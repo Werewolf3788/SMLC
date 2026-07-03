@@ -118,12 +118,13 @@
   },
   "global_assets": [
     {
-      "id": "global_biz_spotlight",
+      "id": "global_business_spotlight",
       "name": "Grandma's Kitchen",
       "url": "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/images/Grandma_s%20Kitchen.jpg",
       "alt": "Featured Local Business Network Spotlight",
       "source_url": "https://www.facebook.com/p/Grandmas-kitchen-Flora-il-61586069549969/"
-      "Description": "Serving home-cooked favorites for over two decades, the Family Diner is a staple of our community."
+      "Description": "Serving home-cooked favorites for over two decades, the Family Diner is a staple of our community. Known for their "Early Bird" specials and the friendliest service in Clay County."
+      "location": "Flora, IL"
     }
   ]
 }
