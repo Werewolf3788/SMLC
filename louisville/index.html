@@ -3,1310 +3,283 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Louisville, IL | Official Community Portal</title>
+    <title>Louisville, IL | Community Portal</title>
     
-    <meta name="description" content="Official community portal for Louisville, IL. Stay updated on local events, business dispatches, historical archives, and town updates.">
-    <meta name="keywords" content="Louisville IL, Clay County IL, Louisville History, Clay County News, Support My Local Community">
+    <meta name="description" content="Official community portal for Louisville, IL. Local events, business dispatches, historical archives, and updates.">
     <meta property="og:title" content="Louisville, IL | Community Hub">
-    <meta property="og:description" content="Explore Louisville, IL landmarks, history, and community dispatches.">
     <meta property="og:type" content="website">
 
-    <!-- GA4 Analytics Auto-Integration -->
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    
+    <!-- External Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Global Analytics Watermarks -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-H6Q756MVE8"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-H6Q756MVE8'); /* SMLC/SKVentures Identification Key */
-      gtag('config', 'G-L376P3NPY4'); /* Global Monitoring Watermark */
+      gtag('config', 'G-H6Q756MVE8');
+      gtag('config', 'G-L376P3NPY4');
     </script>
-
-    <style>
-        /* 
-         * DESIGN REVOLUTION: CUSTOM ROOT PALETTE 
-         * Solves styling problems via strict custom rule compliance.
-         */
-        :root {
-            --primary: #990000;
-            --secondary: #000000;
-            --accent-gold: #FFC10E;
-            --aged-paper: #fffdf5;
-            --text-dark: #222222;
-            --text-light: #ffffff;
-            --base-font: "Playfair Display", Georgia, "Times New Roman", serif;
-            --cursive-font: "Abril Fatface", cursive;
-        }
-
-        /* Fluid Page Blueprint */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: var(--base-font);
-            color: var(--text-dark);
-            background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
-            background-attachment: fixed;
-            min-height: 100vh;
-            line-height: 1.5;
-            overflow-x: hidden;
-        }
-
-        /* 
-         * TYPOGRAPHY RULES
-         * Extracted directly from WordPress parameters and customized cleanly.
-         */
-        h1 {
-            font-size: 3.125rem; /* 50px */
-            font-weight: 500;
-            line-height: 1.2;
-            color: var(--accent-gold);
-            text-align: center;
-        }
-
-        h2 {
-            font-size: 3.125rem; /* 50px */
-            font-weight: 500;
-            line-height: 1.2;
-            color: var(--accent-gold);
-            text-align: center;
-            text-decoration: underline;
-            padding-bottom: 0.625rem;
-        }
-
-        h3 {
-            font-size: 2.0rem; /* 32px */
-            font-weight: 500;
-            line-height: 1.3;
-            color: #22577a; /* Standard WordPress baseline configuration override */
-            padding-bottom: 0.625rem;
-        }
-
-        h4 {
-            font-family: var(--cursive-font);
-            font-size: 0.765rem; /* 12.25px */
-            font-weight: 700;
-            letter-spacing: 1.225px;
-            line-height: 1.4;
-            color: var(--text-light);
-            text-transform: uppercase;
-            text-align: center;
-        }
-
-        p {
-            font-size: 1.875rem; /* 30px */
-            font-weight: 700;
-            line-height: 1.8;
-            color: var(--secondary);
-            text-align: left;
-        }
-
-        a {
-            color: inherit;
-            text-decoration: none;
-        }
-
-        img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        /* Gap Prevention System */
-        header, nav, .hero-section {
-            margin: 0 !important;
-            padding: 0 !important;
-            border: none !important;
-        }
-
-        /* --- SECTION 1: HEADER --- */
-        .main-header {
-            width: 100vw;
-            max-width: 100%;
-            display: block;
-        }
-
-        .header-billboard-link {
-            display: block;
-            width: 100%;
-            aspect-ratio: 2 / 1;
-            max-height: 250px;
-            overflow: hidden;
-        }
-
-        .header-billboard-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        /* --- MENU --- */
-        .nav-bar {
-            background-color: var(--secondary);
-            width: 100vw;
-            max-width: 100%;
-            padding: 1rem 2rem;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            border-bottom: 2px solid var(--accent-gold);
-        }
-
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .nav-brand {
-            color: var(--accent-gold);
-            font-weight: bold;
-            font-size: 1.25rem;
-        }
-
-        .menu-list {
-            display: flex;
-            list-style: none;
-            gap: 1.5rem;
-        }
-
-        .menu-item a {
-            color: var(--primary);
-            font-weight: bold;
-            font-size: 1.1rem;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            transition: background 0.3s ease;
-            min-height: 44px;
-            display: inline-flex;
-            align-items: center;
-        }
-
-        .menu-item a:hover, .menu-item.active a {
-            background-color: rgba(153, 0, 0, 0.2);
-            color: var(--accent-gold);
-        }
-
-        /* --- SECTION 2: HERO --- */
-        .hero-section {
-            background-color: rgba(0,0,0,0.4);
-            padding: 4rem 1rem !important;
-            text-align: center;
-            width: 100vw;
-            max-width: 100%;
-        }
-
-        .hero-subtitle {
-            color: var(--text-light);
-            font-size: 1.5rem;
-            margin-top: 1rem;
-            font-style: italic;
-        }
-
-        /* --- CORE PAGE INNER CONTAINER --- */
-        .page-wrapper {
-            width: 100vw;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem 1rem;
-        }
-
-        /* --- SECTION 3: STACKED GRID LAYOUT --- */
-        .section-discover-header {
-            margin-bottom: 2.5rem;
-        }
-
-        .discover-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 2rem;
-            align-items: stretch;
-            width: 100%;
-        }
-
-        @media (min-width: 1024px) {
-            .discover-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
-        .discover-card {
-            background-color: var(--aged-paper);
-            padding: 2rem;
-            border: 2px solid var(--secondary);
-            box-shadow: 6px 6px 0px var(--secondary);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .discover-card h2 {
-            font-size: 1.5rem;
-            color: var(--text-dark);
-            text-align: left;
-            font-weight: 700;
-            text-decoration: none;
-            margin-bottom: 1.5rem;
-            line-height: 1.4;
-        }
-
-        /* Rotator Slider Component */
-        .slider-viewport {
-            width: 100%;
-            aspect-ratio: 2 / 1;
-            position: relative;
-            overflow: hidden;
-            border: 2px solid var(--secondary);
-            margin: 1.5rem 0;
-            background: #000;
-        }
-
-        .slider-slide {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            transition: opacity 0.6s ease-in-out;
-        }
-
-        .slider-slide.active {
-            opacity: 1;
-        }
-
-        .slider-slide img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .slider-caption {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0,0,0,0.7);
-            color: #fff;
-            padding: 0.5rem;
-            font-size: 0.9rem;
-            text-align: center;
-        }
-
-        .discover-desc2 {
-            font-size: 1.1rem;
-            line-height: 1.6;
-            color: #333;
-            font-weight: normal;
-            margin-top: 1rem;
-        }
-
-        /* Right Card Dual-Image Rendering */
-        .right-card-title {
-            font-size: 1.75rem;
-            font-weight: bold;
-            text-align: center;
-            color: var(--primary);
-            margin-bottom: 1.5rem;
-        }
-
-        .dual-image-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .dual-image-container h2 {
-            font-size: 1.1rem;
-            color: var(--secondary);
-            text-decoration: none;
-            text-align: center;
-            padding-top: 0.5rem;
-        }
-
-        .right-card-desc1 {
-            font-size: 1.1rem;
-            line-height: 1.5;
-            color: #444;
-            font-weight: normal;
-            margin-top: 1rem;
-        }
-
-        /* --- SECTION 4: HISTORICAL TIMELINE ROW --- */
-        .history-section {
-            margin: 4rem 0;
-        }
-
-        .history-section h1 {
-            margin-bottom: 2rem;
-        }
-
-        .history-row {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1rem;
-            width: 100%;
-        }
-
-        @media (min-width: 768px) {
-            .history-row { grid-template-columns: repeat(3, 1fr); }
-        }
-        @media (min-width: 1024px) {
-            .history-row { grid-template-columns: repeat(5, 1fr); }
-        }
-
-        .history-card {
-            background-color: var(--aged-paper);
-            border: 2px solid var(--secondary);
-            box-shadow: 4px 4px 0px var(--secondary);
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .history-card h2 {
-            font-size: 2rem;
-            color: var(--primary);
-            text-decoration: none;
-            text-align: left;
-            padding: 0;
-        }
-
-        .history-card h3 {
-            font-size: 1.25rem;
-            color: var(--secondary);
-            padding: 0;
-        }
-
-        .history-card p {
-            font-size: 0.95rem;
-            font-weight: normal;
-            line-height: 1.4;
-            color: #333;
-        }
-
-        .history-img-box {
-            width: 100%;
-            aspect-ratio: 2 / 1;
-            margin-top: auto;
-            border: 1px solid #ccc;
-            overflow: hidden;
-            background: #eee;
-        }
-
-        .history-img-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        /* --- PARTNERS SYSTEM (SECTIONS 5 & 7) --- */
-        .partners-section {
-            margin: 3rem 0;
-        }
-
-        .partners-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
-            width: 100%;
-        }
-
-        @media (min-width: 768px) {
-            .partners-grid { grid-template-columns: repeat(5, 1fr); }
-        }
-
-        .partner-card {
-            background-color: var(--aged-paper);
-            border: 1px solid #ddd;
-            padding: 1rem;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .partner-logo-box {
-            width: 100%;
-            aspect-ratio: 2 / 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 0.75rem;
-        }
-
-        .partner-logo-box img {
-            max-height: 100%;
-            object-fit: contain;
-        }
-
-        .partner-card h4 {
-            color: var(--secondary);
-            font-size: 0.9rem;
-            font-family: var(--base-font);
-            opacity: 1;
-            letter-spacing: normal;
-        }
-
-        .partner-card h4 a {
-            min-height: 44px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: underline;
-        }
-
-        /* --- SECTION 6: THE TRIPLE TOWER COMPONENT --- */
-        .tower-section {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 2rem;
-            margin: 4rem 0;
-            align-items: start;
-        }
-
-        @media (min-width: 1024px) {
-            .tower-section {
-                grid-template-columns: 1fr 1.5fr 1fr; /* Center Column is primary focus */
-            }
-        }
-
-        /* Column Layout Systems */
-        .tower-col {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        /* Base Clipping Retro Aesthetic applied to clean cards */
-        .clay-county-news-box {
-            box-sizing: border-box;
-            width: 100%;
-            padding: 1.5rem;
-            border: 2px solid #222;
-            background-color: var(--aged-paper);
-            box-shadow: 6px 6px 0px #222;
-            font-family: "Times New Roman", Times, serif;
-            position: relative;
-        }
-
-        .clipping-tag {
-            position: absolute;
-            top: -12px;
-            left: 15px;
-            background: #222;
-            color: #fff;
-            font-size: 10px;
-            padding: 3px 10px;
-            text-transform: uppercase;
-            font-weight: bold;
-            letter-spacing: 1px;
-            z-index: 10;
-        }
-
-        .event-clipping-header {
-            text-align: center;
-            border-top: 4px double #222;
-            border-bottom: 2px solid #222;
-            padding: 10px 0;
-            margin-bottom: 15px;
-            margin-top: 5px;
-        }
-
-        .event-clipping-header h3 {
-            font-family: "Times New Roman", Times, serif !important;
-            font-weight: 900 !important;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin: 0 !important;
-            color: #d9534f !important;
-            font-size: 22px !important;
-            line-height: 1.1 !important;
-        }
-
-        /* Col 1-1 Structure adjustments */
-        .spotlight-img {
-            width: 100%;
-            aspect-ratio: 2 / 1;
-            object-fit: cover;
-            border: 1px solid #222;
-            margin: 0.75rem 0;
-        }
-
-        .black-btn {
-            display: block;
-            text-align: center;
-            background-color: #222;
-            color: #fff !important;
-            padding: 12px;
-            text-transform: uppercase;
-            font-weight: bold;
-            text-decoration: none;
-            font-size: 13px;
-            margin-top: 1rem;
-            min-height: 44px;
-        }
-
-        /* Col 1-2 Custom Scrollable Configuration */
-        .scrollable-bulletin-list {
-            max-height: 380px;
-            overflow-y: auto;
-            padding-right: 5px;
-        }
-
-        .bulletin-item {
-            border-bottom: 1px dashed #777;
-            padding: 10px 0;
-        }
-
-        .bulletin-date {
-            color: #cc0000;
-            font-weight: bold;
-            font-size: 12px;
-        }
-
-        .bulletin-title {
-            font-size: 16px;
-            font-weight: bold;
-            margin: 3px 0;
-        }
-
-        .bulletin-action-row {
-            margin-top: 5px;
-            font-size: 11px;
-        }
-
-        .bulletin-link {
-            color: #cc0000;
-            text-decoration: underline;
-            font-weight: bold;
-            margin-right: 8px;
-        }
-
-        .subscribe-box {
-            border-top: 1px solid #222;
-            margin-top: 1rem;
-            padding-top: 0.75rem;
-            font-size: 11px;
-            text-align: center;
-        }
-
-        /* Column 2: 2x2 Clean News Matrix Grid */
-        .news-2x2-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
-            max-height: 850px;
-            overflow-y: auto;
-            padding-right: 5px;
-        }
-        @media (min-width: 600px) {
-            .news-2x2-grid { grid-template-columns: 1fr 1fr; }
-        }
-
-        .news-card-thumb {
-            width: 100%;
-            aspect-ratio: 2 / 1;
-            object-fit: cover;
-            margin-bottom: 0.5rem;
-            border: 1px solid #ddd;
-        }
-
-        .news-card-date {
-            font-size: 11px;
-            color: #666;
-            margin-bottom: 0.25rem;
-        }
-
-        .news-card-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            line-height: 1.3;
-            margin-bottom: 0.5rem;
-            color: var(--secondary);
-        }
-
-        .news-card-snippet {
-            font-size: 0.95rem;
-            line-height: 1.4;
-            color: #444;
-            margin-bottom: 0.75rem;
-        }
-
-        /* Col 3-1: Gas Monitor */
-        .billboard-container-embed {
-            width: 100%;
-            background: #111;
-            border: 4px solid #2a2a2a;
-            border-radius: 8px;
-            padding: 1rem;
-            color: #fff;
-        }
-
-        /* Col 3-2: Clean Target Container */
-        .directory-box {
-            text-align: center;
-            padding: 1rem;
-        }
-        .directory-box img {
-            max-width: 140px;
-            margin: 0 auto 1rem auto;
-        }
-
-        /* Col 3-3: Polaroid Adjustment */
-        .polaroid-frame {
-            background: #fff;
-            padding: 8px 8px 20px 8px;
-            border: 1px solid #ccc;
-            box-shadow: 2px 2px 6px rgba(0,0,0,0.15);
-            transform: rotate(-2deg);
-            margin-bottom: 1rem;
-        }
-
-        /* --- LIGHTBOX COMPONENT MODULE --- */
-        .lightbox-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.8);
-            z-index: 2000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-
-        .lightbox-window {
-            background: var(--aged-paper);
-            max-width: 650px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            border: 3px solid #222;
-            box-shadow: 8px 8px 0px #000;
-            padding: 2rem;
-            position: relative;
-            font-family: "Times New Roman", Times, serif;
-        }
-
-        .lightbox-close-btn {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 24px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .lightbox-img {
-            width: 100%;
-            aspect-ratio: 2 / 1;
-            object-fit: cover;
-            margin-bottom: 1rem;
-            border: 1px solid #222;
-        }
-
-        /* --- SECTION 8: MISSION STATEMENT --- */
-        .mission-container {
-            background-color: rgba(0,0,0,0.6);
-            border: 2px solid var(--accent-gold);
-            padding: 2.5rem;
-            margin: 4rem 0;
-            text-align: center;
-        }
-
-        .mission-container h3 {
-            color: var(--text-light);
-            font-family: var(--base-font);
-            font-size: 1.25rem;
-            line-height: 1.8;
-            font-weight: normal;
-        }
-
-        /* --- SECTION 9: FOOTER CONFIGURATION --- */
-        .master-footer {
-            background-color: var(--secondary);
-            border-top: 4px solid var(--primary);
-            color: var(--text-light);
-            padding: 3rem 1rem 1.5rem 1.1rem;
-            width: 100vw;
-            max-width: 100%;
-        }
-
-        .footer-grid {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 2.5rem;
-        }
-
-        @media (min-width: 1024px) {
-            .footer-grid { grid-template-columns: repeat(3, 1fr); }
-        }
-
-        .footer-tower {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            text-align: center;
-        }
-
-        .footer-tower h4 {
-            opacity: 0.6;
-            margin-bottom: 0.25rem;
-        }
-
-        .footer-tower h3 {
-            color: var(--accent-gold);
-            font-size: 1.35rem;
-            font-weight: normal;
-            text-align: center;
-            padding: 0;
-        }
-
-        .footer-tower h3 a {
-            min-height: 44px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .copyright-strip {
-            max-width: 1200px;
-            margin: 2.5rem auto 0 auto;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            padding-top: 1.5rem;
-            text-align: center;
-        }
-    </style>
 </head>
 <body>
 
-    <!-- SECTION 1: HEADER -->
+    <!-- SECTION 1: FULL-WIDTH HEADER BILLBOARD -->
     <header class="main-header">
         <a href="./home" class="header-billboard-link">
-            <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="SMLC Logo Header" class="header-billboard-img">
+            <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="SMLC Platform Header Logo" class="header-billboard-img">
         </a>
     </header>
 
-    <!-- MENU CONTAINER -->
+    <!-- NAVIGATION MENU BAR -->
     <nav class="nav-bar">
         <div class="nav-container">
-            <div class="nav-brand">SMLC Portal</div>
+            <!-- SMLC Portal text removed to match centered horizontal layout preferences -->
             <ul class="menu-list" id="dynamic-menu-target">
-                <!-- Fallback fallback static item before async stream parsing -->
+                <!-- Built dynamically via Javascript pipeline -->
                 <li class="menu-item active"><a href="./home">Home</a></li>
             </ul>
         </div>
     </nav>
 
-    <!-- SECTION 2: HERO -->
+    <!-- SECTION 2: HERO BANNER -->
     <section class="hero-section">
-        <h1>Louisville, IL</h1>
-        <div class="hero-subtitle">Established in 1836</div>
+        <div class="hero-shield-wrapper">
+            <h1>Louisville, IL</h1>
+            <div class="hero-subtitle">Established in 1836</div>
+        </div>
     </section>
 
-    <!-- MAIN VIEW WRAPPER -->
-    <main class="page-wrapper">
+    <!-- DESKTOP STRETCH CONTAINER WIDE LAYOUT -->
+    <main class="page-viewport-container">
 
-        <!-- SECTION 3: BLOCKS DISCOVER MATRIX -->
+        <!-- SECTION 3: COMMUNITY DISCOVER COMPLEX -->
         <section class="discover-section">
             <div class="section-discover-header">
                 <h2>Discover the Vibrant Community Center</h2>
             </div>
             
             <div class="discover-grid">
-                <!-- Left Card Container -->
-                <div class="discover-card">
+                <!-- Left Side Card Column -->
+                <div class="discover-card font-contrast-shield">
                     <h2>Join us in supporting local businesses and dive into the exciting events happening in Flora, IL. Experience the warmth of our community and make unforgettable memories.</h2>
                     
                     <div class="slider-viewport" id="louisville-slideshow">
-                        <!-- Content stream parsing engine drops frames natively here -->
+                        <!-- Auto rotation slides dynamically render inside this container -->
                         <div class="slider-slide active">
                             <img src="https://live.staticflickr.com/4117/4861670451_669d9e52e9_b.jpg" alt="Court House">
-                            <div class="slider-caption">Court House - Historic town Government building</div>
+                            <div class="slider-caption">Court House</div>
                         </div>
                     </div>
 
-                    <div class="discover-desc2" id="desc2-target-1">Loading community historical parameters...</div>
+                    <div class="discover-desc2" id="desc2-target-1">Loading local historical parameters...</div>
                 </div>
 
-                <!-- Right Card Container -->
-                <div class="discover-card" style="justify-content: flex-start;">
-                    <div class="right-card-title" id="right-card-meta-title">Loading Title...</div>
+                <!-- Right Side Card Column -->
+                <div class="discover-card font-contrast-shield">
+                    <div class="right-card-title" id="right-card-meta-title">Loading...</div>
                     
                     <div class="dual-image-row">
                         <div class="dual-image-container">
-                            <img id="dual-img-1" src="" alt="">
+                            <img id="dual-img-1" src="" alt="Historic Destination View 1">
                             <h2 id="dual-header-1"></h2>
                         </div>
                         <div class="dual-image-container">
-                            <img id="dual-img-2" src="" alt="">
+                            <img id="dual-img-2" src="" alt="Historic Destination View 2">
                             <h2 id="dual-header-2"></h2>
                         </div>
                     </div>
 
-                    <div class="right-card-desc1" id="right-card-meta-desc1">Loading descriptive details...</div>
+                    <div class="right-card-desc1" id="right-card-meta-desc1">Loading descriptive summary grids...</div>
                 </div>
             </div>
         </section>
 
-        <!-- SECTION 4: HISTORICAL TIMELINE CARD BAR -->
+        <!-- SECTION 4: HORIZONTAL HISTORICAL TIMELINE BAR -->
         <section class="history-section">
-            <h2>Historical Events</h2>
+            <div class="section-title-wrapper">
+                <h2>Historical Events</h2>
+            </div>
             <div class="history-row" id="history-row-target">
-                <!-- Synchronous default fallback element cards drop dynamically here -->
+                <!-- Populated via historical JSON loader -->
             </div>
         </section>
 
-        <!-- SECTION 5: PARTNERS MATRIX ROW TOP -->
+        <!-- SECTION 5: ADVERTISING PARTNERS GRID TOP -->
         <section class="partners-section">
             <div class="partners-grid" id="partners-grid-top">
-                <!-- Render Array Priority Order Block: 1, 3, 5, 2, 4 -->
+                <!-- Reordered layout sequencing order: 1, 3, 5, 2, 4 populated dynamically -->
             </div>
         </section>
 
-        <!-- SECTION 6: THREE TOWER VERTICAL GRID SYSTEM -->
+        <!-- SECTION 6: WIDE 3-COLUMN TOWER GRID SYSTEM -->
         <section class="tower-section">
             
-            <!-- LEFT TOWER (COL 1) -->
+            <!-- LEFT TOWER COLUMN (COL 1) -->
             <div class="tower-col">
-                <!-- Col 1-1: Spotlight Component Card Box -->
+                <!-- Col 1-1: Business Spotlight Card -->
                 <div class="clay-county-news-box">
                     <div class="clipping-tag">Network Spotlight</div>
                     <div class="event-clipping-header">
                         <h3>Business Spotlight</h3>
-                        <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Supporting Local Clay County News</span>
+                        <span class="clipping-subheading">Supporting Local Clay County News</span>
                     </div>
-                    <img src="" alt="Spotlight Fur Image" class="spotlight-img" id="spotlight-asset-img">
-                    <h3 id="spotlight-asset-name" style="color:var(--secondary); font-size:1.4rem; padding:0; margin:0.5rem 0 0.25rem 0;">Loading...</h3>
-                    <h4 id="spotlight-asset-loc" style="color:#666; text-align:left; font-family:var(--base-font); text-transform:none; font-size:1rem; font-weight:normal; margin-bottom:0.5rem;"></h4>
-                    <p id="spotlight-asset-desc" style="font-size:1rem; font-weight:normal; line-height:1.4; color:#333;"></p>
-                    <a href="" id="spotlight-asset-link" target="_blank" class="black-btn">Visit Website</a>
+                    <img src="" alt="Spotlight Advertisement Profile Asset" class="spotlight-img" id="spotlight-asset-img">
+                    <h3 id="spotlight-asset-name" class="spotlight-title-text">Loading...</h3>
+                    <h4 id="spotlight-asset-loc" class="spotlight-location-text"></h4>
+                    <p id="spotlight-asset-desc" class="spotlight-description-body"></p>
+                    <a href="" id="spotlight-asset-link" target="_blank" class="event-clipping-btn">Visit Website</a>
                 </div>
 
-                <!-- Col 1-2: Community Calendar Bulletins Card Box -->
+                <!-- Col 1-2: Community Calendar Box -->
                 <div class="clay-county-news-box">
                     <div class="clipping-tag">Community Bulletin</div>
                     <div class="event-clipping-header">
                         <h3>What's Happening?</h3>
-                        <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #222; font-weight: bold;">Clay County Community Calendar</span>
+                        <span class="clipping-subheading">Clay County Community Calendar</span>
                     </div>
                     
                     <div class="scrollable-bulletin-list" id="bulletin-scroller-target">
-                        <!-- Feed item injection platform hook -->
-                        <div style="text-align:center; font-style:italic; padding:1rem;">Connecting to calendar engine...</div>
+                        <!-- Dynamic wire connection -->
                     </div>
 
                     <div class="subscribe-box">
-                        <strong style="text-transform:uppercase; font-size:10px; display:block; margin-bottom:5px; color:#555;">Subscribe to Calendar</strong>
-                        <a href="https://calendar.google.com" target="_blank" style="color:#cc0000; font-weight:bold; margin-right:8px;">GOOGLE</a> | 
-                        <a href="#" style="color:#cc0000; font-weight:bold; margin-left:8px;">iCAL / OUTLOOK</a>
+                        <span class="cal-label">Subscribe to Calendar</span>
+                        <a href="https://calendar.google.com" target="_blank" class="cal-text-link">GOOGLE</a>
+                        <span style="color:#777; margin: 0 4px;">|</span>
+                        <a href="https://script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec?feed=true" download="community_calendar.ics" class="cal-text-link">iCAL / OUTLOOK</a>
                     </div>
                 </div>
 
-                <!-- Col 1-3: Static Redirect Frame Component Block -->
+                <!-- Col 1-3: Free Submission Clipping Notice -->
                 <div class="clay-county-news-box">
                     <div class="clipping-tag">Bulletin Info</div>
-                    <p style="font-size:1rem; line-height:1.4; color:#333; font-style:italic; text-align:center; margin-bottom:1rem;">
+                    <p class="event-clipping-text">
                         "Got a local fundraiser, school event, or church dinner coming up? Share your news with the community for free!"
                     </p>
-                    <a href="https://www.supportmylocalcommunity.com/submit-event" target="_blank" class="black-btn" style="background-color:#d9534f; border-color:#d9534f;">Submit Your Event</a>
-                    <div style="font-size:9px; text-align:center; color:#777; margin-top:10px; text-transform:uppercase;">Clay City • Flora • Louisville • Sailor Springs • Xenia</div>
+                    <a href="https://www.supportmylocalcommunity.com/submit-event" target="_blank" class="event-clipping-btn" style="background-color:#d9534f; border-color:#d9534f;">Submit Your Event</a>
+                    <div class="clipping-footer">Clay City • Flora • Louisville • Sailor Springs • Xenia</div>
                 </div>
             </div>
 
-            <!-- MIDDLE TOWER (COL 2 - MAIN SOURCE NEWS OVERFLOW) -->
+            <!-- CENTER TOWER COLUMN (COL 2 - SPORTS EMBED + MAIN LOCAL NEWS MATRIX) -->
             <div class="tower-col">
-                <div class="clay-county-news-box" style="box-shadow: 8px 8px 0px #000;">
+                <!-- Col 2-1: ScoreStream Sports EMBED Container -->
+                <div class="sports-embed-card">
+                    <div class="sports-embed-header">Local Athletics Monitor</div>
+                    <div class="scorestream-widget-container" data-ss_widget_type="vertScoreboard" style="height:600px;" data-user-widget-id="64640"></div>
+                </div>
+
+                <!-- Main News Matrix Container -->
+                <div class="clay-county-news-box">
                     <div class="clipping-tag" style="background:#cc0000;">Live Feed</div>
                     <div class="event-clipping-header">
                         <h3 style="color:var(--secondary) !important; font-size:28px !important;">Local News</h3>
-                        <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #666; font-weight: bold;">Clay County Newspaper Dispatch</span>
+                        <span class="clipping-subheading">Clay County Newspaper Dispatch</span>
                     </div>
 
-                    <!-- 2x2 Matrix Container Block -->
-                    <div class="news-2x2-grid" id="news-matrix-target">
-                        <!-- Target Injection Hook Array -->
+                    <!-- Dynamic Layout Engine auto-handles 1 or more cards elegantly without empty gaps -->
+                    <div class="news-dynamic-masonry" id="news-matrix-target">
+                        <!-- Dynamic cards load here -->
                     </div>
                 </div>
             </div>
 
-            <!-- RIGHT TOWER (COL 3) -->
+            <!-- RIGHT TOWER COLUMN (COL 3) -->
             <div class="tower-col">
-                <!-- Col 3-1: Live Fuel Monitor Embed Card -->
+                <!-- Col 3-1: Live Fuel Monitor Container -->
                 <div class="billboard-container-embed">
-                    <div style="background:var(--primary); color:var(--accent-gold); text-align:center; font-size:12px; padding:4px; font-weight:bold; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">S & K Ventures Fuel Monitor</div>
-                    <iframe src="https://skventuresigns-design.github.io/smlc/gas-prices/billboard.html?town=louisville" style="width:100%; height:320px; border:none; overflow:hidden;" scrolling="no"></iframe>
+                    <div class="fuel-monitor-header">S & K Ventures Fuel Monitor</div>
+                    <iframe src="https://skventuresigns-design.github.io/smlc/gas-prices/billboard.html?town=louisville" class="fuel-iframe-frame" scrolling="no"></iframe>
                 </div>
 
-                <!-- Col 3-2: Business Directory Asset Link -->
+                <!-- Col 3-2: Big Business Directory Box Component -->
                 <div class="clay-county-news-box directory-box">
-                    <img src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="SMLC Platform Logo">
-                    <a href="https://clay-county-business-directory.supportmylocalcommunity.com/" target="_blank" class="black-btn" style="margin-top:0;">
-                        <h3 style="color:#fff; font-size:1.1rem; padding:0; letter-spacing:1px; text-transform:uppercase;">Clay County Directory</h3>
+                    <div class="directory-image-wrapper">
+                        <img src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="SMLC Platform Logo Graphic Asset">
+                    </div>
+                    <a href="https://clay-county-business-directory.supportmylocalcommunity.com/" target="_blank" class="event-clipping-btn">
+                        <span style="font-size:1.1rem; letter-spacing:1px; text-transform:uppercase;">Clay County Directory</span>
                     </a>
                 </div>
 
-                <!-- Col 3-3: Social Engagement Redirect Box -->
+                <!-- Col 3-3: Social Platform Invitation Box -->
                 <div class="clay-county-news-box" style="text-align:center;">
                     <div class="clipping-tag" style="background:#d9534f;">Local Conversation</div>
-                    <div class="polaroid-frame">
-                        <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="Support My Local Community Platform Header Image" style="filter: grayscale(10%) sepia(5%);">
+                    <div class="polaroid-frame image-asset-box">
+                        <!-- Kept header graphic as requested -->
+                        <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="SMLC Platform Community Portal Image Layer">
                     </div>
-                    <div class="event-clipping-header" style="border-top:4px double #222; padding:8px 0; margin-bottom:10px;">
+                    <div class="event-clipping-header">
                         <h3 style="font-size:16px !important; color:#222 !important;">Join the Community</h3>
-                        <span style="font-size:10px; color:#555;">Official SMLC Facebook page</span>
+                        <span class="clipping-subheading">Official SMLC Facebook page</span>
                     </div>
-                    <p style="font-size:0.95rem; font-weight:normal; font-style:italic; line-height:1.4; color:#444; margin-bottom:1rem;">
+                    <p class="event-clipping-text">
                         "Stay connected with your neighbors. Discuss local news, share community updates, and join neighbors in the conversation."
                     </p>
-                    <a href="https://www.facebook.com/SupportMyLocalCommunity" target="_blank" class="black-btn">Enter the Conversation</a>
-                    <span style="display:block; margin-top:12px; font-size:9px; text-transform:uppercase; color:#999; letter-spacing:0.5px;">Community Voice • Clay County, IL</span>
+                    <a href="https://www.facebook.com/SupportMyLocalCommunity" target="_blank" class="event-clipping-btn">Enter the Conversation</a>
+                    <span class="community-voice-stamp">Community Voice • Clay County, IL</span>
                 </div>
             </div>
 
         </section>
 
-        <!-- SECTION 8: FULL BROADCAST TEXT COMPONENT -->
+        <!-- SECTION 7: ADVERTISING PARTNERS GRID BOTTOM -->
+        <section class="partners-section">
+            <div class="partners-grid" id="partners-grid-bottom">
+                <!-- Reordered layout sequencing order: 2, 4, 1, 3, 5 populated dynamically -->
+            </div>
+        </section>
+
+        <!-- SECTION 8: MISSION FOOTER MESSAGE BANNER -->
         <section class="mission-container">
             <h3>We are very Thankful and Blessed for our Customers who allow us to advertise their Business to the Community. We hope to be of Service, not only to the Large Corporations, but also to the Small Business’ in the area. A Large Corporation once started out as a small business, so our hope is to help those Small Business’ we serve reach the fullest potential they desire. You will never know what we are able to do for Your Business unless you ask. I hope to hear from you. For questions or comments about this site please email info@supportmylocalcommunity.com</h3>
         </section>
 
     </main>
 
-    <!-- SECTION 9: MASTER STRUCTURED FOOTER -->
+    <!-- SECTION 9: MASTER STRUCTURED FOOTER UNIT -->
     <footer class="master-footer">
         <div class="footer-grid">
-            <!-- Left Grid Pillar -->
             <div class="footer-tower">
                 <h4>Give us a call</h4>
-                <h3 id="footer-phone-target">Loading...</h3>
+                <div id="footer-phone-target">Loading...</div>
             </div>
-            <!-- Middle Grid Pillar -->
             <div class="footer-tower">
                 <h4>Send us an Email</h4>
                 <h3><a id="footer-email-target" href="">Loading...</a></h3>
             </div>
-            <!-- Right Grid Pillar -->
             <div class="footer-tower">
                 <h4>Visit our office</h4>
-                <h3 id="footer-address-target" style="font-size:1.1rem; line-height:1.4;">Loading...</h3>
+                <h3 id="footer-address-target">Loading...</h3>
             </div>
         </div>
         
         <div class="copyright-strip">
-            <h4 id="footer-copy-target" style="opacity:0.8; font-size:0.85rem; color:var(--text-light);">Loading copy frameworks...</h4>
+            <h4 id="footer-copy-target">Loading framework copyrights...</h4>
         </div>
     </footer>
 
-    <!-- LIGHTBOX DETAILED WINDOW COMPONENT MODAL -->
-    <div class="lightbox-overlay" id="news-lightbox" onclick="closeLightbox(event)">
+    <!-- INTERACTIVE PORTAL GLOBAL MODAL LIGHTBOX SYSTEM -->
+    <div class="lightbox-overlay" id="portal-global-lightbox" onclick="closeLightbox(event)">
         <div class="lightbox-window">
-            <span class="lightbox-close-btn" onclick="document.getElementById('news-lightbox').style.display='none'">&times;</span>
-            <img src="" alt="" class="lightbox-img" id="lightbox-target-img">
-            <div class="news-card-date" id="lightbox-target-date"></div>
-            <h2 id="lightbox-target-title" style="color:var(--secondary); text-align:left; font-size:1.8rem; text-decoration:none; margin:0.5rem 0 1rem 0; font-weight:bold; line-height:1.2;"></h2>
-            <div id="lightbox-target-story" style="font-size:1.1rem; line-height:1.6; color:#222; white-space:pre-line;"></div>
+            <span class="lightbox-close-btn" onclick="document.getElementById('portal-global-lightbox').style.display='none'">&times;</span>
+            <div class="lightbox-image-wrapper">
+                <img src="" alt="" class="lightbox-img" id="lightbox-target-img">
+            </div>
+            <div class="lightbox-meta-date" id="lightbox-target-date"></div>
+            <h2 id="lightbox-target-title"></h2>
+            <div id="lightbox-target-story" class="lightbox-story-body"></div>
         </div>
     </div>
 
-    <!-- Async Data Engines Execution Scripts -->
-    <script>
-        /*
-         * CORE LOGICAL RUNTIME DATA SYSTEM
-         * Connects, processes filters, and routes data arrays across DOM segments.
-         */
-
-        // Timestamp human formatting utility tool engine
-        function formatHumanTimestamp(rawString) {
-            try {
-                const dateObj = new Date(rawString);
-                if (isNaN(dateObj.getTime())) return rawString;
-                return dateObj.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' });
-            } catch(e) {
-                return rawString;
-            }
-        }
-
-        // Global Navigation Links Interceptor Protocol
-        document.addEventListener('click', function(e) {
-            const originLink = e.target.closest('a');
-            if (originLink && originLink.getAttribute('href')) {
-                const hrefPath = originLink.getAttribute('href');
-                // External redirection processing safety check
-                if (!hrefPath.startsWith('#') && !hrefPath.startsWith('javascript:')) {
-                    // GA4 explicit capture tracking verification occurs via automated streams logic
-                }
-            }
-        }, true);
-
-        // State Synchronization Layer across duplicate browser contexts
-        const stateSyncChannel = new BroadcastChannel('smlc_town_portal_system');
-        stateSyncChannel.onmessage = (event) => {
-            if (event.data && event.data.type === 'REFRESH_NOTIFICATION') {
-                console.log('Cross-tab update pulse detected:', event.data);
-            }
-        };
-
-        // Async Component Stream Pipeline Engine Orchestrator
-        async function runDataPipes() {
-            
-            // Pipe 1: Remote JSON Menu Component Generator Link
-            try {
-                const resMenu = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/menu.json');
-                const menuData = await resMenu.json();
-                const menuTarget = document.getElementById('dynamic-menu-target');
-                if(menuData && menuData.menu_items) {
-                    menuTarget.innerHTML = menuData.menu_items.map(item => `
-                        <li class="menu-item ${item.slug === 'louisville' ? 'active' : ''}">
-                            <a href="${item.url}">${item.title}</a>
-                        </li>
-                    `).join('');
-                }
-            } catch (err) { console.error("Menu endpoint failure:", err); }
-
-            // Pipe 2: Town Slideshow Images Layer & Section 3 Spotlight Filter Pipeline
-            try {
-                const resImages = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/town-images.json');
-                const imgData = await resImages.json();
-                
-                // Route Part A: Filter and Render Slideshow Images for Louisville
-                const louisvilleAssets = imgData.network_towns.Louisville;
-                if(louisvilleAssets && louisvilleAssets.categories) {
-                    let collectedSlides = [];
-                    louisvilleAssets.categories.forEach(cat => {
-                        cat.images.forEach(img => {
-                            // Ensure raw links render validly on secure web views
-                            let secureUrl = img.url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
-                            collectedSlides.push({ url: secureUrl, alt: img.alt, name: img.name });
-                        });
-                    });
-
-                    const sliderContainer = document.getElementById('louisville-slideshow');
-                    if(collectedSlides.length > 0) {
-                        sliderContainer.innerHTML = collectedSlides.map((slide, idx) => `
-                            <div class="slider-slide ${idx === 0 ? 'active' : ''}">
-                                <img src="${slide.url}" alt="${slide.alt}">
-                                <div class="slider-caption">${slide.name} - ${slide.alt}</div>
-                            </div>
-                        `).join('');
-
-                        // Operationalize internal sliding mechanism auto rotator loop
-                        let currentIdx = 0;
-                        setInterval(() => {
-                            const slides = sliderContainer.querySelectorAll('.slider-slide');
-                            if(slides.length === 0) return;
-                            slides[currentIdx].classList.remove('active');
-                            currentIdx = (currentIdx + 1) % slides.length;
-                            slides[currentIdx].classList.add('active');
-                        }, 5000);
-                    }
-                }
-
-                // Route Part B: Parse and Inject the Global Spotlight Node Card Asset (Col 1-1)
-                const globalSpotlight = imgData.global_assets ? imgData.global_assets[0] : null;
-                if(globalSpotlight) {
-                    document.getElementById('spotlight-asset-img').src = globalSpotlight.url;
-                    document.getElementById('spotlight-asset-img').alt = globalSpotlight.alt;
-                    document.getElementById('spotlight-asset-name').innerText = globalSpotlight.name;
-                    document.getElementById('spotlight-asset-loc').innerText = "Flora, IL Network Highlight";
-                    document.getElementById('spotlight-asset-desc').innerText = globalSpotlight.Description || "";
-                    document.getElementById('spotlight-asset-link').href = globalSpotlight.source_url;
-                }
-            } catch(err) { console.error("Images system endpoint failure:", err); }
-
-            // Pipe 3: Dual Image Layout Integration System Module (Section 3 Right Card)
-            try {
-                const resSection3 = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/section3.json');
-                const sec3Rows = await resSection3.json();
-                const lsvRow = sec3Rows.find(item => item.Town === "Louisville");
-                if(lsvRow) {
-                    document.getElementById('right-card-meta-title').innerText = lsvRow.Title;
-                    document.getElementById('dual-img-1').src = lsvRow.ImageUrl1;
-                    document.getElementById('dual-img-1').alt = lsvRow.Header1;
-                    document.getElementById('dual-header-1').innerText = lsvRow.Header1;
-                    document.getElementById('dual-img-2').src = lsvRow.ImageUrl2;
-                    document.getElementById('dual-img-2').alt = lsvRow.Header2;
-                    document.getElementById('dual-header-2').innerText = lsvRow.Header2;
-                    document.getElementById('right-card-meta-desc1').innerText = lsvRow.Description1;
-                    document.getElementById('desc2-target-1').innerText = lsvRow.Description2;
-                }
-            } catch(err) { console.error("Section 3 pipeline block error:", err); }
-
-            // Pipe 4: Timeline Processing Vector Block Engine (Section 4 Elements)
-            try {
-                const resHistory = await fetch('https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/louisville.json');
-                const historyRoot = await resHistory.json();
-                if(historyRoot && historyRoot.history) {
-                    const rowTarget = document.getElementById('history-row-target');
-                    rowTarget.innerHTML = historyRoot.history.map(evt => `
-                        <div class="history-card">
-                            <h2>${evt.year}</h2>
-                            <h3>${evt.event}</h3>
-                            <p>${evt.description}</p>
-                            ${evt.image_url ? `
-                                <div class="history-img-box">
-                                    <img src="${evt.image_url}" alt="${evt.image_caption || evt.event}">
-                                </div>
-                            ` : ''}
-                        </div>
-                    `).join('');
-                }
-            } catch(err) { console.error("Timeline component pipeline failure:", err); }
-
-            // Pipe 5: Partners Row Sorting Engine Matrix Generator (Sections 5 & 7)
-            try {
-                const resPartners = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/partners.json');
-                const partnersList = await resPartners.json();
-                
-                // Sequence order mappings configuration arrays
-                const mappingTopOrder = [0, 2, 4, 1, 3]; // Map slots sequentially for card 1,3,5,2,4 representation arrays
-                
-                const gridTop = document.getElementById('partners-grid-top');
-                
-                // Build layout architecture rows directly using targeted grid indexing parameters
-                let topHtml = "";
-                mappingTopOrder.forEach(idx => {
-                    const partner = partnersList[idx];
-                    if(partner) {
-                        topHtml += `
-                            <div class="partner-card">
-                                <div class="partner-logo-box">
-                                    <img src="${partner.image}" alt="${partner.name} logo">
-                                </div>
-                                <h4><a href="${partner.websiteUrl}" target="_blank">${partner.name}</a></h4>
-                            </div>
-                        `;
-                    }
-                });
-                gridTop.innerHTML = topHtml;
-            } catch(err) { console.error("Partners layer array grid error:", err); }
-
-            // Pipe 6: Google Apps Script Core Connector Engine (Col 1-2 Community Calendar)
-            try {
-                const listContainer = document.getElementById('bulletin-scroller-target');
-                const SCRIPT_ENDPOINT = "https://script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec?feed=true";
-                const response = await fetch(SCRIPT_ENDPOINT);
-                const events = await response.json();
-
-                if (Array.isArray(events) && events.length > 0) {
-                    // Truncate structural scope to enforce clear 5 event viewing index limit parameters safely
-                    const limitedEvents = events.slice(0, 5);
-                    listContainer.innerHTML = limitedEvents.map((item, index) => {
-                        const title = item.name || "Untitled Event";
-                        const displayDate = formatHumanTimestamp(item.date || item.displayDate);
-                        const location = item.location || "Clay County";
-                        return `
-                            <div class="bulletin-item">
-                                <div class="bulletin-date">${displayDate}</div>
-                                <div class="bulletin-title">${title}</div>
-                                <div style="font-size:12px; color:#555;">Where: ${location}</div>
-                                <div class="bulletin-action-row">
-                                    <a href="https://calendar.google.com" target="_blank" class="bulletin-link">Add to Google</a>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                } else {
-                    listContainer.innerHTML = `<div style="text-align:center; padding:1rem; font-style:italic;">No upcoming regional dispatches discovered.</div>`;
-                }
-            } catch(e) {
-                document.getElementById('bulletin-scroller-target').innerHTML = `<div style="text-align:center; padding:1rem; color:#cc0000;">Calendar index connection paused.</div>`;
-            }
-
-            // Pipe 7: Core News Matrix Processing & Algorithmic Filtering Layer Engine (Col 2 Main Feed)
-            try {
-                const resNews = await fetch('https://raw.githubusercontent.com/skventuresigns-design/smlc/main/local-news/news_data.json');
-                const rawNewsArray = await resNews.json();
-                
-                // Strict validation filter evaluation logic criteria metrics rules setup
-                const filteredNews = rawNewsArray.filter(article => {
-                    const titleText = (article.title || "").toUpperCase();
-                    const storyText = (article.full_story || "").toUpperCase();
-                    
-                    const containsClayCounty = titleText.includes("CLAY COUNTY") || storyText.includes("CLAY COUNTY");
-                    const containsTargetLocs = titleText.includes("LOUISVILLE") || storyText.includes("LOUISVILLE") ||
-                                                titleText.includes("NORTH CLAY") || storyText.includes("NORTH CLAY") ||
-                                                titleText.includes("HOOSIER") || storyText.includes("HOOSIER") ||
-                                                titleText.includes(" NC ") || storyText.includes(" NC ");
-                    
-                    return containsClayCounty || containsTargetLocs;
-                });
-
-                window.globalNewsCache = filteredNews; // Cache globally in memory context window for instant modal extraction updates
-                
-                const matrixTarget = document.getElementById('news-matrix-target');
-                if(filteredNews.length > 0) {
-                    matrixTarget.innerHTML = filteredNews.map(article => {
-                        const cleanDate = formatHumanTimestamp(article.date);
-                        const snippet = article.full_story.length > 110 ? article.full_story.substring(0, 110) + "..." : article.full_story;
-                        return `
-                            <div class="bulletin-item" style="border:1px solid #eee; padding:10px; background:#fff;">
-                                ${article.image ? `<img src="${article.image}" alt="${article.title}" class="news-card-thumb">` : ''}
-                                <div class="news-card-date">${cleanDate}</div>
-                                <div class="news-card-title">${article.title}</div>
-                                <div class="news-card-snippet">"${snippet}"</div>
-                                <a href="javascript:void(0)" class="bulletin-link" onclick="openNewsModal('${article.id}')" style="font-size:12px; text-transform:uppercase;">Read Full Story &rarr;</a>
-                            </div>
-                        `;
-                    }).join('');
-                } else {
-                    matrixTarget.innerHTML = `<div style="grid-column: span 2; text-align:center; padding:2rem; font-style:italic;">No articles matching localized criteria found.</div>`;
-                }
-            } catch(err) { console.error("News vector generation breakdown:", err); }
-
-            // Pipe 8: Footer Data Dynamic Hydration Layer Component Processing
-            try {
-                const resFooter = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/footer.json');
-                const footerWrapper = await resFooter.json();
-                const fData = footerWrapper.footer_data;
-                if(fData) {
-                    // Hydrate Left column phone parameters safely
-                    const phoneHtml = fData.contact_info.phone.map(p => `<a href="${p.url}">${p.label}: ${p.number}</a>`).join('<br>');
-                    document.getElementById('footer-phone-target').innerHTML = phoneHtml;
-
-                    // Hydrate Center column email nodes safely
-                    document.getElementById('footer-email-target').href = fData.contact_info.email.url;
-                    document.getElementById('footer-email-target').innerText = fData.contact_info.email.address;
-
-                    // Hydrate Right column maps navigation locations securely
-                    document.getElementById('footer-address-target').innerHTML = `<a href="${fData.contact_info.address.map_url}" target="_blank">${fData.contact_info.address.text}</a>`;
-
-                    // Output core operational copyright baseline text details
-                    document.getElementById('footer-copy-target').innerText = fData.copyright;
-                }
-            } catch(err) { console.error("Footer layer sync breakdown:", err); }
-        }
-
-        // Lightbox Active Display Modifiers Controls
-        function openNewsModal(articleId) {
-            if(!window.globalNewsCache) return;
-            const article = window.globalNewsCache.find(a => a.id === articleId);
-            if(article) {
-                document.getElementById('lightbox-target-img').src = article.image || '';
-                document.getElementById('lightbox-target-img').style.display = article.image ? 'block' : 'none';
-                document.getElementById('lightbox-target-date').innerText = formatHumanTimestamp(article.date);
-                document.getElementById('lightbox-target-title').innerText = article.title;
-                document.getElementById('lightbox-target-story').innerText = article.full_story;
-                document.getElementById('news-lightbox').style.display = 'flex';
-            }
-        }
-
-        function closeLightbox(e) {
-            if(e.target.id === "news-lightbox") {
-                document.getElementById('news-lightbox').style.display = 'none';
-            }
-        }
-
-        // Initialize Core Engine on complete system DOM ready environment status signals
-        if (document.readyState === 'complete') { runDataPipes(); } 
-        else { window.addEventListener('load', runDataPipes); }
-    </script>
+    <!-- Script Orchestration Core Loader Dependencies -->
+    <script type="text/javascript" src="https://scorestream.com/apiJsCdn/widgets/embed.js" async></script>
+    <script type="text/javascript" src="app.js"></script>
 </body>
 </html>
