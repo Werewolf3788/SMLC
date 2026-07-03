@@ -1,6 +1,7 @@
 /*
- * SYSTEM BRAND STYLE ARCHITECTURE
- * Optimizes color spaces, rules constraints, font rendering metrics, and contrast zones.
+ * Purpose: Full system brand style architecture for the Louisville IL community portal.
+ * Inputs: Enforces desktop-first viewport parameters, fluid scaling protection, and contrast layers.
+ * Outputs: Complete layout mapping, negative space balancing, and structural typography.
  */
 
 :root {
@@ -33,38 +34,38 @@ body {
 
 /* --- TYPOGRAPHY ENGINE --- */
 h1 {
-    font-size: 3.125rem; /* 50px */
+    font-size: 3.125rem; 
     font-weight: 500;
-    line-height: 60px;
+    line-height: 3.75rem;
     color: var(--accent-gold);
     text-align: center;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
 }
 
 h2 {
-    font-size: 3.125rem; /* 50px */
+    font-size: 3.125rem; 
     font-weight: 500;
-    line-height: 60px;
+    line-height: 3.75rem;
     color: var(--accent-gold);
     text-align: center;
     text-decoration: underline;
-    padding-bottom: 10px;
+    padding-bottom: 0.625rem;
 }
 
 h3 {
-    font-size: 2.0rem; /* 32px */
+    font-size: 2.0rem; 
     font-weight: 500;
-    line-height: 41.6px;
+    line-height: 2.6rem;
     color: #22577a;
-    padding-bottom: 10px;
+    padding-bottom: 0.625rem;
 }
 
 h4 {
     font-family: var(--cursive-font);
-    font-size: 0.765rem; /* 12.25px */
+    font-size: 0.75rem; 
     font-weight: 700;
-    letter-spacing: 1.225px;
-    line-height: 17.5px;
+    letter-spacing: 0.0766rem;
+    line-height: 1.094rem;
     color: var(--text-light);
     text-transform: uppercase;
     text-align: center;
@@ -72,9 +73,9 @@ h4 {
 }
 
 p {
-    font-size: 1.875rem; /* 30px */
+    font-size: 1.875rem; 
     font-weight: 700;
-    line-height: 54px;
+    line-height: 3.375rem;
     color: var(--secondary);
     text-align: left;
 }
@@ -82,7 +83,22 @@ p {
 a {
     color: inherit;
     text-decoration: none;
-    min-height: 44px;
+    min-height: 2.75rem;
+}
+
+/* Minimum 12px text size constraint baseline enforcement */
+.clipping-tag, 
+.clipping-subheading, 
+.clipping-footer, 
+.cal-label, 
+.subscribe-box, 
+.bulletin-action-row, 
+.news-card-date, 
+.community-voice-stamp, 
+.fuel-monitor-header, 
+.sports-embed-header,
+.lightbox-meta-date {
+    font-size: 0.75rem !important; 
 }
 
 /* Contrast Protection Layer Shielding */
@@ -101,23 +117,29 @@ a {
 }
 
 /* --- SECTION 1: HEADER --- */
+/* Expanded height parameters to avoid a sandwiched presentation as seen in image_cda1cb.jpg */
 .main-header {
     width: 100vw;
     max-width: 100%;
     background-color: var(--secondary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
 }
 
 .header-billboard-link {
     display: block;
-    width: 100%;
-    position: relative;
+    width: 100vw;
+    max-width: 100%;
     aspect-ratio: 2 / 1;
+    max-height: 18.75rem !important; /* Slightly taller to unclamp the header banner proportions neatly */
 }
 
 .header-billboard-img {
-    width: 100%;
+    width: 100vw;
     height: 100%;
-    object-fit: fill;
+    object-fit: fill; 
 }
 
 /* --- MENU NAVIGATION --- */
@@ -136,10 +158,6 @@ a {
     display: flex;
     justify-content: center; 
     align-items: center;
-}
-
-.nav-brand {
-    display: none !important; 
 }
 
 .menu-list {
@@ -177,7 +195,7 @@ a {
     background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://live.staticflickr.com/4117/4861670451_669d9e52e9_b.jpg');
     background-size: cover;
     background-position: center;
-    width: 100vw;
+    width: 100%;
     max-width: 100%;
     padding: 6rem 1rem !important;
     display: flex;
@@ -201,11 +219,12 @@ a {
     text-shadow: 1px 1px 2px #000;
 }
 
-/* --- STRETCH DESKTOP VIEWPORT LAYOUT WRAPPER --- */
+/* --- STRETCHED DESKTOP VIEWPORT CONTAINMENT MATRIX --- */
 .page-viewport-container {
     width: 100vw;
     max-width: 100%; 
-    padding: 2rem 4vw; 
+    padding: 2.0rem 2.5rem; 
+    margin: 0 auto;
 }
 
 /* --- SECTION 3: ROTATOR & DISCOVER GRID --- */
@@ -215,13 +234,9 @@ a {
 
 .discover-grid {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 3vw; 
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3.5rem !important; 
     align-items: stretch;
-}
-
-@media (min-width: 1024px) {
-    .discover-grid { grid-template-columns: 1fr 1fr; }
 }
 
 .discover-card {
@@ -231,6 +246,7 @@ a {
     box-shadow: 6px 6px 0px var(--secondary);
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
 }
 
 .discover-card h2 {
@@ -242,6 +258,7 @@ a {
 
 .slider-viewport {
     width: 100%;
+    max-height: 24rem; 
     aspect-ratio: 2 / 1;
     position: relative;
     overflow: hidden;
@@ -257,6 +274,8 @@ a {
     opacity: 0;
     transition: opacity 0.8s ease-in-out;
     z-index: 1;
+    width: 100%;
+    height: 100%;
 }
 
 .slider-slide.active { 
@@ -333,12 +352,10 @@ a {
 
 .history-row {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 16px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 2.5rem !important; 
+    align-items: stretch; 
 }
-
-@media (min-width: 600px) { .history-row { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1024px) { .history-row { grid-template-columns: repeat(5, 1fr); } }
 
 .history-card {
     background-color: var(--aged-paper);
@@ -348,7 +365,6 @@ a {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    min-height: 380px;
     cursor: pointer;
     transition: transform 0.2s ease;
 }
@@ -368,7 +384,7 @@ a {
     font-size: 1.15rem;
     color: var(--secondary);
     font-weight: bold;
-    padding: 0 0 8px 0;
+    padding: 0 0 0.5rem 0;
     border-bottom: 1px dashed #ccc;
     margin-bottom: 0.5rem;
 }
@@ -376,14 +392,15 @@ a {
 .history-card p {
     font-size: 0.95rem;
     font-weight: normal;
-    line-height: 1.4;
+    line-height: 1.45;
     color: #444;
+    margin-bottom: 1rem;
 }
 
 .history-img-box {
     width: 100%;
     aspect-ratio: 4 / 3;
-    margin-top: auto;
+    margin-top: auto; 
     border: 1px solid #222;
     background-color: #ffffff;
     overflow: hidden;
@@ -395,36 +412,37 @@ a {
     object-fit: contain;
 }
 
-/* --- SECTIONS 5 & 7: AD PARTNERS MODULAR MATRIX GRID (image_c0642a.jpg Fix) --- */
+/* --- SECTIONS 5 & 7: PARTNERS MODULAR MATRIX GRID --- */
 .partners-section {
     margin: 2.5rem 0;
 }
 
 .partners-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1.5rem;
 }
 
-@media (min-width: 768px) { .partners-grid { grid-template-columns: repeat(5, 1fr); } }
-
+/* Fixes Issue 5: Makes the background layout visible by forcing the cards to wrap snuggly around text/images */
 .partner-card {
     background-color: var(--aged-paper);
     border: 2px solid var(--secondary);
     box-shadow: 3px 3px 0px var(--secondary);
-    padding: 1rem;
+    padding: 0.5rem !important; /* Reduced padding to bring borders closer to internal text */
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    max-height: 180px; 
+    max-height: 11.25rem; 
+    width: max-content !important; /* Wraps precisely around child nodes size bounds instead of wide stretching */
+    margin: 0 auto; /* Keeps cards centered inside their native track lanes */
     overflow: hidden;
 }
 
 .partner-logo-box {
     width: 100%;
-    height: 100px; 
+    height: 6.25rem; 
     display: flex;
     align-items: center;
     justify-content: center;
@@ -449,27 +467,26 @@ a {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 44px;
+    min-height: 2.75rem;
     text-decoration: underline;
 }
 
-/* --- SECTION 6: WIDE EDGE TOWER GRID SYSTEM --- */
+/* --- SECTION 6: WIDE 3-COLUMN TOWER GRID SYSTEM --- */
 .tower-section {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 3vw;
+    grid-template-columns: 23% 46% 23% !important; 
+    justify-content: space-between !important;    
+    gap: 3.5rem !important;                        
     margin: 4rem 0;
     align-items: start;
-}
-
-@media (min-width: 1024px) {
-    .tower-section { grid-template-columns: 28% 44% 28%; }
+    width: 100vw;
+    max-width: 100%;
 }
 
 .tower-col {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 1.5rem; 
 }
 
 .clay-county-news-box {
@@ -484,15 +501,14 @@ a {
 
 .clipping-tag {
     position: absolute;
-    top: -12px;
-    left: 15px;
+    top: -0.75rem;
+    left: 0.9375rem;
     background: #222;
     color: #fff;
-    font-size: 10px;
     padding: 3px 10px;
     text-transform: uppercase;
     font-weight: bold;
-    letter-spacing: 1px;
+    letter-spacing: 0.0625rem;
     z-index: 10;
 }
 
@@ -500,38 +516,37 @@ a {
     text-align: center;
     border-top: 4px double #222;
     border-bottom: 2px solid #222;
-    padding: 12px 0;
+    padding: 0.75rem 0;
     margin-bottom: 1.25rem;
-    margin-top: 5px;
+    margin-top: 0.3125rem;
 }
 
 .event-clipping-header h3 {
     font-family: "Times New Roman", Times, serif !important;
     font-weight: 900 !important;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.0625rem;
     margin: 0 !important;
     color: #d9534f !important;
-    font-size: 24px !important;
+    font-size: 1.5rem !important;
     line-height: 1.1 !important;
 }
 
 .clipping-subheading {
-    font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 0.0938rem;
     color: #222;
     font-weight: bold;
     display: block;
-    margin-top: 4px;
+    margin-top: 0.25rem;
 }
 
 .event-clipping-text {
-    font-size: 16px;
+    font-size: 1rem;
     line-height: 1.5;
     color: #222;
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 1.25rem;
     font-style: italic;
 }
 
@@ -540,12 +555,12 @@ a {
     text-align: center;
     background-color: #222;
     color: #fff !important;
-    padding: 14px;
+    padding: 0.875rem;
     text-transform: uppercase;
     font-weight: bold;
-    letter-spacing: 1px;
-    font-size: 13px;
-    min-height: 44px;
+    letter-spacing: 0.0625rem;
+    font-size: 0.8125rem;
+    min-height: 2.75rem;
     border: 1px solid #222;
     transition: all 0.3s;
 }
@@ -558,19 +573,19 @@ a {
 .clipping-footer {
     display: block;
     text-align: center;
-    font-size: 10px;
     color: #666;
-    margin-top: 15px;
+    margin-top: 0.9375rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.0625rem;
 }
 
 .spotlight-img {
     width: 100%;
     aspect-ratio: 2 / 1;
-    object-fit: cover;
+    object-fit: contain; 
     border: 1px solid #222;
     margin-bottom: 1rem;
+    background: #fff;
 }
 
 .spotlight-title-text {
@@ -599,14 +614,14 @@ a {
 }
 
 .scrollable-bulletin-list {
-    max-height: 480px;
+    max-height: 30rem;
     overflow-y: auto;
-    padding-right: 6px;
+    padding-right: 0.375rem;
 }
 
 .bulletin-item {
     border-bottom: 1px dashed #777;
-    padding: 14px 0;
+    padding: 0.875rem 0;
 }
 
 .bulletin-item:last-child { border-bottom: none; }
@@ -614,16 +629,15 @@ a {
 .bulletin-date-time {
     color: #cc0000;
     font-weight: bold;
-    font-size: 1rem !important;
     text-transform: uppercase;
-    margin-bottom: 2px;
+    margin-bottom: 0.125rem;
 }
 
 .bulletin-title {
     font-size: 1.4rem !important;
     font-weight: bold;
     line-height: 1.3;
-    margin-bottom: 4px;
+    margin-bottom: 0.25rem;
 }
 
 .bulletin-desc-brief, .bulletin-desc-full {
@@ -634,33 +648,25 @@ a {
 .bulletin-desc-brief {
     color: #444;
     font-style: italic;
-    margin-bottom: 6px;
+    margin-bottom: 0.375rem;
 }
 
 .bulletin-desc-full {
     display: none;
     background: rgba(0,0,0,0.04);
-    padding: 8px;
+    padding: 0.5rem;
     border-left: 3px solid #cc0000;
-    margin-bottom: 6px;
+    margin-bottom: 0.375rem;
 }
 
 .bulletin-toggle-btn {
     color: #cc0000;
     text-decoration: underline;
-    font-size: 12px;
     font-weight: bold;
     cursor: pointer;
     text-transform: uppercase;
-    margin-bottom: 8px;
+    margin-bottom: 0.5rem;
     display: inline-block;
-}
-
-.bulletin-action-row {
-    display: flex;
-    gap: 8px;
-    font-size: 11px;
-    font-weight: bold;
 }
 
 .cal-text-link {
@@ -672,55 +678,32 @@ a {
     border-top: 1px solid #222;
     margin-top: 1.25rem;
     padding-top: 1rem;
-    font-size: 11px;
     text-align: center;
-}
-
-.cal-label {
-    display: block;
-    font-size: 10px;
-    text-transform: uppercase;
-    font-weight: bold;
-    color: #666;
-    margin-bottom: 4px;
 }
 
 .sports-embed-card {
     background: #111;
     border: 4px solid #2a2a2a;
-    padding: 12px;
+    padding: 0.75rem;
     box-shadow: 6px 6px 0px #222;
-}
-
-.sports-embed-header {
-    background-color: var(--primary);
-    color: var(--accent-gold);
-    text-align: center;
-    font-size: 13px;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    padding: 6px;
-    margin-bottom: 10px;
 }
 
 .news-dynamic-masonry {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 20px;
-    max-height: 900px;
+    gap: 1.25rem;
+    max-height: 56.25rem;
     overflow-y: auto;
-    padding-right: 4px;
+    padding-right: 0.25rem;
 }
 
-@media (min-width: 600px) {
-    .news-dynamic-masonry.two-columns { grid-template-columns: 1fr 1fr; }
+.news-dynamic-masonry.grid-layout-active {
+    grid-template-columns: 1fr 1fr;
 }
 
 .news-matrix-card {
     background: #fff;
     border: 1px solid #ddd;
-    padding: 12px;
+    padding: 0.75rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -729,17 +712,10 @@ a {
 .news-card-thumb {
     width: 100%;
     aspect-ratio: 2 / 1;
-    object-fit: cover;
+    object-fit: contain; 
     margin-bottom: 0.5rem;
     border: 1px solid #222;
     cursor: pointer;
-}
-
-.news-card-date {
-    font-size: 11px;
-    color: #666;
-    margin-bottom: 4px;
-    text-transform: uppercase;
 }
 
 .news-card-title {
@@ -747,14 +723,14 @@ a {
     font-weight: bold;
     line-height: 1.3;
     color: var(--secondary);
-    margin-bottom: 6px;
+    margin-bottom: 0.375rem;
 }
 
 .news-card-snippet {
     font-size: 0.95rem;
     line-height: 1.45;
     color: #333;
-    margin-bottom: 12px;
+    margin-bottom: 0.75rem;
 }
 
 .directory-box {
@@ -770,7 +746,7 @@ a {
     margin-bottom: 1.5rem;
     background-color: #fff;
     border: 1px solid #ddd;
-    padding: 12px;
+    padding: 0.75rem;
 }
 
 .directory-image-wrapper img {
@@ -781,7 +757,7 @@ a {
 
 .polaroid-frame {
     background: #fff;
-    padding: 10px 10px 25px 10px;
+    padding: 0.625rem 0.625rem 1.5625rem 0.625rem;
     border: 1px solid #ccc;
     box-shadow: 3px 3px 8px rgba(0,0,0,0.15);
     transform: rotate(-2deg);
@@ -796,9 +772,7 @@ a {
 
 .community-voice-stamp {
     display: block;
-    margin-top: 15px;
-    font-size: 9px;
-    text-transform: uppercase;
+    margin-top: 0.9375rem;
     color: #999;
 }
 
@@ -809,20 +783,9 @@ a {
     box-shadow: 6px 6px 0px #222;
 }
 
-.fuel-monitor-header {
-    background: var(--primary);
-    color: var(--accent-gold);
-    text-align: center;
-    font-size: 12px;
-    padding: 6px;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
 .fuel-iframe-frame {
     width: 100%;
-    height: 340px;
+    height: 21.25rem;
     border: none;
     overflow: hidden;
     display: block;
@@ -846,42 +809,54 @@ a {
     padding: 0;
 }
 
+.mission-email-link {
+    color: var(--accent-gold) !important;
+    text-decoration: underline !important;
+}
+
 /* --- SECTION 9: MASTER STRUCTURED FOOTER --- */
+/*
+Purpose: Creates a 3-column layout where the outer margins and inner gutters are perfectly equal.
+Inputs: CSS Grid container.
+Outputs: A balanced, full-width layout that maintains symmetrical spacing.
+*/
 .master-footer {
     background-color: var(--secondary);
     border-top: 4px solid var(--primary);
     color: var(--text-light);
-    padding: 4rem 2rem 2rem 2rem;
+    padding-top: 4rem;
+    padding-bottom: 2rem;
     width: 100vw;
     max-width: 100%;
 }
 
 .footer-grid {
-    max-width: 1440px;
-    margin: 0 auto;
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
-}
-
-@media (min-width: 1024px) {
-    .footer-grid { grid-template-columns: repeat(3, 1fr); }
+    /* repeat(3, 1fr) gives you 3 equal columns */
+    grid-template-columns: repeat(3, 1fr) !important;
+    /* The "gap" creates the space between columns using your 8px multiple rules */
+    gap: 24px !important;
+    /* This ensures the same space exists on the outside edges */
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+    margin: 0;
+    width: 100%;
 }
 
 .footer-tower {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    text-align: center;
+    text-align: center; 
 }
 
 .footer-tower h4 {
     opacity: 0.5;
-    font-size: 0.8rem;
+    text-align: center;
 }
 
 .footer-tower h3 {
-    color: var(--accent-gold);
+    color: var(--accent-gold) !important; 
     font-size: 1.4rem;
     font-weight: normal;
     text-align: center;
@@ -892,13 +867,13 @@ a {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    color: var(--accent-gold) !important;
 }
 
-/* Single row layout formatting for active numbers string (image_c064a3.jpg Fix) */
 .footer-inline-numbers {
     display: flex;
     gap: 1rem;
-    justify-content: center;
+    justify-content: center; 
     align-items: center;
     flex-wrap: nowrap;
 }
@@ -906,17 +881,18 @@ a {
 .footer-inline-numbers a {
     white-space: nowrap;
     display: inline-block;
+    color: var(--accent-gold) !important; 
 }
 
 .copyright-strip {
-    max-width: 1440px;
+    width: 100%;
     margin: 3rem auto 0 auto;
     border-top: 1px solid rgba(255,255,255,0.1);
     padding-top: 1.5rem;
     text-align: center;
 }
 
-/* --- LIGHTBOX COMPONENT MODAL SYSTEM --- */
+/* --- LIGHTBOX MODAL --- */
 .lightbox-overlay {
     position: fixed;
     inset: 0;
@@ -925,14 +901,14 @@ a {
     display: none;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 1.25rem;
 }
 
 .lightbox-window {
     background: var(--aged-paper);
-    max-width: 700px;
+    max-width: 55rem; 
     width: 100%;
-    max-height: 85vh;
+    max-height: 90vh;
     overflow-y: auto;
     border: 3px solid #222;
     box-shadow: 8px 8px 0px #000;
@@ -943,33 +919,30 @@ a {
 
 .lightbox-close-btn {
     position: absolute;
-    top: 10px;
-    right: 20px;
-    font-size: 30px;
+    top: 0.625rem;
+    right: 1.25rem;
+    font-size: 1.875rem;
     cursor: pointer;
     font-weight: bold;
     color: #000;
+    z-index: 20;
 }
 
 .lightbox-image-wrapper {
     width: 100%;
-    aspect-ratio: 2 / 1;
+    height: auto;
+    max-height: 50vh;
     border: 1px solid #222;
     margin-bottom: 1.25rem;
     background-color: #000;
+    overflow: hidden;
 }
 
 .lightbox-img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-}
-
-.lightbox-meta-date {
-    font-size: 12px;
-    color: #666;
-    text-transform: uppercase;
-    margin-bottom: 4px;
+    max-height: 50vh;
+    object-fit: contain !important; 
 }
 
 .lightbox-window h2 {
