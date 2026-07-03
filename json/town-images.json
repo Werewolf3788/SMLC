@@ -9,15 +9,15 @@
             {
               "id": "flora_landmark_01",
               "name": "Charlie Brown Park",
-              "url": "https://raw.githubusercontent.com/Werewolf3788/Testpages/426b3c31cdfacdf89a868df2778395819a4d4fe7/images/Charlie-Brown-Park.jpg",
-              "alt": "Charlie Brown Park",
+              "imageurl": "https://raw.githubusercontent.com/Werewolf3788/Testpages/426b3c31cdfacdf89a868df2778395819a4d4fe7/images/Charlie-Brown-Park.jpg",
+              "alt": "A serene view of the pond at Charlie Brown Park in Flora, Illinois, featuring a fountain spraying water in the center, surrounded by lush green grass and mature trees.",
               "source_url": "https://supportmylocalcommunity.com/flora/charlie-brown-park"
             },
             {
               "id": "flora_landmark_02",
               "name": "B&O Railroad",
-              "url": "https://github.com/Werewolf3788/Testpages/blob/426b3c31cdfacdf89a868df2778395819a4d4fe7/images/Flora-railroad.png",
-              "alt": "B&O Railroad",
+              "imageurl": "https://raw.githubusercontent.com/Werewolf3788/Testpages/426b3c31cdfacdf89a868df2778395819a4d4fe7/images/Flora-railroad.png",
+              "alt": "A vintage black-and-white photograph of a passenger train with engine number 5124 at the B. & O. station in Flora, Illinois, with people on the platform and tracks of the Springfield Branch visible.",
               "source_url": "https://supportmylocalcommunity.com/flora/railroad-history"
             }
           ]
@@ -28,8 +28,8 @@
             {
               "id": "flora_park_01",
               "name": "Flora Sports Mascot",
-              "url": "https://github.com/Werewolf3788/Testpages/blob/426b3c31cdfacdf89a868df2778395819a4d4fe7/images/Flora.jpeg",
-              "alt": "Flora Sports Mascot",
+              "imageurl": "https://raw.githubusercontent.com/Werewolf3788/Testpages/426b3c31cdfacdf89a868df2778395819a4d4fe7/images/Flora.jpeg",
+              "alt": "Flora High School Wolves sports logo featuring a stylized wolf head with one orange and one blue eye, set against a dark background with orange and blue text.",
               "source_url": "https://supportmylocalcommunity.com/flora/schools"
             }
           ]
@@ -40,27 +40,13 @@
             {
               "id": "flora_auto_01",
               "name": "Hanging Rock Auto Repair",
-              "url": "https://github.com/Werewolf3788/Testpages/blob/426b3c31cdfacdf89a868df2778395819a4d4fe7/images/Hanging Rock.jpg",
-              "alt": "Hanging Rock Auto",
+              "imageurl": "https://raw.githubusercontent.com/Werewolf3788/Testpages/426b3c31cdfacdf89a868df2778395819a4d4fe7/images/Hanging%20Rock.jpg",
+              "alt": "A sign for Hanging Rock Auto Repair and More in Flora, Illinois, standing in a grass field with a lifted silver pickup truck parked behind it against a clear blue sky.",
               "source_url": "https://supportmylocalcommunity.com/flora/hanging-rock-auto"
             }
           ]
         },
-        {
-          "category": "Local Business",
-          "images": [
-            {
-              "id": "flora_biz_01",
-              "name": "Grandma's Kitchen",
-              "url": "https://github.com/Werewolf3788/Testpages/blob/426b3c31cdfacdf89a868df2778395819a4d4fe7/images/Grandma_s Kitchen.jpg",
-              "alt": "Spotlight Business",
-              "source_url": "https://supportmylocalcommunity.com/flora/grandmas-kitchen"
-            }
-          ]
-        }
-      ]
-    },
-    "Louisville": {
+       "Louisville": {
       "town_display_name": "Louisville",
       "categories": [
         {
@@ -69,15 +55,15 @@
             {
               "id": "louisville_landmark_01",
               "name": "Court House",
-              "url": "https://live.staticflickr.com/4117/4861670451_669d9e52e9_b.jpg",
-              "alt": "Historic town Government building",
+              "imageurl": "https://live.staticflickr.com/4117/4861670451_669d9e52e9_b.jpg",
+              "alt": "A view of the historic Clay County Courthouse building in Louisville, Illinois, with the Clay County Veterans memorial and various military flags standing on the lawn in the foreground.",
               "source_url": "https://supportmylocalcommunity.com/louisville/courthouse"
             },
             {
               "id": "louisville_landmark_02",
               "name": "North Clay High School",
-              "url": "https://i.ebayimg.com/images/g/qigAAOSwAjpkAqRk/s-l400.jpg",
-              "alt": "North Clay High School Postcard",
+              "imageurl": "https://i.ebayimg.com/images/g/qigAAOSwAjpkAqRk/s-l400.jpg",
+              "alt": "A vintage black-and-white postcard view of North Clay Community High School in Louisville, Illinois, showing the large brick school building from the roadside.",
               "source_url": "https://supportmylocalcommunity.com/louisville/north-clay-high"
             }
           ]
@@ -88,15 +74,15 @@
             {
               "id": "louisville_School",
               "name": "Louisville Sports Logo",
-              "url": "https://pbs.twimg.com/profile_images/1152299246151974916/OaQlVtJk_400x400.jpg",
-              "alt": "Louisville Sports Logo",
+              "imageurl": "https://pbs.twimg.com/profile_images/1152299246151974916/OaQlVtJk_400x400.jpg",
+              "alt": "North Clay High School sports graphic featuring a red 'NC' monogram, a cardinal mascot, and a Native American chief profile over a red and black dotted background.",
               "source_url": "https://supportmylocalcommunity.com/louisville/athletics"
             },
             {
               "id": "louisville_Summer",
               "name": "Summer Mowing",
-              "url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSb2EnnCY5Oudk2m2OKJ4MhPk5ocndOW06I2SiqwvGo-c8DjP0TeQ-rGZZ7&s=10",
-              "alt": "Summer Mowing",
+              "imageurl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSb2EnnCY5Oudk2m2OKJ4MhPk5ocndOW06I2SiqwvGo-c8DjP0TeQ-rGZZ7&s=10",
+              "alt": "Community grounds crew performing summer mowing services in Louisville",
               "source_url": "https://supportmylocalcommunity.com/louisville/weather"
             }
           ]
@@ -107,8 +93,8 @@
             {
               "id": "louisville_auto_01",
               "name": "Louisville Town Sign",
-              "url": "https://www.billburmaster.com/rmsandw/illinois/images/louisvilleilwel.jpg",
-              "alt": "Louisville Town Sign",
+              "imageurl": "https://www.billburmaster.com/rmsandw/illinois/images/louisvilleilwel.jpg",
+              "alt": "A wooden 'Welcome to Louisville' sign mounted on posts, featuring organizational logos including Rotary and Ancient Free and Accepted Masons, with a cemetery visible in the background.",
               "source_url": "https://supportmylocalcommunity.com/louisville/quick-lube"
             }
           ]
@@ -120,10 +106,10 @@
     {
       "id": "global_business_spotlight",
       "name": "Grandma's Kitchen",
-      "url": "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/images/Grandma_s%20Kitchen.jpg",
-      "alt": "Featured Local Business Network Spotlight",
-      "source_url": "https://www.facebook.com/p/Grandmas-kitchen-Flora-il-61586069549969/"
-      "description": "Serving home-cooked favorites for over two decades, the Family Diner is a staple of our community. Known for their Early Bird specials and the friendliest service in Clay County."
+      "imageurl": "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/images/Grandma_s%20Kitchen.jpg",
+      "alt": "Front exterior view of Grandma's Kitchen restaurant, featuring a blue building with a red roof, a red wooden deck, and customers socializing outside.",
+      "source_url": "https://www.facebook.com/p/Grandmas-kitchen-Flora-il-61586069549969/",
+      "description": "Serving home-cooked favorites for over two decades, the Family Diner is a staple of our community. Known for their Early Bird specials and the friendliest service in Clay County.",
       "location": "Flora, IL"
     }
   ]
