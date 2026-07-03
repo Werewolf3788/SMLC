@@ -134,19 +134,19 @@ a {
     max-width: 1440px;
     margin: 0 auto;
     display: flex;
-    justify-content: center; /* Tweak 1: Perfectly centers the entire navigation wrapper element */
+    justify-content: center; 
     align-items: center;
 }
 
 .nav-brand {
-    display: none !important; /* Strips brand name completely out of layout flow */
+    display: none !important; 
 }
 
 .menu-list {
     display: flex;
     list-style: none;
     gap: 1.5rem;
-    justify-content: center; /* Centers items internally within list container elements */
+    justify-content: center; 
     width: 100%;
 }
 
@@ -204,8 +204,8 @@ a {
 /* --- STRETCH DESKTOP VIEWPORT LAYOUT WRAPPER --- */
 .page-viewport-container {
     width: 100vw;
-    max-width: 100%; /* Spreads elements out cleanly to use maximized real estate */
-    padding: 2rem 4vw; /* Balanced fluid padding buffers edge to edge */
+    max-width: 100%; 
+    padding: 2rem 4vw; 
 }
 
 /* --- SECTION 3: ROTATOR & DISCOVER GRID --- */
@@ -395,7 +395,7 @@ a {
     object-fit: contain;
 }
 
-/* --- SECTIONS 5 & 7: AD PARTNERS MODULAR MATRIX GRID --- */
+/* --- SECTIONS 5 & 7: AD PARTNERS MODULAR MATRIX GRID (image_c0642a.jpg Fix) --- */
 .partners-section {
     margin: 2.5rem 0;
 }
@@ -418,14 +418,13 @@ a {
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    /* Tweak 3: Locks maximum layout dimensions to stop massive expansion artifacts seen in image_c0642a.jpg */
     max-height: 180px; 
     overflow: hidden;
 }
 
 .partner-logo-box {
     width: 100%;
-    height: 100px; /* Constrains graphic boundary rows precisely */
+    height: 100px; 
     display: flex;
     align-items: center;
     justify-content: center;
@@ -895,17 +894,18 @@ a {
     justify-content: center;
 }
 
-/* Inline single row layout formatting for active numbers link string seen in image_c064a3.jpg */
+/* Single row layout formatting for active numbers string (image_c064a3.jpg Fix) */
 .footer-inline-numbers {
     display: flex;
-    gap: 1.5rem;
+    gap: 1rem;
     justify-content: center;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 .footer-inline-numbers a {
     white-space: nowrap;
+    display: inline-block;
 }
 
 .copyright-strip {
