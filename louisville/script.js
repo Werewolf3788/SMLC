@@ -4,7 +4,14 @@
  * Outputs: Real-time UI population, global lightboxes, and auto-rotation loops.
  */
 
-// Header image asset layout override fix to force full width aspect bounds
+// Global slider interval reference pointer tracking tokens
+let globalSlideshowTicker = null;
+
+/**
+ * Purpose: Overrides header layout bounds to force wide full screen display rules.
+ * Inputs: None (reads direct viewport DOM targets).
+ * Outputs: Fixed header billboard asset size presentation maps across 100vw.
+ */
 (function applyHeaderLayoutFix() {
     const headerImg = document.querySelector('.header-billboard-img');
     const headerLink = document.querySelector('.header-billboard-link');
@@ -12,8 +19,7 @@
         headerLink.style.display = 'block';
         headerLink.style.width = '100vw';
         headerLink.style.maxWidth = '100%';
-        headerLink.style.aspectRatio = '2 / 1';
-        headerLink.style.maxHeight = '280px';
+        headerLink.style.maxHeight = '240px';
         headerLink.style.margin = '0';
         headerLink.style.padding = '0';
         
@@ -23,13 +29,16 @@
         headerImg.style.margin = '0';
         headerImg.style.padding = '0';
         
-        // Add global lightbox tracking to header image asset
         headerImg.style.cursor = 'pointer';
         headerImg.onclick = () => fireLightbox(headerImg.src, "Support My Local Community", "NETWORK BANNER", "Clay County Illinois #1 Destination for Local Coupons and Discounts");
     }
 })();
 
-// Format database timestamps into readable layout matrices
+/**
+ * Purpose: Formats machine database dates into clean frontend system arrays.
+ * Inputs: rawString (String) - Database string representation.
+ * Outputs: String - Human formatted layout mapping (MM/DD/YY).
+ */
 function formatHumanTimestamp(rawString) {
     if (!rawString) return "Date TBA";
     try {
@@ -41,10 +50,16 @@ function formatHumanTimestamp(rawString) {
     }
 }
 
-// Global modal dynamic dispatcher engine - Applies to EVERY single asset on the viewport
-function fireLightbox(imgSrc, title, dateText, bodyText) {
+/**
+ * Purpose: Activates modal dialog viewport system mapping details.
+ * Inputs: imgSrc (Url), title (Text), dateText (Text), bodyText (Text), targetUrl (Url).
+ * Outputs: Fires global window lightbox element presentation grids.
+ */
+function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl) {
     const overlay = document.getElementById('portal-global-lightbox');
     const targetImg = document.getElementById('lightbox-target-img');
+    const actionRow = document.getElementById('lightbox-action-row');
+    const actionLink = document.getElementById('lightbox-target-link');
     
     if(imgSrc) {
         targetImg.src = imgSrc;
@@ -56,16 +71,33 @@ function fireLightbox(imgSrc, title, dateText, bodyText) {
     document.getElementById('lightbox-target-date').innerText = dateText || '';
     document.getElementById('lightbox-target-title').innerText = title || '';
     document.getElementById('lightbox-target-story').innerText = bodyText || '';
+    
+    if (targetUrl) {
+        actionLink.href = targetUrl;
+        actionRow.style.display = 'block';
+    } else {
+        actionRow.style.display = 'none';
+    }
+    
     overlay.style.display = 'flex';
 }
 
+/**
+ * Purpose: Closes global modular modal overlay states securely.
+ * Inputs: e (Event) - Desktop pointer trigger interactions.
+ * Outputs: Toggles structural displays off.
+ */
 function closeLightbox(e) {
     if(e.target.id === "portal-global-lightbox" || e.target.classList.contains('lightbox-close-btn')) {
         document.getElementById('portal-global-lightbox').style.display = 'none';
     }
 }
 
-// Toggle expansion blocks in the calendar bulletin widget list
+/**
+ * Purpose: Toggles expanding snippet fields inside calendar list streams.
+ * Inputs: idx (Number) - Index reference key lookup.
+ * Outputs: Shifts visibility constraints across targets.
+ */
 function toggleBulletinDesc(idx) {
     const brief = document.getElementById(`bulletin-brief-${idx}`);
     const full = document.getElementById(`bulletin-full-${idx}`);
@@ -82,6 +114,79 @@ function toggleBulletinDesc(idx) {
     }
 }
 
+/**
+ * Purpose: Loops image visibility classes dynamically across slider nodes.
+ * Inputs: None (Scans DOM children within slider container wrapper).
+ * Outputs: Changes visibility tags over distinct timed gaps.
+ */
+function initializeSlideshowEngine() {
+    const slideshowViewport = document.getElementById('louisville-slideshow');
+    if (!slideshowViewport) return;
+
+    if (globalSlideshowTicker) {
+        clearInterval(globalSlideshowTicker);
+    }
+
+    let activeIdx = 0;
+    globalSlideshowTicker = setInterval(() => {
+        const slideNodes = slideshowViewport.querySelectorAll('.slider-slide');
+        if (slideNodes.length <= 1) return;
+        
+        slideNodes[activeIdx].classList.remove('active');
+        activeIdx = (activeIdx + 1) % slideNodes.length;
+        slideNodes[activeIdx].classList.add('active');
+    }, 4000);
+}
+
+/**
+ * Purpose: Assembles standard safety fallback elements if network channels fail.
+ * Inputs: None.
+ * Outputs: Restores critical UI sections using raw data backups.
+ */
+function runDataPipelineFallback() {
+    console.warn("JSON error caught. Initializing standard pipeline fallback layers.");
+    
+    const targetImg = document.getElementById('spotlight-asset-img');
+    if(targetImg) {
+        targetImg.src = "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/images/Grandma_s%20Kitchen.jpg";
+        targetImg.alt = "Grandma's Kitchen Spotlight Profile Element";
+        targetImg.onclick = () => {
+            fireLightbox(targetImg.src, "Grandma's Kitchen", "BUSINESS SPOTLIGHT", "Serving home-cooked favorites for over two decades, the Family Diner is a staple of our community. Known for their Early Bird specials and the friendliest service in Clay County.", "https://www.facebook.com/p/Grandmas-kitchen-Flora-il-61586069549969/");
+        };
+    }
+    document.getElementById('spotlight-asset-name').innerText = "Grandma's Kitchen";
+    document.getElementById('spotlight-asset-loc').innerText = "Flora, IL";
+    document.getElementById('spotlight-asset-desc').innerText = "Serving home-cooked favorites for over two decades, the Family Diner is a staple of our community. Known for their Early Bird specials and the friendliest service in Clay County.";
+    document.getElementById('spotlight-asset-link').href = "https://www.facebook.com/p/Grandmas-kitchen-Flora-il-61586069549969/";
+
+    initializeSlideshowEngine();
+}
+
+/**
+ * Purpose: Injects and executes the dynamic external ScoreStream tracking script.
+ * Inputs: None.
+ * Outputs: Displays local high school athletics widget frameworks securely.
+ */
+function dynamicallyLoadSportsWidget() {
+    try {
+        const existingScript = document.querySelector('script[src*="scorestream.com"]');
+        if (existingScript) existingScript.remove();
+
+        const sportsScript = document.createElement('script');
+        sportsScript.type = 'text/javascript';
+        sportsScript.src = "https://scorestream.com/apiJsCdn/widgets/embed.js";
+        sportsScript.async = true;
+        document.body.appendChild(sportsScript);
+    } catch(e) {
+        console.error("ScoreStream widget initialization fault", e);
+    }
+}
+
+/**
+ * Purpose: Orchestrates structural async network content fetches.
+ * Inputs: External JSON resources and dynamic cloud storage endpoints.
+ * Outputs: Complete front-end portal hydrations.
+ */
 async function processDataPipelines() {
     
     // 1. Menu Builder Loader Pipeline
@@ -101,60 +206,65 @@ async function processDataPipelines() {
         }
     } catch(e) { console.error("Menu pipeline error", e); }
 
-    // 2. Section 3 Rotator Slide Injector & Col 1-1 Spotlight Hydrator
+    // 2. Section 3 Dynamic Louisville Image Array Extractor & Spotlight Hydrator
     try {
-        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/town-images.json');
+        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/refs/heads/main/json/town-images.json');
+        
+        if (!res.ok) {
+            throw new Error(`HTTP network fault code: ${res.status}`);
+        }
+        
         const imgData = await res.json();
         
-        // Populate slider node containers
-        const louisvilleSection = imgData.network_towns.Louisville;
+        const louisvilleSection = imgData.network_towns ? imgData.network_towns.Louisville : null;
         if(louisvilleSection && louisvilleSection.categories) {
             let slideDeck = [];
+            
             louisvilleSection.categories.forEach(cat => {
-                cat.images.forEach(img => {
-                    slideDeck.push({ url: img.url, name: img.name, alt: img.alt });
-                });
+                if (Array.isArray(cat.images)) {
+                    cat.images.forEach(img => {
+                        slideDeck.push({ url: img.imageurl, name: img.name, alt: img.alt, link: img.source_url });
+                    });
+                }
             });
 
             const slideshowViewport = document.getElementById('louisville-slideshow');
-            if(slideDeck.length > 0) {
+            if(slideDeck.length > 0 && slideshowViewport) {
                 slideshowViewport.innerHTML = slideDeck.map((slide, i) => `
-                    <div class="slider-slide ${i === 0 ? 'active' : ''}" onclick="fireLightbox('${slide.url}', '${slide.name}', 'GALLERY ARCHIVE', '${slide.alt}')">
+                    <div class="slider-slide ${i === 0 ? 'active' : ''}" onclick="fireLightbox('${slide.url}', '${slide.name}', 'GALLERY ARCHIVE', '${slide.alt}', '${slide.link}')">
                         <img src="${slide.url}" alt="${slide.alt}">
                         <div class="slider-caption">${slide.name} (Click to Enlarge)</div>
                     </div>
                 `).join('');
 
-                // Fixed Slideshow Auto Rotation: Decoupled and safely timed right here
-                let activeIdx = 0;
-                setInterval(() => {
-                    const slideNodes = slideshowViewport.querySelectorAll('.slider-slide');
-                    if(slideNodes.length <= 1) return;
-                    slideNodes[activeIdx].classList.remove('active');
-                    activeIdx = (activeIdx + 1) % slideNodes.length;
-                    slideNodes[activeIdx].classList.add('active');
-                }, 4000);
+                initializeSlideshowEngine();
             }
+        } else {
+            initializeSlideshowEngine();
         }
 
-        // Spotlight Element Hydration Engine (Col 1-1) - Dynamic ID lookups
-        const spotlightObj = imgData.global_assets ? imgData.global_assets.find(asset => asset.id === "global_business_spotlight") : null;
-        if(spotlightObj) {
-            const targetImg = document.getElementById('spotlight-asset-img');
-            targetImg.src = spotlightObj.url;
-            targetImg.alt = spotlightObj.alt;
-            document.getElementById('spotlight-asset-name').innerText = spotlightObj.name;
-            document.getElementById('spotlight-asset-loc').innerText = spotlightObj.location || "Flora, IL";
-            
-            // Fixed case sensitivity problem: reads case-exact "Description" from raw JSON layout mapping
-            document.getElementById('spotlight-asset-desc').innerText = spotlightObj.Description || "";
-            document.getElementById('spotlight-asset-link').href = spotlightObj.source_url;
-            
-            targetImg.onclick = () => {
-                fireLightbox(spotlightObj.url, spotlightObj.name, "BUSINESS SPOTLIGHT", spotlightObj.Description);
-            };
+        if(imgData.global_assets && Array.isArray(imgData.global_assets)) {
+            const spotlightObj = imgData.global_assets.find(asset => asset.id === "global_business_spotlight");
+            if(spotlightObj) {
+                const targetImg = document.getElementById('spotlight-asset-img');
+                if(targetImg) {
+                    targetImg.src = spotlightObj.imageurl;
+                    targetImg.alt = spotlightObj.alt;
+                    targetImg.onclick = () => {
+                        fireLightbox(spotlightObj.imageurl, spotlightObj.name, "BUSINESS SPOTLIGHT", spotlightObj.description, spotlightObj.source_url);
+                    };
+                }
+                
+                document.getElementById('spotlight-asset-name').innerText = spotlightObj.name;
+                document.getElementById('spotlight-asset-loc').innerText = spotlightObj.location || "Flora, IL";
+                document.getElementById('spotlight-asset-desc').innerText = spotlightObj.description || "";
+                document.getElementById('spotlight-asset-link').href = spotlightObj.source_url;
+            }
         }
-    } catch(e) { console.error("Images workflow error", e); }
+    } catch(e) { 
+        console.error("Images workflow error:", e); 
+        runDataPipelineFallback();
+    }
 
     // 3. Section 3 Right Card Matrix Handler
     try {
@@ -167,12 +277,12 @@ async function processDataPipelines() {
             const i1 = document.getElementById('dual-img-1');
             i1.src = targetRow.ImageUrl1;
             document.getElementById('dual-header-1').innerText = targetRow.Header1;
-            i1.onclick = () => fireLightbox(targetRow.ImageUrl1, targetRow.Header1, "ARCHIVE VIEW", targetRow.Description1);
+            i1.onclick = () => fireLightbox(targetRow.ImageUrl1, targetRow.Header1, "ARCHIVE VIEW", targetRow.Description1, targetRow.source_url || "https://supportmylocalcommunity.com");
             
             const i2 = document.getElementById('dual-img-2');
             i2.src = targetRow.ImageUrl2;
             document.getElementById('dual-header-2').innerText = targetRow.Header2;
-            i2.onclick = () => fireLightbox(targetRow.ImageUrl2, targetRow.Header2, "ARCHIVE VIEW", targetRow.Description1);
+            i2.onclick = () => fireLightbox(targetRow.ImageUrl2, targetRow.Header2, "ARCHIVE VIEW", targetRow.Description1, targetRow.source_url || "https://supportmylocalcommunity.com");
             
             document.getElementById('right-card-meta-desc1').innerText = targetRow.Description1;
             document.getElementById('desc2-target-1').innerText = targetRow.Description2;
@@ -186,14 +296,19 @@ async function processDataPipelines() {
         if(payload && payload.history) {
             const historyContainer = document.getElementById('history-row-target');
             historyContainer.innerHTML = payload.history.map(evt => {
-                const briefDesc = evt.description.length > 75 ? evt.description.substring(0, 75) + "..." : evt.description;
+                // Evaluates if an event features an image_url to control truncation behavior
+                const hasImage = !!evt.image_url;
+                const finalDescText = hasImage 
+                    ? (evt.description.length > 75 ? evt.description.substring(0, 75) + "..." : evt.description)
+                    : evt.description; // Shows full description uncropped when no preview image exists
+
                 return `
-                    <div class="history-card" onclick="fireLightbox('${evt.image_url || ''}', '${evt.event}', 'YEAR ${evt.year}', \`${evt.description}\`)">
+                    <div class="history-card" onclick="fireLightbox('${evt.image_url || ''}', '${evt.event}', 'YEAR ${evt.year}', \`${evt.description}\`, '${evt.source_url || ''}')">
                         <div>
                             <h2>${evt.year}</h2>
                             <h3>${evt.event}</h3>
-                            <p>${briefDesc}</p>
-                            <span style="color:#cc0000; font-size:11px; font-weight:bold; display:block; margin-top:6px;">READ FULL TEXT &rarr;</span>
+                            <p>${finalDesc}</p>
+                            ${evt.image_url ? `<span style="color:#cc0000; font-size:11px; font-weight:bold; display:block; margin-top:6px;">READ FULL TEXT &rarr;</span>` : ''}
                         </div>
                         ${evt.image_url ? `
                             <div class="history-img-box">
@@ -219,12 +334,11 @@ async function processDataPipelines() {
                 const p = partners[idx];
                 if(!p) return '';
                 
-                // Formulate target inline string nodes
                 const escapedName = p.name.replace(/'/g, "\\'");
                 return `
                     <div class="partner-card">
                         <div class="partner-logo-box">
-                            <img src="${p.image}" alt="${p.name} logo" style="cursor:pointer;" onclick="fireLightbox('${p.image}', '${escapedName}', 'NETWORK PARTNER', 'Official digital partner of Support My Local Community network serving ${p.county || 'Clay'} County.')">
+                            <img src="${p.image}" alt="${p.name} logo" style="cursor:pointer;" onclick="fireLightbox('${p.image}', '${escapedName}', 'NETWORK PARTNER', 'Official digital partner of Support My Local Community network serving ${p.county || 'Clay'} County.', '${p.websiteUrl}')">
                         </div>
                         <h4><a href="${p.websiteUrl}" target="_blank">${p.name}</a></h4>
                     </div>
@@ -279,7 +393,7 @@ async function processDataPipelines() {
         }
     } catch(err) { scroller.innerHTML = `<div style="text-align:center; padding:1rem; color:#cc0000;">Sync Offline.</div>`; }
 
-    // 7. News Filtration Grid Engine Matrix (Col 2 Main Feed)
+    // 7. News Filtration Grid Engine Matrix
     try {
         const res = await fetch('https://raw.githubusercontent.com/skventuresigns-design/smlc/main/local-news/news_data.json');
         const newsArray = await res.json();
@@ -299,9 +413,9 @@ async function processDataPipelines() {
         
         if(filtered.length > 0) {
             if(filtered.length > 1) {
-                targetGrid.classList.add('two-columns');
+                targetGrid.classList.add('grid-layout-active');
             } else {
-                targetGrid.classList.remove('two-columns');
+                targetGrid.classList.remove('grid-layout-active');
             }
 
             targetGrid.innerHTML = filtered.map(story => {
@@ -330,7 +444,6 @@ async function processDataPipelines() {
         const payload = await res.json();
         const f = payload.footer_data;
         if(f) {
-            // FIXED: Strips out text headers and links phone numbers side-by-side on a single row layout natively
             const cleanNumbersHtml = `
                 <div class="footer-inline-numbers">
                     ${f.contact_info.phone.map((p, i) => `
@@ -346,14 +459,24 @@ async function processDataPipelines() {
             document.getElementById('footer-copy-target').innerText = f.copyright;
         }
     } catch(e) { console.error("Footer download failed", e); }
+    
+    dynamicallyLoadSportsWidget();
 }
 
+/**
+ * Purpose: Connects target click streams directly into the lightbox overlay parser cache blocks.
+ * Inputs: id (String) - Database identification hash token.
+ * Outputs: Fires detail modal panels.
+ */
 function openNewsModal(id) {
     if(!window.newsCacheBlock) return;
     const match = window.newsCacheBlock.find(a => a.id === id);
     if(match) {
-        fireLightbox(match.image, match.title, formatHumanTimestamp(match.date), match.full_story);
+        fireLightbox(match.image, match.title, formatHumanTimestamp(match.date), match.full_story, match.source_url || '');
     }
 }
 
-window.addEventListener('DOMContentLoaded', processDataPipelines);
+// Global initialization parameters loaders trigger definitions
+window.addEventListener('DOMContentLoaded', () => {
+    processDataPipelines();
+});
