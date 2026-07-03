@@ -1,11 +1,41 @@
 /**
  * Purpose: Core operational pipeline for the Louisville IL community portal.
  * Inputs: Dynamic API endpoints from GitHub Repos and Apps Script channels.
- * Outputs: Real-time UI population, global lightboxes, and auto-rotation loops.
+ * Outputs: Real-time UI population, auto-expiration calendar hider loops, and smart cache busting tokens.
  */
 
 // Global slider interval reference pointer tracking tokens
 let globalSlideshowTicker = null;
+
+// Real-time calendar auto-reaping checker interval pointer
+let calendarLiveExpirationTicker = null;
+
+// Local storage buffer caching array for active processing elements
+window.calendarCachedEvents = [];
+
+/**
+ * Purpose: Checks current browser time to toggle dark mode overrides based on Dusk/Dawn phases.
+ * Inputs: None.
+ * Outputs: Modifies standard DOM document body class tags directly.
+ */
+(function checkAmbientDuskTheme() {
+    const currentHour = new Date().getHours();
+    // Dusk threshold set to 7:00 PM (19) through Dawn at 5:00 AM (5)
+    if (currentHour >= 19 || currentHour < 5) {
+        document.body.classList.add('dusk-mode-active');
+    } else {
+        document.body.classList.remove('dusk-mode-active');
+    }
+})();
+
+/**
+ * Purpose: Formulates an automated hourly smart cache buster token parameter.
+ * Inputs: None.
+ * Outputs: String - Unique numeric hash matching the current explicit hour segment blocks.
+ */
+function getSmartCacheBuster() {
+    return "cb=" + Math.floor(Date.now() / 3600000);
+}
 
 /**
  * Purpose: Overrides header layout bounds to force wide full screen display rules.
@@ -183,15 +213,87 @@ function dynamicallyLoadSportsWidget() {
 }
 
 /**
+ * Purpose: Evaluates locations text strings to assign specific town class modifiers.
+ * Inputs: locationText (String).
+ * Outputs: String (CSS structural layout tracking handles).
+ */
+function determineTownColorClass(locationText) {
+    if (!locationText) return '';
+    const textUpper = locationText.toUpperCase();
+    if (textUpper.includes("FLORA")) return 'town-flora';
+    if (textUpper.includes("LOUISVILLE")) return 'town-louisville';
+    if (textUpper.includes("CLAY CITY")) return 'town-claycity';
+    return '';
+}
+
+/**
+ * Purpose: Renders buffered calendar items from memory into the scrollable list container.
+ * Inputs: None (reads global window.calendarCachedEvents array data layers).
+ * Outputs: Structural calendar list cards populated dynamically.
+ */
+function renderLiveActiveCalendarBulletin() {
+    const scroller = document.getElementById('bulletin-scroller-target');
+    if (!scroller || !Array.isArray(window.calendarCachedEvents)) return;
+
+    const API = "https://script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec?feed=true";
+    const nowTimestamp = new Date().getTime();
+
+    // Dynamically screens past calendar items out using explicit time validations
+    const liveEvents = window.calendarCachedEvents.filter(item => {
+        const eventDateStr = item.date || item.displayDate;
+        if (!eventDateStr) return true;
+        return new Date(eventDateStr).getTime() + 86400000 >= nowTimestamp;
+    });
+
+    if (liveEvents.length > 0) {
+        // UNLOCKED: Loops through the full array without slicing to ensure all future entries scroll natively
+        scroller.innerHTML = liveEvents.map((item, idx) => {
+            const eventTitle = item.name || "Community Event";
+            const eventDate = formatHumanTimestamp(item.date || item.displayDate);
+            const eventTime = item.time || item.displayTime || "Time TBA";
+            const location = item.location || "Clay County";
+            const details = item.details || "No details provided.";
+            const briefDetails = details.length > 60 ? details.substring(0, 60) + "..." : details;
+            
+            // Computes specific dynamic color tags underneath your requested town rules
+            const townColorClass = determineTownColorClass(location);
+            const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(eventTitle)}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(location)}&sf=true&output=xml`;
+
+            return `
+                <div class="bulletin-item ${townColorClass}" data-event-id="${item.id || idx}">
+                    <div class="bulletin-date-time">${eventDate} &bull; ${eventTime}</div>
+                    <div class="bulletin-title">${eventTitle}</div>
+                    <div style="font-size:12px; color:#666; margin-bottom:4px;"><strong>Location:</strong> ${location}</div>
+                    
+                    <div class="bulletin-desc-brief" id="bulletin-brief-${idx}">"${briefDetails}"</div>
+                    <div class="bulletin-desc-full" id="bulletin-full-${idx}">${details}</div>
+                    
+                    ${details.length > 60 ? `<div class="bulletin-toggle-btn" id="bulletin-btn-${idx}" onclick="toggleBulletinDesc(${idx})">Read More</div>` : ''}
+                    
+                    <div class="bulletin-action-row">
+                        <a href="${gCalUrl}" target="_blank" class="cal-text-link">Google Cal</a>
+                        <span style="color:#777;">|</span>
+                        <a href="${API}" class="cal-text-link" download="${eventTitle.replace(/\s+/g, '_')}.ics">iCal Event</a>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } else {
+        scroller.innerHTML = `<div style="text-align:center; padding:1rem; font-style:italic;">No events scheduled.</div>`;
+    }
+}
+
+/**
  * Purpose: Orchestrates structural async network content fetches.
  * Inputs: External JSON resources and dynamic cloud storage endpoints.
  * Outputs: Complete front-end portal hydrations.
  */
 async function processDataPipelines() {
+    const cb = getSmartCacheBuster();
     
     // 1. Menu Builder Loader Pipeline
     try {
-        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/menu.json');
+        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/menu.json?' + cb);
         const menuArray = await res.json();
         
         const brandLabel = document.querySelector('.nav-brand');
@@ -206,9 +308,9 @@ async function processDataPipelines() {
         }
     } catch(e) { console.error("Menu pipeline error", e); }
 
-    // 2. Section 3 Dynamic Louisville Image Array Extractor & Spotlight Hydrator
+    // 2. Section 3 Dynamic image arrays and spotlight extractors
     try {
-        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/refs/heads/main/json/town-images.json');
+        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/refs/heads/main/json/town-images.json?' + cb);
         
         if (!res.ok) {
             throw new Error(`HTTP network fault code: ${res.status}`);
@@ -268,7 +370,7 @@ async function processDataPipelines() {
 
     // 3. Section 3 Right Card Matrix Handler
     try {
-        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/section3.json');
+        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/section3.json?' + cb);
         const rows = await res.json();
         const targetRow = rows.find(r => r.Town === "Louisville");
         if(targetRow) {
@@ -291,16 +393,15 @@ async function processDataPipelines() {
 
     // 4. Historical Events Timeline Manager (Section 4)
     try {
-        const res = await fetch('https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/louisville.json');
+        const res = await fetch('https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/louisville.json?' + cb);
         const payload = await res.json();
         if(payload && payload.history) {
             const historyContainer = document.getElementById('history-row-target');
             historyContainer.innerHTML = payload.history.map(evt => {
-                // Evaluates if an event features an image_url to control truncation behavior
                 const hasImage = !!evt.image_url;
-                const finalDescText = hasImage 
+                const finalDesc = hasImage 
                     ? (evt.description.length > 75 ? evt.description.substring(0, 75) + "..." : evt.description)
-                    : evt.description; // Shows full description uncropped when no preview image exists
+                    : evt.description;
 
                 return `
                     <div class="history-card" onclick="fireLightbox('${evt.image_url || ''}', '${evt.event}', 'YEAR ${evt.year}', \`${evt.description}\`, '${evt.source_url || ''}')">
@@ -323,7 +424,7 @@ async function processDataPipelines() {
 
     // 5. Partners Modular Grid Ordering Logic System (Sections 5 & 7)
     try {
-        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/partners.json');
+        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/partners.json?' + cb);
         const partners = await res.json();
         
         const sequenceTop = [0, 2, 4, 1, 3];    
@@ -350,52 +451,29 @@ async function processDataPipelines() {
         document.getElementById('partners-grid-bottom').innerHTML = buildPartnerHtml(sequenceBottom);
     } catch(e) { console.error("Partners grid rendering error", e); }
 
-    // 6. Community Calendar Engine (Col 1-2)
+    // 6. Live Auto-Expiration Community Calendar Pipeline Engine (Col 1-2)
     try {
-        const scroller = document.getElementById('bulletin-scroller-target');
         const API = "https://script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec?feed=true";
-        const res = await fetch(API);
+        const res = await fetch(API + "&" + cb);
         const elements = await res.json();
 
         if(Array.isArray(elements) && elements.length > 0) {
-            const viewportLimits = elements.slice(0, 5);
-            scroller.innerHTML = viewportLimits.map((item, idx) => {
-                const eventTitle = item.name || "Community Event";
-                const eventDate = formatHumanTimestamp(item.date || item.displayDate);
-                const eventTime = item.time || item.displayTime || "Time TBA";
-                const location = item.location || "Clay County";
-                const details = item.details || "No details provided.";
-                const briefDetails = details.length > 60 ? details.substring(0, 60) + "..." : details;
-                
-                const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(eventTitle)}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(location)}&sf=true&output=xml`;
+            window.calendarCachedEvents = elements;
+            
+            // Initial layout print map execution
+            renderLiveActiveCalendarBulletin();
 
-                return `
-                    <div class="bulletin-item">
-                        <div class="bulletin-date-time">${eventDate} &bull; ${eventTime}</div>
-                        <div class="bulletin-title">${eventTitle}</div>
-                        <div style="font-size:12px; color:#666; margin-bottom:4px;"><strong>Location:</strong> ${location}</div>
-                        
-                        <div class="bulletin-desc-brief" id="bulletin-brief-${idx}">"${briefDetails}"</div>
-                        <div class="bulletin-desc-full" id="bulletin-full-${idx}">${details}</div>
-                        
-                        ${details.length > 60 ? `<div class="bulletin-toggle-btn" id="bulletin-btn-${idx}" onclick="toggleBulletinDesc(${idx})">Read More</div>` : ''}
-                        
-                        <div class="bulletin-action-row">
-                            <a href="${gCalUrl}" target="_blank" class="cal-text-link">Google Cal</a>
-                            <span style="color:#777;">|</span>
-                            <a href="${API}" class="cal-text-link" download="${eventTitle.replace(/\s+/g, '_')}.ics">iCal Event</a>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            // Setup real-time 30-second sweep sweeps to hide events automatically as they expire
+            if(calendarLiveExpirationTicker) clearInterval(calendarLiveExpirationTicker);
+            calendarLiveExpirationTicker = setInterval(renderLiveActiveCalendarBulletin, 30000);
         } else {
-            scroller.innerHTML = `<div style="text-align:center; padding:1rem; font-style:italic;">No events scheduled.</div>`;
+            document.getElementById('bulletin-scroller-target').innerHTML = `<div style="text-align:center; padding:1rem; font-style:italic;">No events scheduled.</div>`;
         }
-    } catch(err) { scroller.innerHTML = `<div style="text-align:center; padding:1rem; color:#cc0000;">Sync Offline.</div>`; }
+    } catch(err) { document.getElementById('bulletin-scroller-target').innerHTML = `<div style="text-align:center; padding:1rem; color:#cc0000;">Sync Offline.</div>`; }
 
     // 7. News Filtration Grid Engine Matrix
     try {
-        const res = await fetch('https://raw.githubusercontent.com/skventuresigns-design/smlc/main/local-news/news_data.json');
+        const res = await fetch('https://raw.githubusercontent.com/skventuresigns-design/smlc/main/local-news/news_data.json?' + cb);
         const newsArray = await res.json();
         
         const filtered = newsArray.filter(item => {
@@ -440,7 +518,7 @@ async function processDataPipelines() {
 
     // 8. Footer Info Data Dynamic Populator Engine
     try {
-        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/footer.json');
+        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/footer.json?' + cb);
         const payload = await res.json();
         const f = payload.footer_data;
         if(f) {
