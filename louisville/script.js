@@ -252,7 +252,11 @@ function renderLiveActiveCalendarBulletin() {
             const eventDate = formatHumanTimestamp(item.date || item.displayDate);
             const eventTime = item.time || item.displayTime || "Time TBA";
             const location = item.location || "Clay County";
-            const details = item.details || "No details provided.";
+            
+            // Clean out inner markup formatting blocks to prevent rogue text layout size explosions
+            let details = item.details || "No details provided.";
+            details = details.replace(/<\/?[^>]+(>|$)/g, "");
+            
             const briefDetails = details.length > 60 ? details.substring(0, 60) + "..." : details;
             
             // Computes specific dynamic color tags underneath your requested town rules
@@ -403,8 +407,11 @@ async function processDataPipelines() {
                     ? (evt.description.length > 75 ? evt.description.substring(0, 75) + "..." : evt.description)
                     : evt.description;
 
+                const safeDescription = evt.description.replace(/'/g, "\\'").replace(/\r?\n|\r/g, " ");
+                const safeEventTitle = evt.event.replace(/'/g, "\\'");
+
                 return `
-                    <div class="history-card" onclick="fireLightbox('${evt.image_url || ''}', '${evt.event}', 'YEAR ${evt.year}', \`${evt.description}\`, '${evt.source_url || ''}')">
+                    <div class="history-card" onclick="fireLightbox('${evt.image_url || ''}', '${safeEventTitle}', 'YEAR ${evt.year}', '${safeDescription}', '${evt.source_url || ''}')">
                         <div>
                             <h2>${evt.year}</h2>
                             <h3>${evt.event}</h3>
