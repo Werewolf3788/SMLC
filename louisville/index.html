@@ -12,10 +12,10 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght=0,400..900;1,400..900&display=swap" rel="stylesheet">
     
-    <!-- External Stylesheet Linked to raw GitHub Content CDN -->
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/Werewolf3788/Testpages/main/louisville/style.css">
+    <!-- Relative Local Path to Prevent Browser MIME Type Blocking -->
+    <link rel="stylesheet" href="./style.css">
     
     <!-- Global Analytics Watermarks -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-H6Q756MVE8"></script>
@@ -126,7 +126,9 @@
                         <h3>Business Spotlight</h3>
                         <span class="clipping-subheading">Supporting Local Clay County News</span>
                     </div>
-                    <img src="" alt="Spotlight Advertisement Profile Asset" class="spotlight-img" id="spotlight-asset-img">
+                    <div class="image-scaling-container">
+                        <img src="" alt="Spotlight Advertisement Profile Asset" class="spotlight-img" id="spotlight-asset-img">
+                    </div>
                     <h3 id="spotlight-asset-name" class="spotlight-title-text">Loading...</h3>
                     <h4 id="spotlight-asset-loc" class="spotlight-location-text"></h4>
                     <p id="spotlight-asset-desc" class="spotlight-description-body"></p>
@@ -277,7 +279,7 @@
         </div>
     </div>
 
-    <!-- Core Script Orchestration Dependency Linked to raw GitHub Content CDN -->
-    <script type="text/javascript" src="https://raw.githubusercontent.com/Werewolf3788/Testpages/main/louisville/script.js"></script>
+    <!-- Relative Local Path to Prevent Browser MIME Type Blocking -->
+    <script type="text/javascript" src="./script.js"></script>
 </body>
 </html>
