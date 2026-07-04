@@ -107,12 +107,12 @@
   "global_assets": [
     {
       "id": "global_business_spotlight",
-      "name": "Grandma's Kitchen",
+      "name": "Grace & Truth Counsaling",
       "imageurl": "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/images/Grandma_s%20Kitchen.jpg",
-      "alt": "Front exterior view of Grandma's Kitchen restaurant, featuring a blue building with a red roof, a red wooden deck, and customers socializing outside.",
-      "source_url": "https://www.facebook.com/p/Grandmas-kitchen-Flora-il-61586069549969/",
-      "description": "Serving home-cooked favorites for over two decades, the Family Diner is a staple of our community. Known for their Early Bird specials and the friendliest service in Clay County.",
-      "location": "Flora, IL"
+      "alt": "Grace & Truth is a counsaling service",
+      "source_url": "https://www.graceandtruthcounseling.com",
+      "description": "Our mission is to help those who are hurting by providing affordable biblically-based professional counseling. The goal of Grace and Truth Counseling is to provide a safe, caring and non-judgmental environment for people to open up and work through the difficulties in life. The counselor, Becky Payne, interweaves both clinical skills and spiritual direction to guide people through the necessary changes by utilizing grace and truth.  The hope is that counseling will help people to come to a place of peace, joy and contentment in their life and to see marriages and families restored.",
+      "location": "Louisville, IL"
     }
   ]
 }
