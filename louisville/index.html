@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Louisville, IL | Community Portal</title>
-    
     <meta name="description" content="Official community portal for Louisville, IL. Local events, business dispatches, historical archives, and updates.">
     <meta property="og:title" content="Louisville, IL | Community Hub">
     <meta property="og:type" content="website">
@@ -12,10 +11,10 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght=0,400..900;1,400..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500&display=swap" rel="stylesheet">
     
-    <!-- Relative Local Path to Prevent Browser MIME Type Blocking -->
-    <link rel="stylesheet" href="./style.css">
+    <!-- External Stylesheet Linked to raw GitHub Content CDN -->
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/Werewolf3788/Testpages/main/louisville/style.css">
     
     <!-- Global Analytics Watermarks -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-H6Q756MVE8"></script>
@@ -28,6 +27,12 @@
     </script>
 </head>
 <body>
+
+    <!-- DYNAMIC FLOATING COMMEMORATIVE AND HOLIDAY OVERLAY HUD -->
+    <div class="portal-floating-hud-track">
+        <div id="hud-county-age-target" class="hud-floating-badge county-anniversary-badge" style="display: none;"></div>
+        <div id="hud-holiday-title-target" class="hud-floating-badge holiday-celebration-badge" style="display: none;"></div>
+    </div>
 
     <!-- SECTION 1: FULL-WIDTH HEADER BILLBOARD -->
     <header class="main-header">
@@ -63,7 +68,7 @@
             </div>
             
             <div class="discover-grid">
-                <!-- Left Side Card Column -->
+                <!-- Left Side Discover Card -->
                 <div class="discover-card font-contrast-shield">
                     <h2>Join us in supporting local businesses and dive into the exciting events happening in Flora, IL. Experience the warmth of our community and make unforgettable memories.</h2>
                     
@@ -77,7 +82,7 @@
                     <div class="discover-desc2" id="desc2-target-1">Loading local historical parameters...</div>
                 </div>
 
-                <!-- Right Side Card Column -->
+                <!-- Right Side Discover Card -->
                 <div class="discover-card font-contrast-shield">
                     <div class="right-card-title" id="right-card-meta-title">Loading...</div>
                     
@@ -97,38 +102,119 @@
             </div>
         </section>
 
-        <!-- SECTION 4: HORIZONTAL HISTORICAL TIMELINE BAR -->
+        <!-- SECTION 4: CUSTOM TWO COLUMN ARTICLE & SIDEBAR SECTION -->
+        <section class="feature-split-section">
+            <div class="feature-split-grid">
+                <!-- Left Feature Card: Renewable Energy Feature Box -->
+                <div class="dv-custom-article-wrapper">
+                    <div class="article-container">
+                        <header class="article-hero">
+                            <div class="category-tag">Renewable Energy Feature</div>
+                            <h3>Harvesting the Sun</h3>
+                            <p class="deck">How the quiet fields of Louisville, Illinois, became a powerhouse for the state's clean energy future.</p>
+                        </header>
+                        <div class="main-layout">
+                            <article class="article-body">
+                                <p>In the heart of Clay County, the landscape is shifting. Historically known for its rich soil and agricultural prowess, Louisville is now home to some of the most significant solar initiatives in Illinois. The introduction of the <strong>Maple Flats Solar Project</strong> has transformed 7,000 acres of rural land into a high-tech energy hub.</p>
+                                <p>This transition isn't just about environmental impact; it's a massive economic engine. By repurposing land for photovoltaic arrays, the community is securing a legacy of energy leadership. Local residents are seeing the benefits through programs like <strong>Nexamp’s Community Solar</strong>, which allows families to save on electric costs without installing their own panels.</p>
+                                <p>While the Little Wabash River once powered the town's early industry, it is now the Illinois sky that provides the next great resource, proving that small towns can lead the charge in a global energy revolution. The synergy between heritage and high-tech is defining the new Louisville.</p>
+                            </article>
+                            <aside class="sidebar">
+                                <div class="stat-sidebar">
+                                    <div style="margin-bottom: 1rem;">
+                                        <span class="stat-label">Generation Capacity</span>
+                                        <span class="stat-number">250 MW</span>
+                                    </div>
+                                    <div>
+                                        <span class="stat-label">Homes Powered</span>
+                                        <span class="stat-number">60,000+</span>
+                                    </div>
+                                </div>
+                                <div class="bz-card">
+                                    <h4>Local Spotlight</h4>
+                                    <p style="font-size: 0.85rem; margin-bottom: 0.5rem;">Louisville's impact extends beyond energy to culture and music.</p>
+                                    <ul class="stats-list">
+                                        <li><strong>Bailey Zimmerman</strong> <span>Country Star</span></li>
+                                        <li><strong>Hometown</strong> <span>Louisville, IL</span></li>
+                                        <li><strong>Population</strong> <span>~1,100</span></li>
+                                        <li><strong>Work Ethic</strong> <span>Blue-Collar</span></li>
+                                    </ul>
+                                </div>
+                            </aside>
+                        </div>
+                        <div class="article-footer">
+                            <span>Louisville Monthly | Jan 2026</span>
+                            <span>Issue 42 | P. 14</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Feature Card: Historic Newspaper Style Box -->
+                <div class="dv-newspaper-wrap">
+                    <aside class="newspaper-sidebar">
+                        <div class="news-header">
+                            <h4>The Clay County Community</h4>
+                            <small>Louisville, Illinois • Vol. CLXXXIV</small>
+                        </div>
+                        <h2>A Legacy on the Wabash</h2>
+                        <span class="sub-headline">Tracing Two Centuries of Prairie Progress</span>
+                        <div class="news-content">
+                            <p><span class="first-letter">L</span>ouisville’s story began long before its formal incorporation. Nestled along the winding banks of the Little Wabash River, the area was a beacon for early pioneers seeking fertile soil and reliable water transport. By the 1820s, the surrounding prairie began to transform into a tapestry of homesteading life.</p>
+                            <div class="timeline-section">
+                                <div class="timeline-item">
+                                    <span class="year-label">1824 —</span> Clay County is organized; Louisville emerges as a vital trading post.
+                                </div>
+                                <div class="timeline-item">
+                                    <span class="year-label">1842 —</span> Louisville is chosen as the official County Seat.
+                                </div>
+                                <div class="timeline-item" style="border:none; margin-bottom: 0; padding-bottom: 0;">
+                                    <span class="year-label">2026 —</span> Modern Louisville celebrates its heritage as a center for community and culture.
+                                </div>
+                            </div>
+                            <p>The town's destiny was cemented in 1842 when it was designated the permanent County Seat. This move triggered rapid development around the iconic public square, making the Little Wabash the town's early lifeblood.</p>
+                        </div>
+                        <div class="news-footer">
+                            <span>PRICE: TWO CENTS</span>
+                            <span>LATE EDITION</span>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: HISTORICAL ROW TIMELINE BAR -->
         <section class="history-section">
             <div class="section-title-wrapper">
-                <h2>Historical Events</h2>
+                <h2>Historical Archives</h2>
             </div>
             <div class="history-row" id="history-row-target">
                 <!-- Populated via historical JSON loader -->
             </div>
         </section>
 
-        <!-- SECTION 5: ADVERTISING PARTNERS GRID TOP -->
+        <!-- SECTION 6: ADVERTISING PARTNERS GRID TOP -->
         <section class="partners-section">
+            <h2 style="color: #ffffff; text-align: center; margin-bottom: 2rem; font-weight: normal;">Our Digital Advertising Partners</h2>
             <div class="partners-grid" id="partners-grid-top">
-                <!-- Populated dynamically -->
+                <!-- Cycled dynamically via scripts -->
             </div>
         </section>
 
-        <!-- SECTION 6: WIDE 3-COLUMN TOWER GRID SYSTEM -->
+        <!-- SECTION 7: WIDE 3-COLUMN TOWER GRID SYSTEM (GRANITE BACKDROP) -->
         <section class="tower-section">
             
             <!-- LEFT TOWER COLUMN -->
             <div class="tower-col">
                 <!-- Business Spotlight Card -->
                 <div class="clay-county-news-box">
-                    <div class="clipping-tag">Network Spotlight</div>
+                    <div class="card-header-label-wrapper">
+                        <h1>Network Spotlight</h1>
+                    </div>
                     <div class="event-clipping-header">
                         <h3>Business Spotlight</h3>
                         <span class="clipping-subheading">Supporting Local Clay County News</span>
                     </div>
-                    <div class="image-scaling-container">
-                        <img src="" alt="Spotlight Advertisement Profile Asset" class="spotlight-img" id="spotlight-asset-img">
-                    </div>
+                    <img src="" alt="Spotlight Advertisement Profile Asset" class="spotlight-img" id="spotlight-asset-img">
                     <h3 id="spotlight-asset-name" class="spotlight-title-text">Loading...</h3>
                     <h4 id="spotlight-asset-loc" class="spotlight-location-text"></h4>
                     <p id="spotlight-asset-desc" class="spotlight-description-body"></p>
@@ -137,14 +223,16 @@
 
                 <!-- Community Calendar Box -->
                 <div class="clay-county-news-box">
-                    <div class="clipping-tag">Community Bulletin</div>
+                    <div class="card-header-label-wrapper">
+                        <h1>Community Bulletin</h1>
+                    </div>
                     <div class="event-clipping-header">
-                        <h3>What's Happening?</h3>
-                        <span class="clipping-subheading">Clay County Community Calendar</span>
+                        <h3>Louisville Calendar</h3>
+                        <span class="clipping-subheading">Local Events & Dispatches Only</span>
                     </div>
                     
                     <div class="scrollable-bulletin-list" id="bulletin-scroller-target">
-                        <!-- Dynamic wire connection -->
+                        <!-- Dynamic filtered wire connection -->
                     </div>
 
                     <div class="subscribe-box">
@@ -157,7 +245,9 @@
 
                 <!-- Free Submission Clipping Notice -->
                 <div class="clay-county-news-box">
-                    <div class="clipping-tag">Bulletin Info</div>
+                    <div class="card-header-label-wrapper">
+                        <h1>Bulletin Info</h1>
+                    </div>
                     <p class="event-clipping-text">
                         "Got a local fundraiser, school event, or church dinner coming up? Share your news with the community for free!"
                     </p>
@@ -176,14 +266,16 @@
 
                 <!-- Main News Matrix Container -->
                 <div class="clay-county-news-box">
-                    <div class="clipping-tag" style="background:#cc0000;">Live Feed</div>
+                    <div class="card-header-label-wrapper" style="background:#cc0000 !important;">
+                        <h1>Live Feed</h1>
+                    </div>
                     <div class="event-clipping-header">
                         <h3 style="color:var(--secondary) !important; font-size:1.75rem !important;">Local News</h3>
                         <span class="clipping-subheading">Clay County Newspaper Dispatch</span>
                     </div>
 
                     <div class="news-dynamic-masonry" id="news-matrix-target">
-                        <!-- Dynamic cards load here -->
+                        <!-- Dynamic cards load here in a strict 2x2 grid format -->
                     </div>
                 </div>
             </div>
@@ -192,7 +284,10 @@
             <div class="tower-col">
                 <!-- Live Fuel Monitor Container -->
                 <div class="billboard-container-embed">
-                    <div class="fuel-monitor-header">S & K Ventures Fuel Monitor</div>
+                    <div class="fuel-monitor-header">
+                        <div>S & K Ventures Fuel Monitor</div>
+                        <div>Click the billboard to update price's</div>
+                    </div>
                     <iframe src="https://skventuresigns-design.github.io/smlc/gas-prices/billboard.html?town=louisville" class="fuel-iframe-frame" scrolling="no"></iframe>
                 </div>
 
@@ -208,7 +303,9 @@
 
                 <!-- Social Platform Invitation Box -->
                 <div class="clay-county-news-box" style="text-align:center;">
-                    <div class="clipping-tag" style="background:#d9534f;">Local Conversation</div>
+                    <div class="card-header-label-wrapper" style="background:#d9534f !important;">
+                        <h1>Facebook</h1>
+                    </div>
                     <div class="polaroid-frame image-asset-box">
                         <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="SMLC Platform Community Portal Image Layer">
                     </div>
@@ -222,25 +319,39 @@
                     <a href="https://www.facebook.com/SupportMyLocalCommunity" target="_blank" class="event-clipping-btn">Enter the Conversation</a>
                     <span class="community-voice-stamp">Community Voice • Clay County, IL</span>
                 </div>
+
+                <!-- LOCAL DIRECTORIES INSTITUTIONAL CARD NODE -->
+                <div class="clay-county-news-box">
+                    <div class="card-header-label-wrapper" style="background:#0258A3 !important;">
+                        <h1>Local Links</h1>
+                    </div>
+                    <div class="event-clipping-header">
+                        <h3>Louisville Resources</h3>
+                        <span class="clipping-subheading">Direct Institutional Links</span>
+                    </div>
+                    <div id="local-links-target-container" class="local-links-stream">
+                        <!-- Populated and filtered dynamically via script channels -->
+                    </div>
+                </div>
             </div>
 
         </section>
 
-        <!-- SECTION 7: ADVERTISING PARTNERS GRID BOTTOM -->
+        <!-- SECTION 8: ADVERTISING PARTNERS GRID BOTTOM -->
         <section class="partners-section">
             <div class="partners-grid" id="partners-grid-bottom">
-                <!-- Populated dynamically -->
+                <!-- Cycled dynamically via scripts -->
             </div>
         </section>
 
-        <!-- SECTION 8: MISSION FOOTER MESSAGE BANNER -->
+        <!-- SECTION 9: MISSION FOOTER MESSAGE BANNER -->
         <section class="mission-container">
             <h3>We are very Thankful and Blessed for our Customers who allow us to advertise their Business to the Community. We hope to be of Service, not only to the Large Corporations, but also to the Small Business’ in the area. A Large Corporation once started out as a small business, so our hope is to help those Small Business’ we serve reach the fullest potential they desire. You will never know what we are able to do for Your Business unless you ask. I hope to hear from you. For questions or comments about this site please email info@supportmylocalcommunity.com</h3>
         </section>
 
     </main>
 
-    <!-- SECTION 9: MASTER STRUCTURED FOOTER UNIT -->
+    <!-- SECTION 10: MASTER STRUCTURED FOOTER UNIT -->
     <footer class="master-footer">
         <div class="footer-grid">
             <div class="footer-tower">
@@ -279,7 +390,7 @@
         </div>
     </div>
 
-    <!-- Relative Local Path to Prevent Browser MIME Type Blocking -->
-    <script type="text/javascript" src="./script.js"></script>
+    <!-- Core Script Orchestration Dependency Linked to raw GitHub Content CDN -->
+    <script type="text/javascript" src="https://raw.githubusercontent.com/Werewolf3788/Testpages/main/louisville/script.js"></script>
 </body>
 </html>
