@@ -1,16 +1,14 @@
 <!-- 
-   Active Version: 2026-07-26_18:20
-   File: louisville.html
-   Description: Louisville IL Community Portal template.
-   Features:
-   - Dynamic HTML Data Binding (<html data-town="LOUISVILLE">)
-   - Relative Path Imports (style.css & script.js in same directory)
-   - Integrated Lightbox & Satellite Map Coordinates
-   - Active Version & Build Timestamp Sync in HTML Footer
-   - Dual GA4 Analytics Watermarks (G-L376P3NPY4 + G-H6Q756MVE8)
+  Active Version: 2026-07-26_19:50
+  Description: Louisville IL Community Portal - Fully Synchronized HTML Chassis
+  Features:
+  - Header image flush barrier preventing sticky menu overlap
+  - Section 4 Right Sidebar containers for Business Spotlight & Fuel Monitor Widget
+  - Section 7 Newspaper & Polaroid Card Containers
+  - Dynamic cache-busting, footer versioning, and GA4 Analytics
 -->
 <!DOCTYPE html>
-<html lang="en-US" data-town="LOUISVILLE">
+<html lang="en-US">
 <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -20,10 +18,10 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
     
-    <!-- Local Directory Stylesheet Import with Smart Cache-Buster -->
-    <link rel="stylesheet" href="./style.css?v=202607261820" />
+    <!-- Relative Local Stylesheet Import with Smart Cache-Buster -->
+    <link rel="stylesheet" href="./style.css?v=202607261950" />
     
     <!-- Global Analytics Watermarks -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L376P3NPY4"></script>
@@ -36,7 +34,7 @@
         gtag('config', 'G-H6Q756MVE8'); /* Project Specific Property */
     </script>
 </head>
-<body data-town="LOUISVILLE">
+<body data-town="louisville">
 
     <!-- DYNAMIC FLOATING COMMEMORATIVE AND HOLIDAY OVERLAY HUD -->
     <div class="portal-floating-hud-track">
@@ -44,18 +42,23 @@
         <div id="hud-holiday-title-target" class="hud-floating-badge holiday-celebration-badge" style="display: none;"></div>
     </div>
 
-    <!-- SECTION 1: FULL-WIDTH HEADER BILLBOARD & STICKY MENU BAR -->
+    <!-- SECTION 1: HEADER BILLBOARD & STICKY MENU BAR (HARD FLUSH BARRIER) -->
     <div id="global-header-container" class="site-brand-header">
         <a href="./home?utm_campaign=werewolf3788profile&utm_source=HeaderBillboardLink&utm_medium=banner_click" class="header-billboard-link">
-            <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="SMLC Community Digital Frame Network Map Node Area Display" class="header-billboard-img" />
+            <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="SMLC Community Digital Network Map" class="header-billboard-img" />
         </a>
     </div>
     
     <header class="menu-bar">
         <div class="menu-inner">
             <nav>
-                <ul id="dynamic-menu-target" class="menu-links">
-                    <!-- Populated dynamically via script.js -->
+                <ul id="dynamic-menu-links" class="menu-links">
+                    <li><a href="./home?utm_campaign=werewolf3788profile&utm_source=NavHomeButton&utm_medium=nav_click">Home</a></li>
+                    <li><a href="./clay-city?utm_campaign=werewolf3788profile&utm_source=NavClayCityButton&utm_medium=nav_click">Clay City</a></li>
+                    <li><a href="./flora?utm_campaign=werewolf3788profile&utm_source=NavFloraButton&utm_medium=nav_click">Flora</a></li>
+                    <li><a href="./louisville?utm_campaign=werewolf3788profile&utm_source=NavLouisvilleButton&utm_medium=nav_click" class="active">Louisville</a></li>
+                    <li><a href="./sailor-springs?utm_campaign=werewolf3788profile&utm_source=NavSailorSpringsButton&utm_medium=nav_click">Sailor Springs</a></li>
+                    <li><a href="./xenia?utm_campaign=werewolf3788profile&utm_source=NavXeniaButton&utm_medium=nav_click">Xenia</a></li>
                 </ul>
             </nav>
         </div>
@@ -73,7 +76,7 @@
         </section>
     </div>
 
-    <!-- SECTION 3: RESTRUCTURED ROW 1 / ROW 2 SPLIT LAYOUT -->
+    <!-- SECTION 3: RESTRUCTURED SPLIT LAYOUT -->
     <section class="section3-split-layout">
         <div class="section3-container-grid">
             <div class="section3-row-1">
@@ -118,82 +121,85 @@
         </div>
     </section>
 
-    <!-- SECTION 4: EQUAL-HEIGHT 2-BOX ROW -->
+    <!-- SECTION 4: 2-COLUMN LAYOUT (ARTICLE + DYNAMIC BUSINESS SPOTLIGHT & FUEL MONITOR SIDEBAR) -->
     <div class="section4-two-box-wrapper">
         <div class="section4-left-article-box">
-            <div class="article-container">
-                <header class="section4-centered-article-header">
-                    <div class="category-tag">Renewable Energy Feature</div>
-                    <h1 class="article-stacked-title">Harvesting the Sun</h1>
-                    <p class="article-stacked-deck">How the quiet fields of Louisville, Illinois, became a powerhouse for the state's clean energy future.</p>
-                </header>
+            <header class="section4-centered-article-header">
+                <div class="category-tag">Renewable Energy Feature</div>
+                <h1 class="article-stacked-title">Harvesting the Sun</h1>
+                <p class="article-stacked-deck">How the quiet fields of Louisville, Illinois, became a powerhouse for the state's clean energy future.</p>
+            </header>
 
-                <div class="article-body-content">
-                    <p>In the heart of Clay County, the landscape is shifting. Historically known for its rich soil and agricultural prowess, Louisville is now home to some of the most significant solar initiatives in Illinois. The introduction of the <strong>Maple Flats Solar Project</strong> has transformed 7,000 acres of rural land into a high-tech energy hub.</p>
-                    <p>This transition isn't just about environmental impact; it's a massive economic engine. By repurposing land for photovoltaic arrays, the community is securing a legacy of energy leadership. Local residents are seeing the benefits through programs like <strong>Nexamp’s Community Solar</strong>, which allows families to save on electric costs without installing their own panels.</p>
-                    <p>While the Little Wabash River once powered the town's early industry, it is now the Illinois sky that provides the next great resource, proving that small towns can lead the charge in a global energy revolution. The synergy between heritage and high-tech is defining the new Louisville.</p>
-                </div>
+            <article class="article-body-content">
+                <p>
+                    In the heart of Clay County, the landscape is shifting. Historically known for its rich soil and agricultural prowess, Louisville is now home to some of the most significant solar initiatives in Illinois. The introduction of the <strong>Maple Flats Solar Project</strong> has transformed 7,000 acres of rural land into a high-tech energy hub.
+                </p>
+                <p>
+                    This transition isn't just about environmental impact; it's a massive economic engine. By repurposing land for photovoltaic arrays, the community is securing a legacy of energy leadership. Local residents are seeing the benefits through programs like <strong>Nexamp’s Community Solar</strong>, which allows families to save on electric costs without installing their own panels.
+                </p>
+                <p>
+                    While the Little Wabash River once powered the town's early industry, it is now the Illinois sky that provides the next great resource, proving that small towns can lead the charge in a global energy revolution. The synergy between heritage and high-tech is defining the new Louisville.
+                </p>
+            </article>
 
-                <div class="article-footer">
-                    <span>Louisville Monthly | Jan 2026</span>
-                    <span>Issue No. 42 | Page 14</span>
-                </div>
+            <div class="article-footer">
+                <span>Louisville Monthly | Jan 2026</span>
+                <span>Issue No. 42 | Page 14</span>
             </div>
         </div>
 
-        <div class="section4-right-widgets-stack">
-            <div class="business-spotlight-showcase-card" id="network-spotlight-registry-widget">
-                <h3 class="sidebar-widget-title dynamic-accent-element">Business Spotlight</h3>
-                <div class="showcase-card-body">
-                    <div id="global-spotlight-media-container" class="showcase-media-canvas">
-                        <img id="spotlight-asset-img" src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Business Spotlight" style="cursor:pointer;">
-                    </div>
-                    <div style="text-align:center; margin-top: 8px;">
-                        <h4 id="spotlight-asset-name" style="margin: 4px 0;">Loading Business...</h4>
-                        <span id="spotlight-asset-loc" style="font-size: 11px; color:#666;">Flora, IL</span>
-                        <p id="spotlight-asset-desc" style="font-size: 12px; margin: 6px 0;"></p>
-                        <a id="spotlight-asset-link" href="#" target="_blank" class="cal-text-link">Visit Website &rarr;</a>
-                    </div>
+        <!-- RIGHT SIDEBAR: BUSINESS SPOTLIGHT (4.2.2.1) & FUEL MONITOR (4.2.2.2) -->
+        <aside class="section4-right-widgets-stack">
+            <!-- SECTION 4.2.2.1: BUSINESS SPOTLIGHT CONTAINER -->
+            <div class="clay-county-news-box spotlight-clipping">
+                <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
+                <div class="spotlight-image-wrap">
+                    <img id="spotlight-asset-img" src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Business Spotlight">
                 </div>
+                <span class="biz-title" id="spotlight-asset-name">Local Merchant</span>
+                <span class="biz-location" id="spotlight-asset-loc">Louisville, IL</span>
+                <p class="biz-description" id="spotlight-asset-desc">Supporting local commerce across Clay County.</p>
+                <a href="#" id="spotlight-asset-link" target="_blank" class="spotlight-btn">Visit Business &rarr;</a>
             </div>
 
-            <div class="fuel-monitor-billboard-card" id="fuel-index-monitor-box">
-                <h3 class="sidebar-widget-title dynamic-accent-element">Fuel Index Monitor</h3>
-                <div class="fuel-card-body">
-                    <div class="fuel-station-header">
-                        <div class="station-logo-frame">
-                            <img src="https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/Casey's.png" alt="Casey's Logo" class="lightbox-triggerable-element" />
-                        </div>
-                        <div class="station-meta-title">CASEY'S • LOUISVILLE</div>
+            <!-- SECTION 4.2.2.2: FUEL INDEX MONITOR GAS WIDGET CONTAINER -->
+            <div id="fuel-monitor-target-box" class="fuel-monitor-billboard-card">
+                <div class="sidebar-widget-title">LOUISVILLE FUEL INDEX MONITOR</div>
+                <div class="fuel-station-header">
+                    <div class="station-logo-frame">
+                        <img src="https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/Casey's.png" alt="Gas Station">
                     </div>
-                    <div class="fuel-pricing-grid">
-                        <div class="price-box dynamic-inner-panel">
-                            <span class="price-type-label">REGULAR</span>
-                            <span id="lv-reg" class="price-value-regular">$3.49</span>
-                        </div>
-                        <div class="price-box dynamic-inner-panel">
-                            <span class="price-type-label">DIESEL</span>
-                            <span id="lv-die" class="price-value-diesel">$3.89</span>
-                        </div>
-                    </div>
-                    <div id="lv-time" class="sync-timestamp-label">Syncing Ledger...</div>
+                    <div class="station-meta-title">CASEY'S</div>
                 </div>
+                <div class="fuel-pricing-grid">
+                    <div class="price-box">
+                        <span class="price-type-label">REGULAR</span>
+                        <span class="price-value-regular">$3.29</span>
+                    </div>
+                    <div class="price-box">
+                        <span class="price-type-label">DIESEL</span>
+                        <span class="price-value-diesel">$3.89</span>
+                    </div>
+                </div>
+                <div class="sync-timestamp-label">Syncing Real-Time Prices...</div>
             </div>
-        </div>
+        </aside>
     </div>
 
     <!-- SECTION 5: HISTORICAL TIMELINE -->
-    <section class="historical-timeline-chassis-wrapper">
-        <div class="timeline-full-width-container">
-            <div class="timeline-row-1-header">
-                <title1 class="main-timeline-center-title-node">Historical Timeline</title1>
-                <p class="main-timeline-sub-caption-node">Journey through the significant milestones that have shaped Louisville, IL, into the community it is today.</p>
+    <div class="main-container">
+        <section class="historical-timeline-chassis-wrapper">
+            <div class="timeline-inner-bounds">
+                <div class="timeline-row-1-header">
+                    <span class="main-timeline-center-title-node">Historical Timeline</span>
+                    <p class="main-timeline-sub-caption-node">Journey through the significant milestones that have shaped Louisville, IL, into the community it is today.</p>
+                </div>
+                <div id="history-row-target" class="timeline-row-2-cards">
+                    <div class="feed-loading-placeholder">Parsing landmark records ledger database tracking layers...</div>
+                </div>
             </div>
-            <div id="history-row-target" class="timeline-5x2-full-grid">
-                <div class="feed-loading-placeholder">Parsing landmark records ledger database tracking layers...</div>
-            </div>
-        </div>
-    </section>
+        </section>
+    </div>
 
     <!-- SECTION 6: ADVERTISING PARTNERS STRIP PANEL -->
     <div class="widescreen-strip-container">
@@ -206,13 +212,14 @@
     <section class="smlc-three-column-portal-wrapper" id="adaptive-time-portal-chassis">
         <div class="portal-grid-layout-fixed">
             
-            <!-- LEFT COLUMN CELL (7.1) -->
+            <!-- COLUMN 7.1 -->
             <div class="portal-column-cell-box left-cell-stack">
+                <!-- 7.1.1 COMMUNITY BULLETIN EVENT SUBMISSION -->
                 <div class="clay-county-news-box event-clipping">
                     <div class="clipping-tag">Community Bulletin</div>
                     <div class="event-clipping-header">
                         <h3>What's Happening?</h3>
-                        <span class="calendar-sub-stamp">Clay County Community Calendar</span>
+                        <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #222; font-weight: bold;">Clay County Community Calendar</span>
                     </div>
                     <p class="event-clipping-text">
                         "Got a local fundraiser, school event, or church dinner coming up? Share your news with the community for free!"
@@ -221,6 +228,7 @@
                     <div class="clipping-footer">Clay City • Flora • Louisville • Sailor Springs • Xenia</div>
                 </div>
 
+                <!-- 7.1.2 UPCOMING EVENTS CALENDAR CLIPPING -->
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">Upcoming Events in Louisville</h2>
                     <div class="news-clipping-wrapper">
@@ -230,7 +238,7 @@
                         </div>
                         
                         <div id="bulletin-scroller-target">
-                            <div class="feed-loading-placeholder">Syncing real-time community calendar feed...</div>
+                            <div style="text-align:center; padding: 20px; font-style:italic;">Loading community calendar...</div>
                         </div>
                         
                         <div class="clipping-footer">
@@ -241,26 +249,26 @@
                 </div>
             </div>
 
-            <!-- CENTER COLUMN CELL (7.2) -->
+            <!-- COLUMN 7.2 -->
             <div class="portal-column-cell-box center-cell-stack">
+                <!-- 7.2.1 NORTH CLAY SPORTS -->
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">North Clay Sports</h2>
                     <div class="scorestream-embed-card">
-                        <div class="scorestream-card-header">HIGH SCHOOL SPORTS SCOREBOARD</div>
+                        <div style="font-family:'Oswald', sans-serif; font-size:16px; font-weight:bold; margin-bottom:10px; text-align:center;">HIGH SCHOOL SPORTS SCOREBOARD</div>
                         <div class="scorestream-viewport-frame-fixed">
                             <div class="scorestream-widget-container" data-ss_widget_type="horzScoreboard" data-user-widget-id="68601"></div>
                         </div>
                     </div>
                 </div>
 
+                <!-- 7.2.2 LOCAL & GLOBAL NEWS DISPATCHES -->
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">Louisville News</h2>
                     <div class="newspaper-feed-chassis">
-                        <div class="newspaper-header-border-fixed">
-                            <div class="header-title-group-fixed">
-                                <h2 class="dynamic-text-element-fixed">Louisville Local Dispatches</h2>
-                            </div>
-                            <span class="newsroom-source-tag-fixed">SMLC Newsroom</span>
+                        <div class="clipping-masthead">
+                            <span class="black-tag">SMLC Newsroom</span>
+                            <p class="clipping-tagline">Louisville Local Dispatches</p>
                         </div>
                         <div id="news-matrix-target" class="news-dynamic-masonry">
                             <div class="feed-loading-placeholder">Reconstructing localized newsroom dispatches...</div>
@@ -268,13 +276,10 @@
                     </div>
                 </div>
 
+                <!-- 7.2.3 BUSINESS DIRECTORY BUTTON -->
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">Business Directory</h2>
-                    <div class="section7-news-banner-frame">
-                        <img src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="SMLC Community Banner" style="width: 100%; height: auto; border: 2px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 4px; display: block;" class="lightbox-triggerable-element" />
-                    </div>
-
-                    <div class="town-showcase-action-row" style="padding: 16px 0 0 0;">
+                    <div class="town-showcase-action-row" style="padding: 10px 0 0 0;">
                         <a href="https://clay-county-business-directory.supportmylocalcommunity.com/" target="_blank" class="town-directory-interactive-btn-s7" style="width: 100%;">
                             Clay County Business Directory
                         </a>
@@ -282,47 +287,57 @@
                 </div>
             </div>
 
-            <!-- RIGHT COLUMN CELL (7.3) -->
+            <!-- COLUMN 7.3 -->
             <div class="portal-column-cell-box right-cell-stack">
+                <!-- 7.3.1 SMLC FACEBOOK POLAROID CARD -->
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">SMLC Facebook</h2>
                     <div class="clay-county-news-box group-invitation-master">
                         <div class="notice-tag-red">Local Conversation</div>
 
                         <div class="polaroid-wrap">
-                            <img decoding="async" src="https://png.pngtree.com/png-clipart/20181003/ourmid/pngtree-facebook-logo-facebook-icon-png-image_3654755.png" alt="Support My Local Community">
+                            <img src="https://ourflora.com/wp-content/uploads/2023/08/Ourflora.png" alt="OurFlora Community">
                         </div>
 
                         <div class="invitation-header-main">
                             <h3>Join the Community</h3>
-                            <span class="sub-header-text">Official SMLC Facebook page</span>
+                            <span class="sub-header-text">Official OurFlora Facebook page</span>
                         </div>
 
                         <p class="invitation-body-text">
                             "Stay connected with your neighbors. Discuss local news, share community updates, and join neighbors in the OurFlora conversation."
                         </p>
 
-                        <a href="https://www.facebook.com/SupportMyLocalCommunity" target="_blank" class="fb-action-btn">
+                        <a href="https://www.facebook.com/OurFloraIL" target="_blank" class="fb-action-btn">
                             Enter the Conversation
                         </a>
                       
-                        <span style="display: block; margin-top: 15px; font-size: 9px; text-transform: uppercase; color: #999;">
+                        <span class="community-voice-footer">
                             Community Voice • Clay County, IL
                         </span>
                     </div>
                 </div>
 
+                <!-- 7.3.2 LOCAL DIRECTORY LINKS -->
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">town local links</h2>
-                    <div class="clay-county-news-box">
-                        <div class="card-header-label-wrapper">
-                            <h1>Local Directory</h1>
+                    <div class="clay-county-news-box group-invitation-master">
+                        <div class="notice-tag-red">Town Directory</div>
+
+                        <div class="invitation-header-main" style="margin-top:15px;">
+                            <h3>Local Links &amp; Resources</h3>
+                            <span class="sub-header-text">Official Louisville &amp; Clay County Portals</span>
                         </div>
+
                         <div class="scrollable-directory-stream">
                             <div id="local-links-target-container" class="local-links-stream">
                                 <div style="font-style:italic; font-size:12px; color:#666;">Loading directory links...</div>
                             </div>
                         </div>
+
+                        <span class="community-voice-footer">
+                            Verified Resources • Clay County, IL
+                        </span>
                     </div>
                 </div>
             </div>
@@ -341,12 +356,12 @@
 
     <!-- SECTION 9 & 10: PROCLAMATION BLOCK -->
     <div class="main-container section10-message-chassis">
-        <section class="section10-proclamation-card-box">
-            <p class="section10-body-prose">
+        <section class="section10-proclamation-card-box" style="background:#fffdf5; border:2px solid #222; padding:30px; box-shadow:6px 6px 0px #000; border-radius:6px; color:#222; text-align:center;">
+            <p style="font-size:16px; line-height:1.6; font-style:italic; margin-bottom:15px;">
                 We are very Thankful and Blessed for our Customers who allow us to advertise their Business to the Community. We hope to be of Service, not only to the Large Corporations, but also to the Small Business’ in the area. A Large Corporation once started out as a small business, so our hope is to help those Small Business’ we serve reach the fullest potential they desire. You will never know what we are able to do for Your Business unless you ask. I hope to hear from you.
             </p>
-            <p class="section10-footer-dispatch">
-                For questions or comments about this site please email <a id="section10-dynamic-email-anchor" href="mailto:Scott.Robinson@skventuresigns.com" class="section10-prose-link">Scott.Robinson@skventuresigns.com</a>
+            <p style="font-size:14px; font-weight:bold;">
+                For questions or comments about this site please email <a href="mailto:Scott.Robinson@skventuresigns.com" style="color:#0258A3; text-decoration:underline;">Scott.Robinson@skventuresigns.com</a>
             </p>
         </section>
     </div>
@@ -354,77 +369,56 @@
     <!-- LIGHTBOX OVERLAY -->
     <div id="portal-global-lightbox" class="lightbox-overlay-mask" onclick="closeLightbox(event)">
         <div class="lightbox-modal-window">
-            <div class="lightbox-header-bar">
-                <div class="lightbox-meta-group">
-                    <span id="lightbox-label" class="dynamic-accent-element">SMLC Dispatches</span>
-                </div>
-                <button onclick="document.getElementById('portal-global-lightbox').style.display='none'" class="lightbox-close-btn">&times;</button>
+            <div class="lightbox-header-bar" style="padding:15px; border-bottom:2px solid #222; display:flex; justify-content:space-between; align-items:center;">
+                <span id="lightbox-label" style="font-weight:bold; font-size:18px;">SMLC Dispatches</span>
+                <button onclick="document.getElementById('portal-global-lightbox').style.display='none'" class="lightbox-close-btn" style="font-size:24px; cursor:pointer; background:none; border:none;">&times;</button>
             </div>
             
-            <div class="Split-Body-Flex-Matrix">
-                <div class="Lightbox-Left-Cell">
-                    <h3 id="lightbox-target-title">Title</h3>
-                    <div id="lightbox-target-date" style="font-size: 11px; color: #cc0000; font-weight: bold; margin-bottom: 8px;">Wire Sync Info</div>
-                    
-                    <div id="lightbox-location-container" style="font-size: 13px; font-weight: bold; margin-bottom: 12px;">
-                        📍 Location: <a id="lightbox-target-location-link" href="https://maps.google.com/?q=Louisville,+IL" target="_blank" style="color: #0258A3; text-decoration: underline;">Louisville, IL</a>
-                    </div>
-
-                    <p id="lightbox-target-story" class="lightbox-story-content">Story Body</p>
-                    
-                    <div id="lightbox-img-wrapper" class="lightbox-image-wrapper">
-                        <img id="lightbox-target-img" src="" alt="Expanded Asset Content display">
-                    </div>
-                </div>
-                
-                <div class="Lightbox-Right-Cell" id="lightbox-maps-render-viewport">
-                    <iframe id="lightbox-satellite-map-frame" 
-                            width="100%" 
-                            height="100%" 
-                            style="border:0;" 
-                            loading="lazy" 
-                            allowfullscreen 
-                            src="https://maps.google.com/maps?q=Louisville,+IL&t=k&z=15&ie=UTF8&iwloc=&output=embed">
-                    </iframe>
+            <div style="padding:20px; overflow-y:auto;">
+                <h3 id="lightbox-target-title" style="font-size:24px; margin-top:0;">Title</h3>
+                <div id="lightbox-target-date" style="font-size: 13px; color: #cc0000; font-weight: bold; margin-bottom: 12px;">Wire Sync Info</div>
+                <p id="lightbox-target-story" style="font-size:16px; line-height:1.6;">Story Body</p>
+                <div id="lightbox-img-wrapper" style="margin-top:15px;">
+                    <img id="lightbox-target-img" src="" alt="Expanded Asset Content" style="width:100%; border-radius:4px;">
                 </div>
             </div>
             
-            <div class="lightbox-footer-bar">
+            <div class="lightbox-footer-bar" style="padding:15px; border-top:1px solid #ddd; text-align:center; font-size:12px; color:#666;">
                 <span>SUPPORT MY LOCAL COMMUNITY NETWORK &copy; 2026</span>
-                <div id="lightbox-action-row" style="display:none;">
+                <div id="lightbox-action-row" style="display:none; margin-top:8px;">
                     <a id="lightbox-target-link" href="#" target="_blank" style="color: #0258A3; font-weight: bold;">Open Source &rarr;</a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- SECTION 11: GLOBAL FOOTER MATRIX -->
+    <!-- GLOBAL FOOTER -->
     <footer id="global-footer-container" class="site-global-footer-matrix">
-        <div class="footer-primary-row-chassis">
-            <div class="footer-matrix-block-cell left-align-cell">
-                <span class="footer-label">Contact Us:</span>
-                <div id="footer-phone-target" class="footer-value-row"></div>
+        <div style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:20px; max-width:1200px; margin:0 auto; padding-bottom:20px;">
+            <div>
+                <span style="font-weight:bold; color:var(--louis-gold);">Contact Us:</span>
+                <div id="footer-phone-target"></div>
             </div>
-            <div class="footer-matrix-block-cell center-align-cell">
-                <span class="footer-label">Email:</span>
-                <a id="footer-email-target" href="#" class="footer-value"></a>
+            <div>
+                <span style="font-weight:bold; color:var(--louis-gold);">Email:</span><br>
+                <a id="footer-email-target" href="#" style="color:#fff;"></a>
             </div>
-            <div class="footer-matrix-block-cell right-align-cell">
-                <span class="footer-label">Address:</span>
-                <div id="footer-address-target" class="footer-value-row"></div>
+            <div>
+                <span style="font-weight:bold; color:var(--louis-gold);">Address:</span>
+                <div id="footer-address-target"></div>
             </div>
         </div>
-        <div class="footer-copyright-bottom-row">
-            <p id="footer-copy-target" class="footer-copyright-text">&copy; 2026 Louisville Community Portal. All rights reserved.</p>
-            <p class="footer-version-info" style="margin-top: 8px; opacity: 0.8; font-size: 12px; color: #aaaaaa;">
-                <strong>System Build Version:</strong> v1.0.0 | <strong>Active Version:</strong> 2026-07-26_18:20
+        <div style="border-top:1px solid #333; padding-top:15px;">
+            <p id="footer-copy-target">&copy; 2026 Louisville Community Portal. All rights reserved.</p>
+            <p style="margin-top: 8px; opacity: 0.8; font-size: 12px; color: #aaaaaa;">
+                <strong>System Build Version:</strong> v1.0.0 | <strong>Active Version:</strong> 2026-07-26_19:50
             </p>
         </div>
     </footer>
 
-    <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top">↑</button>
+    <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top" style="position:fixed; bottom:20px; right:20px; padding:10px 15px; background:#222; color:#fff; border:1px solid var(--louis-gold); border-radius:4px; cursor:pointer;">↑</button>
 
-    <!-- Core Operational Pipeline Script Import -->
-    <script type="text/javascript" src="./script.js?v=202607261820"></script>
+    <!-- Relative Script Import with Smart Cache-Buster -->
+    <script type="text/javascript" src="./script.js?v=202607261950"></script>
 </body>
 </html>
