@@ -1,7 +1,12 @@
 <!-- 
-  Version Timestamp: 2026-07-07_12:12-CT
-  Description: Complete production-ready community portal template for Louisville, IL. 
-  Includes 100% Google-compliant SEO structure, GA4 dual-tracking watermarks, and GitHack asset delivery.
+  Active Version: 2026-07-26_12:09
+  Description: Production-ready Louisville, IL Community Portal index.html updated to match site directives.
+  Features:
+  - Dual GA4 tracking watermarks (Global G-L376P3NPY4 + Project Specific G-Z9M5LXQ5XN)
+  - Dynamic UTM tracking on header link and nav links
+  - Smart Cache-Busting (?v=202607261209) on external resources
+  - Visible active version/timestamp in HTML footer
+  - Fully cross-browser compatible structure
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -39,16 +44,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500&display=swap" rel="stylesheet">
     
     <!-- External Stylesheet via GitHack CDN with Smart Cache-Buster -->
-    <link rel="stylesheet" href="https://raw.githack.com/Werewolf3788/Testpages/main/louisville/style.css?v=202607071212">
+    <link rel="stylesheet" href="https://raw.githack.com/Werewolf3788/Testpages/main/louisville/style.css?v=202607261209">
     
-    <!-- Global Analytics Watermarks (Global + Client-Specific) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-H6Q756MVE8"></script>
+    <!-- Global Analytics Watermarks (Global Site-Wide Watermark + Project Specific) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-L376P3NPY4"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-H6Q756MVE8'); /* Scott's Client Site Tracking */
-      gtag('config', 'G-L376P3NPY4'); /* Site-Wide Analytics Watermark */
+      gtag('config', 'G-L376P3NPY4'); /* Global Site-Wide Analytics Watermark */
+      gtag('config', 'G-Z9M5LXQ5XN'); /* Project-Specific Analytics Property */
     </script>
 </head>
 <body>
@@ -61,7 +66,7 @@
 
     <!-- SECTION 1: FULL-WIDTH HEADER BILLBOARD -->
     <header class="main-header">
-        <a href="./home" class="header-billboard-link">
+        <a href="./home?utm_campaign=werewolf3788profile&utm_source=HeaderBillboardLink&utm_medium=banner_click" class="header-billboard-link">
             <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="SMLC Platform Header Logo" class="header-billboard-img">
         </a>
     </header>
@@ -70,7 +75,9 @@
     <nav class="nav-bar">
         <div class="nav-container">
             <ul class="menu-list" id="dynamic-menu-target">
-                <li class="menu-item active"><a href="./home">Home</a></li>
+                <li class="menu-item active">
+                    <a href="./home?utm_campaign=werewolf3788profile&utm_source=NavHomeButton&utm_medium=nav_click">Home</a>
+                </li>
             </ul>
         </div>
     </nav>
@@ -157,7 +164,13 @@
 
     </main>
 
+    <!-- FOOTER WITH VISIBLE ACTIVE VERSION AND TIMESTAMP -->
+    <footer class="site-footer" style="text-align: center; padding: 20px; font-family: sans-serif; font-size: 14px; opacity: 0.85;">
+        <p>&copy; 2026 Louisville Community Portal. All rights reserved.</p>
+        <p class="footer-version-info"><strong>Active Version:</strong> 2026-07-26_12:09</p>
+    </footer>
+
     <!-- Core Script Orchestration via GitHack CDN with Smart Cache-Buster -->
-    <script type="text/javascript" src="https://raw.githack.com/Werewolf3788/Testpages/main/louisville/script.js?v=202607071212"></script>
+    <script type="text/javascript" src="https://raw.githack.com/Werewolf3788/Testpages/main/louisville/script.js?v=202607261209"></script>
 </body>
 </html>
