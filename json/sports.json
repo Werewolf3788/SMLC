@@ -1,0 +1,59 @@
+<!-- v=1785165057 ?v=1785165057 -->
+{
+  "widgets": {
+    "clay_county_teams": {
+      "name": "All Clay County",
+      "teams": ["North Clay", "Cardinals", "Indians", "Wolves", "Wolf Pups"],
+      "banner_id": "68988",
+      "vertical_id": "69251"
+    },
+    "clay_city": {
+      "name": "Clay City",
+      "teams": ["Wolves", "Wolf Pups"],
+      "banner_id": "64422",
+      "vertical_id": "69251"
+    },
+    "louisville": {
+      "name": "Louisville",
+      "teams": ["North Clay", "Cardinals", "Indians"],
+      "banner_id": "68601",
+      "vertical_id": "69253"
+    },
+    "flora": {
+      "name": "Flora",
+      "teams": ["Wolves", "Wolf Pup"],
+      "banner_id": "68602",
+      "vertical_id": "69252"
+    }
+  },
+  "team_schedules": {
+    "flora_boys_varsity_football": {
+      "name": "Flora Boys Varsity Football",
+      "id": "69254",
+      "team": "Flora High School",
+      "sport": "Football",
+      "squad": "Boys Varsity"
+    },
+    "flora_boys_jv_football": {
+      "name": "Flora Boys High School JV Football",
+      "id": "69255",
+      "team": "Flora High School",
+      "sport": "Football",
+      "squad": "Boys Varsity"
+    },
+    "flora_football_freshmen": {
+      "name": "Flora Football Freshmen",
+      "id": "69256",
+      "team": "Flora High School",
+      "sport": "Football",
+      "squad": "Boys Freshman"
+    },
+    "boys_hs_varsity_basketball": {
+      "name": "Boys HS Varsity Basketball",
+      "id": "69257",
+      "team": "Flora High School",
+      "sport": "Basketball",
+      "squad": "Boys Varsity"
+    }
+  }
+}
