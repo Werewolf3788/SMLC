@@ -10,7 +10,8 @@
     "assets_json": "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/assets.json",
     "bulletin_engine_js": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/bulletin/bulletin-engine.js",
     "gas_billboard_html": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/billboard.html",
-    "school_colors_css": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/clay-county-IL/school-colors.css"
+    "school_colors_css": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/clay-county-IL/school-colors.css",
+    "School_sports": "https://github.com/Werewolf3788/Testpages/edit/main/json/config.json"
   },
   "multi_alerts_rss_cluster": [
     "https://www.google.com/alerts/feeds/16385066500020016213/7900491242905665188",
