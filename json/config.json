@@ -1,10 +1,16 @@
 {
+  "active_version": "v1.0.0",
+  "last_updated": "2026-07-26 12:22",
   "regional_endpoints": {
     "apps_script_bulletin_url": "https://script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec",
     "smlc_local_news_json": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/local-news/news_data.json",
     "merchant_spreadsheet_csv": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTwXvTxCrAM-1tVTG4Rhg8Oka186yumxK3nebWyE61pD_jt-hhlo-d4D0iv05P4pm0Ag7JH-tAiwzbo/pub?output=csv",
     "partners_json_manifest": "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/partners.json",
-    "update_gas_portal_url": "https://werewolf3788.github.io/Testpages/update-gas.html"
+    "update_gas_portal_url": "https://werewolf3788.github.io/Testpages/update-gas.html",
+    "assets_json": "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/assets.json",
+    "bulletin_engine_js": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/bulletin/bulletin-engine.js",
+    "gas_billboard_html": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/billboard.html",
+    "school_colors_css": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/clay-county-IL/school-colors.css"
   },
   "multi_alerts_rss_cluster": [
     "https://www.google.com/alerts/feeds/16385066500020016213/7900491242905665188",
@@ -13,6 +19,18 @@
     "https://www.google.com/alerts/feeds/16385066500020016213/68970857447932436"
   ],
   "town_history_tree": {
-    "louisville": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townjson/louisville.json"
+    "bible_grove": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/bible-grove.json",
+    "camp_travis": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/camp-travis.json",
+    "clay_city": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/clay-city.json",
+    "flora": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/flora.json",
+    "hoosier": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/hoosier.json",
+    "hord": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/hord.json",
+    "ingraham": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/ingraham.json",
+    "iola": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/iola.json",
+    "kenner": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/kenner.json",
+    "louisville": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/louisville.json",
+    "oskaloosa": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/oskaloosa.json",
+    "sailor_springs": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/sailor-springs.json",
+    "xenia": "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/xenia.json"
   }
 }
