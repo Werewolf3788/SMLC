@@ -1,36 +1,134 @@
+<!-- v=1785165057 ?v=1785165057 -->
 {
-	"maps": {
-		"flora": {
-			"name": "Flora, IL",
-			"src": "https://ourflora.com/wp-content/uploads/2025/02/R.jpg",
-			"alt": "Community map of Flora, IL",
-			"url": "https://werewolf3788.github.io/Testpages/flora.html"
-		},
-		"clay_city": {
-			"name": "Clay City, IL",
-			"src": "https://townmapsusa.com/images/maps/map_of_clay_city_il.jpg",
-			"alt": "Community map of Clay City, IL",
-			"url": "https://werewolf3788.github.io/Testpages/clay-city.html"
-		},
-		"xenia": {
-			"name": "Xenia, IL",
-			"src": "https://townmapsusa.com/images/maps/map_of_xenia_il.jpg",
-			"alt": "Community map of Xenia, IL",
-			"url": "https://werewolf3788.github.io/Testpages/xenia.html"
-		},
-		"sailor_springs": {
-			"name": "Sailor Springs, IL",
-			"src": "https://townmapsusa.com/images/maps/map_of_sailor_springs_il.jpg",
-			"alt": "Community map of Sailor Springs, IL",
-			"url": "https://werewolf3788.github.io/Testpages/sailor-springs.html"
-		},
-		"louisville": {
-			"name": "Louisville, IL",
-			"src": "https://townmapsusa.com/images/maps/map_of_louisville_il.jpg",
-			"alt": "Community map of Louisville, IL",
-			"url": "https://werewolf3788.github.io/Testpages/louisville.html"
-		}
-	}
+  "locations": {
+    "flora": {
+      "name": "Flora, IL",
+      "map": {
+        "src": "https://ourflora.com/wp-content/uploads/2025/02/R.jpg",
+        "alt": "Community map of Flora, IL",
+        "url": "https://werewolf3788.github.io/Testpages/flora.html"
+      },
+      "widgets": {
+        "banner_id": "68602",
+        "vertical_id": "69252",
+        "teams": ["Wolves", "Wolf Pup"]
+      },
+      "schedules": {
+        "flora_boys_varsity_football": {
+          "name": "Flora Boys Varsity Football",
+          "id": "69254",
+          "team": "Flora High School",
+          "sport": "Football",
+          "squad": "Boys Varsity"
+        },
+        "flora_boys_jv_football": {
+          "name": "Flora Boys High School JV Football",
+          "id": "69255",
+          "team": "Flora High School",
+          "sport": "Football",
+          "squad": "Boys Varsity"
+        },
+        "flora_football_freshmen": {
+          "name": "Flora Football Freshmen",
+          "id": "69256",
+          "team": "Flora High School",
+          "sport": "Football",
+          "squad": "Boys Freshman"
+        },
+        "boys_hs_varsity_basketball": {
+          "name": "Boys HS Varsity Basketball",
+          "id": "69257",
+          "team": "Flora High School",
+          "sport": "Basketball",
+          "squad": "Boys Varsity"
+        }
+      },
+      "gas_stations": {
+        "caseys": {
+          "name": "Flora Casey's",
+          "id": "48100"
+        },
+        "mach_1": {
+          "name": "Flora Mach 1",
+          "id": "128128"
+        },
+        "hucks": {
+          "name": "Flora Huck's",
+          "id": "48101"
+        },
+        "fast_stop": {
+          "name": "Flora Fast Stop",
+          "id": "120226"
+        }
+      }
+    },
+    "louisville": {
+      "name": "Louisville, IL",
+      "map": {
+        "src": "https://townmapsusa.com/images/maps/map_of_louisville_il.jpg",
+        "alt": "Community map of Louisville, IL",
+        "url": "https://werewolf3788.github.io/Testpages/louisville.html"
+      },
+      "widgets": {
+        "banner_id": "68601",
+        "vertical_id": "69253",
+        "teams": ["North Clay", "Cardinals", "Indians"]
+      },
+      "gas_stations": {
+        "caseys": {
+          "name": "Louisville Casey's",
+          "id": "87817"
+        }
+      }
+    },
+    "clay_city": {
+      "name": "Clay City, IL",
+      "map": {
+        "src": "https://townmapsusa.com/images/maps/map_of_clay_city_il.jpg",
+        "alt": "Community map of Clay City, IL",
+        "url": "https://werewolf3788.github.io/Testpages/clay-city.html"
+      },
+      "widgets": {
+        "banner_id": "64422",
+        "vertical_id": "69251",
+        "teams": ["Wolves", "Wolf Pups"]
+      },
+      "gas_stations": {
+        "caseys": {
+          "name": "Clay City Casey's",
+          "id": "48026"
+        }
+      }
+    },
+    "xenia": {
+      "name": "Xenia, IL",
+      "map": {
+        "src": "https://townmapsusa.com/images/maps/map_of_xenia_il.jpg",
+        "alt": "Community map of Xenia, IL",
+        "url": "https://werewolf3788.github.io/Testpages/xenia.html"
+      },
+      "gas_stations": {
+        "xenia_gas_station": {
+          "name": "Xenia Gas Station",
+          "id": "171711"
+        }
+      }
+    },
+    "sailor_springs": {
+      "name": "Sailor Springs, IL",
+      "map": {
+        "src": "https://townmapsusa.com/images/maps/map_of_sailor_springs_il.jpg",
+        "alt": "Community map of Sailor Springs, IL",
+        "url": "https://werewolf3788.github.io/Testpages/sailor-springs.html"
+      }
+    },
+    "all_clay_county": {
+      "name": "All Clay County",
+      "widgets": {
+        "banner_id": "68988",
+        "vertical_id": "69251",
+        "teams": ["North Clay", "Cardinals", "Indians", "Wolves", "Wolf Pups"]
+      }
+    }
+  }
 }
-/* NO STRIPPING, NO COMPRESSING, DON'T CHANGE WHAT I SPECIFICALLY DIDN'T SAY TO CHANGE */
-/* NYT Timestamp: 2026-06-16 08:34:42 */
