@@ -1,16 +1,16 @@
 <!-- 
-  Active Version: 2026-07-26_15:30
-  Description: Louisville IL Community Portal template.
-  Features:
-  - Clean Relative Path Asset Imports (style.css & script.js in same directory)
-  - Section 7 ET Module Heading Headers (`#A44F0B` background boxes)
-  - 5-Event scroll viewport with internal overflow scrolling
-  - Section 7 3-Column Equal Height Layout with 60px Horizontal Column Gap
-  - Visible active version/timestamp in HTML footer
-  - Dual GA4 tracking watermarks (G-L376P3NPY4 + G-H6Q756MVE8)
+   Active Version: 2026-07-26_18:20
+   File: louisville.html
+   Description: Louisville IL Community Portal template.
+   Features:
+   - Dynamic HTML Data Binding (<html data-town="LOUISVILLE">)
+   - Relative Path Imports (style.css & script.js in same directory)
+   - Integrated Lightbox & Satellite Map Coordinates
+   - Active Version & Build Timestamp Sync in HTML Footer
+   - Dual GA4 Analytics Watermarks (G-L376P3NPY4 + G-H6Q756MVE8)
 -->
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="en-US" data-town="LOUISVILLE">
 <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -23,7 +23,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500&display=swap" rel="stylesheet">
     
     <!-- Local Directory Stylesheet Import with Smart Cache-Buster -->
-    <link rel="stylesheet" href="./style.css?v=202607261530" />
+    <link rel="stylesheet" href="./style.css?v=202607261820" />
     
     <!-- Global Analytics Watermarks -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L376P3NPY4"></script>
@@ -36,7 +36,7 @@
         gtag('config', 'G-H6Q756MVE8'); /* Project Specific Property */
     </script>
 </head>
-<body data-town="louisville">
+<body data-town="LOUISVILLE">
 
     <!-- DYNAMIC FLOATING COMMEMORATIVE AND HOLIDAY OVERLAY HUD -->
     <div class="portal-floating-hud-track">
@@ -54,13 +54,8 @@
     <header class="menu-bar">
         <div class="menu-inner">
             <nav>
-                <ul id="dynamic-menu-links" class="menu-links">
-                    <li><a href="./home?utm_campaign=werewolf3788profile&utm_source=NavHomeButton&utm_medium=nav_click">Home</a></li>
-                    <li><a href="./clay-city?utm_campaign=werewolf3788profile&utm_source=NavClayCityButton&utm_medium=nav_click">Clay City</a></li>
-                    <li><a href="./flora?utm_campaign=werewolf3788profile&utm_source=NavFloraButton&utm_medium=nav_click">Flora</a></li>
-                    <li><a href="./louisville?utm_campaign=werewolf3788profile&utm_source=NavLouisvilleButton&utm_medium=nav_click" class="active">Louisville</a></li>
-                    <li><a href="./sailor-springs?utm_campaign=werewolf3788profile&utm_source=NavSailorSpringsButton&utm_medium=nav_click">Sailor Springs</a></li>
-                    <li><a href="./xenia?utm_campaign=werewolf3788profile&utm_source=NavXeniaButton&utm_medium=nav_click">Xenia</a></li>
+                <ul id="dynamic-menu-target" class="menu-links">
+                    <!-- Populated dynamically via script.js -->
                 </ul>
             </nav>
         </div>
@@ -207,7 +202,7 @@
         </section>
     </div>
 
-    <!-- SECTION 7: THREE-COLUMN OPERATIONAL DATA INTERFACE WITH MODULE HEADINGS -->
+    <!-- SECTION 7: THREE-COLUMN OPERATIONAL DATA INTERFACE -->
     <section class="smlc-three-column-portal-wrapper" id="adaptive-time-portal-chassis">
         <div class="portal-grid-layout-fixed">
             
@@ -226,7 +221,6 @@
                     <div class="clipping-footer">Clay City • Flora • Louisville • Sailor Springs • Xenia</div>
                 </div>
 
-                <!-- 7.1.1 MODULE HEADING & CALENDAR CARD -->
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">Upcoming Events in Louisville</h2>
                     <div class="news-clipping-wrapper">
@@ -235,101 +229,8 @@
                             <p class="clipping-tagline" id="month-tagline">Upcoming Events</p> 
                         </div>
                         
-                        <div id="divi-event-list">
-                            <div class="divi-event-item">
-                                <div class="divi-event-date">August 2, 2026</div>
-                                <div class="divi-event-title">Holy Cross Church Parish Picnic</div>
-                                <div class="event-info-text">
-                                    <strong>Where:</strong> 5782 Ingraham Ln, Newton, IL 62448, USA <br> 
-                                    <strong>Time:</strong> 10:00 AM - 10:00 PM 
-                                </div>
-                                <div class="event-snippet" id="snippet-0">"Holy Cross Church of Wendelin Parish Picnic will be held on Sunday, August 2nd, from ..."</div>
-                                <div class="full-details" id="details-0" style="display:none;">Holy Cross Church of Wendelin Parish Picnic will be held on Sunday, August 2nd, from 10. to 10 pm. Tickets will be sold from 10:45 am to 3:45 pm. Adults are $12.00, children 6 through 12 is $6.00, and children 5 and under free. Activities include a country store, food, beer garden, bingo, peddle tractor pull, raffle, kids games, inflatables, and live music all day.&nbsp;<a href="https://www.wnoi.com/wp-content/uploads/2026/06/Holy-Cross-26-resized.jpg" target="_blank">https://www.wnoi.com/wp-content/uploads/2026/06/Holy-Cross-26-resized.jpg</a></div>
-                                <div class="read-more-btn" id="btn-0" onclick="toggleDetails(0, 'Holy Cross Church Parish Picnic')">Read More</div>
-
-                                <div class="cal-links">
-                                    <span class="cal-label">Add to Calendar</span>
-                                    <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=Holy%20Cross%20Church%20Parish%20Picnic&amp;location=5782%20Ingraham%20Ln%2C%20Newton%2C%20IL%2062448%2C%20USA&amp;sf=true&amp;output=xml" target="_blank" class="cal-text-link" onclick="trackEvent('google_cal_add', 'Holy Cross Church Parish Picnic')">Google</a>
-                                    <span style="color:#777; margin: 0 5px;">|</span>
-                                    <a href="#" download="Holy_Cross_Church_Parish_Picnic.ics" class="cal-text-link" onclick="trackEvent('apple_cal_add', 'Holy Cross Church Parish Picnic')">Apple / Outlook</a>
-                                </div>
-                            </div>
-
-                            <div class="divi-event-item">
-                                <div class="divi-event-date">August 3, 2026</div>
-                                <div class="divi-event-title">CCH Walk-In School Physical Days!</div>
-                                <div class="event-info-text">
-                                    <strong>Where:</strong> 929 Stacy Burk Dr, Flora, IL 62839-3241, United States <br> 
-                                    <strong>Time:</strong> 12:00 PM - 8:00 PM 
-                                </div>
-                                <div class="event-snippet" id="snippet-1">"Mark your calendars for our annual CCH Walk-In School Physical days! These will suf..."</div>
-                                <div class="full-details" id="details-1" style="display:none;">Mark your calendars for our annual CCH Walk-In School Physical days! These will suffice for sports physicals.<br><a href="https://www.facebook.com/events/2404754976701822/" target="_blank">https://www.facebook.com/events/2404754976701822/</a></div>
-                                <div class="read-more-btn" id="btn-1" onclick="toggleDetails(1, 'CCH Walk-In School Physical Days!')">Read More</div>
-
-                                <div class="cal-links">
-                                    <span class="cal-label">Add to Calendar</span>
-                                    <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=CCH%20Walk-In%20School%20Physical%20Days!&amp;location=929%20Stacy%20Burk%20Dr%2C%20Flora%2C%20IL%2062839-3241%2C%20United%20States&amp;sf=true&amp;output=xml" target="_blank" class="cal-text-link" onclick="trackEvent('google_cal_add', 'CCH Walk-In School Physical Days!')">Google</a>
-                                    <span style="color:#777; margin: 0 5px;">|</span>
-                                    <a href="#" download="CCH_Walk-In_School_Physical_Days!.ics" class="cal-text-link" onclick="trackEvent('apple_cal_add', 'CCH Walk-In School Physical Days!')">Apple / Outlook</a>
-                                </div>
-                            </div>
-
-                            <div class="divi-event-item">
-                                <div class="divi-event-date">August 5, 2026</div>
-                                <div class="divi-event-title">☕✨ Caffeinate &amp; Collaborate ✨☕</div>
-                                <div class="event-info-text">
-                                    <strong>Where:</strong> 114 E North Ave, Flora, IL 62839-2027, United States <br> 
-                                    <strong>Time:</strong> 12:00 PM - 1:00 PM 
-                                </div>
-                                <div class="event-snippet" id="snippet-2">"☕✨ Caffeinate &amp; Collaborate ✨☕ Join us for our monthly networking event!"</div>
-                                <div class="full-details" id="details-2" style="display:none;">Join us for our monthly networking event!<br><a href="https://www.facebook.com/events/36654666207511728/" target="_blank">https://www.facebook.com/events/36654666207511728/</a></div>
-                                <div class="read-more-btn" id="btn-2" onclick="toggleDetails(2, '☕✨ Caffeinate &amp; Collaborate ✨☕')">Read More</div>
-
-                                <div class="cal-links">
-                                    <span class="cal-label">Add to Calendar</span>
-                                    <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=Caffeinate%20%26%20Collaborate&amp;location=114%20E%20North%20Ave%2C%20Flora%2C%20IL&amp;sf=true&amp;output=xml" target="_blank" class="cal-text-link" onclick="trackEvent('google_cal_add', 'Caffeinate & Collaborate')">Google</a>
-                                    <span style="color:#777; margin: 0 5px;">|</span>
-                                    <a href="#" download="Caffeinate_&_Collaborate.ics" class="cal-text-link" onclick="trackEvent('apple_cal_add', 'Caffeinate & Collaborate')">Apple / Outlook</a>
-                                </div>
-                            </div>
-
-                            <div class="divi-event-item">
-                                <div class="divi-event-date">August 12, 2026</div>
-                                <div class="divi-event-title">Free Children’s Orthopedic Assessment Clinic</div>
-                                <div class="event-info-text">
-                                    <strong>Where:</strong> CCH Medical Clinic - Flora, 929 Stacey Burk Dr, Flora, IL 62839, USA <br> 
-                                    <strong>Time:</strong> 11:30 AM - 2:00 PM 
-                                </div>
-                                <div class="event-snippet" id="snippet-3">"The Flora Elks 1659 and Olney Elks 926 Lodges sponsor a free clinic..."</div>
-                                <div class="full-details" id="details-3" style="display:none;">Free children's orthopedic assessment clinic sponsored by Elks Lodges.</div>
-                                <div class="read-more-btn" id="btn-3" onclick="toggleDetails(3, 'Free Children’s Orthopedic Assessment Clinic')">Read More</div>
-
-                                <div class="cal-links">
-                                    <span class="cal-label">Add to Calendar</span>
-                                    <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=Free%20Children%E2%80%99s%20Orthopedic%20Assessment%20Clinic&amp;location=CCH%20Medical%20Clinic%20-%20Flora&amp;sf=true&amp;output=xml" target="_blank" class="cal-text-link" onclick="trackEvent('google_cal_add', 'Free Children’s Orthopedic Assessment Clinic')">Google</a>
-                                    <span style="color:#777; margin: 0 5px;">|</span>
-                                    <a href="#" download="Free_Childrens_Clinic.ics" class="cal-text-link" onclick="trackEvent('apple_cal_add', 'Free Children’s Orthopedic Assessment Clinic')">Apple / Outlook</a>
-                                </div>
-                            </div>
-
-                            <div class="divi-event-item">
-                                <div class="divi-event-date">August 13, 2026</div>
-                                <div class="divi-event-title">The MacCormack Family</div>
-                                <div class="event-info-text">
-                                    <strong>Where:</strong> New Liberty General Baptist Church, 2403 Nickelson Creek Rd, Iuka, IL 62849, USA <br> 
-                                    <strong>Time:</strong> 7:00 PM - 10:00 PM 
-                                </div>
-                                <div class="event-snippet" id="snippet-4">"1 hour gospel concert."</div>
-                                <div class="full-details" id="details-4" style="display:none;">1 hour gospel concert.<br><a href="https://www.facebook.com/events/3019397444924484/" target="_blank">https://www.facebook.com/events/3019397444924484/</a></div>
-                                <div class="read-more-btn" id="btn-4" onclick="toggleDetails(4, 'The MacCormack Family')">Read More</div>
-
-                                <div class="cal-links">
-                                    <span class="cal-label">Add to Calendar</span>
-                                    <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=The%20MacCormack%20Family&amp;location=New%20Liberty%20General%20Baptist%20Church&amp;sf=true&amp;output=xml" target="_blank" class="cal-text-link" onclick="trackEvent('google_cal_add', 'The MacCormack Family')">Google</a>
-                                    <span style="color:#777; margin: 0 5px;">|</span>
-                                    <a href="#" download="The_MacCormack_Family.ics" class="cal-text-link" onclick="trackEvent('apple_cal_add', 'The MacCormack Family')">Apple / Outlook</a>
-                                </div>
-                            </div>
+                        <div id="bulletin-scroller-target">
+                            <div class="feed-loading-placeholder">Syncing real-time community calendar feed...</div>
                         </div>
                         
                         <div class="clipping-footer">
@@ -342,19 +243,16 @@
 
             <!-- CENTER COLUMN CELL (7.2) -->
             <div class="portal-column-cell-box center-cell-stack">
-                <!-- 7.2.1 MODULE HEADING & SPORTS CARD -->
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">North Clay Sports</h2>
                     <div class="scorestream-embed-card">
                         <div class="scorestream-card-header">HIGH SCHOOL SPORTS SCOREBOARD</div>
                         <div class="scorestream-viewport-frame-fixed">
                             <div class="scorestream-widget-container" data-ss_widget_type="horzScoreboard" data-user-widget-id="68601"></div>
-                            <script async type="text/javascript" src="https://scorestream.com/apiJsCdn/widgets/embed.js"></script>
                         </div>
                     </div>
                 </div>
 
-                <!-- 7.2.2 MODULE HEADING & NEWS DISPATCHES CARD -->
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">Louisville News</h2>
                     <div class="newspaper-feed-chassis">
@@ -370,7 +268,6 @@
                     </div>
                 </div>
 
-                <!-- 7.2.3 MODULE HEADING & BUSINESS DIRECTORY BUTTON FRAME -->
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">Business Directory</h2>
                     <div class="section7-news-banner-frame">
@@ -387,7 +284,6 @@
 
             <!-- RIGHT COLUMN CELL (7.3) -->
             <div class="portal-column-cell-box right-cell-stack">
-                <!-- 7.3.1 MODULE HEADING & SMLC FACEBOOK CARD -->
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">SMLC Facebook</h2>
                     <div class="clay-county-news-box group-invitation-master">
@@ -416,7 +312,6 @@
                     </div>
                 </div>
 
-                <!-- 7.3.2 MODULE HEADING & TOWN LOCAL LINKS DIRECTORY CARD -->
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">town local links</h2>
                     <div class="clay-county-news-box">
@@ -463,7 +358,7 @@
                 <div class="lightbox-meta-group">
                     <span id="lightbox-label" class="dynamic-accent-element">SMLC Dispatches</span>
                 </div>
-                <button onclick="document.getElementById('portal-global-lightbox').classList.remove('active-show')" class="lightbox-close-btn">&times;</button>
+                <button onclick="document.getElementById('portal-global-lightbox').style.display='none'" class="lightbox-close-btn">&times;</button>
             </div>
             
             <div class="Split-Body-Flex-Matrix">
@@ -522,32 +417,14 @@
         <div class="footer-copyright-bottom-row">
             <p id="footer-copy-target" class="footer-copyright-text">&copy; 2026 Louisville Community Portal. All rights reserved.</p>
             <p class="footer-version-info" style="margin-top: 8px; opacity: 0.8; font-size: 12px; color: #aaaaaa;">
-                <strong>System Build Version:</strong> v1.0.0 | <strong>Active Version:</strong> 2026-07-26_15:30
+                <strong>System Build Version:</strong> v1.0.0 | <strong>Active Version:</strong> 2026-07-26_18:20
             </p>
         </div>
     </footer>
 
     <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top">↑</button>
 
-    <!-- Local Directory Script Import with Smart Cache-Buster -->
-    <script type="text/javascript" src="./script.js?v=202607261530"></script>
-    
-    <script>
-        function toggleDetails(idx, title) {
-            const snippet = document.getElementById('snippet-' + idx);
-            const details = document.getElementById('details-' + idx);
-            const btn = document.getElementById('btn-' + idx);
-
-            if (details.style.display === 'none' || details.style.display === '') {
-                details.style.display = 'block';
-                snippet.style.display = 'none';
-                btn.innerText = 'Show Less';
-            } else {
-                details.style.display = 'none';
-                snippet.style.display = 'block';
-                btn.innerText = 'Read More';
-            }
-        }
-    </script>
+    <!-- Core Operational Pipeline Script Import -->
+    <script type="text/javascript" src="./script.js?v=202607261820"></script>
 </body>
 </html>
