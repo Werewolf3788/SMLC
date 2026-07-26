@@ -1,9 +1,10 @@
 /* ==========================================================================
-   Active Version: 2026-07-26_12:28
+   Active Version: 2026-07-26_15:25
    File: script.js
    Description: Core operational pipeline & application engine for community portal pages.
    Features:
    - Dynamic Title-Based Town & Keyword Extraction Filter Matrix
+   - Dynamic ScoreStream Widget Extraction from External JSON Config (sports.json / config.json)
    - Real-time UI population, auto-expiration calendar loops, and smart cache-busting
    - Smart tabs handling, dynamic UTM tracking, and visible build footer sync
    ========================================================================== */
@@ -12,36 +13,43 @@
 const TOWN_ALIAS_MAP = {
     "LOUISVILLE": {
         primaryName: "Louisville",
+        jsonKey: "louisville",
         keywords: ["LOUISVILLE", "NORTH CLAY", "NC", "HOOSIER"],
         zipCodes: ["62858"]
     },
     "FLORA": {
         primaryName: "Flora",
-        keywords: ["FLORA", "FLO"],
+        jsonKey: "flora",
+        keywords: ["FLORA", "FLO", "WOLVES"],
         zipCodes: ["62839"]
     },
     "CLAY CITY": {
         primaryName: "Clay City",
-        keywords: ["CLAY CITY"],
+        jsonKey: "clay_city",
+        keywords: ["CLAY CITY", "CC"],
         zipCodes: ["62824"]
     },
     "XENIA": {
         primaryName: "Xenia",
+        jsonKey: "clay_county_teams",
         keywords: ["XENIA"],
         zipCodes: ["62899"]
     },
     "IOLA": {
         primaryName: "Iola",
+        jsonKey: "louisville",
         keywords: ["IOLA"],
         zipCodes: ["62849"]
     },
     "SAILOR SPRINGS": {
         primaryName: "Sailor Springs",
+        jsonKey: "clay_county_teams",
         keywords: ["SAILOR SPRINGS"],
         zipCodes: ["62879"]
     },
     "INGRAHAM": {
         primaryName: "Ingraham",
+        jsonKey: "louisville",
         keywords: ["INGRAHAM"],
         zipCodes: ["62434"]
     }
@@ -474,7 +482,6 @@ async function loadLocalLinksDirectory(cacheBuster) {
         const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/refs/heads/main/json/local_links.json?' + cacheBuster);
         const data = await res.json();
         if(Array.isArray(data)) {
-            // DYNAMIC FILTER: Filters local directory using active town match matrix
             const filteredLinks = data.filter(link => matchesActiveTown(link.name, link.location));
             if(filteredLinks.length > 0) {
                 linkTarget.innerHTML = filteredLinks.map(link => `
@@ -505,11 +512,14 @@ async function processDataPipelines() {
         const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/menu.json?' + cb);
         const menuArray = await res.json();
         if(Array.isArray(menuArray)) {
-            document.getElementById('dynamic-menu-target').innerHTML = menuArray.map(item => `
-                <li class="menu-item ${item.name.toUpperCase() === ACTIVE_TOWN.primaryName.toUpperCase() ? 'active' : ''}">
-                    <a href="${item.url}">${item.name}</a>
-                </li>
-            `).join('');
+            const menuTarget = document.getElementById('dynamic-menu-target');
+            if (menuTarget) {
+                menuTarget.innerHTML = menuArray.map(item => `
+                    <li class="menu-item ${item.name.toUpperCase() === ACTIVE_TOWN.primaryName.toUpperCase() ? 'active' : ''}">
+                        <a href="${item.url}">${item.name}</a>
+                    </li>
+                `).join('');
+            }
         }
     } catch(e) { console.error("Menu link pipeline fault", e); }
 
@@ -559,10 +569,9 @@ async function processDataPipelines() {
     try {
         const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/section3.json?' + cb);
         const rows = await res.json();
-        // DYNAMIC FILTER: Matches Town property against active town primary name
         const targetRow = rows.find(r => (r.Town || "").toUpperCase() === ACTIVE_TOWN.primaryName.toUpperCase());
         if(targetRow) {
-            document.getElementById('right-card-meta-title').innerText = targetRow.Title;
+            const rTitle = document.getElementById('right-card-meta-title'); if (rTitle) rTitle.innerText = targetRow.Title;
             const i1 = document.getElementById('dual-img-1'); if (i1) { i1.src = targetRow.ImageUrl1; i1.onclick = () => fireLightbox(targetRow.ImageUrl1, targetRow.Header1, "ARCHIVE VIEW", targetRow.Description1, targetRow.source_url); }
             const h1 = document.getElementById('dual-header-1'); if (h1) h1.innerText = targetRow.Header1;
             const i2 = document.getElementById('dual-img-2'); if (i2) { i2.src = targetRow.ImageUrl2; i2.onclick = () => fireLightbox(targetRow.ImageUrl2, targetRow.Header2, "ARCHIVE VIEW", targetRow.Description1, targetRow.source_url); }
@@ -572,13 +581,14 @@ async function processDataPipelines() {
         }
     } catch(e) { console.error("Discover complex card matrix data failure", e); }
 
-    // 4. Historical Archive Timeline (URL dynamically routes based on active town name)
+    // 4. Historical Archive Timeline
     try {
         const townSlug = ACTIVE_TOWN.primaryName.toLowerCase().replace(/\s+/g, '');
         const res = await fetch(`https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/${townSlug}.json?` + cb);
         const payload = await res.json();
-        if(payload && payload.history) {
-            document.getElementById('history-row-target').innerHTML = payload.history.map(evt => {
+        const historyRowTarget = document.getElementById('history-row-target');
+        if(payload && payload.history && historyRowTarget) {
+            historyRowTarget.innerHTML = payload.history.map(evt => {
                 let textExcerpt = evt.description || "";
                 if(textExcerpt.length > 140) {
                     textExcerpt = textExcerpt.substring(0, 140) + "...";
@@ -627,7 +637,6 @@ async function processDataPipelines() {
         const res = await fetch('https://raw.githubusercontent.com/skventuresigns-design/smlc/main/local-news/news_data.json?' + cb);
         const newsArray = await res.json();
         
-        // DYNAMIC FILTER: Matches title or body against town keywords & aliases (e.g. LOUISVILLE, NORTH CLAY, NC, HOOSIER)
         const filtered = newsArray.filter(item => {
             return matchesActiveTown(item.title + " " + item.full_story, item.location);
         });
@@ -659,27 +668,52 @@ async function processDataPipelines() {
         const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/footer.json?' + cb);
         const payload = await res.json(); const f = payload.footer_data;
         if(f) {
-            document.getElementById('footer-phone-target').innerHTML = `<div class="footer-inline-numbers">${f.contact_info.phone.map(p => `<a href="${p.url}" style="color:#c5a059; text-decoration:none;">${p.number}</a>`).join('<span style="color:#c5a059; padding:0 10px;">/</span>')}</div>`;
-            document.getElementById('footer-email-target').href = f.contact_info.email.url;
-            document.getElementById('footer-email-target').innerText = f.contact_info.email.address;
-            document.getElementById('footer-address-target').innerHTML = `<a href="${f.contact_info.address.map_url}" target="_blank" style="color:#fff; text-decoration:none;">${f.contact_info.address.text}</a>`;
-            document.getElementById('footer-copy-target').innerText = f.copyright;
+            const fPhone = document.getElementById('footer-phone-target'); if (fPhone) fPhone.innerHTML = `<div class="footer-inline-numbers">${f.contact_info.phone.map(p => `<a href="${p.url}" style="color:#c5a059; text-decoration:none;">${p.number}</a>`).join('<span style="color:#c5a059; padding:0 10px;">/</span>')}</div>`;
+            const fEmail = document.getElementById('footer-email-target'); if (fEmail) { fEmail.href = f.contact_info.email.url; fEmail.innerText = f.contact_info.email.address; }
+            const fAddress = document.getElementById('footer-address-target'); if (fAddress) fAddress.innerHTML = `<a href="${f.contact_info.address.map_url}" target="_blank" style="color:#fff; text-decoration:none;">${f.contact_info.address.text}</a>`;
+            const fCopy = document.getElementById('footer-copy-target'); if (fCopy) fCopy.innerText = f.copyright;
         }
     } catch(e) { console.error("Footer fetch fault encountered", e); }
     
     // 9. Load Directory Links
     await loadLocalLinksDirectory(cb);
 
-    // 10. ScoreStream Athletics Integration
+    // 10. Dynamic ScoreStream Sports Integration with JSON Config Fetching
     try {
+        // Primary JSON route for sports configuration
+        const sportsJsonUrl = 'https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/sports.json?' + cb;
+        const res = await fetch(sportsJsonUrl);
+        const sportsConfig = await res.json();
+        
+        let targetWidgetId = "68601"; // Fallback default
+
+        if (sportsConfig && sportsConfig.widgets) {
+            const activeKey = ACTIVE_TOWN.jsonKey || "louisville";
+            const townWidgetGroup = sportsConfig.widgets[activeKey] || sportsConfig.widgets["clay_county_teams"];
+            if (townWidgetGroup && townWidgetGroup.banner_id) {
+                targetWidgetId = townWidgetGroup.banner_id;
+            }
+        }
+
+        const widgetContainer = document.querySelector('.scorestream-widget-container');
+        if (widgetContainer) {
+            widgetContainer.setAttribute('data-user-widget-id', targetWidgetId);
+        }
+
+        // Re-inject script to trigger ScoreStream re-render
         const existingScript = document.querySelector('script[src*="scorestream.com"]');
         if (existingScript) existingScript.remove();
+
         const sportsScript = document.createElement('script');
         sportsScript.type = 'text/javascript'; 
         sportsScript.src = "https://scorestream.com/apiJsCdn/widgets/embed.js"; 
         sportsScript.async = true;
         document.body.appendChild(sportsScript);
-    } catch(e) { console.error("ScoreStream structural layout failure", e); }
+
+        console.log(`ScoreStream Sports Widget dynamic binding successful using Banner ID: ${targetWidgetId}`);
+    } catch(e) { 
+        console.error("ScoreStream JSON configuration pipeline error, falling back to static embed", e); 
+    }
 }
 
 function openNewsModal(id) {
@@ -694,5 +728,5 @@ window.addEventListener('DOMContentLoaded', () => {
     applyDynamicUTMTracking();
     setupSmartTabsLogic();
     processDataPipelines();
-    console.log(`Portal Engine initialized for ${ACTIVE_TOWN.primaryName}. Active Version: 2026-07-26_12:28`);
+    console.log(`Portal Engine initialized for ${ACTIVE_TOWN.primaryName}. Active Version: 2026-07-26_15:25`);
 });
