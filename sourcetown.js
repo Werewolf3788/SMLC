@@ -1,12 +1,11 @@
 /* ==========================================================================
-   Active Version: 2026-07-27_06:15
+   Active Version: 2026-07-27_07:00
    File: sourcetown.js / script.js
    Description: SMLC Community Portal Network - Title-First Universal Master Engine
-   Features:
-   - Title-First Town Detection & Smart Keyword Filtering
-   - Clay County Home Hub Aggregator Mode (displays all towns)
-   - Resilient History Timeline & Local Links Pipelines
-   - Fixed Gas Widget Flashing & Footer Data Pipeline Integration
+   Fixes:
+   - Fixed Louisville duplicate station mapping (48026/87817) causing widget flashing
+   - Enforced strict static mode for single-station towns (Louisville, Clay City, Xenia)
+   - Smooth 4-station rotator engine for Flora IL
    ========================================================================== */
 
 /* === SECTION 1: Geographically Correct Town Alignment Matrix === */
@@ -293,13 +292,13 @@ function initializeFirebaseGasMonitor() {
     const gasContainer = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
     if (!gasContainer) return;
 
+    // Direct 1-to-1 mapping for single station towns to eliminate duplicate ID rotation/flashing
     const stationConfigs = {
         "48100": { town: "flora", display: "Flora", name: "CASEY'S", logo: "Casey's.png" },     
         "48101": { town: "flora", display: "Flora", name: "HUCK'S", logo: "Hucks.png" },      
         "128128": { town: "flora", display: "Flora", name: "MACH 1", logo: "Mach 1.png" },    
-        "120226": { town: "flora", display: "Fast Stop", name: "FAST STOP", logo: "Fast stop.png" },  
+        "120226": { town: "flora", display: "Flora", name: "FAST STOP", logo: "Fast stop.png" },  
         "48026": { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" }, 
-        "87817": { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" },      
         "171711": { town: "clay-city", display: "Clay City", name: "CASEY'S", logo: "Casey's.png" },
         "181818": { town: "xenia", display: "Xenia", name: "KNAPP'S", logo: "Knapps.png" }  
     };
@@ -344,6 +343,7 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
     const stationIds = Object.keys(stationConfigs).filter(id => gasTownsArray.includes(stationConfigs[id].town));
     if (stationIds.length === 0) return;
 
+    // Clear any active rotator interval instantly
     if (gasMonitorRotator) {
         clearInterval(gasMonitorRotator);
         gasMonitorRotator = null;
@@ -385,8 +385,11 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
         currentIdx = (currentIdx + 1) % stationIds.length;
     };
 
+    // First initial render
     renderCurrentStation();
 
+    // STRICT CHECK: Only start interval if there is MORE than 1 station (e.g. Flora or Home Page)
+    // Single-station towns (Louisville, Clay City, Xenia) will remain completely static with zero flashing.
     if (stationIds.length > 1) {
         gasMonitorRotator = setInterval(renderCurrentStation, 5000);
     }
@@ -749,5 +752,5 @@ async function processDataPipelines() {
 /* === SECTION Initialization === */
 window.addEventListener('DOMContentLoaded', () => {
     processDataPipelines();
-    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-27_06:15`);
+    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-27_07:00`);
 });
