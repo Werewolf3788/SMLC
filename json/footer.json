@@ -11,17 +11,7 @@
           "label": "Main Office",
           "number": "618-708-4450",
           "url": "tel:+16187084450",
-          "whatsapp_url": "https://wa.me/16187084450",
-          "actions": [
-            {
-              "label": "Call Phone",
-              "url": "tel:+16187084450"
-            },
-            {
-              "label": "WhatsApp",
-              "url": "https://wa.me/16187084450"
-            }
-          ]
+          "whatsapp_url": "https://wa.me/16187084450"
         },
         {
           "label": "Toll Free",
@@ -29,22 +19,20 @@
           "url": "tel:+18449074450"
         }
       ],
-     {
-  "address": {
-    "text": "607 W Clark Ave, Effingham, IL 62401",
-    "plus_code": "4F72+R4 Effingham, Illinois",
-    "view_links": {
-      "google_map": "https://www.google.com/maps/search/?api=1&query=607+W+Clark+Ave,+Effingham,+IL+62401",
-      "apple_map": "https://maps.apple.com/?q=607+W+Clark+Ave,+Effingham,+IL+62401"
+      "address": {
+        "text": "607 W Clark Ave, Effingham, IL 62401",
+        "plus_code": "4F72+R4 Effingham, Illinois",
+        "view_links": {
+          "google_map": "https://www.google.com/maps/search/?api=1&query=607+W+Clark+Ave,+Effingham,+IL+62401",
+          "apple_map": "https://maps.apple.com/?q=607+W+Clark+Ave,+Effingham,+IL+62401"
+        },
+        "directions_links": {
+          "google_maps_directions": "https://www.google.com/maps/dir/?api=1&destination=607+W+Clark+Ave,+Effingham,+IL+62401",
+          "apple_maps_directions": "https://maps.apple.com/?daddr=607+W+Clark+Ave,+Effingham,+IL+62401"
+        },
+        "geo_uri": "geo:0,0?q=607+W+Clark+Ave,+Effingham,+IL+62401"
+      }
     },
-    "directions_links": {
-      "google_maps_directions": "https://www.google.com/maps/dir/?api=1&destination=607+W+Clark+Ave,+Effingham,+IL+62401",
-      "apple_maps_directions": "https://maps.apple.com/?daddr=607+W+Clark+Ave,+Effingham,+IL+62401"
-    },
-    "geo_uri": "geo:0,0?q=607+W+Clark+Ave,+Effingham,+IL+62401"
-  }
-}
-  ],
     "copyright": "© 2026 S&K Ventures. All rights reserved."
   }
 }
