@@ -1,15 +1,16 @@
 /* ==========================================================================
    Active Version: 2026-07-26_23:59
    File: script.js / sourcetown.js
-   Description: Louisville IL Community Portal - Fully Synchronized Master Engine
+   Description: Louisville IL Community Portal - Master Engine
    Features:
-   - Dynamic Section 3 Slideshow Engine (Reads network_towns -> Categories -> Images)
+   - Dynamic Section 3 Slideshow Engine (network_towns -> categories -> images)
    - ScoreStream Horizontal Sports Scoreboard bound to exact town IDs
    - Firebase Real-Time Fuel Price Monitor with full property fallbacks
+   - Section 4 Business Spotlight Loader (cities_towns_villages & townships)
    - Historical Timeline Engine bound to config.json town_history_tree
    - Lightbox with Click-Outside-to-Close and HTML map link rendering
    - Calendar Bulletin Engine with robust date parsing
-   - Advertising Partners Strips (Sections 6 & 8) and Footer Contacts Pipeline
+   - Advertising Partners Strips and Footer Contacts Pipeline
    ========================================================================== */
 
 /* === SECTION 1: Geographically Correct Town Alignment Matrix === */
@@ -169,13 +170,13 @@ function openNewsLightboxModal(idx) {
     );
 }
 
-/* === SECTION 5: Dynamic Section 3 Slideshow Engine (Traverses network_towns -> categories -> images) === */
+/* === SECTION 5: Dynamic Section 3 Slideshow Engine (network_towns -> categories -> images) === */
 async function initializeSection3Slideshow(cb) {
     const viewport = document.getElementById('louisville-slideshow') || document.querySelector('.slider-viewport');
     if (!viewport) return;
 
     try {
-        const slideshowEndpoint = cleanRawUrl(window.globalAppConfig?.slideshow) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/town-images.json";
+        const slideshowEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.slideshow) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/town-images.json";
         const res = await fetch(slideshowEndpoint + '?' + cb);
         const data = await res.json();
         
@@ -355,7 +356,7 @@ async function loadPartnersStrips(cacheBuster) {
     if (!topGrid && !bottomGrid) return;
 
     try {
-        const partnersEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.partners_json_manifest) || "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/partners/partners.json";
+        const partnersEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.partners_json_manifest) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/partners.json";
         const res = await fetch(partnersEndpoint + '?' + cacheBuster);
         const data = await res.json();
         const partnersList = Array.isArray(data) ? data : (data.partners || []);
@@ -409,7 +410,7 @@ async function loadFooterDataPipeline(cacheBuster) {
     } catch(e) { console.error("Footer JSON error:", e); }
 }
 
-/* === SECTION 10: Local Links Directory Engine === */
+/* === SECTION 10: Local Links Directory & Master Pipeline Orchestrator === */
 async function loadLocalLinksDirectory(cacheBuster) {
     const linkTarget = document.getElementById('local-links-target-container');
     if(!linkTarget) return;
@@ -435,7 +436,6 @@ async function loadLocalLinksDirectory(cacheBuster) {
     }
 }
 
-/* === SECTION 11: Master Data Orchestrator === */
 async function processDataPipelines() {
     const cb = getSmartCacheBuster();
 
@@ -447,7 +447,7 @@ async function processDataPipelines() {
 
     const endpoints = window.globalAppConfig?.regional_endpoints || {};
 
-    // 1. Business Spotlight Loader (Reads config.json -> Business_Spotlight / spotlight.json)
+    // 1. Business Spotlight Loader (Reads spotlight.json nesting)
     try {
         const spotlightEndpoint = cleanRawUrl(endpoints.Business_Spotlight) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/spotlight.json";
         const spotlightRes = await fetch(spotlightEndpoint + '?' + cb);
@@ -456,17 +456,22 @@ async function processDataPipelines() {
         
         if (spotlightData && spotlightTarget) {
             const townKey = ACTIVE_TOWN.jsonKey || "louisville";
-            const activeSpotlight = spotlightData[townKey] 
-                || spotlightData.maps?.[townKey] 
-                || spotlightData.business_spotlights?.cities_towns_villages?.[townKey]
+            const spotlights = spotlightData.business_spotlights || {};
+            const townsMap = spotlights.cities_towns_villages || {};
+            const townshipsMap = spotlights.civil_townships || {};
+
+            const activeSpotlight = townsMap[townKey] 
+                || townshipsMap[townKey] 
+                || townshipsMap[`${townKey}_township`]
+                || spotlightData[townKey]
                 || (Array.isArray(spotlightData) ? spotlightData[0] : null);
 
             if (activeSpotlight) {
-                const img = activeSpotlight.src || activeSpotlight.image_url || activeSpotlight.imageurl || activeSpotlight.image;
-                const title = activeSpotlight.name || activeSpotlight.title || "Local Merchant";
+                const img = activeSpotlight.image_url || activeSpotlight.src || activeSpotlight.imageurl || activeSpotlight.image;
+                const title = activeSpotlight.title || activeSpotlight.name || "Local Merchant";
                 const loc = activeSpotlight.location || ACTIVE_TOWN.primaryName + ", IL";
-                const desc = activeSpotlight.alt || activeSpotlight.description || "Supporting local commerce across Clay County.";
-                const link = activeSpotlight.url || activeSpotlight.website_url || activeSpotlight.link || "#";
+                const desc = activeSpotlight.description || activeSpotlight.alt || "Supporting local commerce across Clay County.";
+                const link = activeSpotlight.website_url || activeSpotlight.url || activeSpotlight.link || "#";
 
                 spotlightTarget.innerHTML = `
                     <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
@@ -482,7 +487,8 @@ async function processDataPipelines() {
 
     // 2. Section 3 Landmark Data
     try {
-        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/section3.json?' + cb);
+        const section3Endpoint = cleanRawUrl(endpoints.Section_3) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/section3.json";
+        const res = await fetch(section3Endpoint + '?' + cb);
         const rows = await res.json();
         if (Array.isArray(rows)) {
             const targetRow = rows.find(r => (r.Town || "").toUpperCase() === ACTIVE_TOWN.primaryName.toUpperCase());
@@ -557,7 +563,7 @@ async function processDataPipelines() {
 
     // 5. Local News Matrix Pipeline
     try {
-        const newsEndpoint = endpoints.smlc_local_news_json || "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/local-news/news_data.json";
+        const newsEndpoint = cleanRawUrl(endpoints.smlc_local_news_json) || "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/local-news/news_data.json";
         const res = await fetch(newsEndpoint + '?' + cb);
         const newsArray = await res.json();
         const targetGrid = document.getElementById('news-matrix-target');
@@ -586,7 +592,7 @@ async function processDataPipelines() {
     initializeFirebaseGasMonitor();
 }
 
-/* === SECTION 12: App Initialization === */
+/* === SECTION Initialization === */
 window.addEventListener('DOMContentLoaded', () => {
     processDataPipelines();
     console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-26_23:59`);
