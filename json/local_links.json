@@ -53,5 +53,15 @@
     "location": "Louisville, IL",
     "name": "EPA Illinois",
     "url": "https://epa.illinois.gov/"
-  }
+  },
+  {
+    "location": "Flora, IL",
+    "name": "Schools",
+    "url": "https://www.floraschools.com"
+  },
+  {
+    "location": "Flora, IL",
+    "name": "The Country Closet",
+    "url": "https://www.facebook.com/TheCountryCloset"
+  },
 ]
