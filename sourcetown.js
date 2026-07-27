@@ -1,14 +1,13 @@
 /* ==========================================================================
-   Active Version: 2026-07-26_22:45
+   Active Version: 2026-07-26_23:00
    File: sourcetown.js
-   Description: Louisville IL Community Portal - Master Engine Engine
-   Features:
-   - Dynamic Section 3 Slideshow Auto-Rotator
-   - Clickable Gas Monitor bound to update_gas_portal_url
-   - Partners Strip Pipeline (Section 6 & 8) bound to partners_json_manifest
-   - Universal Cross-Platform WhatsApp (wa.me) & Phone Calling Engine
-   - Native mailto: Email Auto-Fill Engine
-   - OS-Aware Maps Launcher (Apple Maps vs. Google Maps)
+   Description: Louisville IL Community Portal - Fully Fixed Master Engine
+   Fixes Included:
+   - Click outside Lightbox overlay to close
+   - Fixed Date TBA calendar formatting bug (checks date, displayDate, event_date)
+   - Section 3 Slideshow Auto-Fader
+   - ScoreStream dynamic banner ID preserving ScoreStream API script
+   - Fixed Business Spotlight parsing for spotlight.json
    ========================================================================== */
 
 /* === SECTION 1: Geographically Correct Town Alignment Matrix === */
@@ -34,7 +33,7 @@ function getActiveTownConfig() {
 
 const ACTIVE_TOWN = getActiveTownConfig();
 
-/* === SECTION 2: Global State & Device/OS Handlers === */
+/* === SECTION 2: Global State & OS Handlers === */
 let globalSlideshowTicker = null;
 let gasMonitorRotator = null;
 window.calendarCachedEvents = [];
@@ -56,7 +55,6 @@ function buildOSMapUrl(addressText) {
 
 function handlePhoneClick(number, isWhatsAppEligible) {
     const cleanNum = number.replace(/[^\d]/g, '');
-    
     if (isWhatsAppEligible) {
         const wantWhatsApp = confirm("Click 'OK' to open WhatsApp Chat, or 'Cancel' to place a direct Phone Call.");
         if (wantWhatsApp) {
@@ -64,49 +62,17 @@ function handlePhoneClick(number, isWhatsAppEligible) {
             return;
         }
     }
-    
     window.location.href = `tel:+1${cleanNum}`;
 }
 
-/* === SECTION 3: Helper & Utility Functions === */
-function getSmartCacheBuster() { return "v=" + Math.floor(Date.now() / 3600000); }
-
-function cleanRawUrl(urlStr) {
-    if (!urlStr) return "";
-    return urlStr.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/").replace("/edit/", "/");
-}
-
-function matchesActiveTown(text, location) {
-    const combinedStr = ((text || "") + " " + (location || "")).toUpperCase();
-    return ACTIVE_TOWN.keywords.some(kw => combinedStr.includes(kw)) || ACTIVE_TOWN.zipCodes.some(zip => combinedStr.includes(zip));
-}
-
-function formatHumanTimestamp(rawString) {
-    if (!rawString) return "Date TBA";
-    try {
-        const dateObj = new Date(rawString);
-        if (isNaN(dateObj.getTime())) return rawString;
-        return dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    } catch(e) { return rawString; }
-}
-
-function parseInteractiveContent(rawText) {
-    if (!rawText) return "";
-    let parsed = rawText;
-
-    // Convert phone numbers to interactive triggers
-    parsed = parsed.replace(/(\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b)/g, (match) => {
-        const clean = match.replace(/[^\d]/g, '');
-        const isWhatsApp = clean.includes("6187084450");
-        return `<a href="javascript:void(0)" onclick="handlePhoneClick('${clean}', ${isWhatsApp})" style="color:#0258A3; font-weight:bold; text-decoration:underline;">${match}</a>`;
-    });
-
-    // Convert emails to mailto links
-    parsed = parsed.replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, (match) => {
-        return `<a href="mailto:${match}" style="color:#0258A3; font-weight:bold; text-decoration:underline;">${match}</a>`;
-    });
-
-    return parsed;
+/* === SECTION 3: Lightbox & Modal Click-Outside Logic === */
+function closeLightbox(event) {
+    const overlay = document.getElementById('portal-global-lightbox');
+    if (!overlay) return;
+    // Close if user clicked directly on background overlay or close button
+    if (!event || event.target === overlay || event.target.classList.contains('lightbox-close-btn')) {
+        overlay.style.display = 'none';
+    }
 }
 
 function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl) {
@@ -132,19 +98,66 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl) {
     } else if (actionRow) {
         actionRow.style.display = 'none';
     }
-    if (overlay) overlay.style.display = 'flex';
+    if (overlay) {
+        overlay.style.display = 'flex';
+        // Ensure click outside closes the lightbox
+        overlay.onclick = closeLightbox;
+    }
+}
+
+/* === SECTION 4: Helper & Date Formatter === */
+function getSmartCacheBuster() { return "v=" + Math.floor(Date.now() / 3600000); }
+
+function cleanRawUrl(urlStr) {
+    if (!urlStr) return "";
+    return urlStr.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/").replace("/edit/", "/");
+}
+
+function matchesActiveTown(text, location) {
+    const combinedStr = ((text || "") + " " + (location || "")).toUpperCase();
+    return ACTIVE_TOWN.keywords.some(kw => combinedStr.includes(kw)) || ACTIVE_TOWN.zipCodes.some(zip => combinedStr.includes(zip));
+}
+
+function formatHumanTimestamp(rawString) {
+    if (!rawString || rawString === "undefined" || rawString === "null") return "Date TBA";
+    try {
+        const dateObj = new Date(rawString);
+        if (isNaN(dateObj.getTime())) return rawString; // Return raw string if it's already pre-formatted text
+        return dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    } catch(e) { return rawString; }
+}
+
+function parseInteractiveContent(rawText) {
+    if (!rawText) return "";
+    let parsed = rawText;
+
+    parsed = parsed.replace(/(\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b)/g, (match) => {
+        const clean = match.replace(/[^\d]/g, '');
+        const isWhatsApp = clean.includes("6187084450");
+        return `<a href="javascript:void(0)" onclick="handlePhoneClick('${clean}', ${isWhatsApp})" style="color:#0258A3; font-weight:bold; text-decoration:underline;">${match}</a>`;
+    });
+
+    parsed = parsed.replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, (match) => {
+        return `<a href="mailto:${match}" style="color:#0258A3; font-weight:bold; text-decoration:underline;">${match}</a>`;
+    });
+
+    return parsed;
 }
 
 function openCalendarLightboxModal(idx) {
     const targetItem = window.calendarCachedEvents[idx];
     if(!targetItem) return;
-    const title = targetItem.name || "Community Event";
-    const dateText = formatHumanTimestamp(targetItem.date || targetItem.displayDate);
+    const title = targetItem.name || targetItem.title || "Community Event";
+    
+    // Robust date resolver fixes "Date TBA" bug
+    const rawDate = targetItem.date || targetItem.displayDate || targetItem.event_date || targetItem.pubDate;
+    const dateText = formatHumanTimestamp(rawDate);
+    
     const timeText = targetItem.time || targetItem.displayTime || "Time TBA";
     const rawLoc = targetItem.location || ACTIVE_TOWN.primaryName + ", IL";
     const mapUrl = buildOSMapUrl(rawLoc);
     
-    let details = targetItem.details || "No details provided.";
+    let details = targetItem.details || targetItem.description || "No details provided.";
     const metaHeader = `${dateText} @ ${timeText} | Location: <a href="${mapUrl}" target="_blank" style="color:#d9534f; text-decoration:underline;">${rawLoc}</a>`;
     fireLightbox('', title, metaHeader, details, '');
 }
@@ -155,53 +168,74 @@ function openNewsLightboxModal(idx) {
     fireLightbox(
         story.image || '',
         story.title || 'Local News Dispatch',
-        formatHumanTimestamp(story.date) + (story.location ? ` | ${story.location}` : ''),
+        formatHumanTimestamp(story.date || story.pubDate) + (story.location ? ` | ${story.location}` : ''),
         story.full_story || story.description || '',
         story.link || story.url || ''
     );
 }
 
-/* === SECTION 4: Section 3 Slideshow Auto-Rotator === */
+/* === SECTION 5: Section 3 Slideshow Auto-Rotator === */
 function initializeSection3Slideshow() {
-    const viewport = document.getElementById('louisville-slideshow') || document.querySelector('.slider-viewport');
+    const viewport = document.getElementById('louisville-slideshow') || document.querySelector('.slider-viewport') || document.getElementById('louisville-town-slideshow-matrix');
     if (!viewport) return;
-    const slides = viewport.querySelectorAll('.slider-slide');
+    
+    const slides = viewport.querySelectorAll('.slider-slide, img');
     if (slides.length <= 1) return;
 
     let currentSlideIdx = 0;
     if (globalSlideshowTicker) clearInterval(globalSlideshowTicker);
 
+    // Apply slideshow CSS styles dynamically
+    slides.forEach((slide, idx) => {
+        slide.style.transition = "opacity 0.8s ease-in-out";
+        slide.style.position = idx === 0 ? "relative" : "absolute";
+        slide.style.top = "0";
+        slide.style.left = "0";
+        slide.style.width = "100%";
+        slide.style.opacity = idx === 0 ? "1" : "0";
+    });
+
     globalSlideshowTicker = setInterval(() => {
-        slides[currentSlideIdx].classList.remove('active');
+        slides[currentSlideIdx].style.opacity = "0";
         currentSlideIdx = (currentSlideIdx + 1) % slides.length;
-        slides[currentSlideIdx].classList.add('active');
+        slides[currentSlideIdx].style.opacity = "1";
     }, 4000);
 }
 
-/* === SECTION 5: ScoreStream Sports Integration === */
+/* === SECTION 6: ScoreStream Integration (Uses sports.json / spotlight.json IDs) === */
 async function loadScorestreamSportsWidget(cb) {
     const widgetContainer = document.querySelector('.scorestream-widget-container');
     if (!widgetContainer) return;
-    let targetBannerId = "68601";
+
+    let targetBannerId = "68601"; // Louisville Default
 
     try {
         const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/sports.json?' + cb);
         const sportsData = await res.json();
         const activeKey = ACTIVE_TOWN.jsonKey || "louisville";
-        if (sportsData?.widgets?.[activeKey]) targetBannerId = sportsData.widgets[activeKey].banner_id;
-    } catch(e) { console.error("Sports JSON config error:", e); }
+        
+        if (sportsData?.widgets?.[activeKey]?.banner_id) {
+            targetBannerId = sportsData.widgets[activeKey].banner_id;
+        } else if (sportsData?.widgets?.clay_county_teams?.banner_id) {
+            targetBannerId = sportsData.widgets.clay_county_teams.banner_id;
+        }
+    } catch(e) { 
+        console.error("Sports JSON fetch fallback:", e); 
+    }
 
     widgetContainer.setAttribute('data-user-widget-id', targetBannerId);
-    const existingScript = document.querySelector('script[src*="scorestream.com"]');
-    if (existingScript) existingScript.remove();
 
-    const sportsScript = document.createElement('script');
-    sportsScript.src = "https://scorestream.com/apiJsCdn/widgets/embed.js";
-    sportsScript.async = true;
-    document.body.appendChild(sportsScript);
+    // Inject ScoreStream Embed JS if not already running
+    if (!window.ScorestreamLoaded) {
+        window.ScorestreamLoaded = true;
+        const sportsScript = document.createElement('script');
+        sportsScript.src = "https://scorestream.com/apiJsCdn/widgets/embed.js";
+        sportsScript.async = true;
+        document.body.appendChild(sportsScript);
+    }
 }
 
-/* === SECTION 6: Firebase Fuel Price Monitor Engine === */
+/* === SECTION 7: Firebase Fuel Price Monitor Engine === */
 function initializeFirebaseGasMonitor() {
     const gasContainer = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
     if (!gasContainer) return;
@@ -211,9 +245,9 @@ function initializeFirebaseGasMonitor() {
         "48101": { town: "flora", display: "Flora", name: "HUCK'S", logo: "Hucks.png" },      
         "128128": { town: "flora", display: "Flora", name: "MACH 1", logo: "Mach 1.png" },    
         "120226": { town: "flora", display: "Flora", name: "FAST STOP", logo: "Fast stop.png" },  
-        "48026": { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" }, 
-        "87817": { town: "xenia", display: "Xenia", name: "KNAPP'S", logo: "Knapps.png" },      
-        "171711": { town: "clay-city", display: "Clay City", name: "CASEY'S", logo: "Casey's.png" }  
+        "48026": { town: "clay-city", display: "Clay City", name: "CASEY'S", logo: "Casey's.png" }, 
+        "87817": { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" },      
+        "171711": { town: "xenia", display: "Xenia", name: "KNAPP'S", logo: "Knapps.png" }  
     };
 
     if (typeof firebase === 'undefined') {
@@ -244,16 +278,17 @@ function bindFirebaseFuelDatabase(stationConfigs, container) {
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const activeGasTown = ACTIVE_TOWN.gasKey || "louisville";
-
+    
     db.ref('fuel_prices').on('value', (snap) => {
         const val = snap.val();
-        if (val) renderGasBillboardUI(val, stationConfigs, activeGasTown, container);
+        if (val) renderGasBillboardUI(val, stationConfigs, ACTIVE_TOWN.gasKey, container);
     });
 }
 
-function renderGasBillboardUI(data, stationConfigs, activeGasTown, container) {
-    const stationIds = Object.keys(stationConfigs).filter(id => stationConfigs[id].town === activeGasTown);
+function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
+    const gasTownsArray = Array.isArray(activeGasTowns) ? activeGasTowns : [activeGasTowns];
+    const stationIds = Object.keys(stationConfigs).filter(id => gasTownsArray.includes(stationConfigs[id].town));
+    
     if (stationIds.length === 0) return;
 
     const updatePortalUrl = window.globalAppConfig?.regional_endpoints?.update_gas_portal_url || "https://www.supportmylocalcommunity.com/update-gas";
@@ -272,7 +307,7 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTown, container) {
             <div class="sidebar-widget-title">${config.display.toUpperCase()} FUEL INDEX MONITOR</div>
             <div class="fuel-station-header">
                 <div class="station-logo-frame"><img src="https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/${safeLogo}" alt="${config.name}"></div>
-                <div class="station-meta-title">${config.name}</div>
+                <div class="station-meta-title">${config.name} (${config.display})</div>
             </div>
             <div class="fuel-pricing-grid">
                 <div class="price-box"><span class="price-type-label">REGULAR</span><span class="price-value-regular">${info.reg}</span></div>
@@ -288,7 +323,7 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTown, container) {
     if (stationIds.length > 1) gasMonitorRotator = setInterval(renderCurrentStation, 5000);
 }
 
-/* === SECTION 7: Advertising Partners Pipeline === */
+/* === SECTION 8: Advertising Partners Pipeline === */
 async function loadPartnersStrips(cacheBuster) {
     const topGrid = document.getElementById('partners-grid-top');
     const bottomGrid = document.getElementById('partners-grid-bottom');
@@ -313,7 +348,7 @@ async function loadPartnersStrips(cacheBuster) {
     } catch(e) { console.error("Partners manifest error:", e); }
 }
 
-/* === SECTION 8: Footer Data Pipeline (OS & Device Aware) === */
+/* === SECTION 9: Footer Data Pipeline === */
 async function loadFooterDataPipeline(cacheBuster) {
     try {
         const footerEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.footer_json) || 'https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/footer.json';
@@ -322,7 +357,6 @@ async function loadFooterDataPipeline(cacheBuster) {
         const contact = data?.footer_data?.contact_info;
 
         if (contact) {
-            // Render Device-Aware Phone Numbers (Calls + WhatsApp wa.me)
             const phoneTarget = document.getElementById('footer-phone-target');
             if (phoneTarget && Array.isArray(contact.phone)) {
                 phoneTarget.innerHTML = contact.phone.map(p => {
@@ -331,7 +365,6 @@ async function loadFooterDataPipeline(cacheBuster) {
                 }).join('');
             }
 
-            // Render Email with Automatic To: Mailto Pre-fill
             const emailTarget = document.getElementById('footer-email-target');
             if (emailTarget && contact.email) {
                 const mailAddr = contact.email.address;
@@ -339,21 +372,19 @@ async function loadFooterDataPipeline(cacheBuster) {
                 emailTarget.innerText = mailAddr;
             }
 
-            // Render OS-Aware Interactive Map Address
             const addressTarget = document.getElementById('footer-address-target');
             if (addressTarget && contact.address) {
                 const mapUrl = buildOSMapUrl(contact.address.text);
                 addressTarget.innerHTML = `<a href="${mapUrl}" target="_blank" style="color:#fff; text-decoration:underline;">${contact.address.text}</a>`;
             }
 
-            // Render Copyright
             const copyTarget = document.getElementById('footer-copy-target');
             if (copyTarget && data.footer_data.copyright) copyTarget.innerHTML = data.footer_data.copyright;
         }
     } catch(e) { console.error("Footer JSON error:", e); }
 }
 
-/* === SECTION 9: Master Data Pipeline Orchestrator === */
+/* === SECTION 10: Master Data Pipeline Orchestrator === */
 async function processDataPipelines() {
     const cb = getSmartCacheBuster();
 
@@ -364,24 +395,24 @@ async function processDataPipelines() {
 
     const endpoints = window.globalAppConfig?.regional_endpoints || {};
 
-    // 1. Business Spotlight
+    // 1. Business Spotlight (Reads spotlight.json / business_spotlight.json)
     try {
-        const spotlightEndpoint = cleanRawUrl(endpoints.Business_Spotlight) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/business_spotlight.json";
+        const spotlightEndpoint = cleanRawUrl(endpoints.Business_Spotlight) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/spotlight.json";
         const spotlightRes = await fetch(spotlightEndpoint + '?' + cb);
         const spotlightData = await spotlightRes.json();
         const spotlightTarget = document.querySelector('.clay-county-news-box.spotlight-clipping');
+        
         if (spotlightData && spotlightTarget) {
             const townKey = ACTIVE_TOWN.jsonKey || "louisville";
-            const cities = spotlightData.business_spotlights?.cities_towns_villages || spotlightData.maps || spotlightData;
-            const townships = spotlightData.business_spotlights?.civil_townships || {};
-            const activeSpotlight = cities[townKey] || townships[townKey] || (Array.isArray(spotlightData) ? spotlightData[0] : spotlightData);
+            const maps = spotlightData.maps || spotlightData.business_spotlights?.cities_towns_villages || spotlightData;
+            const activeSpotlight = maps[townKey] || (Array.isArray(spotlightData) ? spotlightData[0] : spotlightData);
 
             if (activeSpotlight) {
-                const img = activeSpotlight.image_url || activeSpotlight.imageurl || activeSpotlight.src || activeSpotlight.image;
-                const title = activeSpotlight.title || activeSpotlight.name || "Local Merchant";
+                const img = activeSpotlight.src || activeSpotlight.image_url || activeSpotlight.imageurl || activeSpotlight.image;
+                const title = activeSpotlight.name || activeSpotlight.title || "Local Merchant";
                 const loc = activeSpotlight.location || ACTIVE_TOWN.primaryName + ", IL";
-                const desc = activeSpotlight.description || activeSpotlight.alt || "Supporting local commerce across Clay County.";
-                const link = activeSpotlight.website_url || activeSpotlight.websiteurl || activeSpotlight.url || "#";
+                const desc = activeSpotlight.alt || activeSpotlight.description || "Supporting local commerce across Clay County.";
+                const link = activeSpotlight.url || activeSpotlight.website_url || activeSpotlight.link || "#";
 
                 spotlightTarget.innerHTML = `
                     <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
@@ -395,7 +426,7 @@ async function processDataPipelines() {
         }
     } catch(e) { console.error("Spotlight error", e); }
 
-    // 2. Section 3 Landmark Data & Slideshow Initializer
+    // 2. Section 3 Landmark Data
     try {
         const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/section3.json?' + cb);
         const rows = await res.json();
@@ -415,7 +446,7 @@ async function processDataPipelines() {
 
     initializeSection3Slideshow();
 
-    // 3. Calendar Bulletin Engine with OS Map & Phone Parsing
+    // 3. Calendar Bulletin Engine (With Robust Date Parser)
     try {
         const bulletinEndpoint = endpoints.apps_script_bulletin_url || "https://script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec";
         const res = await fetch(bulletinEndpoint + '?feed=true&' + cb);
@@ -423,15 +454,19 @@ async function processDataPipelines() {
         const scroller = document.getElementById('bulletin-scroller-target');
 
         if (Array.isArray(elements) && elements.length > 0) {
-            window.calendarCachedEvents = elements.filter(item => matchesActiveTown(item.name + " " + item.details, item.location));
+            window.calendarCachedEvents = elements.filter(item => matchesActiveTown((item.name || item.title || "") + " " + (item.details || item.description || ""), item.location));
             if (scroller && window.calendarCachedEvents.length > 0) {
                 scroller.innerHTML = window.calendarCachedEvents.map((item, idx) => {
                     const mapUrl = buildOSMapUrl(item.location || ACTIVE_TOWN.primaryName);
-                    const parsedDetails = parseInteractiveContent((item.details || "").substring(0, 90));
+                    const parsedDetails = parseInteractiveContent((item.details || item.description || "").substring(0, 90));
+                    
+                    const rawDate = item.date || item.displayDate || item.event_date || item.pubDate;
+                    const dateText = formatHumanTimestamp(rawDate);
+
                     return `
                         <div class="divi-event-item" style="margin-bottom:15px; padding-bottom:10px; border-bottom:1px dashed #ccc;">
-                            <div class="divi-event-date" style="font-size:12px; color:#d9534f; font-weight:bold;">${formatHumanTimestamp(item.date)} &bull; ${item.time || 'TBA'}</div>
-                            <div class="divi-event-title" style="font-size:16px; font-weight:bold;">${item.name}</div>
+                            <div class="divi-event-date" style="font-size:12px; color:#d9534f; font-weight:bold;">${dateText} &bull; ${item.time || item.displayTime || 'TBA'}</div>
+                            <div class="divi-event-title" style="font-size:16px; font-weight:bold;">${item.name || item.title}</div>
                             <div class="event-info-text" style="font-size:13px; color:#333;">
                                 <strong>Where:</strong> <a href="${mapUrl}" target="_blank" style="color:#0258A3; text-decoration:underline;">${item.location || ACTIVE_TOWN.primaryName}</a>
                             </div>
@@ -444,7 +479,7 @@ async function processDataPipelines() {
         }
     } catch(err) { console.error("Calendar Wire fault", err); }
 
-    // 4. Local News Dispatches Pipeline
+    // 4. Local News Matrix Pipeline
     try {
         const newsEndpoint = endpoints.smlc_local_news_json || "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/local-news/news_data.json";
         const res = await fetch(newsEndpoint + '?' + cb);
@@ -467,15 +502,15 @@ async function processDataPipelines() {
         }
     } catch(e) { console.error("Local news error", e); }
 
-    // 5. Partners, Footer, ScoreStream & Gas Monitor Integrations
+    // 5. Integrations: Partners, Footer, ScoreStream & Gas Monitor
     await loadPartnersStrips(cb);
     await loadFooterDataPipeline(cb);
     await loadScorestreamSportsWidget(cb);
     initializeFirebaseGasMonitor();
 }
 
-/* === SECTION 10: App Initialization === */
+/* === SECTION 11: App Initialization === */
 window.addEventListener('DOMContentLoaded', () => {
     processDataPipelines();
-    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-26_22:45`);
+    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-26_23:00`);
 });
