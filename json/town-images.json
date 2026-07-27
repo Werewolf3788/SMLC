@@ -7,18 +7,18 @@
           "category": "Landmarks",
           "images": [
             {
-              "id": "flora_landmark_01",
-              "name": "Charlie Brown Park",
-              "imageurl": "https://raw.githubusercontent.com/Werewolf3788/Testpages/426b3c31cdfacdf89a868df2778395819a4d4fe7/images/Charlie-Brown-Park.jpg",
-              "alt": "A serene view of the pond at Charlie Brown Park in Flora, Illinois, featuring a fountain spraying water in the center, surrounded by lush green grass and mature trees.",
-              "source_url": "https://supportmylocalcommunity.com/flora/charlie-brown-park"
+            "id": "flora_school",
+              "name": "Flora Sports Mascot",
+              "imageurl": "https://raw.githubusercontent.com/Werewolf3788/Testpages/426b3c31cdfacdf89a868df2778395819a4d4fe7/images/Flora.jpeg",
+              "alt": "Flora High School Wolves sports logo featuring a stylized wolf head with one orange and one blue eye, set against a dark background with orange and blue text.",
+              "source_url": "https://www.floraschools.com"
             },
             {
               "id": "flora_landmark_02",
               "name": "B&O Railroad",
               "imageurl": "https://raw.githubusercontent.com/Werewolf3788/Testpages/426b3c31cdfacdf89a868df2778395819a4d4fe7/images/Flora-railroad.png",
               "alt": "A vintage black-and-white photograph of a passenger train with engine number 5124 at the B. & O. station in Flora, Illinois, with people on the platform and tracks of the Springfield Branch visible.",
-              "source_url": "https://supportmylocalcommunity.com/flora/railroad-history"
+              "source_url": "https://www.floradepot.com"
             }
           ]
         },
@@ -26,11 +26,11 @@
           "category": "Parks",
           "images": [
             {
-              "id": "flora_park_01",
-              "name": "Flora Sports Mascot",
-              "imageurl": "https://raw.githubusercontent.com/Werewolf3788/Testpages/426b3c31cdfacdf89a868df2778395819a4d4fe7/images/Flora.jpeg",
-              "alt": "Flora High School Wolves sports logo featuring a stylized wolf head with one orange and one blue eye, set against a dark background with orange and blue text.",
-              "source_url": "https://supportmylocalcommunity.com/flora/schools"
+              "id": "flora_cb_park",
+              "name": "Charlie Brown Park",
+              "imageurl": "https://florail.govoffice2.com/vertical/Sites/%7B62602091-720B-4C05-8923-FB9F25FCDE7A%7D/uploads/%7B214933E3-3F4D-4652-A8FF-7BADC13248A5%7D_Web.jpg",
+              "alt": "A view of Charlie Brown Park entrance from old hwy 50 (south enterance)",
+              "source_url": "https://florail.govoffice2.com/?SEC=7F7E72A7-8F2D-4781-810B-C202665BB8A2"
             }
           ]
         },
@@ -38,11 +38,11 @@
           "category": "Automotive",
           "images": [
             {
-              "id": "flora_auto_01",
+              "id": "flora_hanging_rock_auto_repair",
               "name": "Hanging Rock Auto Repair",
               "imageurl": "https://raw.githubusercontent.com/Werewolf3788/Testpages/426b3c31cdfacdf89a868df2778395819a4d4fe7/images/Hanging%20Rock.jpg",
               "alt": "A sign for Hanging Rock Auto Repair and More in Flora, Illinois, standing in a grass field with a lifted silver pickup truck parked behind it against a clear blue sky.",
-              "source_url": "https://supportmylocalcommunity.com/flora/hanging-rock-auto"
+              "source_url": "https://www.facebook.com/michaelpersinger87/"
             }
           ]
         }
@@ -55,18 +55,18 @@
           "category": "Landmarks",
           "images": [
             {
-              "id": "louisville_landmark_01",
+              "id": "louisville_landmark_courthouse",
               "name": "Court House",
               "imageurl": "https://live.staticflickr.com/4117/4861670451_669d9e52e9_b.jpg",
               "alt": "A view of the historic Clay County Courthouse building in Louisville, Illinois, with the Clay County Veterans memorial and various military flags standing on the lawn in the foreground.",
-              "source_url": "https://supportmylocalcommunity.com/louisville/courthouse"
+              "source_url": "https://www.illinoiscourts.gov/courts-directory/73/Clay-County-Courthouse/court/"
             },
             {
-              "id": "louisville_landmark_02",
+              "id": "louisville_landmark_school",
               "name": "North Clay High School",
               "imageurl": "https://i.ebayimg.com/images/g/qigAAOSwAjpkAqRk/s-l400.jpg",
               "alt": "A vintage black-and-white postcard view of North Clay Community High School in Louisville, Illinois, showing the large brick school building from the roadside.",
-              "source_url": "https://supportmylocalcommunity.com/louisville/north-clay-high"
+              "source_url": "https://sites.google.com/northclayschools.com/nccusd25"
             }
           ]
         },
@@ -77,15 +77,15 @@
               "id": "louisville_School",
               "name": "Louisville Sports Logo",
               "imageurl": "https://pbs.twimg.com/profile_images/1152299246151974916/OaQlVtJk_400x400.jpg",
-              "alt": "North Clay High School sports graphic featuring a red 'NC' monogram, a cardinal mascot, and a Native American chief profile over a red and black dotted background.",
-              "source_url": "https://supportmylocalcommunity.com/louisville/athletics"
+              "alt": "North Clay local park with sporting events",
+              "source_url": "https://www.facebook.com/NorthClayPark/"
             },
             {
               "id": "louisville_Summer",
-              "name": "Summer Mowing",
-              "imageurl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSb2EnnCY5Oudk2m2OKJ4MhPk5ocndOW06I2SiqwvGo-c8DjP0TeQ-rGZZ7&s=10",
-              "alt": "Community grounds crew performing summer mowing services in Louisville",
-              "source_url": "https://supportmylocalcommunity.com/louisville/weather"
+              "name": "Louisville Town Home Page",
+              "imageurl": "https://louisvilleil.com/wp-content/uploads/2022/12/cropped-sealofIllinoisseal.jpg.png",
+              "alt": "Louisville is a Village of 1,200 citizens who for all intents and purposes are one large extended family. Accordingly, the mission of the Village of Louisville is committed to preserving its unique small town charm, spirit, and family-oriented atmosphere while promoting sensible growth that will ensure the preservation of the unique character and qualities of the Village citizenry. To that end, the Village will support high quality development and renovation that maintains and improves these unique qualities not only for the older generations of the community, but also for the younger generations of the Village, and that by increasing the residential, job, social, and recreational opportunities for all its citizens, they will wish to remain in the Village throughout their lives, establishing their own roots and place in the family-oriented community of the Village of Louisville.",
+              "source_url": "https://louisvilleil.com"
             }
           ]
         },
@@ -94,25 +94,15 @@
           "images": [
             {
               "id": "louisville_auto_01",
-              "name": "Louisville Town Sign",
-              "imageurl": "https://www.billburmaster.com/rmsandw/illinois/images/louisvilleilwel.jpg",
-              "alt": "A wooden 'Welcome to Louisville' sign mounted on posts, featuring organizational logos including Rotary and Ancient Free and Accepted Masons, with a cemetery visible in the background.",
-              "source_url": "https://supportmylocalcommunity.com/louisville/quick-lube"
+              "name": "Full Armor Christian Academy ",
+              "imageurl": "https://www.fullarmorchristianacademy.com/uploads/9/8/1/9/98192958/experiend-the-fa-difference-banner_orig.jpg",
+              "alt": "Offers a faith-based education for students from preschool (ages 3–5) through 12th grade. We focus on the whole child—helping them grow spiritually, academically, and personally, all with Christ at the center. Here, students are equipped to lead, serve, and make a difference in the world.",
+              "source_url": "https://www.fullarmorchristianacademy.com"
             }
           ]
         }
       ]
     }
-  },
-  "global_assets": [
-    {
-      "id": "global_business_spotlight",
-      "name": "Grace & Truth Counsaling",
-      "imageurl": "https://ourflora.com/wp-content/uploads/2025/12/GTC1.png",
-      "alt": "Grace & Truth is a counsaling service",
-      "source_url": "https://www.graceandtruthcounseling.com",
-      "description": "Our mission is to help those who are hurting by providing affordable biblically-based professional counseling. The goal of Grace and Truth Counseling is to provide a safe, caring and non-judgmental environment for people to open up and work through the difficulties in life. The counselor, Becky Payne, interweaves both clinical skills and spiritual direction to guide people through the necessary changes by utilizing grace and truth.  The hope is that counseling will help people to come to a place of peace, joy and contentment in their life and to see marriages and families restored.",
-      "location": "Louisville, IL"
-    }
+  }
   ]
-}
+
