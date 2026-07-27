@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-07-26_19:45
+   Active Version: 2026-07-26_23:15
    File: style.css
    Description: Master Stylesheet - Header Barrier, Dynamic Widgets, & Compact Cards
    ========================================================================== */
@@ -124,7 +124,7 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 .river-marquee { margin-top: 20px; font-size: 14px; font-family: monospace; font-weight: 700; color: #ffffff; background-color: rgba(0, 0, 0, 0.75); padding: 8px 22px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.2); width: max-content; margin-left: auto; margin-right: auto; }
 
 /* ==========================================================================
-   SECTION 3: SPLIT LAYOUT
+   SECTION 3: SPLIT LAYOUT & SLIDESHOW ENGINE
    ========================================================================== */
 .section3-split-layout { width: 100%; padding: 60px clamp(20px, 3.5vw, 80px); background: transparent !important; }
 .section3-container-grid { width: 100%; max-width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 36px; }
@@ -136,11 +136,49 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 
 .section3-left-col { display: flex !important; flex-direction: column !important; gap: 24px; height: auto !important; }
 .section3-slideshow-box { background: #111; border: 2px solid #333; border-radius: 8px; padding: 20px; width: 100%; }
-.slider-viewport { width: 100%; height: 360px; position: relative; overflow: hidden; border: 2px solid #222; background: #000; }
-.slider-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 0.8s ease-in-out; }
-.slider-slide.active { opacity: 1; }
-.slider-slide img { width: 100%; height: 100%; object-fit: cover; }
-.slider-caption { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.85); color: #ffffff; padding: 12px; font-size: 1.2rem; font-weight: bold; text-align: center; }
+
+/* SLIDESHOW FIXED OVERLAY POSITIONING */
+.slider-viewport { 
+	width: 100%; 
+	height: 360px; 
+	position: relative !important; 
+	overflow: hidden !important; 
+	border: 2px solid #222; 
+	background: #000; 
+	border-radius: 6px;
+}
+.slider-slide { 
+	position: absolute !important; 
+	inset: 0 !important; 
+	width: 100% !important;
+	height: 100% !important;
+	opacity: 0; 
+	transition: opacity 0.8s ease-in-out !important; 
+	z-index: 1;
+}
+.slider-slide.active { 
+	opacity: 1 !important; 
+	z-index: 2;
+}
+.slider-slide img { 
+	width: 100% !important; 
+	height: 100% !important; 
+	object-fit: cover !important; 
+	display: block !important;
+}
+.slider-caption { 
+	position: absolute; 
+	bottom: 0; 
+	left: 0; 
+	right: 0; 
+	background: rgba(0,0,0,0.85); 
+	color: #ffffff; 
+	padding: 12px; 
+	font-size: 1.2rem; 
+	font-weight: bold; 
+	text-align: center; 
+	z-index: 3;
+}
 
 .section3-about-box { background: rgba(18, 18, 18, 0.9); border: 1px solid rgba(255, 255, 255, 0.2); border-left: 5px solid var(--louis-gold); padding: 24px; border-radius: 8px; }
 .section3-about-tag { color: var(--louis-gold); font-size: 15px !important; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 12px; }
@@ -285,23 +323,6 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	margin: -28px -28px 20px -28px;
 	border-bottom: 2px solid #000;
 }
-.news-box-header {
-	text-align: center;
-	border-top: 4px double #222;
-	border-bottom: 2px solid #222;
-	padding: 14px 0;
-	margin-bottom: 20px;
-}
-.news-box-header h3 {
-	font-family: "Times New Roman", Times, serif !important;
-	font-weight: 900 !important;
-	text-transform: uppercase;
-	letter-spacing: 1px;
-	margin: 0 !important;
-	color: #222 !important;
-	font-size: 26px !important;
-	line-height: 1.2 !important;
-}
 .spotlight-image-wrap, .showcase-media-canvas {
 	width: 100%;
 	height: auto;
@@ -314,6 +335,7 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	width: 100%;
 	display: block;
 	filter: grayscale(10%) contrast(110%);
+	cursor: pointer;
 }
 .biz-title, #spotlight-asset-name {
 	font-family: "Times New Roman", Times, serif !important;
@@ -370,6 +392,7 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	border-radius: 6px !important;
 	padding: 24px !important;
 	color: #222222 !important;
+	cursor: pointer !important;
 }
 .fuel-station-header {
 	display: flex;
@@ -440,7 +463,7 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 }
 
 /* ==========================================================================
-   SECTION 5: HISTORICAL TIMELINE - NEWSPAPER CARD SPECIFICATIONS
+   SECTION 5: HISTORICAL TIMELINE
    ========================================================================== */
 .historical-timeline-chassis-wrapper {
 	width: 100% !important;
@@ -461,7 +484,6 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	margin-bottom: 40px !important;
 }
 
-.timeline-row-1-header title1,
 .main-timeline-center-title-node {
 	font-family: 'Playfair Display', Georgia, serif !important;
 	font-size: 52px !important;
@@ -480,7 +502,6 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	text-shadow: 1px 1px 4px #000000 !important;
 }
 
-.timeline-5x2-full-grid,
 .timeline-row-2-cards {
 	display: grid !important;
 	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
@@ -502,11 +523,10 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	height: 100% !important;
 	width: 100% !important;
 	margin: 0 !important;
-	box-sizing: border-box !important;
+	cursor: pointer !important;
 }
 
-.history-card h2,
-.history-card h2.history-year-title {
+.history-card h2 {
 	font-family: 'Times New Roman', Times, serif !important;
 	font-size: 32px !important;
 	font-weight: 900 !important;
@@ -517,8 +537,7 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	line-height: 1.1 !important;
 }
 
-.history-card h3,
-.history-card h3.history-event-header {
+.history-card h3 {
 	font-family: 'Playfair Display', Georgia, serif !important;
 	font-size: 20px !important;
 	font-weight: 700 !important;
@@ -527,8 +546,7 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	line-height: 1.3 !important;
 }
 
-.history-card p,
-.history-card p.history-desc-text {
+.history-card p {
 	font-family: 'Times New Roman', Times, serif !important;
 	font-size: 16px !important;
 	line-height: 1.6 !important;
@@ -556,7 +574,7 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 }
 
 /* ==========================================================================
-   SECTION 6 & 8: PARTNERS STRIP (EDGE-TO-EDGE FULL SCREEN SPREAD)
+   SECTION 6 & 8: PARTNERS STRIP
    ========================================================================== */
 .widescreen-strip-container,
 .section8-town-images-strip {
@@ -621,14 +639,10 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	padding: 8px !important;
 }
 
-.partner-logo-box img,
-.partner-card img {
+.partner-logo-box img {
 	max-width: 100% !important;
 	max-height: 100% !important;
-	width: auto !important;
-	height: auto !important;
 	object-fit: contain !important;
-	display: block !important;
 	cursor: pointer !important;
 }
 
@@ -638,17 +652,6 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	font-weight: bold !important;
 	margin: 10px 0 0 0 !important;
 	color: #000000 !important;
-	line-height: 1.2 !important;
-}
-
-.partner-card h4 a {
-	color: #000000 !important;
-	text-decoration: none !important;
-}
-
-.partner-card h4 a:hover {
-	color: #0258A3 !important;
-	text-decoration: underline !important;
 }
 
 /* ==========================================================================
@@ -669,7 +672,7 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 }
 @media (max-width: 1024px) { .portal-grid-layout-fixed { grid-template-columns: 1fr !important; gap: 36px !important; } }
 
-.portal-column-cell-box { display: flex !important; flex-direction: column !important; gap: 36px !important; justify-content: flex-start !important; height: auto !important; }
+.portal-column-cell-box { display: flex !important; flex-direction: column !important; gap: 36px !important; justify-content: flex-start !important; }
 .card-module-wrapper { display: flex !important; flex-direction: column !important; height: auto !important; }
 
 /* MODULE HEADING HEADER BOX (#A44F0B) */
@@ -688,96 +691,7 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	display: block !important;
 }
 
-/* SECTION 7.1.1: EVENT CLIPPING SUBMISSION BOX */
-.clay-county-news-box.event-clipping {
-	box-sizing: border-box !important;
-	width: 100% !important;
-	max-width: 480px !important;
-	margin: 20px auto !important;
-	padding: 25px !important;
-	border: 2px solid #222 !important;
-	background-color: #fffdf5 !important;
-	box-shadow: 6px 6px 0px #222 !important;
-	font-family: "Times New Roman", Times, serif !important;
-	position: relative !important;
-	align-self: center !important;
-}
-
-.clipping-tag {
-	position: absolute !important;
-	top: -12px !important;
-	left: 15px !important;
-	background: #222 !important;
-	color: #fff !important;
-	font-size: 10px !important;
-	padding: 3px 10px !important;
-	text-transform: uppercase !important;
-	font-weight: bold !important;
-	letter-spacing: 1px !important;
-	z-index: 10 !important;
-}
-
-.event-clipping-header {
-	text-align: center !important;
-	border-top: 4px double #222 !important;
-	border-bottom: 2px solid #222 !important;
-	padding: 15px 0 !important;
-	margin-bottom: 20px !important;
-	margin-top: 5px !important;
-}
-
-.event-clipping-header h3 {
-	font-family: "Times New Roman", Times, serif !important;
-	font-weight: 900 !important;
-	text-transform: uppercase !important;
-	letter-spacing: 1px !important;
-	margin: 0 !important;
-	color: #d9534f !important;
-	font-size: 26px !important;
-	line-height: 1.1 !important;
-}
-
-.event-clipping-text {
-	font-size: 16px !important;
-	line-height: 1.5 !important;
-	color: #222 !important;
-	text-align: center !important;
-	margin-bottom: 20px !important;
-	font-style: italic !important;
-}
-
-.event-clipping-btn {
-	display: block !important;
-	text-align: center !important;
-	background-color: #222 !important;
-	color: #fff !important;
-	padding: 14px !important;
-	text-transform: uppercase !important;
-	font-weight: bold !important;
-	letter-spacing: 2px !important;
-	text-decoration: none !important;
-	font-size: 14px !important;
-	border: 1px solid #222 !important;
-	transition: all 0.3s !important;
-}
-
-.event-clipping-btn:hover {
-	background-color: #d9534f !important;
-	border-color: #d9534f !important;
-	color: #fff !important;
-}
-
-.clipping-footer {
-	display: block !important;
-	text-align: center !important;
-	font-size: 10px !important;
-	color: #666 !important;
-	margin-top: 15px !important;
-	text-transform: uppercase !important;
-	letter-spacing: 1px !important;
-}
-
-/* SECTION 7.1.2: DYNAMIC COMMUNITY CALENDAR BULLETIN FEED */
+/* COMMUNITY BULLETIN & CALENDAR FEED */
 .news-clipping-wrapper {
 	background-color: #fffdf5;
 	box-shadow: 6px 6px 0px rgba(0,0,0,0.6); 
@@ -785,267 +699,15 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	font-family: 'Times New Roman', Times, serif;
 	color: #222;
 	width: 100%;
-	max-width: 100%;
-	margin: 0 auto;
-	overflow: hidden;
 	padding: 28px;
 	border-radius: 6px;
 }
-.clipping-masthead {
-	text-align: center;
-	padding-bottom: 16px;
-	border-bottom: 4px double #222; 
-	margin-bottom: 22px; 
-}
-.black-tag {
-	background: #000;
-	color: #fff;
-	text-transform: uppercase;
-	font-size: 22px;
-	font-weight: bold;
-	padding: 6px 18px;
-	display: inline-block;
-	letter-spacing: 1px;
-	line-height: 1;
-}
-.clipping-tagline {
-	font-size: 13px;
-	text-transform: uppercase;
-	font-weight: bold;
-	margin: 12px 0 0 0;
-	letter-spacing: 1px;
-	color: #444;
-}
-#divi-event-list,
-#bulletin-scroller-target {
-	max-height: 560px !important;
-	overflow-y: auto !important;
-	padding-right: 8px !important;
-}
-.divi-event-item {
-	border-bottom: 1px dashed #777;
-	padding: 18px 0;
-	text-align: left;
-}
-.divi-event-item:last-child {
-	border-bottom: none;
-}
-.divi-event-date {
-	color: #cc0000;
-	font-weight: bold;
-	font-size: 15px;
-	text-transform: uppercase;
-}
-.divi-event-title {
-	font-size: 22px; 
-	font-weight: bold;
-	margin: 6px 0;
-	line-height: 1.25;
-}
-.event-info-text {
-	font-size: 16px;
-	line-height: 1.5;
-	color: #333;
-}
-.event-snippet {
-	font-size: 15px;
-	color: #555;
-	font-style: italic;
-	margin: 10px 0;
-	line-height: 1.5;
-	display: block;
-}
-.full-details {
-	display: none;
-	font-size: 15px;
-	color: #222;
-	margin: 12px 0;
-	line-height: 1.6;
-	background: rgba(0,0,0,0.04);
-	padding: 12px;
-	border-left: 4px solid #cc0000;
-}
-.read-more-btn {
-	color: #cc0000;
-	text-decoration: underline;
-	font-weight: bold;
-	font-size: 14px;
-	cursor: pointer;
-	text-transform: uppercase;
-	display: inline-block;
-	margin-top: 6px;
-}
-.cal-links { 
-	margin-top: 16px;
-	font-size: 14px;
-}
-.cal-label {
-	display: block;
-	font-size: 12px;
-	text-transform: uppercase;
-	font-weight: bold;
-	color: #666;
-	margin-bottom: 6px;
-	letter-spacing: 0.5px;
-}
-.cal-text-link {
-	color: #cc0000 !important;
-	text-decoration: none !important;
-	font-weight: bold;
-	text-transform: uppercase;
-	font-size: 13px;
-}
-.cal-text-link:hover { text-decoration: underline !important; }
 
-/* SECTION 7.2: CENTER COLUMN RETRO CONTAINERS */
-.scorestream-embed-card, 
-.newspaper-feed-chassis {
-	background-color: #fffdf5 !important; 
-	border: 3px double #222222 !important; 
-	box-shadow: 6px 6px 0px #222222 !important; 
-	padding: 28px !important;
-	border-radius: 6px;
-	color: #222222 !important;
-}
+#bulletin-scroller-target,
 .news-dynamic-masonry {
 	max-height: 560px !important;
 	overflow-y: auto !important;
 	padding-right: 8px !important;
-	text-align: left !important;
-}
-
-/* SECTION 7.3.1: FACEBOOK INVITATION CARD */
-.clay-county-news-box.group-invitation-master {
-	box-sizing: border-box !important;
-	width: 100% !important;
-	max-width: 400px !important;
-	margin: 20px auto !important;
-	padding: 25px !important;
-	border: 3px double #222 !important;
-	background-color: #fffdf5 !important;
-	box-shadow: 6px 6px 0px #222 !important;
-	font-family: Arial, sans-serif !important;
-	position: relative !important;
-	text-align: center !important;
-	align-self: center !important;
-}
-
-.notice-tag-red {
-	background: #d9534f !important;
-	color: #fff !important;
-	font-size: 11px !important;
-	padding: 4px 15px !important;
-	text-transform: uppercase !important;
-	font-weight: bold !important;
-	display: inline-block !important;
-	position: absolute !important;
-	top: -15px !important;
-	left: 50% !important;
-	transform: translateX(-50%) !important;
-	border: 1px solid #222 !important;
-	box-shadow: 2px 2px 0px #222 !important;
-	z-index: 10 !important;
-	white-space: nowrap !important;
-}
-
-.polaroid-wrap {
-	background: #fff !important;
-	padding: 10px 10px 25px 10px !important;
-	border: 1px solid #ccc !important;
-	box-shadow: 3px 3px 8px rgba(0,0,0,0.2) !important;
-	transform: rotate(-3deg) !important;
-	margin-bottom: 20px !important;
-}
-
-.polaroid-wrap img {
-	width: 100% !important;
-	display: block !important;
-	filter: grayscale(20%) sepia(10%) !important;
-}
-
-.invitation-header-main {
-	border-top: 4px double #222 !important;
-	border-bottom: 1px solid #222 !important;
-	padding: 12px 0 !important;
-	margin-bottom: 15px !important;
-}
-
-.invitation-header-main h3 {
-	font-family: "Times New Roman", Times, serif !important;
-	font-weight: 900 !important;
-	text-transform: uppercase !important;
-	font-size: 20px !important;
-	margin: 0 0 5px 0 !important;
-	color: #222 !important;
-	line-height: 1.1 !important;
-}
-
-.sub-header-text {
-	font-size: 11px !important;
-	color: #444 !important;
-	font-weight: bold !important;
-	display: block !important;
-	letter-spacing: 0.5px !important;
-	text-transform: none !important;
-}
-
-.invitation-body-text {
-	font-family: "Times New Roman", Times, serif !important;
-	font-size: 15px !important;
-	line-height: 1.4 !important;
-	color: #333 !important;
-	font-style: italic !important;
-	margin-bottom: 20px !important;
-	padding: 0 10px !important;
-}
-
-.fb-action-btn {
-	display: block !important;
-	background-color: #222 !important;
-	color: #fff !important;
-	padding: 12px !important;
-	text-transform: uppercase !important;
-	font-weight: bold !important;
-	letter-spacing: 1px !important;
-	text-decoration: none !important;
-	font-size: 13px !important;
-	border: 2px solid #222 !important;
-	transition: all 0.3s ease !important;
-}
-
-.fb-action-btn:hover {
-	background-color: #fffdf5 !important;
-	color: #222 !important;
-}
-
-.community-voice-footer {
-	display: block !important;
-	margin-top: 15px !important;
-	font-size: 9px !important;
-	color: #777 !important;
-	text-transform: lowercase !important;
-	letter-spacing: 1px !important;
-	text-align: center !important;
-}
-
-/* SECTION 7.2.3: CLAY COUNTY BUSINESS DIRECTORY BUTTON */
-.town-directory-interactive-btn-s7 {
-	background-color: #000000 !important;
-	color: var(--louis-gold) !important;
-	border: 2px solid var(--louis-gold) !important;
-	border-radius: 31px !important;
-	cursor: pointer;
-	display: inline-block;
-	font-size: 17px;
-	font-weight: 800;
-	padding: 14px 28px;
-	text-align: center;
-	text-decoration: none !important;
-	transition: all 0.3s ease;
-}
-.town-directory-interactive-btn-s7:hover {
-	background-color: var(--louis-gold) !important;
-	color: #000000 !important;
 }
 
 /* ==========================================================================
@@ -1055,9 +717,41 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 .site-global-footer-matrix p, .site-global-footer-matrix span { color: #ffffff !important; font-size: 15px !important; }
 
 /* ==========================================================================
-   LIGHTBOX MODAL
+   LIGHTBOX MODAL & CLICK OUTSIDE TO CLOSE
    ========================================================================== */
-.lightbox-overlay-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.88); backdrop-filter: blur(8px); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 24px; }
-.lightbox-overlay-mask.active-show { display: flex !important; }
-.lightbox-modal-window { background: #fffdf5 !important; border: 2px solid #222 !important; box-shadow: 12px 12px 0px #000 !important; max-width: 56rem !important; width: 100%; border-radius: 6px; display: flex; flex-direction: column; max-height: 90vh; overflow: hidden; color: #1a1a1a !important; }
-.lightbox-modal-window p, .lightbox-modal-window h3 { color: #1a1a1a !important; font-size: 16px !important; }
+.lightbox-overlay-mask { 
+	position: fixed !important; 
+	top: 0 !important; 
+	left: 0 !important; 
+	width: 100vw !important; 
+	height: 100vh !important; 
+	background-color: rgba(0, 0, 0, 0.88) !important; 
+	backdrop-filter: blur(8px) !important; 
+	z-index: 10000 !important; 
+	display: none; 
+	align-items: center !important; 
+	justify-content: center !important; 
+	padding: 24px !important;
+	pointer-events: auto !important; /* Enables click events on overlay background */
+}
+
+.lightbox-modal-window { 
+	background: #fffdf5 !important; 
+	border: 2px solid #222 !important; 
+	box-shadow: 12px 12px 0px #000 !important; 
+	max-width: 56rem !important; 
+	width: 100% !important; 
+	border-radius: 6px !important; 
+	display: flex !important; 
+	flex-direction: column !important; 
+	max-height: 90vh !important; 
+	overflow: hidden !important; 
+	color: #1a1a1a !important; 
+	pointer-events: auto !important;
+}
+
+.lightbox-modal-window p, 
+.lightbox-modal-window h3 { 
+	color: #1a1a1a !important; 
+	font-size: 16px !important; 
+}
