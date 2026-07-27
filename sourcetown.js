@@ -11,15 +11,15 @@
    - OS-Aware Maps Launcher (Apple Maps vs. Google Maps)
    ========================================================================== */
 
-/* === SECTION 1: Town Alignment Matrix === */
+/* === SECTION 1: Geographically Correct Town Alignment Matrix === */
 const TOWN_ALIAS_MAP = {
-    "LOUISVILLE": { primaryName: "Louisville", jsonKey: "louisville", gasKey: "louisville", historyKey: "louisville", keywords: ["LOUISVILLE", "NORTH CLAY", "NC", "HOOSIER"], zipCodes: ["62858"] },
-    "FLORA": { primaryName: "Flora", jsonKey: "flora", gasKey: "flora", historyKey: "flora", keywords: ["FLORA", "FLO", "WOLVES"], zipCodes: ["62839"] },
-    "CLAY CITY": { primaryName: "Clay City", jsonKey: "clay_city", gasKey: "clay-city", historyKey: "clay_city", keywords: ["CLAY CITY", "CC"], zipCodes: ["62824"] },
-    "XENIA": { primaryName: "Xenia", jsonKey: "xenia", gasKey: "xenia", historyKey: "xenia", keywords: ["XENIA"], zipCodes: ["62899"] },
-    "IOLA": { primaryName: "Iola", jsonKey: "iola", gasKey: "louisville", historyKey: "iola", keywords: ["IOLA"], zipCodes: ["62849"] },
-    "SAILOR SPRINGS": { primaryName: "Sailor Springs", jsonKey: "sailor_springs", gasKey: "louisville", historyKey: "sailor_springs", keywords: ["SAILOR SPRINGS"], zipCodes: ["62879"] },
-    "INGRAHAM": { primaryName: "Ingraham", jsonKey: "louisville", gasKey: "louisville", historyKey: "ingraham", keywords: ["INGRAHAM"], zipCodes: ["62434"] }
+    "LOUISVILLE": { primaryName: "Louisville", jsonKey: "louisville", gasKey: ["louisville"], historyKey: "louisville", keywords: ["LOUISVILLE", "NORTH CLAY", "NC", "HOOSIER"], zipCodes: ["62858"] },
+    "FLORA": { primaryName: "Flora", jsonKey: "flora", gasKey: ["flora"], historyKey: "flora", keywords: ["FLORA", "FLO", "WOLVES"], zipCodes: ["62839"] },
+    "CLAY CITY": { primaryName: "Clay City", jsonKey: "clay_city", gasKey: ["clay-city"], historyKey: "clay_city", keywords: ["CLAY CITY", "CC"], zipCodes: ["62824"] },
+    "XENIA": { primaryName: "Xenia", jsonKey: "xenia", gasKey: ["xenia"], historyKey: "xenia", keywords: ["XENIA"], zipCodes: ["62899"] },
+    "IOLA": { primaryName: "Iola", jsonKey: "iola", gasKey: ["louisville"], historyKey: "iola", keywords: ["IOLA"], zipCodes: ["62849"] },
+    "SAILOR SPRINGS": { primaryName: "Sailor Springs", jsonKey: "sailor_springs", gasKey: ["louisville", "clay-city"], historyKey: "sailor_springs", keywords: ["SAILOR SPRINGS"], zipCodes: ["62879"] },
+    "INGRAHAM": { primaryName: "Ingraham", jsonKey: "louisville", gasKey: ["louisville", "clay-city"], historyKey: "ingraham", keywords: ["INGRAHAM"], zipCodes: ["62434"] }
 };
 
 function getActiveTownConfig() {
