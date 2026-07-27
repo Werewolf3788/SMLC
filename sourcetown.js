@@ -1,7 +1,11 @@
 /* ==========================================================================
-   Active Version: 2026-07-26_20:20
+   Active Version: 2026-07-26_22:00
    File: sourcetown.js
-   Description: Louisville IL Community Portal - Root Pipeline Engine
+   Description: Louisville IL Community Portal - Fully Synchronized Master Engine
+   Features:
+   - Dynamic Section 3 Slideshow Auto-Rotator
+   - Clickable Gas Monitor redirecting to config.json update_gas_portal_url
+   - Partners Strip pipeline (Section 6 & 8) bound to partners_json_manifest
    ========================================================================== */
 
 /* === SECTION 1: Town Alignment Matrix === */
@@ -32,7 +36,7 @@ const TOWN_ALIAS_MAP = {
     },
     "XENIA": {
         primaryName: "Xenia",
-        jsonKey: "clay_county_teams",
+        jsonKey: "xenia",
         gasKey: "xenia",
         historyKey: "xenia",
         keywords: ["XENIA"],
@@ -40,7 +44,7 @@ const TOWN_ALIAS_MAP = {
     },
     "IOLA": {
         primaryName: "Iola",
-        jsonKey: "louisville",
+        jsonKey: "iola",
         gasKey: "louisville",
         historyKey: "iola",
         keywords: ["IOLA"],
@@ -48,7 +52,7 @@ const TOWN_ALIAS_MAP = {
     },
     "SAILOR SPRINGS": {
         primaryName: "Sailor Springs",
-        jsonKey: "clay_county_teams",
+        jsonKey: "sailor_springs",
         gasKey: "louisville",
         historyKey: "sailor_springs",
         keywords: ["SAILOR SPRINGS"],
@@ -81,6 +85,7 @@ function getActiveTownConfig() {
 const ACTIVE_TOWN = getActiveTownConfig();
 
 /* === SECTION 2: Global State Tracking === */
+let globalSlideshowTicker = null;
 let gasMonitorRotator = null;
 window.calendarCachedEvents = [];
 window.newsCacheBlock = [];
@@ -154,43 +159,34 @@ function openCalendarLightboxModal(idx) {
     fireLightbox('', title, `${dateText} @ ${timeText} | Location: ${location}`, details, '');
 }
 
-/* === SECTION 4: Smart Tabs & UTM Tracking === */
-function setupSmartTabsLogic() {
-    const channelName = "community_portal_tab_channel";
-    const broadcast = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(channelName) : null;
-    if (!window.name) window.name = "community_portal_main_tab";
-
-    document.addEventListener("click", (event) => {
-        const anchor = event.target.closest("a");
-        if (!anchor) return;
-        const targetUrl = anchor.getAttribute("href");
-        if (!targetUrl || targetUrl.startsWith("#") || targetUrl.startsWith("javascript:")) return;
-
-        if (broadcast) {
-            broadcast.postMessage({ type: "TAB_NAVIGATION", url: targetUrl, timestamp: Date.now() });
-        }
-    });
+function openNewsLightboxModal(idx) {
+    const story = window.newsCacheBlock[idx];
+    if (!story) return;
+    fireLightbox(
+        story.image || '',
+        story.title || 'Local News Dispatch',
+        formatHumanTimestamp(story.date) + (story.location ? ` | ${story.location}` : ''),
+        story.full_story || story.description || '',
+        story.link || story.url || ''
+    );
 }
 
-function applyDynamicUTMTracking() {
-    const activeProjectIdentifier = "werewolf3788profile";
-    document.querySelectorAll("a").forEach((anchor) => {
-        const href = anchor.getAttribute("href");
-        if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
+/* === SECTION 4: Section 3 Slideshow Auto-Rotator === */
+function initializeSection3Slideshow() {
+    const viewport = document.getElementById('louisville-slideshow') || document.querySelector('.slider-viewport');
+    if (!viewport) return;
 
-        try {
-            const url = new URL(href, window.location.origin);
-            if (!url.searchParams.has("utm_campaign")) url.searchParams.set("utm_campaign", activeProjectIdentifier);
-            if (!url.searchParams.has("utm_source")) {
-                const elementLabel = anchor.innerText.trim() || anchor.getAttribute("aria-label") || "LinkClick";
-                url.searchParams.set("utm_source", elementLabel.replace(/\s+/g, "_"));
-            }
-            if (!url.searchParams.has("utm_medium")) url.searchParams.set("utm_medium", "interactive_element");
-            anchor.setAttribute("href", url.toString());
-        } catch (e) {
-            console.error("UTM error for URL:", href, e);
-        }
-    });
+    const slides = viewport.querySelectorAll('.slider-slide');
+    if (slides.length <= 1) return;
+
+    let currentSlideIdx = 0;
+    if (globalSlideshowTicker) clearInterval(globalSlideshowTicker);
+
+    globalSlideshowTicker = setInterval(() => {
+        slides[currentSlideIdx].classList.remove('active');
+        currentSlideIdx = (currentSlideIdx + 1) % slides.length;
+        slides[currentSlideIdx].classList.add('active');
+    }, 4000);
 }
 
 /* === SECTION 5: ScoreStream Sports Integration === */
@@ -227,7 +223,7 @@ async function loadScorestreamSportsWidget(cb) {
     document.body.appendChild(sportsScript);
 }
 
-/* === SECTION 6: Firebase Fuel Price Monitor Engine === */
+/* === SECTION 6: Firebase Fuel Price Monitor Engine (Clickable Widget) === */
 function initializeFirebaseGasMonitor() {
     const gasContainer = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
     if (!gasContainer) return;
@@ -292,12 +288,18 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTown, container) {
         return;
     }
 
+    const updatePortalUrl = window.globalAppConfig?.regional_endpoints?.update_gas_portal_url || "https://www.supportmylocalcommunity.com/update-gas";
+
     let currentIdx = 0;
     const renderCurrentStation = () => {
         const id = stationIds[currentIdx];
         const config = stationConfigs[id];
         const info = data[id] || { reg: "---", dsl: "---", date: "PENDING" };
         const safeLogo = encodeURIComponent(config.logo);
+
+        container.style.cursor = "pointer";
+        container.title = "Click to update gas prices";
+        container.onclick = () => window.open(updatePortalUrl, '_blank');
 
         container.innerHTML = `
             <div class="sidebar-widget-title">${config.display.toUpperCase()} FUEL INDEX MONITOR</div>
@@ -317,7 +319,7 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTown, container) {
                     <span class="price-value-diesel">${(info.dsl === "0" || !info.dsl) ? "---" : info.dsl}</span>
                 </div>
             </div>
-            <div class="sync-timestamp-label">Updated: ${info.date}</div>
+            <div class="sync-timestamp-label">Updated: ${info.date} &bull; Click to Update</div>
         `;
         currentIdx = (currentIdx + 1) % stationIds.length;
     };
@@ -329,7 +331,38 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTown, container) {
     }
 }
 
-/* === SECTION 7: Local Directory Links === */
+/* === SECTION 7: Advertising Partners Pipeline (Section 6 & Section 8) === */
+async function loadPartnersStrips(cacheBuster) {
+    const topGrid = document.getElementById('partners-grid-top');
+    const bottomGrid = document.getElementById('partners-grid-bottom');
+    if (!topGrid && !bottomGrid) return;
+
+    try {
+        const partnersEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.partners_json_manifest) || "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/partners/partners.json";
+        const res = await fetch(partnersEndpoint + '?' + cacheBuster);
+        const data = await res.json();
+        
+        const partnersList = Array.isArray(data) ? data : (data.partners || data.sponsors || []);
+
+        if (partnersList.length > 0) {
+            const partnerCardsHtml = partnersList.map(p => `
+                <div class="partner-card">
+                    <div class="partner-logo-box">
+                        <img src="${p.logo || p.image || p.img}" alt="${p.name || 'SMLC Partner'}" onclick="window.open('${p.url || p.link || '#'}', '_blank')">
+                    </div>
+                    <h4><a href="${p.url || p.link || '#'}" target="_blank">${p.name || 'Local Partner'}</a></h4>
+                </div>
+            `).join('');
+
+            if (topGrid) topGrid.innerHTML = partnerCardsHtml;
+            if (bottomGrid) bottomGrid.innerHTML = partnerCardsHtml;
+        }
+    } catch(e) {
+        console.error("Partners manifest load error:", e);
+    }
+}
+
+/* === SECTION 8: Local Directory Links & Footer Pipeline === */
 async function loadLocalLinksDirectory(cacheBuster) {
     const linkTarget = document.getElementById('local-links-target-container');
     if(!linkTarget) return;
@@ -355,7 +388,42 @@ async function loadLocalLinksDirectory(cacheBuster) {
     }
 }
 
-/* === SECTION 8: Master Data Pipeline Orchestrator === */
+async function loadFooterDataPipeline(cacheBuster) {
+    try {
+        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/footer.json?' + cacheBuster);
+        const data = await res.json();
+        const contact = data?.footer_data?.contact_info;
+
+        if (contact) {
+            const phoneTarget = document.getElementById('footer-phone-target');
+            if (phoneTarget && Array.isArray(contact.phone)) {
+                phoneTarget.innerHTML = contact.phone.map(p => `
+                    <div><a href="${p.url}" style="color:#fff;">${p.label}: ${p.number}</a></div>
+                `).join('');
+            }
+
+            const emailTarget = document.getElementById('footer-email-target');
+            if (emailTarget && contact.email) {
+                emailTarget.href = contact.email.url || `mailto:${contact.email.address}`;
+                emailTarget.innerText = contact.email.address;
+            }
+
+            const addressTarget = document.getElementById('footer-address-target');
+            if (addressTarget && contact.address) {
+                addressTarget.innerHTML = `<a href="${contact.address.map_url}" target="_blank" style="color:#fff; text-decoration:underline;">${contact.address.text}</a>`;
+            }
+
+            const copyTarget = document.getElementById('footer-copy-target');
+            if (copyTarget && data.footer_data.copyright) {
+                copyTarget.innerHTML = data.footer_data.copyright;
+            }
+        }
+    } catch(e) {
+        console.error("Footer JSON error:", e);
+    }
+}
+
+/* === SECTION 9: Master Data Pipeline Orchestrator === */
 async function processDataPipelines() {
     const cb = getSmartCacheBuster();
 
@@ -372,27 +440,40 @@ async function processDataPipelines() {
 
     // 1. Business Spotlight Loader
     try {
-        const spotlightEndpoint = cleanRawUrl(endpoints.Business_Spotlight) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/spotlight.json";
+        const spotlightEndpoint = cleanRawUrl(endpoints.Business_Spotlight) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/business_spotlight.json";
         const spotlightRes = await fetch(spotlightEndpoint + '?' + cb);
         const spotlightData = await spotlightRes.json();
         
         const spotlightTarget = document.querySelector('.clay-county-news-box.spotlight-clipping');
         if (spotlightData && spotlightTarget) {
-            const activeSpotlight = Array.isArray(spotlightData) ? spotlightData[0] : spotlightData;
-            spotlightTarget.innerHTML = `
-                <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
-                <div class="spotlight-image-wrap">
-                    <img src="${activeSpotlight.imageurl || activeSpotlight.image}" alt="${activeSpotlight.name}">
-                </div>
-                <span class="biz-title">${activeSpotlight.name}</span>
-                <span class="biz-location">${activeSpotlight.location || 'Clay County, IL'}</span>
-                <p class="biz-description">"${activeSpotlight.description}"</p>
-                <a href="${activeSpotlight.source_url || activeSpotlight.link || '#'}" target="_blank" class="spotlight-btn">Visit Business &rarr;</a>
-            `;
+            const townKey = ACTIVE_TOWN.jsonKey || "louisville";
+            const cities = spotlightData.business_spotlights?.cities_towns_villages || spotlightData.maps || spotlightData;
+            const townships = spotlightData.business_spotlights?.civil_townships || {};
+            
+            const activeSpotlight = cities[townKey] || townships[townKey] || (Array.isArray(spotlightData) ? spotlightData[0] : spotlightData);
+
+            if (activeSpotlight) {
+                const img = activeSpotlight.image_url || activeSpotlight.imageurl || activeSpotlight.src || activeSpotlight.image;
+                const title = activeSpotlight.title || activeSpotlight.name || "Local Merchant";
+                const loc = activeSpotlight.location || ACTIVE_TOWN.primaryName + ", IL";
+                const desc = activeSpotlight.description || activeSpotlight.alt || "Supporting local commerce across Clay County.";
+                const link = activeSpotlight.website_url || activeSpotlight.websiteurl || activeSpotlight.url || activeSpotlight.link || "#";
+
+                spotlightTarget.innerHTML = `
+                    <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
+                    <div class="spotlight-image-wrap">
+                        <img src="${img}" alt="${title}" class="lightbox-triggerable-element" onclick="fireLightbox('${img}', '${title.replace(/'/g, "\\'")}', '${loc}', '${desc.replace(/'/g, "\\'")}', '${link}')">
+                    </div>
+                    <span class="biz-title">${title}</span>
+                    <span class="biz-location">${loc}</span>
+                    <p class="biz-description">"${desc}"</p>
+                    <a href="${link}" target="_blank" class="spotlight-btn">Visit Business &rarr;</a>
+                `;
+            }
         }
     } catch(e) { console.error("Business Spotlight Pipeline Fault", e); }
 
-    // 2. Section 3 Landmark Data Loader (section3.json)
+    // 2. Section 3 Landmark Data Loader & Slideshow Init
     try {
         const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/section3.json?' + cb);
         const rows = await res.json();
@@ -409,6 +490,8 @@ async function processDataPipelines() {
             }
         }
     } catch(e) { console.error("Section 3 JSON data error", e); }
+
+    initializeSection3Slideshow();
 
     // 3. Section 5 Timeline Loader
     try {
@@ -463,14 +546,15 @@ async function processDataPipelines() {
         const targetGrid = document.getElementById('news-matrix-target');
         
         if (Array.isArray(newsArray) && targetGrid) {
-            const filtered = newsArray.filter(item => matchesActiveTown(item.title + " " + item.full_story, item.location));
-            if (filtered.length > 0) {
-                targetGrid.innerHTML = filtered.map(story => `
+            window.newsCacheBlock = newsArray.filter(item => matchesActiveTown(item.title + " " + item.full_story, item.location));
+            if (window.newsCacheBlock.length > 0) {
+                targetGrid.innerHTML = window.newsCacheBlock.map((story, idx) => `
                     <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
-                        ${story.image ? `<img src="${story.image}" style="width:100%; height:160px; object-fit:cover; border-radius:4px;">` : ''}
+                        ${story.image ? `<img src="${story.image}" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})">` : ''}
                         <div style="font-size:12px; color:#d9534f; font-weight:bold; margin-top:10px;">${formatHumanTimestamp(story.date)}</div>
                         <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${story.title}</div>
-                        <div style="font-size:14px; color:#444;">"${story.full_story.substring(0, 110)}..."</div>
+                        <div style="font-size:14px; color:#444;">"${(story.full_story || story.description || '').substring(0, 110)}..."</div>
+                        <div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: #0258A3; font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>
                     </div>
                 `).join('');
             } else {
@@ -479,18 +563,18 @@ async function processDataPipelines() {
         }
     } catch(e) { console.error("Local news error", e); }
 
-    // 6. Load Directory Links
+    // 6. Directory Links, Partners Strips, and Footer Data
     await loadLocalLinksDirectory(cb);
+    await loadPartnersStrips(cb);
+    await loadFooterDataPipeline(cb);
 
     // 7. ScoreStream Sports & Firebase Gas Monitor
     await loadScorestreamSportsWidget(cb);
     initializeFirebaseGasMonitor();
 }
 
-/* === SECTION 9: App Initialization === */
+/* === SECTION 10: App Initialization === */
 window.addEventListener('DOMContentLoaded', () => {
-    applyDynamicUTMTracking();
-    setupSmartTabsLogic();
     processDataPipelines();
-    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-26_20:20`);
+    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-26_22:00`);
 });
