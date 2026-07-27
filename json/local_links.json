@@ -1,13 +1,13 @@
 [
   {
-    "location": "Louisville, IL",
-    "name": "North Clay School's",
-    "url": "https://sites.google.com/northclayschools.com/nccusd25"
+    "location": "Flora, IL",
+    "name": "Schools",
+    "url": "https://www.floraschools.com"
   },
   {
-    "location": "Louisville, IL",
-    "name": "Village of Louisville",
-    "url": "https://louisvilleil.com"
+    "location": "Flora, IL",
+    "name": "The Country Closet",
+    "url": "https://www.facebook.com/TheCountryCloset"
   },
   {
     "location": "Louisville, IL",
@@ -18,6 +18,21 @@
     "location": "Louisville, IL",
     "name": "Clay County ESDA",
     "url": "http://claycountyillinois.org/emergency-services/"
+  },
+  {
+    "location": "Louisville, IL",
+    "name": "Clay County Museum",
+    "url": "https://www.enjoyillinois.com/explore/listing/clay-county-museum/"
+  },
+  {
+    "location": "Louisville, IL",
+    "name": "Clay County Sheriff",
+    "url": "https://www.sheriff.claycounty.illinois.gov"
+  },
+  {
+    "location": "Louisville, IL",
+    "name": "EPA Illinois",
+    "url": "https://epa.illinois.gov/"
   },
   {
     "location": "Louisville, IL",
@@ -36,32 +51,12 @@
   },
   {
     "location": "Louisville, IL",
-    "name": "Clay County Sheriff",
-    "url": "https://www.sheriff.claycounty.illinois.gov"
+    "name": "North Clay School's",
+    "url": "https://sites.google.com/northclayschools.com/nccusd25"
   },
   {
     "location": "Louisville, IL",
-    "name": "EPA Illinois",
-    "url": "https://epa.illinois.gov/"
-  },
-  {
-    "location": "Louisville, IL",
-    "name": "Clay County Museum",
-    "url": "https://www.enjoyillinois.com/explore/listing/clay-county-museum/"
-  },
-  {
-    "location": "Louisville, IL",
-    "name": "EPA Illinois",
-    "url": "https://epa.illinois.gov/"
-  },
-  {
-    "location": "Flora, IL",
-    "name": "Schools",
-    "url": "https://www.floraschools.com"
-  },
-  {
-    "location": "Flora, IL",
-    "name": "The Country Closet",
-    "url": "https://www.facebook.com/TheCountryCloset"
-  },
+    "name": "Village of Louisville",
+    "url": "https://louisvilleil.com"
+  }
 ]
