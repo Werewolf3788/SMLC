@@ -5,12 +5,13 @@
    Features:
    - Dynamic Section 3 Slideshow Engine (network_towns -> categories -> images)
    - ScoreStream Horizontal Sports Scoreboard bound via setAttribute('data-user-widget-id', ...)
-   - Firebase Real-Time Fuel Price Monitor with full property fallbacks
-   - Section 4 Business Spotlight Loader (cities_towns_villages & townships)
-   - Historical Timeline Engine bound to config.json town_history_tree
+   - Section 4.2.2 Firebase Fuel Price Monitor bound to config.json -> gas_widget
+   - Section 4.2.1 Business Spotlight Loader bound to config.json -> Business_Spotlight
+   - Sections 6 & 8 Advertising Partners Strips bound to config.json -> partners_json_manifest
+   - Historical Timeline Engine bound to config.json -> town_history_tree
    - Lightbox with Click-Outside-to-Close and HTML map link rendering
    - Calendar Bulletin Engine with robust date parsing
-   - Advertising Partners Strips and Footer Contacts Pipeline
+   - Footer Contacts Pipeline
    ========================================================================== */
 
 /* === SECTION 1: Geographically Correct Town Alignment Matrix === */
@@ -255,7 +256,7 @@ function loadScorestreamSportsWidget() {
     }
 }
 
-/* === SECTION 7: Firebase Fuel Price Monitor Engine === */
+/* === SECTION 7: Section 4.2.2 Firebase Fuel Price Monitor Engine === */
 function initializeFirebaseGasMonitor() {
     const gasContainer = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
     if (!gasContainer) return;
@@ -311,7 +312,11 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
     const stationIds = Object.keys(stationConfigs).filter(id => gasTownsArray.includes(stationConfigs[id].town));
     if (stationIds.length === 0) return;
 
-    const updatePortalUrl = window.globalAppConfig?.regional_endpoints?.update_gas_portal_url || "https://www.supportmylocalcommunity.com/update-gas";
+    // Direct binding to config.json -> gas_widget / update_gas_github_source
+    const updatePortalUrl = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.gas_widget) 
+        || cleanRawUrl(window.globalAppConfig?.regional_endpoints?.update_gas_github_source) 
+        || "https://werewolf3788.github.io/Testpages/update-gas.html";
+
     let currentIdx = 0;
 
     const renderCurrentStation = () => {
@@ -349,14 +354,17 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
     if (stationIds.length > 1) gasMonitorRotator = setInterval(renderCurrentStation, 5000);
 }
 
-/* === SECTION 8: Advertising Partners Strip Engine === */
+/* === SECTION 8: Sections 6 & 8 Advertising Partners Strip Engine === */
 async function loadPartnersStrips(cacheBuster) {
     const topGrid = document.getElementById('partners-grid-top');
     const bottomGrid = document.getElementById('partners-grid-bottom');
     if (!topGrid && !bottomGrid) return;
 
     try {
-        const partnersEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.partners_json_manifest) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/partners.json";
+        // Direct binding to config.json -> partners_json_manifest
+        const partnersEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.partners_json_manifest) 
+            || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/partners.json";
+            
         const res = await fetch(partnersEndpoint + '?' + cacheBuster);
         const data = await res.json();
         const partnersList = Array.isArray(data) ? data : (data.partners || []);
@@ -447,7 +455,7 @@ async function processDataPipelines() {
 
     const endpoints = window.globalAppConfig?.regional_endpoints || {};
 
-    // 1. Business Spotlight Loader
+    // 1. Business Spotlight Loader (Section 4.2.1)
     try {
         const spotlightEndpoint = cleanRawUrl(endpoints.Business_Spotlight) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/spotlight.json";
         const spotlightRes = await fetch(spotlightEndpoint + '?' + cb);
