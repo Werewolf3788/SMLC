@@ -1,10 +1,10 @@
 /* ==========================================================================
    Active Version: 2026-07-26_23:59
-   File: script.js / sourcetown.js
+   File: sourcetown.js / script.js
    Description: Louisville IL Community Portal - Master Engine
    Features:
    - Dynamic Section 3 Slideshow Engine (network_towns -> categories -> images)
-   - ScoreStream Horizontal Sports Scoreboard bound to exact town IDs
+   - ScoreStream Horizontal Sports Scoreboard bound via setAttribute('data-user-widget-id', ...)
    - Firebase Real-Time Fuel Price Monitor with full property fallbacks
    - Section 4 Business Spotlight Loader (cities_towns_villages & townships)
    - Historical Timeline Engine bound to config.json town_history_tree
@@ -170,7 +170,7 @@ function openNewsLightboxModal(idx) {
     );
 }
 
-/* === SECTION 5: Dynamic Section 3 Slideshow Engine (network_towns -> categories -> images) === */
+/* === SECTION 5: Dynamic Section 3 Slideshow Engine === */
 async function initializeSection3Slideshow(cb) {
     const viewport = document.getElementById('louisville-slideshow') || document.querySelector('.slider-viewport');
     if (!viewport) return;
@@ -233,26 +233,26 @@ async function initializeSection3Slideshow(cb) {
     }, 4000);
 }
 
-/* === SECTION 6: ScoreStream Integration (Dynamic DOM Injection Engine) === */
+/* === SECTION 6: ScoreStream Integration === */
 function loadScorestreamSportsWidget() {
-    const viewportFrame = document.querySelector('.scorestream-viewport-frame-fixed');
-    if (!viewportFrame) return;
+    const container = document.querySelector('.scorestream-widget-container');
+    if (!container) return;
 
-    const targetBannerId = ACTIVE_TOWN.scorestreamId || "68601";
-    viewportFrame.innerHTML = '';
+    // 1. Update data-user-widget-id attribute on container in HTML
+    container.setAttribute('data-user-widget-id', ACTIVE_TOWN.scorestreamId);
 
-    const widgetDiv = document.createElement('div');
-    widgetDiv.className = 'scorestream-widget-container';
-    widgetDiv.setAttribute('data-ss_widget_type', 'horzScoreboard');
-    widgetDiv.setAttribute('data-user-widget-id', targetBannerId);
+    // 2. Refresh embed.js script so ScoreStream renders the new town ID
+    const parent = container.parentElement;
+    if (parent) {
+        const oldScript = parent.querySelector('script[src*="scorestream.com"]');
+        if (oldScript) oldScript.remove();
 
-    const sportsScript = document.createElement('script');
-    sportsScript.type = 'text/javascript';
-    sportsScript.async = true;
-    sportsScript.src = "https://scorestream.com/apiJsCdn/widgets/embed.js";
-
-    viewportFrame.appendChild(widgetDiv);
-    viewportFrame.appendChild(sportsScript);
+        const newScript = document.createElement('script');
+        newScript.type = 'text/javascript';
+        newScript.async = true;
+        newScript.src = "https://scorestream.com/apiJsCdn/widgets/embed.js";
+        parent.appendChild(newScript);
+    }
 }
 
 /* === SECTION 7: Firebase Fuel Price Monitor Engine === */
@@ -447,7 +447,7 @@ async function processDataPipelines() {
 
     const endpoints = window.globalAppConfig?.regional_endpoints || {};
 
-    // 1. Business Spotlight Loader (Reads spotlight.json nesting)
+    // 1. Business Spotlight Loader
     try {
         const spotlightEndpoint = cleanRawUrl(endpoints.Business_Spotlight) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/spotlight.json";
         const spotlightRes = await fetch(spotlightEndpoint + '?' + cb);
@@ -506,7 +506,7 @@ async function processDataPipelines() {
 
     await initializeSection3Slideshow(cb);
 
-    // 3. Historical Timeline Engine (Reads config.json -> town_history_tree)
+    // 3. Historical Timeline Engine
     try {
         const historyTree = window.globalAppConfig?.town_history_tree || {};
         const activeHistoryKey = ACTIVE_TOWN.historyKey || "louisville";
