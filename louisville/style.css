@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-07-26_23:30
+   Active Version: 2026-07-27_05:25
    File: style.css
    Description: Master Stylesheet - Header Barrier, Dynamic Widgets, & Compact Cards
    ========================================================================== */
@@ -898,7 +898,6 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 .cal-text-link:hover { text-decoration: underline !important; }
 
 /* SECTION 7.2: CENTER COLUMN RETRO CONTAINERS */
-.scorestream-embed-card, 
 .newspaper-feed-chassis {
 	background-color: #fffdf5 !important; 
 	border: 3px double #222222 !important; 
