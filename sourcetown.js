@@ -1,114 +1,84 @@
 /* ==========================================================================
-   Active Version: 2026-07-26_22:00
+   Active Version: 2026-07-26_22:45
    File: sourcetown.js
-   Description: Louisville IL Community Portal - Fully Synchronized Master Engine
+   Description: Louisville IL Community Portal - Master Engine Engine
    Features:
    - Dynamic Section 3 Slideshow Auto-Rotator
-   - Clickable Gas Monitor redirecting to config.json update_gas_portal_url
-   - Partners Strip pipeline (Section 6 & 8) bound to partners_json_manifest
+   - Clickable Gas Monitor bound to update_gas_portal_url
+   - Partners Strip Pipeline (Section 6 & 8) bound to partners_json_manifest
+   - Universal Cross-Platform WhatsApp (wa.me) & Phone Calling Engine
+   - Native mailto: Email Auto-Fill Engine
+   - OS-Aware Maps Launcher (Apple Maps vs. Google Maps)
    ========================================================================== */
 
 /* === SECTION 1: Town Alignment Matrix === */
 const TOWN_ALIAS_MAP = {
-    "LOUISVILLE": {
-        primaryName: "Louisville",
-        jsonKey: "louisville",
-        gasKey: "louisville",
-        historyKey: "louisville",
-        keywords: ["LOUISVILLE", "NORTH CLAY", "NC", "HOOSIER"],
-        zipCodes: ["62858"]
-    },
-    "FLORA": {
-        primaryName: "Flora",
-        jsonKey: "flora",
-        gasKey: "flora",
-        historyKey: "flora",
-        keywords: ["FLORA", "FLO", "WOLVES"],
-        zipCodes: ["62839"]
-    },
-    "CLAY CITY": {
-        primaryName: "Clay City",
-        jsonKey: "clay_city",
-        gasKey: "clay-city",
-        historyKey: "clay_city",
-        keywords: ["CLAY CITY", "CC"],
-        zipCodes: ["62824"]
-    },
-    "XENIA": {
-        primaryName: "Xenia",
-        jsonKey: "xenia",
-        gasKey: "xenia",
-        historyKey: "xenia",
-        keywords: ["XENIA"],
-        zipCodes: ["62899"]
-    },
-    "IOLA": {
-        primaryName: "Iola",
-        jsonKey: "iola",
-        gasKey: "louisville",
-        historyKey: "iola",
-        keywords: ["IOLA"],
-        zipCodes: ["62849"]
-    },
-    "SAILOR SPRINGS": {
-        primaryName: "Sailor Springs",
-        jsonKey: "sailor_springs",
-        gasKey: "louisville",
-        historyKey: "sailor_springs",
-        keywords: ["SAILOR SPRINGS"],
-        zipCodes: ["62879"]
-    },
-    "INGRAHAM": {
-        primaryName: "Ingraham",
-        jsonKey: "louisville",
-        gasKey: "louisville",
-        historyKey: "ingraham",
-        keywords: ["INGRAHAM"],
-        zipCodes: ["62434"]
-    }
+    "LOUISVILLE": { primaryName: "Louisville", jsonKey: "louisville", gasKey: "louisville", historyKey: "louisville", keywords: ["LOUISVILLE", "NORTH CLAY", "NC", "HOOSIER"], zipCodes: ["62858"] },
+    "FLORA": { primaryName: "Flora", jsonKey: "flora", gasKey: "flora", historyKey: "flora", keywords: ["FLORA", "FLO", "WOLVES"], zipCodes: ["62839"] },
+    "CLAY CITY": { primaryName: "Clay City", jsonKey: "clay_city", gasKey: "clay-city", historyKey: "clay_city", keywords: ["CLAY CITY", "CC"], zipCodes: ["62824"] },
+    "XENIA": { primaryName: "Xenia", jsonKey: "xenia", gasKey: "xenia", historyKey: "xenia", keywords: ["XENIA"], zipCodes: ["62899"] },
+    "IOLA": { primaryName: "Iola", jsonKey: "iola", gasKey: "louisville", historyKey: "iola", keywords: ["IOLA"], zipCodes: ["62849"] },
+    "SAILOR SPRINGS": { primaryName: "Sailor Springs", jsonKey: "sailor_springs", gasKey: "louisville", historyKey: "sailor_springs", keywords: ["SAILOR SPRINGS"], zipCodes: ["62879"] },
+    "INGRAHAM": { primaryName: "Ingraham", jsonKey: "louisville", gasKey: "louisville", historyKey: "ingraham", keywords: ["INGRAHAM"], zipCodes: ["62434"] }
 };
 
 function getActiveTownConfig() {
     const htmlTownAttr = (document.documentElement.getAttribute('data-town') || document.body?.getAttribute('data-town') || "").toUpperCase();
-    if (htmlTownAttr && TOWN_ALIAS_MAP[htmlTownAttr]) {
-        return TOWN_ALIAS_MAP[htmlTownAttr];
-    }
+    if (htmlTownAttr && TOWN_ALIAS_MAP[htmlTownAttr]) return TOWN_ALIAS_MAP[htmlTownAttr];
     const pageTitle = document.title.toUpperCase();
     for (const key in TOWN_ALIAS_MAP) {
-        if (pageTitle.includes(key)) {
-            return TOWN_ALIAS_MAP[key];
-        }
+        if (pageTitle.includes(key)) return TOWN_ALIAS_MAP[key];
     }
     return TOWN_ALIAS_MAP["LOUISVILLE"];
 }
 
 const ACTIVE_TOWN = getActiveTownConfig();
 
-/* === SECTION 2: Global State Tracking === */
+/* === SECTION 2: Global State & Device/OS Handlers === */
 let globalSlideshowTicker = null;
 let gasMonitorRotator = null;
 window.calendarCachedEvents = [];
 window.newsCacheBlock = [];
 window.globalAppConfig = null;
 
-/* === SECTION 3: Helper & Utility Functions === */
-function getSmartCacheBuster() {
-    return "v=" + Math.floor(Date.now() / 3600000);
+function isIOSDevice() {
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
+
+function buildOSMapUrl(addressText) {
+    if (!addressText) return "#";
+    const encoded = encodeURIComponent(addressText);
+    if (isIOSDevice()) {
+        return `maps://maps.apple.com/?daddr=${encoded}`;
+    }
+    return `https://www.google.com/maps/dir/?api=1&destination=${encoded}`;
+}
+
+function handlePhoneClick(number, isWhatsAppEligible) {
+    const cleanNum = number.replace(/[^\d]/g, '');
+    
+    if (isWhatsAppEligible) {
+        const wantWhatsApp = confirm("Click 'OK' to open WhatsApp Chat, or 'Cancel' to place a direct Phone Call.");
+        if (wantWhatsApp) {
+            window.open(`https://wa.me/1${cleanNum}`, '_blank');
+            return;
+        }
+    }
+    
+    window.location.href = `tel:+1${cleanNum}`;
+}
+
+/* === SECTION 3: Helper & Utility Functions === */
+function getSmartCacheBuster() { return "v=" + Math.floor(Date.now() / 3600000); }
 
 function cleanRawUrl(urlStr) {
     if (!urlStr) return "";
-    return urlStr
-        .replace("github.com", "raw.githubusercontent.com")
-        .replace("/blob/", "/")
-        .replace("/edit/", "/");
+    return urlStr.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/").replace("/edit/", "/");
 }
 
 function matchesActiveTown(text, location) {
     const combinedStr = ((text || "") + " " + (location || "")).toUpperCase();
-    const matchedKeyword = ACTIVE_TOWN.keywords.some(kw => combinedStr.includes(kw));
-    const matchedZip = ACTIVE_TOWN.zipCodes.some(zip => combinedStr.includes(zip));
-    return matchedKeyword || matchedZip;
+    return ACTIVE_TOWN.keywords.some(kw => combinedStr.includes(kw)) || ACTIVE_TOWN.zipCodes.some(zip => combinedStr.includes(zip));
 }
 
 function formatHumanTimestamp(rawString) {
@@ -118,6 +88,25 @@ function formatHumanTimestamp(rawString) {
         if (isNaN(dateObj.getTime())) return rawString;
         return dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     } catch(e) { return rawString; }
+}
+
+function parseInteractiveContent(rawText) {
+    if (!rawText) return "";
+    let parsed = rawText;
+
+    // Convert phone numbers to interactive triggers
+    parsed = parsed.replace(/(\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b)/g, (match) => {
+        const clean = match.replace(/[^\d]/g, '');
+        const isWhatsApp = clean.includes("6187084450");
+        return `<a href="javascript:void(0)" onclick="handlePhoneClick('${clean}', ${isWhatsApp})" style="color:#0258A3; font-weight:bold; text-decoration:underline;">${match}</a>`;
+    });
+
+    // Convert emails to mailto links
+    parsed = parsed.replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, (match) => {
+        return `<a href="mailto:${match}" style="color:#0258A3; font-weight:bold; text-decoration:underline;">${match}</a>`;
+    });
+
+    return parsed;
 }
 
 function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl) {
@@ -135,7 +124,7 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl) {
     
     const dateEl = document.getElementById('lightbox-target-date'); if (dateEl) dateEl.innerText = dateText || '';
     const titleEl = document.getElementById('lightbox-target-title'); if (titleEl) titleEl.innerText = title || '';
-    const storyEl = document.getElementById('lightbox-target-story'); if (storyEl) storyEl.innerText = bodyText || '';
+    const storyEl = document.getElementById('lightbox-target-story'); if (storyEl) storyEl.innerHTML = parseInteractiveContent(bodyText) || '';
     
     if (targetUrl && actionLink && actionRow) {
         actionLink.href = targetUrl;
@@ -152,11 +141,12 @@ function openCalendarLightboxModal(idx) {
     const title = targetItem.name || "Community Event";
     const dateText = formatHumanTimestamp(targetItem.date || targetItem.displayDate);
     const timeText = targetItem.time || targetItem.displayTime || "Time TBA";
-    const location = targetItem.location || ACTIVE_TOWN.primaryName + ", IL";
-    let details = targetItem.details || "No details provided.";
-    details = details.replace(/<\/?[^>]+(>|$)/g, ""); 
+    const rawLoc = targetItem.location || ACTIVE_TOWN.primaryName + ", IL";
+    const mapUrl = buildOSMapUrl(rawLoc);
     
-    fireLightbox('', title, `${dateText} @ ${timeText} | Location: ${location}`, details, '');
+    let details = targetItem.details || "No details provided.";
+    const metaHeader = `${dateText} @ ${timeText} | Location: <a href="${mapUrl}" target="_blank" style="color:#d9534f; text-decoration:underline;">${rawLoc}</a>`;
+    fireLightbox('', title, metaHeader, details, '');
 }
 
 function openNewsLightboxModal(idx) {
@@ -175,7 +165,6 @@ function openNewsLightboxModal(idx) {
 function initializeSection3Slideshow() {
     const viewport = document.getElementById('louisville-slideshow') || document.querySelector('.slider-viewport');
     if (!viewport) return;
-
     const slides = viewport.querySelectorAll('.slider-slide');
     if (slides.length <= 1) return;
 
@@ -193,37 +182,26 @@ function initializeSection3Slideshow() {
 async function loadScorestreamSportsWidget(cb) {
     const widgetContainer = document.querySelector('.scorestream-widget-container');
     if (!widgetContainer) return;
-
     let targetBannerId = "68601";
 
     try {
-        const sportsUrl = 'https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/sports.json?' + cb;
-        const res = await fetch(sportsUrl);
+        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/sports.json?' + cb);
         const sportsData = await res.json();
-
         const activeKey = ACTIVE_TOWN.jsonKey || "louisville";
-        if (sportsData && sportsData.widgets && sportsData.widgets[activeKey]) {
-            targetBannerId = sportsData.widgets[activeKey].banner_id;
-        } else if (sportsData && sportsData.widgets && sportsData.widgets["clay_county_teams"]) {
-            targetBannerId = sportsData.widgets["clay_county_teams"].banner_id;
-        }
-    } catch(e) {
-        console.error("Sports JSON configuration error, using town default:", e);
-    }
+        if (sportsData?.widgets?.[activeKey]) targetBannerId = sportsData.widgets[activeKey].banner_id;
+    } catch(e) { console.error("Sports JSON config error:", e); }
 
     widgetContainer.setAttribute('data-user-widget-id', targetBannerId);
-
     const existingScript = document.querySelector('script[src*="scorestream.com"]');
     if (existingScript) existingScript.remove();
 
     const sportsScript = document.createElement('script');
-    sportsScript.type = 'text/javascript';
     sportsScript.src = "https://scorestream.com/apiJsCdn/widgets/embed.js";
     sportsScript.async = true;
     document.body.appendChild(sportsScript);
 }
 
-/* === SECTION 6: Firebase Fuel Price Monitor Engine (Clickable Widget) === */
+/* === SECTION 6: Firebase Fuel Price Monitor Engine === */
 function initializeFirebaseGasMonitor() {
     const gasContainer = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
     if (!gasContainer) return;
@@ -264,33 +242,23 @@ function bindFirebaseFuelDatabase(stationConfigs, container) {
         appId: "1:22397440085:web:c88e71688ed58896bc4dc"
     };
 
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const activeGasTown = ACTIVE_TOWN.gasKey || "louisville";
 
     db.ref('fuel_prices').on('value', (snap) => {
         const val = snap.val();
-        if (val) {
-            renderGasBillboardUI(val, stationConfigs, activeGasTown, container);
-        } else {
-            container.innerHTML = `<div style="text-align:center; padding:20px; font-weight:bold; color:var(--louis-gold);">Gas Monitor Offline</div>`;
-        }
+        if (val) renderGasBillboardUI(val, stationConfigs, activeGasTown, container);
     });
 }
 
 function renderGasBillboardUI(data, stationConfigs, activeGasTown, container) {
     const stationIds = Object.keys(stationConfigs).filter(id => stationConfigs[id].town === activeGasTown);
-    if (stationIds.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding:20px; font-weight:bold; color:#222;">No Gas Stations Listed for ${ACTIVE_TOWN.primaryName}.</div>`;
-        return;
-    }
+    if (stationIds.length === 0) return;
 
     const updatePortalUrl = window.globalAppConfig?.regional_endpoints?.update_gas_portal_url || "https://www.supportmylocalcommunity.com/update-gas";
-
     let currentIdx = 0;
+
     const renderCurrentStation = () => {
         const id = stationIds[currentIdx];
         const config = stationConfigs[id];
@@ -298,26 +266,17 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTown, container) {
         const safeLogo = encodeURIComponent(config.logo);
 
         container.style.cursor = "pointer";
-        container.title = "Click to update gas prices";
         container.onclick = () => window.open(updatePortalUrl, '_blank');
 
         container.innerHTML = `
             <div class="sidebar-widget-title">${config.display.toUpperCase()} FUEL INDEX MONITOR</div>
             <div class="fuel-station-header">
-                <div class="station-logo-frame">
-                    <img src="https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/${safeLogo}" alt="${config.name}">
-                </div>
+                <div class="station-logo-frame"><img src="https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/${safeLogo}" alt="${config.name}"></div>
                 <div class="station-meta-title">${config.name}</div>
             </div>
             <div class="fuel-pricing-grid">
-                <div class="price-box">
-                    <span class="price-type-label">REGULAR</span>
-                    <span class="price-value-regular">${info.reg}</span>
-                </div>
-                <div class="price-box">
-                    <span class="price-type-label">DIESEL</span>
-                    <span class="price-value-diesel">${(info.dsl === "0" || !info.dsl) ? "---" : info.dsl}</span>
-                </div>
+                <div class="price-box"><span class="price-type-label">REGULAR</span><span class="price-value-regular">${info.reg}</span></div>
+                <div class="price-box"><span class="price-type-label">DIESEL</span><span class="price-value-diesel">${(info.dsl === "0" || !info.dsl) ? "---" : info.dsl}</span></div>
             </div>
             <div class="sync-timestamp-label">Updated: ${info.date} &bull; Click to Update</div>
         `;
@@ -326,12 +285,10 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTown, container) {
 
     renderCurrentStation();
     if (gasMonitorRotator) clearInterval(gasMonitorRotator);
-    if (stationIds.length > 1) {
-        gasMonitorRotator = setInterval(renderCurrentStation, 5000);
-    }
+    if (stationIds.length > 1) gasMonitorRotator = setInterval(renderCurrentStation, 5000);
 }
 
-/* === SECTION 7: Advertising Partners Pipeline (Section 6 & Section 8) === */
+/* === SECTION 7: Advertising Partners Pipeline === */
 async function loadPartnersStrips(cacheBuster) {
     const topGrid = document.getElementById('partners-grid-top');
     const bottomGrid = document.getElementById('partners-grid-bottom');
@@ -341,115 +298,82 @@ async function loadPartnersStrips(cacheBuster) {
         const partnersEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.partners_json_manifest) || "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/partners/partners.json";
         const res = await fetch(partnersEndpoint + '?' + cacheBuster);
         const data = await res.json();
-        
-        const partnersList = Array.isArray(data) ? data : (data.partners || data.sponsors || []);
+        const partnersList = Array.isArray(data) ? data : (data.partners || []);
 
         if (partnersList.length > 0) {
             const partnerCardsHtml = partnersList.map(p => `
                 <div class="partner-card">
-                    <div class="partner-logo-box">
-                        <img src="${p.logo || p.image || p.img}" alt="${p.name || 'SMLC Partner'}" onclick="window.open('${p.url || p.link || '#'}', '_blank')">
-                    </div>
-                    <h4><a href="${p.url || p.link || '#'}" target="_blank">${p.name || 'Local Partner'}</a></h4>
+                    <div class="partner-logo-box"><img src="${p.logo || p.image}" alt="${p.name}" onclick="window.open('${p.url || '#'}', '_blank')"></div>
+                    <h4><a href="${p.url || '#'}" target="_blank">${p.name || 'Local Partner'}</a></h4>
                 </div>
             `).join('');
-
             if (topGrid) topGrid.innerHTML = partnerCardsHtml;
             if (bottomGrid) bottomGrid.innerHTML = partnerCardsHtml;
         }
-    } catch(e) {
-        console.error("Partners manifest load error:", e);
-    }
+    } catch(e) { console.error("Partners manifest error:", e); }
 }
 
-/* === SECTION 8: Local Directory Links & Footer Pipeline === */
-async function loadLocalLinksDirectory(cacheBuster) {
-    const linkTarget = document.getElementById('local-links-target-container');
-    if(!linkTarget) return;
-    try {
-        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/refs/heads/main/json/local_links.json?' + cacheBuster);
-        const data = await res.json();
-        if(Array.isArray(data)) {
-            const filteredLinks = data.filter(link => matchesActiveTown(link.name, link.location));
-            if(filteredLinks.length > 0) {
-                linkTarget.innerHTML = filteredLinks.map(link => `
-                    <div class="local-link-node" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #ddd;">
-                        <span style="font-weight: bold; font-size: 15px; color: #1a1a1a;">${link.name}</span> &mdash; 
-                        <a href="${link.url}" target="_blank" class="local-link-anchor-btn" style="font-weight: bold; color: var(--link-bright-blue);">Visit Site &rarr;</a>
-                    </div>
-                `).join('');
-            } else {
-                linkTarget.innerHTML = `<div style="font-style:italic; font-size:14px; color:#666;">No institutional links available for ${ACTIVE_TOWN.primaryName}.</div>`;
-            }
-        }
-    } catch(e) {
-        console.error("Local links error", e);
-        linkTarget.innerHTML = `<div style="font-size:14px; color:#cc0000;">Directory segment offline.</div>`;
-    }
-}
-
+/* === SECTION 8: Footer Data Pipeline (OS & Device Aware) === */
 async function loadFooterDataPipeline(cacheBuster) {
     try {
-        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/footer.json?' + cacheBuster);
+        const footerEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.footer_json) || 'https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/footer.json';
+        const res = await fetch(footerEndpoint + '?' + cacheBuster);
         const data = await res.json();
         const contact = data?.footer_data?.contact_info;
 
         if (contact) {
+            // Render Device-Aware Phone Numbers (Calls + WhatsApp wa.me)
             const phoneTarget = document.getElementById('footer-phone-target');
             if (phoneTarget && Array.isArray(contact.phone)) {
-                phoneTarget.innerHTML = contact.phone.map(p => `
-                    <div><a href="${p.url}" style="color:#fff;">${p.label}: ${p.number}</a></div>
-                `).join('');
+                phoneTarget.innerHTML = contact.phone.map(p => {
+                    const isWhatsApp = p.number.includes("618-708-4450");
+                    return `<div><a href="javascript:void(0)" onclick="handlePhoneClick('${p.number}', ${isWhatsApp})" style="color:#fff; text-decoration:none;"><strong>${p.label}:</strong> ${p.number}</a></div>`;
+                }).join('');
             }
 
+            // Render Email with Automatic To: Mailto Pre-fill
             const emailTarget = document.getElementById('footer-email-target');
             if (emailTarget && contact.email) {
-                emailTarget.href = contact.email.url || `mailto:${contact.email.address}`;
-                emailTarget.innerText = contact.email.address;
+                const mailAddr = contact.email.address;
+                emailTarget.href = `mailto:${mailAddr}`;
+                emailTarget.innerText = mailAddr;
             }
 
+            // Render OS-Aware Interactive Map Address
             const addressTarget = document.getElementById('footer-address-target');
             if (addressTarget && contact.address) {
-                addressTarget.innerHTML = `<a href="${contact.address.map_url}" target="_blank" style="color:#fff; text-decoration:underline;">${contact.address.text}</a>`;
+                const mapUrl = buildOSMapUrl(contact.address.text);
+                addressTarget.innerHTML = `<a href="${mapUrl}" target="_blank" style="color:#fff; text-decoration:underline;">${contact.address.text}</a>`;
             }
 
+            // Render Copyright
             const copyTarget = document.getElementById('footer-copy-target');
-            if (copyTarget && data.footer_data.copyright) {
-                copyTarget.innerHTML = data.footer_data.copyright;
-            }
+            if (copyTarget && data.footer_data.copyright) copyTarget.innerHTML = data.footer_data.copyright;
         }
-    } catch(e) {
-        console.error("Footer JSON error:", e);
-    }
+    } catch(e) { console.error("Footer JSON error:", e); }
 }
 
 /* === SECTION 9: Master Data Pipeline Orchestrator === */
 async function processDataPipelines() {
     const cb = getSmartCacheBuster();
 
-    // 0. Primary Master Config Pipeline (config.json)
     try {
-        const configUrl = 'https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/config.json?' + cb;
-        const configRes = await fetch(configUrl);
+        const configRes = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/config.json?' + cb);
         window.globalAppConfig = await configRes.json();
-    } catch(e) {
-        console.error("Master config.json fetch fault, using fallbacks", e);
-    }
+    } catch(e) { console.error("Config fetch fault", e); }
 
     const endpoints = window.globalAppConfig?.regional_endpoints || {};
 
-    // 1. Business Spotlight Loader
+    // 1. Business Spotlight
     try {
         const spotlightEndpoint = cleanRawUrl(endpoints.Business_Spotlight) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/business_spotlight.json";
         const spotlightRes = await fetch(spotlightEndpoint + '?' + cb);
         const spotlightData = await spotlightRes.json();
-        
         const spotlightTarget = document.querySelector('.clay-county-news-box.spotlight-clipping');
         if (spotlightData && spotlightTarget) {
             const townKey = ACTIVE_TOWN.jsonKey || "louisville";
             const cities = spotlightData.business_spotlights?.cities_towns_villages || spotlightData.maps || spotlightData;
             const townships = spotlightData.business_spotlights?.civil_townships || {};
-            
             const activeSpotlight = cities[townKey] || townships[townKey] || (Array.isArray(spotlightData) ? spotlightData[0] : spotlightData);
 
             if (activeSpotlight) {
@@ -457,13 +381,11 @@ async function processDataPipelines() {
                 const title = activeSpotlight.title || activeSpotlight.name || "Local Merchant";
                 const loc = activeSpotlight.location || ACTIVE_TOWN.primaryName + ", IL";
                 const desc = activeSpotlight.description || activeSpotlight.alt || "Supporting local commerce across Clay County.";
-                const link = activeSpotlight.website_url || activeSpotlight.websiteurl || activeSpotlight.url || activeSpotlight.link || "#";
+                const link = activeSpotlight.website_url || activeSpotlight.websiteurl || activeSpotlight.url || "#";
 
                 spotlightTarget.innerHTML = `
                     <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
-                    <div class="spotlight-image-wrap">
-                        <img src="${img}" alt="${title}" class="lightbox-triggerable-element" onclick="fireLightbox('${img}', '${title.replace(/'/g, "\\'")}', '${loc}', '${desc.replace(/'/g, "\\'")}', '${link}')">
-                    </div>
+                    <div class="spotlight-image-wrap"><img src="${img}" alt="${title}" onclick="fireLightbox('${img}', '${title.replace(/'/g, "\\'")}', '${loc}', '${desc.replace(/'/g, "\\'")}', '${link}')"></div>
                     <span class="biz-title">${title}</span>
                     <span class="biz-location">${loc}</span>
                     <p class="biz-description">"${desc}"</p>
@@ -471,9 +393,9 @@ async function processDataPipelines() {
                 `;
             }
         }
-    } catch(e) { console.error("Business Spotlight Pipeline Fault", e); }
+    } catch(e) { console.error("Spotlight error", e); }
 
-    // 2. Section 3 Landmark Data Loader & Slideshow Init
+    // 2. Section 3 Landmark Data & Slideshow Initializer
     try {
         const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/section3.json?' + cb);
         const rows = await res.json();
@@ -489,56 +411,40 @@ async function processDataPipelines() {
                 const desc2 = document.getElementById('desc2-target-1'); if (desc2) desc2.innerText = targetRow.Description2;
             }
         }
-    } catch(e) { console.error("Section 3 JSON data error", e); }
+    } catch(e) { console.error("Section 3 error", e); }
 
     initializeSection3Slideshow();
 
-    // 3. Section 5 Timeline Loader
-    try {
-        const historyTree = window.globalAppConfig?.town_history_tree || {};
-        const activeHistoryKey = ACTIVE_TOWN.historyKey || "louisville";
-        const historyEndpoint = historyTree[activeHistoryKey] || `https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/${activeHistoryKey.replace(/_/g, '-')}.json`;
-        
-        const res = await fetch(historyEndpoint + '?' + cb);
-        const payload = await res.json();
-        const historyRowTarget = document.getElementById('history-row-target');
-        if(payload && payload.history && historyRowTarget) {
-            historyRowTarget.innerHTML = payload.history.map(evt => `
-                <div class="history-card" onclick="fireLightbox('${evt.image_url || ''}', '${(evt.event || '').replace(/'/g, "\\'")}', 'YEAR ${evt.year}', '${(evt.description || '').replace(/'/g, "\\'")}', '${evt.source_url || ''}')">
-                    <h2>${evt.year}</h2>
-                    <h3>${evt.event}</h3>
-                    <p>${evt.description || ''}</p>
-                    ${evt.image_url ? `<div class="history-img-box"><img src="${evt.image_url}" alt="${evt.event}"></div>` : ''}
-                </div>
-            `).join('');
-        }
-    } catch(e) { console.error("Timeline data error", e); }
-
-    // 4. Calendar Bulletin Engine
+    // 3. Calendar Bulletin Engine with OS Map & Phone Parsing
     try {
         const bulletinEndpoint = endpoints.apps_script_bulletin_url || "https://script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec";
         const res = await fetch(bulletinEndpoint + '?feed=true&' + cb);
         const elements = await res.json();
-        const scroller = document.getElementById('bulletin-scroller-target') || document.getElementById('divi-event-list');
-        
+        const scroller = document.getElementById('bulletin-scroller-target');
+
         if (Array.isArray(elements) && elements.length > 0) {
             window.calendarCachedEvents = elements.filter(item => matchesActiveTown(item.name + " " + item.details, item.location));
             if (scroller && window.calendarCachedEvents.length > 0) {
-                scroller.innerHTML = window.calendarCachedEvents.map((item, idx) => `
-                    <div class="divi-event-item">
-                        <div class="divi-event-date">${formatHumanTimestamp(item.date)} &bull; ${item.time || 'TBA'}</div>
-                        <div class="divi-event-title">${item.name}</div>
-                        <div class="event-info-text"><strong>Where:</strong> ${item.location || ACTIVE_TOWN.primaryName}</div>
-                        <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})">Read More &rarr;</div>
-                    </div>
-                `).join('');
-            } else if (scroller) {
-                scroller.innerHTML = `<div style="text-align:center; padding:1.5rem; font-style:italic;">No events scheduled for ${ACTIVE_TOWN.primaryName}.</div>`;
+                scroller.innerHTML = window.calendarCachedEvents.map((item, idx) => {
+                    const mapUrl = buildOSMapUrl(item.location || ACTIVE_TOWN.primaryName);
+                    const parsedDetails = parseInteractiveContent((item.details || "").substring(0, 90));
+                    return `
+                        <div class="divi-event-item" style="margin-bottom:15px; padding-bottom:10px; border-bottom:1px dashed #ccc;">
+                            <div class="divi-event-date" style="font-size:12px; color:#d9534f; font-weight:bold;">${formatHumanTimestamp(item.date)} &bull; ${item.time || 'TBA'}</div>
+                            <div class="divi-event-title" style="font-size:16px; font-weight:bold;">${item.name}</div>
+                            <div class="event-info-text" style="font-size:13px; color:#333;">
+                                <strong>Where:</strong> <a href="${mapUrl}" target="_blank" style="color:#0258A3; text-decoration:underline;">${item.location || ACTIVE_TOWN.primaryName}</a>
+                            </div>
+                            <div style="font-size:13px; color:#555; margin-top:4px;">${parsedDetails}...</div>
+                            <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:#0258A3; font-weight:bold; cursor:pointer; margin-top:6px;">Read More &rarr;</div>
+                        </div>
+                    `;
+                }).join('');
             }
         }
     } catch(err) { console.error("Calendar Wire fault", err); }
 
-    // 5. Local News Matrix Pipeline
+    // 4. Local News Dispatches Pipeline
     try {
         const newsEndpoint = endpoints.smlc_local_news_json || "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/local-news/news_data.json";
         const res = await fetch(newsEndpoint + '?' + cb);
@@ -557,18 +463,13 @@ async function processDataPipelines() {
                         <div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: #0258A3; font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>
                     </div>
                 `).join('');
-            } else {
-                targetGrid.innerHTML = `<div style="text-align:center; grid-column:1/-1; font-style:italic; padding:20px;">No news found for ${ACTIVE_TOWN.primaryName}.</div>`;
             }
         }
     } catch(e) { console.error("Local news error", e); }
 
-    // 6. Directory Links, Partners Strips, and Footer Data
-    await loadLocalLinksDirectory(cb);
+    // 5. Partners, Footer, ScoreStream & Gas Monitor Integrations
     await loadPartnersStrips(cb);
     await loadFooterDataPipeline(cb);
-
-    // 7. ScoreStream Sports & Firebase Gas Monitor
     await loadScorestreamSportsWidget(cb);
     initializeFirebaseGasMonitor();
 }
@@ -576,5 +477,5 @@ async function processDataPipelines() {
 /* === SECTION 10: App Initialization === */
 window.addEventListener('DOMContentLoaded', () => {
     processDataPipelines();
-    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-26_22:00`);
+    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-26_22:45`);
 });
