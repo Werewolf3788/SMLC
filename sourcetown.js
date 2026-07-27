@@ -1,18 +1,10 @@
 /* ==========================================================================
-   Active Version: 2026-07-27_01:00
+   Active Version: 2026-07-27_05:00
    File: sourcetown.js / script.js
    Description: Louisville IL Community Portal - Master Engine
-   Features:
-   - Dynamic Section 3 Slideshow Engine (network_towns -> categories -> images)
-   - ScoreStream Horizontal Sports Scoreboard bound via setAttribute('data-user-widget-id', ...)
-   - Section 4.2.2 Firebase Fuel Price Monitor bound to config.json -> gas_widget
-   - Section 4.2.1 Business Spotlight Loader bound to config.json -> Business_Spotlight
-   - Section 4.1.0 Dynamic Town Article Engine bound to artical.json
-   - Sections 6 & 8 Advertising Partners Strips bound to config.json -> partners_json_manifest
-   - Historical Timeline Engine bound to config.json -> town_history_tree
-   - Lightbox with Click-Outside-to-Close and HTML map link rendering
-   - Calendar Bulletin Engine with robust date parsing
-   - Footer Contacts Pipeline
+   Fixes:
+   - Fixed Gas Widget Flashing (stops rotator when 1 station is present)
+   - Upgraded Footer Pipeline to seamlessly process new footer.json payload
    ========================================================================== */
 
 /* === SECTION 1: Geographically Correct Town Alignment Matrix === */
@@ -84,6 +76,26 @@ function parseInteractiveContent(rawText) {
     return parsed;
 }
 
+function attachUtmParameters(urlStr) {
+    if (!urlStr || urlStr === "#" || urlStr.startsWith("javascript:")) return urlStr;
+    try {
+        const pageTitle = encodeURIComponent((document.title || "smlc_page").trim());
+        const utmSource = "smlc_portal";
+        const utmMedium = "town_article";
+        
+        const urlObj = new URL(urlStr, window.location.origin);
+        urlObj.searchParams.set("utm_source", utmSource);
+        urlObj.searchParams.set("utm_medium", utmMedium);
+        urlObj.searchParams.set("utm_campaign", pageTitle);
+        
+        return urlObj.toString();
+    } catch(e) {
+        const connector = urlStr.includes("?") ? "&" : "?";
+        const pageTitle = encodeURIComponent((document.title || "smlc_page").trim());
+        return `${urlStr}${connector}utm_source=smlc_portal&utm_medium=town_article&utm_campaign=${pageTitle}`;
+    }
+}
+
 function isIOSDevice() {
     return /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
@@ -134,7 +146,7 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl) {
     const storyEl = document.getElementById('lightbox-target-story'); if (storyEl) storyEl.innerHTML = parseInteractiveContent(bodyText) || '';
     
     if (targetUrl && actionLink && actionRow) {
-        actionLink.href = targetUrl;
+        actionLink.href = attachUtmParameters(targetUrl);
         actionRow.style.display = 'block';
     } else if (actionRow) {
         actionRow.style.display = 'none';
@@ -313,7 +325,12 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
     const stationIds = Object.keys(stationConfigs).filter(id => gasTownsArray.includes(stationConfigs[id].town));
     if (stationIds.length === 0) return;
 
-    // Direct binding to config.json -> gas_widget / update_gas_github_source
+    // Clear any existing rotation interval immediately
+    if (gasMonitorRotator) {
+        clearInterval(gasMonitorRotator);
+        gasMonitorRotator = null;
+    }
+
     const updatePortalUrl = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.gas_widget) 
         || cleanRawUrl(window.globalAppConfig?.regional_endpoints?.update_gas_github_source) 
         || "https://werewolf3788.github.io/Testpages/update-gas.html";
@@ -333,7 +350,7 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
         const safeLogo = encodeURIComponent(config.logo);
 
         container.style.cursor = "pointer";
-        container.onclick = () => window.open(updatePortalUrl, '_blank');
+        container.onclick = () => window.open(attachUtmParameters(updatePortalUrl), '_blank');
 
         container.innerHTML = `
             <div class="sidebar-widget-title">${config.display.toUpperCase()} FUEL INDEX MONITOR</div>
@@ -351,36 +368,56 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
     };
 
     renderCurrentStation();
-    if (gasMonitorRotator) clearInterval(gasMonitorRotator);
-    if (stationIds.length > 1) gasMonitorRotator = setInterval(renderCurrentStation, 5000);
+
+    // STRICT CHECK: Only start interval if there is MORE than 1 station to rotate (prevents flashing)
+    if (stationIds.length > 1) {
+        gasMonitorRotator = setInterval(renderCurrentStation, 5000);
+    }
 }
 
 /* === SECTION 8: Sections 6 & 8 Advertising Partners Strip Engine === */
 async function loadPartnersStrips(cacheBuster) {
-    const topGrid = document.getElementById('partners-grid-top');
-    const bottomGrid = document.getElementById('partners-grid-bottom');
-    if (!topGrid && !bottomGrid) return;
+    const topGrid = document.getElementById('partners-grid-top') 
+        || document.querySelector('.scotts-partners-top') 
+        || document.querySelectorAll('.partner-card-container')[0];
+        
+    const bottomGrid = document.getElementById('partners-grid-bottom') 
+        || document.querySelector('.scotts-partners-bottom') 
+        || document.querySelectorAll('.partner-card-container')[1];
 
     try {
-        // Direct binding to config.json -> partners_json_manifest
         const partnersEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.partners_json_manifest) 
-            || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/partners.json";
+            || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/partners.json";
             
         const res = await fetch(partnersEndpoint + '?' + cacheBuster);
         const data = await res.json();
         const partnersList = Array.isArray(data) ? data : (data.partners || []);
 
         if (partnersList.length > 0) {
-            const partnerCardsHtml = partnersList.map(p => `
-                <div class="partner-card">
-                    <div class="partner-logo-box"><img src="${p.logo || p.image}" alt="${p.name}" onclick="window.open('${p.url || '#'}', '_blank')"></div>
-                    <h4><a href="${p.url || '#'}" target="_blank">${p.name || 'Local Partner'}</a></h4>
-                </div>
-            `).join('');
+            const partnerCardsHtml = partnersList.map(p => {
+                const targetRawUrl = p.websiteUrl || p.url || '#';
+                const taggedUrl = attachUtmParameters(targetRawUrl);
+                const imgSrc = p.image || p.logo || '';
+                const partnerName = p.name || 'Local Partner';
+
+                return `
+                    <div class="partner-card">
+                        <div class="partner-logo-box">
+                            <img src="${imgSrc}" alt="${partnerName}" onclick="window.open('${taggedUrl}', '_blank')" style="cursor:pointer;">
+                        </div>
+                        <h4><a href="${taggedUrl}" target="_blank" data-ga-label="partner_link">${partnerName}</a></h4>
+                    </div>
+                `;
+            }).join('');
+
             if (topGrid) topGrid.innerHTML = partnerCardsHtml;
             if (bottomGrid) bottomGrid.innerHTML = partnerCardsHtml;
+        } else {
+            console.warn("Partners manifest loaded but contained no items.");
         }
-    } catch(e) { console.error("Partners manifest error:", e); }
+    } catch(e) { 
+        console.error("Partners manifest error:", e); 
+    }
 }
 
 /* === SECTION 9: Footer Data Pipeline Engine === */
@@ -392,29 +429,42 @@ async function loadFooterDataPipeline(cacheBuster) {
         const contact = data?.footer_data?.contact_info;
 
         if (contact) {
+            // Render Phones (Main Office, Toll Free, WhatsApp)
             const phoneTarget = document.getElementById('footer-phone-target');
             if (phoneTarget && Array.isArray(contact.phone)) {
                 phoneTarget.innerHTML = contact.phone.map(p => {
-                    const isWhatsApp = p.number.includes("618-708-4450");
-                    return `<div><a href="javascript:void(0)" onclick="handlePhoneClick('${p.number}', ${isWhatsApp})" style="color:#fff; text-decoration:none;"><strong>${p.label}:</strong> ${p.number}</a></div>`;
+                    const cleanNum = (p.number || "").replace(/[^\d]/g, '');
+                    const isWhatsApp = (p.whatsapp_url || p.number.includes("618-708-4450")) ? true : false;
+                    const displayLabel = p.label ? `<strong>${p.label}:</strong> ` : '';
+                    
+                    return `<div><a href="javascript:void(0)" onclick="handlePhoneClick('${cleanNum}', ${isWhatsApp})" style="color:#fff; text-decoration:none;">${displayLabel}${p.number}</a></div>`;
                 }).join('');
             }
 
+            // Render Email
             const emailTarget = document.getElementById('footer-email-target');
             if (emailTarget && contact.email) {
-                const mailAddr = contact.email.address;
+                const mailAddr = contact.email.address || contact.email;
                 emailTarget.href = `mailto:${mailAddr}`;
                 emailTarget.innerText = mailAddr;
             }
 
+            // Render Address & Directions
             const addressTarget = document.getElementById('footer-address-target');
             if (addressTarget && contact.address) {
-                const mapUrl = buildOSMapUrl(contact.address.text);
-                addressTarget.innerHTML = `<a href="${mapUrl}" target="_blank" style="color:#fff; text-decoration:underline;">${contact.address.text}</a>`;
+                const addrText = contact.address.text || contact.address;
+                const mapUrl = contact.address.directions_links?.google_maps_directions 
+                    || contact.address.view_links?.google_map 
+                    || buildOSMapUrl(addrText);
+                    
+                addressTarget.innerHTML = `<a href="${mapUrl}" target="_blank" style="color:#fff; text-decoration:underline;">${addrText}</a>`;
             }
 
+            // Render Copyright
             const copyTarget = document.getElementById('footer-copy-target');
-            if (copyTarget && data.footer_data.copyright) copyTarget.innerHTML = data.footer_data.copyright;
+            if (copyTarget && data.footer_data.copyright) {
+                copyTarget.innerHTML = data.footer_data.copyright;
+            }
         }
     } catch(e) { console.error("Footer JSON error:", e); }
 }
@@ -429,12 +479,15 @@ async function loadLocalLinksDirectory(cacheBuster) {
         if(Array.isArray(data)) {
             const filteredLinks = data.filter(link => matchesActiveTown(link.name, link.location));
             if(filteredLinks.length > 0) {
-                linkTarget.innerHTML = filteredLinks.map(link => `
-                    <div class="local-link-node" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #ddd;">
-                        <span style="font-weight: bold; font-size: 15px; color: #1a1a1a;">${link.name}</span> &mdash; 
-                        <a href="${link.url}" target="_blank" class="local-link-anchor-btn" style="font-weight: bold; color: var(--link-bright-blue);">Visit Site &rarr;</a>
-                    </div>
-                `).join('');
+                linkTarget.innerHTML = filteredLinks.map(link => {
+                    const taggedUrl = attachUtmParameters(link.url);
+                    return `
+                        <div class="local-link-node" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #ddd;">
+                            <span style="font-weight: bold; font-size: 15px; color: #1a1a1a;">${link.name}</span> &mdash; 
+                            <a href="${taggedUrl}" target="_blank" class="local-link-anchor-btn" data-ga-label="local_link" style="font-weight: bold; color: var(--link-bright-blue);">Visit Site &rarr;</a>
+                        </div>
+                    `;
+                }).join('');
             } else {
                 linkTarget.innerHTML = `<div style="font-style:italic; font-size:14px; color:#666;">No institutional links available for ${ACTIVE_TOWN.primaryName}.</div>`;
             }
@@ -468,13 +521,20 @@ async function loadTownArticleData(cacheBuster) {
                 paragraphsHtml = `<p style="margin-bottom: 1rem; line-height: 1.6; white-space: pre-line;">${parseInteractiveContent(data.content)}</p>`;
             }
 
+            let sourceLinkHtml = "";
+            if (data.source_url) {
+                const taggedUrl = attachUtmParameters(data.source_url);
+                sourceLinkHtml = `<div style="margin-top: 15px;"><a href="${taggedUrl}" target="_blank" data-ga-label="town_article_source" style="color: #0258A3; font-weight: bold; text-decoration: underline;">Read Full Source &rarr;</a></div>`;
+            }
+
             articleTarget.innerHTML = `
-                <div class="town-article-wrapper">
+                <div class="town-article-wrapper" data-ga-label="town_article_block">
                     <h2 class="town-article-title" style="font-size: 1.5rem; font-weight: bold; margin-bottom: 5px;">${title}</h2>
                     ${subtitle}
                     <div class="town-article-body">
                         ${paragraphsHtml}
                     </div>
+                    ${sourceLinkHtml}
                 </div>
             `;
         }
@@ -518,7 +578,7 @@ async function processDataPipelines() {
                 const title = activeSpotlight.title || activeSpotlight.name || "Local Merchant";
                 const loc = activeSpotlight.location || ACTIVE_TOWN.primaryName + ", IL";
                 const desc = activeSpotlight.description || activeSpotlight.alt || "Supporting local commerce across Clay County.";
-                const link = activeSpotlight.website_url || activeSpotlight.url || activeSpotlight.link || "#";
+                const link = attachUtmParameters(activeSpotlight.website_url || activeSpotlight.url || activeSpotlight.link || "#");
 
                 spotlightTarget.innerHTML = `
                     <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
@@ -526,7 +586,7 @@ async function processDataPipelines() {
                     <span class="biz-title">${title}</span>
                     <span class="biz-location">${loc}</span>
                     <p class="biz-description">"${desc}"</p>
-                    <a href="${link}" target="_blank" class="spotlight-btn">Visit Business &rarr;</a>
+                    <a href="${link}" target="_blank" class="spotlight-btn" data-ga-label="business_spotlight">Visit Business &rarr;</a>
                 `;
             }
         }
@@ -643,5 +703,5 @@ async function processDataPipelines() {
 /* === SECTION Initialization === */
 window.addEventListener('DOMContentLoaded', () => {
     processDataPipelines();
-    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-27_01:00`);
+    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-27_05:00`);
 });
