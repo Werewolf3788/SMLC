@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-07-26_23:59
+   Active Version: 2026-07-27_01:00
    File: sourcetown.js / script.js
    Description: Louisville IL Community Portal - Master Engine
    Features:
@@ -7,6 +7,7 @@
    - ScoreStream Horizontal Sports Scoreboard bound via setAttribute('data-user-widget-id', ...)
    - Section 4.2.2 Firebase Fuel Price Monitor bound to config.json -> gas_widget
    - Section 4.2.1 Business Spotlight Loader bound to config.json -> Business_Spotlight
+   - Section 4.1.0 Dynamic Town Article Engine bound to artical.json
    - Sections 6 & 8 Advertising Partners Strips bound to config.json -> partners_json_manifest
    - Historical Timeline Engine bound to config.json -> town_history_tree
    - Lightbox with Click-Outside-to-Close and HTML map link rendering
@@ -444,6 +445,44 @@ async function loadLocalLinksDirectory(cacheBuster) {
     }
 }
 
+/* === SECTION 11: Town Article Engine (Coordinate 4.1.0) === */
+async function loadTownArticleData(cacheBuster) {
+    const articleTarget = document.getElementById('town-article-target') || document.querySelector('.town-article-container');
+    if (!articleTarget) return;
+
+    try {
+        const articleEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.town_artical) 
+            || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/artical.json";
+            
+        const res = await fetch(articleEndpoint + '?' + cacheBuster);
+        const data = await res.json();
+
+        if (data) {
+            const title = data.title || "Town Article";
+            const subtitle = data.subtitle ? `<h3 class="town-article-subtitle" style="font-size: 1.1rem; color: #555; margin-bottom: 15px;">${data.subtitle}</h3>` : "";
+            
+            let paragraphsHtml = "";
+            if (Array.isArray(data.content)) {
+                paragraphsHtml = data.content.map(paragraph => `<p style="margin-bottom: 1rem; line-height: 1.6;">${parseInteractiveContent(paragraph)}</p>`).join('');
+            } else if (typeof data.content === 'string') {
+                paragraphsHtml = `<p style="margin-bottom: 1rem; line-height: 1.6; white-space: pre-line;">${parseInteractiveContent(data.content)}</p>`;
+            }
+
+            articleTarget.innerHTML = `
+                <div class="town-article-wrapper">
+                    <h2 class="town-article-title" style="font-size: 1.5rem; font-weight: bold; margin-bottom: 5px;">${title}</h2>
+                    ${subtitle}
+                    <div class="town-article-body">
+                        ${paragraphsHtml}
+                    </div>
+                </div>
+            `;
+        }
+    } catch(e) {
+        console.error("Town Article JSON error:", e);
+    }
+}
+
 async function processDataPipelines() {
     const cb = getSmartCacheBuster();
 
@@ -593,6 +632,7 @@ async function processDataPipelines() {
     } catch(e) { console.error("Local news error", e); }
 
     // 6. Integrations
+    await loadTownArticleData(cb);
     await loadLocalLinksDirectory(cb);
     await loadPartnersStrips(cb);
     await loadFooterDataPipeline(cb);
@@ -603,5 +643,5 @@ async function processDataPipelines() {
 /* === SECTION Initialization === */
 window.addEventListener('DOMContentLoaded', () => {
     processDataPipelines();
-    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-26_23:59`);
+    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-27_01:00`);
 });
