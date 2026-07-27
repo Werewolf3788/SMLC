@@ -1,28 +1,51 @@
+<!--
+  Version: 1.0.1
+  Timestamp: 2026-07-27 04:59:38 EDT
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🐺 Werewolf Project | Gaming & Hub Portal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- === SECTION: Styles & Libraries === -->
+    <script src="https://cdn.tailwindcss.com?v=202607270459"></script>
     <style>
-        body { background-color: #1e1c1c; color: #f3f4f6; font-family: 'Inter', sans-serif; }
-        .accent-red { color: #dc2626; }
-        .card { background-color: #2a2828; border: 1px solid #3f3e3e; }
+        /* === SECTION: Core Styles === */
+        body { 
+            background-color: #1e1c1c; 
+            color: #f3f4f6; 
+            font-family: 'Inter', sans-serif; 
+        }
+        .accent-red { 
+            color: #dc2626; 
+        }
+        .card { 
+            background-color: #2a2828; 
+            border: 1px solid #3f3e3e; 
+            min-height: 100%;
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
     </style>
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen flex flex-col justify-between">
 
+    <!-- === SECTION: Header & Navigation === -->
     <nav class="border-b border-gray-700 bg-[#2a2828] p-4">
         <div class="container mx-auto flex flex-wrap justify-between items-center">
             <h1 class="text-xl font-bold tracking-tight">🐺 Werewolf <span class="accent-red">Project</span></h1>
-            <div id="main-menu" class="flex flex-wrap gap-4 text-sm font-medium mt-2 md:mt-0">
-                <!-- Menu items will be injected here -->
+            <div id="main-menu" class="flex flex-wrap gap-4 text-sm font-medium mt-2 md:mt-0 items-center">
+                <!-- Dynamic Menu items injected via menu.json -->
+                <span class="text-gray-400 text-xs">Loading menu...</span>
             </div>
         </div>
     </nav>
 
-    <main class="container mx-auto p-8">
+    <!-- === SECTION: Main Content === -->
+    <main class="container mx-auto p-8 flex-grow">
         <section class="mb-16 text-center py-10">
             <h2 class="text-5xl font-extrabold mb-4">Gaming & Hub Portal</h2>
             <p class="text-xl text-gray-400 max-w-2xl mx-auto">
@@ -32,39 +55,78 @@
 
         <section id="features" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div class="card p-6 rounded-xl shadow-lg">
-                <h3 class="text-xl font-bold mb-3 text-red-500">🌟 Key Features</h3>
-                <p class="text-sm text-gray-300">Real-time Game Trackers for theHunter, Sniper Elite, and FS25. Dynamic Profile System with auto-binding and cross-tab sync.</p>
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-red-500">🌟 Key Features</h3>
+                    <p class="text-sm text-gray-300">Real-time Game Trackers for theHunter, Sniper Elite, and FS25. Dynamic Profile System with auto-binding and cross-tab sync.</p>
+                </div>
             </div>
             <div class="card p-6 rounded-xl shadow-lg">
-                <h3 class="text-xl font-bold mb-3 text-red-500">⚙️ Automation</h3>
-                <p class="text-sm text-gray-300">Automated GitHub Actions handling background updates for PSN token synchronization and live game backups.</p>
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-red-500">⚙️ Automation</h3>
+                    <p class="text-sm text-gray-300">Automated GitHub Actions handling background updates for PSN token synchronization and live game backups.</p>
+                </div>
             </div>
             <div class="card p-6 rounded-xl shadow-lg">
-                <h3 class="text-xl font-bold mb-3 text-red-500">🔗 Resources</h3>
-                <p class="text-sm text-gray-300">
-                    <a href="https://github.com/Werewolf3788/Testpages/blob/main/json/menu.json" target="_blank" class="text-red-500 hover:underline">View Menu JSON Source</a>
-                </p>
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-red-500">🔗 Resources</h3>
+                    <p class="text-sm text-gray-300">
+                        <a href="https://github.com/Werewolf3788/Testpages/blob/main/json/menu.json" target="_blank" class="text-blue-400 hover:underline">View Menu JSON Source</a>
+                    </p>
+                </div>
             </div>
         </section>
     </main>
 
-    <script>
-        const menuItems = [
-            { "name": "Home", "url": "./index.html" },
-            { "name": "Clay City", "url": "./clay-city.html" },
-            { "name": "Flora", "url": "./flora.html" },
-            { "name": "Louisville", "url": "./louisville.html" },
-            { "name": "Sailor Springs", "url": "./sailor-springs.html" },
-            { "name": "Xenia", "url": "./xenia.html" }
-        ];
+    <!-- === SECTION: Footer === -->
+    <footer class="border-t border-gray-800 bg-[#181616] py-4 text-center text-xs text-gray-500">
+        <p>v1.0.1 | 2026-07-27 04:59:38 EDT</p>
+    </footer>
 
-        const menuContainer = document.getElementById('main-menu');
-        menuItems.forEach(item => {
-            const link = document.createElement('a');
-            link.href = item.url;
-            link.className = "hover:text-red-500 transition px-2 py-1";
-            link.textContent = item.name;
-            menuContainer.appendChild(link);
+    <!-- === SECTION: Dynamic Menu & Smart Tabs Logic === -->
+    <script>
+        /* === SECTION: Dynamic Fetch & Menu Injection === */
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuContainer = document.getElementById('main-menu');
+            const menuJsonUrl = 'https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/menu.json?v=202607270459';
+
+            fetch(menuJsonUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    menuContainer.innerHTML = ''; // Clear loading placeholder
+                    
+                    // Support array direct or object wrapped array (e.g., { "menu": [...] })
+                    const items = Array.isArray(data) ? data : (data.menu || data.items || []);
+
+                    items.forEach(item => {
+                        const link = document.createElement('a');
+                        link.href = item.url || item.link || '#';
+                        link.textContent = item.name || item.title || item.label || 'Link';
+                        link.className = "hover:text-red-500 transition px-2 py-1 text-gray-200";
+
+                        /* === SECTION: Smart Tabs & Duplicate Interception === */
+                        link.addEventListener('click', (e) => {
+                            const targetUrl = link.getAttribute('href');
+                            
+                            // Prevent duplicating tabs if link points to an external or target tab
+                            if (targetUrl.startsWith('http') || targetUrl.startsWith('//')) {
+                                e.preventDefault();
+                                const windowName = 'Tab_' + targetUrl.replace(/[^a-zA-Z0-9]/g, '_');
+                                window.open(targetUrl, windowName);
+                            }
+                        });
+
+                        menuContainer.appendChild(link);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching menu.json:', error);
+                    menuContainer.innerHTML = '<span class="text-red-400 text-xs">Failed to load menu</span>';
+                });
         });
     </script>
 </body>
