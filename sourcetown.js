@@ -1,14 +1,18 @@
 /* ==========================================================================
-   Active Version: 2026-07-27_05:00
+   Active Version: 2026-07-27_05:37
    File: sourcetown.js / script.js
-   Description: Louisville IL Community Portal - Master Engine
-   Fixes:
-   - Fixed Gas Widget Flashing (stops rotator when 1 station is present)
-   - Upgraded Footer Pipeline to seamlessly process new footer.json payload
+   Description: SMLC Community Portal Network - Universal Master Engine & Smart Filter
+   Features:
+   - Universal Town Detection & Smart Keyword Filtering
+   - Clay County Home Hub Aggregator Mode (displays all towns)
+   - Resilient History Timeline pipeline with error fallback
+   - Fixed Gas Widget Flashing & Footer Data Pipeline Integration
    ========================================================================== */
 
 /* === SECTION 1: Geographically Correct Town Alignment Matrix === */
 const TOWN_ALIAS_MAP = {
+    "HOME": { primaryName: "Clay County", jsonKey: "all", gasKey: ["louisville", "flora", "clay-city", "xenia"], historyKey: "all", keywords: [], zipCodes: [], isHome: true, scorestreamId: "68601" },
+    "CLAY COUNTY": { primaryName: "Clay County", jsonKey: "all", gasKey: ["louisville", "flora", "clay-city", "xenia"], historyKey: "all", keywords: [], zipCodes: [], isHome: true, scorestreamId: "68601" },
     "LOUISVILLE": { primaryName: "Louisville", jsonKey: "louisville", gasKey: ["louisville"], historyKey: "louisville", keywords: ["LOUISVILLE", "NORTH CLAY", "NC", "HOOSIER"], zipCodes: ["62858"], scorestreamId: "68601" },
     "FLORA": { primaryName: "Flora", jsonKey: "flora", gasKey: ["flora"], historyKey: "flora", keywords: ["FLORA", "FLO", "WOLVES"], zipCodes: ["62839"], scorestreamId: "68602" },
     "CLAY CITY": { primaryName: "Clay City", jsonKey: "clay_city", gasKey: ["clay-city"], historyKey: "clay_city", keywords: ["CLAY CITY", "CC"], zipCodes: ["62824"], scorestreamId: "64422" },
@@ -21,11 +25,14 @@ const TOWN_ALIAS_MAP = {
 function getActiveTownConfig() {
     const htmlTownAttr = (document.documentElement.getAttribute('data-town') || document.body?.getAttribute('data-town') || "").toUpperCase();
     if (htmlTownAttr && TOWN_ALIAS_MAP[htmlTownAttr]) return TOWN_ALIAS_MAP[htmlTownAttr];
+    
     const pageTitle = document.title.toUpperCase();
     for (const key in TOWN_ALIAS_MAP) {
         if (pageTitle.includes(key)) return TOWN_ALIAS_MAP[key];
     }
-    return TOWN_ALIAS_MAP["LOUISVILLE"];
+    
+    // Default fallback: Clay County Home Hub if no specific town match is found
+    return TOWN_ALIAS_MAP["HOME"];
 }
 
 const ACTIVE_TOWN = getActiveTownConfig();
@@ -46,6 +53,9 @@ function cleanRawUrl(urlStr) {
 }
 
 function matchesActiveTown(text, location) {
+    // If on Home Page / Clay County mode, accept all content
+    if (ACTIVE_TOWN.isHome) return true;
+    
     const combinedStr = ((text || "") + " " + (location || "")).toUpperCase();
     return ACTIVE_TOWN.keywords.some(kw => combinedStr.includes(kw)) || ACTIVE_TOWN.zipCodes.some(zip => combinedStr.includes(zip));
 }
@@ -186,7 +196,7 @@ function openNewsLightboxModal(idx) {
 
 /* === SECTION 5: Dynamic Section 3 Slideshow Engine === */
 async function initializeSection3Slideshow(cb) {
-    const viewport = document.getElementById('louisville-slideshow') || document.querySelector('.slider-viewport');
+    const viewport = document.getElementById('louisville-slideshow') || document.getElementById('flora-slideshow') || document.querySelector('.slider-viewport');
     if (!viewport) return;
 
     try {
@@ -197,16 +207,26 @@ async function initializeSection3Slideshow(cb) {
         let slidesList = [];
 
         if (data.network_towns) {
-            const matchedTownKey = Object.keys(data.network_towns).find(
-                key => key.toLowerCase() === ACTIVE_TOWN.primaryName.toLowerCase()
-            );
-
-            if (matchedTownKey && data.network_towns[matchedTownKey].categories) {
-                data.network_towns[matchedTownKey].categories.forEach(cat => {
-                    if (Array.isArray(cat.images)) {
-                        slidesList.push(...cat.images);
+            if (ACTIVE_TOWN.isHome) {
+                // Combine all town slideshow images for Home page
+                Object.keys(data.network_towns).forEach(townKey => {
+                    const townObj = data.network_towns[townKey];
+                    if (townObj && townObj.categories) {
+                        townObj.categories.forEach(cat => {
+                            if (Array.isArray(cat.images)) slidesList.push(...cat.images);
+                        });
                     }
                 });
+            } else {
+                const matchedTownKey = Object.keys(data.network_towns).find(
+                    key => key.toLowerCase() === ACTIVE_TOWN.primaryName.toLowerCase()
+                );
+
+                if (matchedTownKey && data.network_towns[matchedTownKey].categories) {
+                    data.network_towns[matchedTownKey].categories.forEach(cat => {
+                        if (Array.isArray(cat.images)) slidesList.push(...cat.images);
+                    });
+                }
             }
         } else {
             const townKey = ACTIVE_TOWN.jsonKey || "louisville";
@@ -252,10 +272,7 @@ function loadScorestreamSportsWidget() {
     const container = document.querySelector('.scorestream-widget-container');
     if (!container) return;
 
-    // 1. Update data-user-widget-id attribute on container in HTML
     container.setAttribute('data-user-widget-id', ACTIVE_TOWN.scorestreamId);
-
-    // 2. Refresh embed.js script so ScoreStream renders the new town ID
     const parent = container.parentElement;
     if (parent) {
         const oldScript = parent.querySelector('script[src*="scorestream.com"]');
@@ -325,7 +342,6 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
     const stationIds = Object.keys(stationConfigs).filter(id => gasTownsArray.includes(stationConfigs[id].town));
     if (stationIds.length === 0) return;
 
-    // Clear any existing rotation interval immediately
     if (gasMonitorRotator) {
         clearInterval(gasMonitorRotator);
         gasMonitorRotator = null;
@@ -369,7 +385,6 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
 
     renderCurrentStation();
 
-    // STRICT CHECK: Only start interval if there is MORE than 1 station to rotate (prevents flashing)
     if (stationIds.length > 1) {
         gasMonitorRotator = setInterval(renderCurrentStation, 5000);
     }
@@ -429,7 +444,6 @@ async function loadFooterDataPipeline(cacheBuster) {
         const contact = data?.footer_data?.contact_info;
 
         if (contact) {
-            // Render Phones (Main Office, Toll Free, WhatsApp)
             const phoneTarget = document.getElementById('footer-phone-target');
             if (phoneTarget && Array.isArray(contact.phone)) {
                 phoneTarget.innerHTML = contact.phone.map(p => {
@@ -441,7 +455,6 @@ async function loadFooterDataPipeline(cacheBuster) {
                 }).join('');
             }
 
-            // Render Email
             const emailTarget = document.getElementById('footer-email-target');
             if (emailTarget && contact.email) {
                 const mailAddr = contact.email.address || contact.email;
@@ -449,7 +462,6 @@ async function loadFooterDataPipeline(cacheBuster) {
                 emailTarget.innerText = mailAddr;
             }
 
-            // Render Address & Directions
             const addressTarget = document.getElementById('footer-address-target');
             if (addressTarget && contact.address) {
                 const addrText = contact.address.text || contact.address;
@@ -460,7 +472,6 @@ async function loadFooterDataPipeline(cacheBuster) {
                 addressTarget.innerHTML = `<a href="${mapUrl}" target="_blank" style="color:#fff; text-decoration:underline;">${addrText}</a>`;
             }
 
-            // Render Copyright
             const copyTarget = document.getElementById('footer-copy-target');
             if (copyTarget && data.footer_data.copyright) {
                 copyTarget.innerHTML = data.footer_data.copyright;
@@ -614,17 +625,21 @@ async function processDataPipelines() {
     await initializeSection3Slideshow(cb);
 
     // 3. Historical Timeline Engine
+    const historyRowTarget = document.getElementById('history-row-target');
     try {
         const historyTree = window.globalAppConfig?.town_history_tree || {};
         const activeHistoryKey = ACTIVE_TOWN.historyKey || "louisville";
-        const historyEndpoint = historyTree[activeHistoryKey] || `https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/${activeHistoryKey.replace(/_/g, '-')}.json`;
         
+        let historyEndpoint = historyTree[activeHistoryKey] 
+            || `https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/${activeHistoryKey.replace(/_/g, '-')}.json`;
+            
         const res = await fetch(cleanRawUrl(historyEndpoint) + '?' + cb);
+        if (!res.ok) throw new Error(`HTTP ${res.status} when fetching history for ${activeHistoryKey}`);
+
         const payload = await res.json();
-        const historyRowTarget = document.getElementById('history-row-target');
         const historyList = Array.isArray(payload) ? payload : (payload.history || payload.timeline || []);
 
-        if(historyList.length > 0 && historyRowTarget) {
+        if (historyList.length > 0 && historyRowTarget) {
             historyRowTarget.innerHTML = historyList.map(evt => `
                 <div class="history-card" onclick="fireLightbox('${evt.image_url || evt.image || ''}', '${(evt.event || evt.title || '').replace(/'/g, "\\'")}', 'YEAR ${evt.year}', '${(evt.description || '').replace(/'/g, "\\'")}', '${evt.source_url || evt.link || ''}')">
                     <h2>${evt.year}</h2>
@@ -633,8 +648,15 @@ async function processDataPipelines() {
                     ${(evt.image_url || evt.image) ? `<div class="history-img-box"><img src="${evt.image_url || evt.image}" alt="${evt.event}"></div>` : ''}
                 </div>
             `).join('');
+        } else if (historyRowTarget) {
+            historyRowTarget.innerHTML = `<div style="color:#ffffff; font-style:italic; text-align:center; width:100%; padding: 20px;">No historical milestones recorded yet for ${ACTIVE_TOWN.primaryName}.</div>`;
         }
-    } catch(e) { console.error("Timeline data error", e); }
+    } catch(e) { 
+        console.error("Timeline data fetch/parse error:", e);
+        if (historyRowTarget) {
+            historyRowTarget.innerHTML = `<div style="color:#ffffff; font-style:italic; text-align:center; width:100%; padding: 20px;">Historical records archive temporarily updating.</div>`;
+        }
+    }
 
     // 4. Calendar Bulletin Engine
     try {
@@ -664,6 +686,8 @@ async function processDataPipelines() {
                         </div>
                     `;
                 }).join('');
+            } else if (scroller) {
+                scroller.innerHTML = `<div style="text-align:center; padding: 20px; font-style:italic;">No upcoming events currently scheduled for ${ACTIVE_TOWN.primaryName}.</div>`;
             }
         }
     } catch(err) { console.error("Calendar Wire fault", err); }
@@ -687,6 +711,8 @@ async function processDataPipelines() {
                         <div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: #0258A3; font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>
                     </div>
                 `).join('');
+            } else {
+                targetGrid.innerHTML = `<div style="text-align:center; padding: 20px; font-style:italic;">No recent dispatches found for ${ACTIVE_TOWN.primaryName}.</div>`;
             }
         }
     } catch(e) { console.error("Local news error", e); }
@@ -703,5 +729,5 @@ async function processDataPipelines() {
 /* === SECTION Initialization === */
 window.addEventListener('DOMContentLoaded', () => {
     processDataPipelines();
-    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-27_05:00`);
+    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-27_05:37`);
 });
