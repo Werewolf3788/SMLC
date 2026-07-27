@@ -1,0 +1,134 @@
+{
+  "v": "2026.07.27.01",
+  "page_id": "home_page",
+  "sections": [
+    {
+      "coordinate": "1.1.1",
+      "section_id": "Section 1",
+      "component_key": "Menu_Navigationbar",
+      "enabled": true,
+      "label": "Menu Bar",
+      "data_source": "/json/navigation.json?v=2026.07.27.01"
+    },
+    {
+      "coordinate": "3.2.2",
+      "section_id": "Section 3.2.2",
+      "component_key": "vibrant_community_slideshow",
+      "enabled": true,
+      "label": "Slideshow",
+      "data_source": "/json/slideshow.json?v=2026.07.27.01"
+    },
+    {
+      "coordinate": "3.1.1",
+      "section_id": "Section 3",
+      "component_key": "vibrant_community_poi",
+      "enabled": true,
+      "label": "Point of Interest",
+      "data_source": "/json/poi.json?v=2026.07.27.01"
+    },
+    {
+      "coordinate": "4.1.0",
+      "section_id": "Section 4.1",
+      "component_key": "town_artical",
+      "enabled": true,
+      "label": "Town Article",
+      "data_source": "/json/article.json?v=2026.07.27.01"
+    },
+    {
+      "coordinate": "4.1.1",
+      "section_id": "Section 4.1.1",
+      "component_key": "business_spotlight",
+      "enabled": true,
+      "label": "Business Spotlight",
+      "data_source": "/json/business_spotlight.json?v=2026.07.27.01"
+    },
+    {
+      "coordinate": "4.1.2",
+      "section_id": "Section 4.1.2",
+      "component_key": "gas_widget",
+      "enabled": true,
+      "label": "Gas Widget",
+      "data_source": "/json/gas_prices.json?v=2026.07.27.01"
+    },
+    {
+      "coordinate": "5.1.1",
+      "section_id": "Section 5",
+      "component_key": "historical_timeline",
+      "enabled": true,
+      "label": "Historical Timeline",
+      "data_source": "/json/timeline.json?v=2026.07.27.01"
+    },
+    {
+      "coordinate": "6.1.1",
+      "section_id": "Section 6",
+      "component_key": "scotts_partners",
+      "enabled": true,
+      "label": "Scott's Partners",
+      "data_source": "/json/partners.json?v=2026.07.27.01"
+    },
+    {
+      "coordinate": "7.1.1",
+      "section_id": "Section 7.1.1",
+      "component_key": "submit_event",
+      "enabled": true,
+      "label": "Submit Your Event",
+      "data_source": "/json/submit_event_form.json?v=2026.07.27.01"
+    },
+    {
+      "coordinate": "7.1.2",
+      "section_id": "Section 7.1.2",
+      "component_key": "calendar_events",
+      "enabled": true,
+      "label": "Calendar Event",
+      "data_source": "/json/events.json?v=2026.07.27.01"
+    },
+    {
+      "coordinate": "7.2.1",
+      "section_id": "Section 7.2.1",
+      "component_key": "clay_county_news",
+      "enabled": true,
+      "label": "Local News",
+      "data_source": "/json/news.json?v=2026.07.27.01"
+    },
+    {
+      "coordinate": "7.2.2",
+      "section_id": "Section 7.2.2",
+      "component_key": "business_directory",
+      "enabled": true,
+      "label": "Business Directory",
+      "data_source": "/json/directory.json?v=2026.07.27.01"
+    },
+    {
+      "coordinate": "7.3.1",
+      "section_id": "Section 7.3.1",
+      "component_key": "facebook_feed",
+      "enabled": true,
+      "label": "Facebook Feed",
+      "data_source": "/json/facebook.json?v=2026.07.27.01"
+    },
+    {
+      "coordinate": "7.3.2",
+      "section_id": "Section 7.3.2",
+      "component_key": "local_links",
+      "enabled": true,
+      "label": "Local Resources",
+      "data_source": "/json/resources.json?v=2026.07.27.01"
+    },
+    {
+      "coordinate": "8.1.1",
+      "section_id": "Section 8",
+      "component_key": "scotts_partners_secondary",
+      "enabled": true,
+      "label": "Partners",
+      "data_source": "/json/partners.json?v=2026.07.27.01"
+    },
+    {
+      "coordinate": "10.1.1",
+      "section_id": "Section 10",
+      "component_key": "footer",
+      "enabled": true,
+      "label": "Footer",
+      "data_source": "/json/footer.json?v=2026.07.27.01"
+    }
+  ]
+}
