@@ -2,6 +2,14 @@
    Active Version: 2026-07-26_23:59
    File: script.js / sourcetown.js
    Description: Louisville IL Community Portal - Fully Synchronized Master Engine
+   Features:
+   - Dynamic Section 3 Slideshow Engine (Reads network_towns -> Categories -> Images)
+   - ScoreStream Horizontal Sports Scoreboard bound to exact town IDs
+   - Firebase Real-Time Fuel Price Monitor with full property fallbacks
+   - Historical Timeline Engine bound to config.json town_history_tree
+   - Lightbox with Click-Outside-to-Close and HTML map link rendering
+   - Calendar Bulletin Engine with robust date parsing
+   - Advertising Partners Strips (Sections 6 & 8) and Footer Contacts Pipeline
    ========================================================================== */
 
 /* === SECTION 1: Geographically Correct Town Alignment Matrix === */
@@ -118,7 +126,6 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl) {
         targetImg.parentElement.style.display = 'none';
     }
     
-    // FIXED: Changed innerText to innerHTML so map HTML links render instead of raw tag text
     const dateEl = document.getElementById('lightbox-target-date'); if (dateEl) dateEl.innerHTML = dateText || '';
     const titleEl = document.getElementById('lightbox-target-title'); if (titleEl) titleEl.innerText = title || '';
     const storyEl = document.getElementById('lightbox-target-story'); if (storyEl) storyEl.innerHTML = parseInteractiveContent(bodyText) || '';
@@ -162,7 +169,7 @@ function openNewsLightboxModal(idx) {
     );
 }
 
-/* === SECTION 5: Dynamic Section 3 Slideshow Engine === */
+/* === SECTION 5: Dynamic Section 3 Slideshow Engine (Traverses network_towns -> categories -> images) === */
 async function initializeSection3Slideshow(cb) {
     const viewport = document.getElementById('louisville-slideshow') || document.querySelector('.slider-viewport');
     if (!viewport) return;
@@ -172,16 +179,39 @@ async function initializeSection3Slideshow(cb) {
         const res = await fetch(slideshowEndpoint + '?' + cb);
         const data = await res.json();
         
-        const townKey = ACTIVE_TOWN.jsonKey || "louisville";
-        const slidesList = data[townKey] || data.images || (Array.isArray(data) ? data : []);
+        let slidesList = [];
 
-        if (Array.isArray(slidesList) && slidesList.length > 0) {
-            viewport.innerHTML = slidesList.map((item, idx) => `
-                <div class="slider-slide ${idx === 0 ? 'active' : ''}" style="position: absolute; inset: 0; opacity: ${idx === 0 ? 1 : 0}; transition: opacity 0.8s ease-in-out; z-index: ${idx === 0 ? 2 : 1};">
-                    <img src="${item.src || item.url || item.image}" alt="${item.alt || item.title || 'Town View'}" onclick="fireLightbox('${item.src || item.url || item.image}', '${(item.title || item.alt || '').replace(/'/g, "\\'")}', 'SLIDESHOW VIEW', '${(item.caption || '').replace(/'/g, "\\'")}', '')" style="width:100%; height:100%; object-fit:cover; cursor:pointer;">
-                    ${(item.caption || item.title) ? `<div class="slider-caption">${item.caption || item.title}</div>` : ''}
-                </div>
-            `).join('');
+        if (data.network_towns) {
+            const matchedTownKey = Object.keys(data.network_towns).find(
+                key => key.toLowerCase() === ACTIVE_TOWN.primaryName.toLowerCase()
+            );
+
+            if (matchedTownKey && data.network_towns[matchedTownKey].categories) {
+                data.network_towns[matchedTownKey].categories.forEach(cat => {
+                    if (Array.isArray(cat.images)) {
+                        slidesList.push(...cat.images);
+                    }
+                });
+            }
+        } else {
+            const townKey = ACTIVE_TOWN.jsonKey || "louisville";
+            slidesList = data[townKey] || data.images || (Array.isArray(data) ? data : []);
+        }
+
+        if (slidesList.length > 0) {
+            viewport.innerHTML = slidesList.map((item, idx) => {
+                const imgUrl = item.imageurl || item.src || item.url || item.image;
+                const captionTitle = item.name || item.title || item.alt || 'Town View';
+                const altText = (item.alt || captionTitle).replace(/'/g, "\\'");
+                const safeCaption = (captionTitle).replace(/'/g, "\\'");
+
+                return `
+                    <div class="slider-slide ${idx === 0 ? 'active' : ''}" style="position: absolute; inset: 0; opacity: ${idx === 0 ? 1 : 0}; transition: opacity 0.8s ease-in-out; z-index: ${idx === 0 ? 2 : 1};">
+                        <img src="${imgUrl}" alt="${altText}" onclick="fireLightbox('${imgUrl}', '${safeCaption}', 'SLIDESHOW VIEW', '${altText}', '${item.source_url || ''}')" style="width:100%; height:100%; object-fit:cover; cursor:pointer;">
+                        ${captionTitle ? `<div class="slider-caption">${captionTitle}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
         }
     } catch(e) {
         console.error("Slideshow JSON fetch error, keeping existing HTML slides:", e);
@@ -202,7 +232,7 @@ async function initializeSection3Slideshow(cb) {
     }, 4000);
 }
 
-/* === SECTION 6: ScoreStream Integration === */
+/* === SECTION 6: ScoreStream Integration (Dynamic DOM Injection Engine) === */
 function loadScorestreamSportsWidget() {
     const viewportFrame = document.querySelector('.scorestream-viewport-frame-fixed');
     if (!viewportFrame) return;
@@ -229,7 +259,6 @@ function initializeFirebaseGasMonitor() {
     const gasContainer = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
     if (!gasContainer) return;
 
-    // FIXED: Station IDs mapped accurately to Firebase RTDB keys
     const stationConfigs = {
         "48100": { town: "flora", display: "Flora", name: "CASEY'S", logo: "Casey's.png" },     
         "48101": { town: "flora", display: "Flora", name: "HUCK'S", logo: "Hucks.png" },      
@@ -289,7 +318,6 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
         const config = stationConfigs[id];
         const info = data[id] || {};
         
-        // FIXED: Added property fallbacks for reg/regular/price & dsl/diesel
         const regPrice = info.reg || info.regular || info.price || "---";
         let dslPrice = info.dsl || info.diesel || "---";
         if (dslPrice === "0" || !dslPrice) dslPrice = "---";
@@ -419,7 +447,7 @@ async function processDataPipelines() {
 
     const endpoints = window.globalAppConfig?.regional_endpoints || {};
 
-    // 1. FIXED Business Spotlight Loader (Full Structural Traversal)
+    // 1. Business Spotlight Loader (Reads config.json -> Business_Spotlight / spotlight.json)
     try {
         const spotlightEndpoint = cleanRawUrl(endpoints.Business_Spotlight) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/spotlight.json";
         const spotlightRes = await fetch(spotlightEndpoint + '?' + cb);
@@ -472,7 +500,7 @@ async function processDataPipelines() {
 
     await initializeSection3Slideshow(cb);
 
-    // 3. Historical Timeline Engine
+    // 3. Historical Timeline Engine (Reads config.json -> town_history_tree)
     try {
         const historyTree = window.globalAppConfig?.town_history_tree || {};
         const activeHistoryKey = ACTIVE_TOWN.historyKey || "louisville";
