@@ -2,12 +2,6 @@
    Active Version: 2026-07-26_23:59
    File: script.js / sourcetown.js
    Description: Louisville IL Community Portal - Fully Synchronized Master Engine
-   Features:
-   - Dynamic Section 3 Slideshow Engine bound to config.json slideshow manifest
-   - ScoreStream Horizontal Sports Scoreboard bound to exact town IDs
-   - Firebase Real-Time Fuel Price Monitor
-   - Historical Timeline, Business Spotlight, & Calendar Feed Wire
-   - Dynamic Advertising Partners & OS-Aware Footer Contacts
    ========================================================================== */
 
 /* === SECTION 1: Geographically Correct Town Alignment Matrix === */
@@ -124,7 +118,8 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl) {
         targetImg.parentElement.style.display = 'none';
     }
     
-    const dateEl = document.getElementById('lightbox-target-date'); if (dateEl) dateEl.innerText = dateText || '';
+    // FIXED: Changed innerText to innerHTML so map HTML links render instead of raw tag text
+    const dateEl = document.getElementById('lightbox-target-date'); if (dateEl) dateEl.innerHTML = dateText || '';
     const titleEl = document.getElementById('lightbox-target-title'); if (titleEl) titleEl.innerText = title || '';
     const storyEl = document.getElementById('lightbox-target-story'); if (storyEl) storyEl.innerHTML = parseInteractiveContent(bodyText) || '';
     
@@ -167,7 +162,7 @@ function openNewsLightboxModal(idx) {
     );
 }
 
-/* === SECTION 5: Dynamic Section 3 Slideshow Engine (Reads config.json -> slideshow) === */
+/* === SECTION 5: Dynamic Section 3 Slideshow Engine === */
 async function initializeSection3Slideshow(cb) {
     const viewport = document.getElementById('louisville-slideshow') || document.querySelector('.slider-viewport');
     if (!viewport) return;
@@ -207,22 +202,26 @@ async function initializeSection3Slideshow(cb) {
     }, 4000);
 }
 
-/* === SECTION 6: ScoreStream Integration (Exact User IDs) === */
+/* === SECTION 6: ScoreStream Integration === */
 function loadScorestreamSportsWidget() {
-    const widgetContainer = document.querySelector('.scorestream-widget-container');
-    if (!widgetContainer) return;
+    const viewportFrame = document.querySelector('.scorestream-viewport-frame-fixed');
+    if (!viewportFrame) return;
 
     const targetBannerId = ACTIVE_TOWN.scorestreamId || "68601";
-    widgetContainer.setAttribute('data-user-widget-id', targetBannerId);
+    viewportFrame.innerHTML = '';
 
-    if (!window.ScorestreamLoaded) {
-        window.ScorestreamLoaded = true;
-        const sportsScript = document.createElement('script');
-        sportsScript.type = 'text/javascript';
-        sportsScript.src = "https://scorestream.com/apiJsCdn/widgets/embed.js";
-        sportsScript.async = true;
-        document.body.appendChild(sportsScript);
-    }
+    const widgetDiv = document.createElement('div');
+    widgetDiv.className = 'scorestream-widget-container';
+    widgetDiv.setAttribute('data-ss_widget_type', 'horzScoreboard');
+    widgetDiv.setAttribute('data-user-widget-id', targetBannerId);
+
+    const sportsScript = document.createElement('script');
+    sportsScript.type = 'text/javascript';
+    sportsScript.async = true;
+    sportsScript.src = "https://scorestream.com/apiJsCdn/widgets/embed.js";
+
+    viewportFrame.appendChild(widgetDiv);
+    viewportFrame.appendChild(sportsScript);
 }
 
 /* === SECTION 7: Firebase Fuel Price Monitor Engine === */
@@ -230,14 +229,16 @@ function initializeFirebaseGasMonitor() {
     const gasContainer = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
     if (!gasContainer) return;
 
+    // FIXED: Station IDs mapped accurately to Firebase RTDB keys
     const stationConfigs = {
         "48100": { town: "flora", display: "Flora", name: "CASEY'S", logo: "Casey's.png" },     
         "48101": { town: "flora", display: "Flora", name: "HUCK'S", logo: "Hucks.png" },      
         "128128": { town: "flora", display: "Flora", name: "MACH 1", logo: "Mach 1.png" },    
         "120226": { town: "flora", display: "Flora", name: "FAST STOP", logo: "Fast stop.png" },  
-        "48026": { town: "clay-city", display: "Clay City", name: "CASEY'S", logo: "Casey's.png" }, 
+        "48026": { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" }, 
         "87817": { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" },      
-        "171711": { town: "xenia", display: "Xenia", name: "KNAPP'S", logo: "Knapps.png" }  
+        "171711": { town: "clay-city", display: "Clay City", name: "CASEY'S", logo: "Casey's.png" },
+        "181818": { town: "xenia", display: "Xenia", name: "KNAPP'S", logo: "Knapps.png" }  
     };
 
     if (typeof firebase === 'undefined') {
@@ -286,7 +287,14 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
     const renderCurrentStation = () => {
         const id = stationIds[currentIdx];
         const config = stationConfigs[id];
-        const info = data[id] || { reg: "---", dsl: "---", date: "PENDING" };
+        const info = data[id] || {};
+        
+        // FIXED: Added property fallbacks for reg/regular/price & dsl/diesel
+        const regPrice = info.reg || info.regular || info.price || "---";
+        let dslPrice = info.dsl || info.diesel || "---";
+        if (dslPrice === "0" || !dslPrice) dslPrice = "---";
+
+        const updateDate = info.date || info.updated || "PENDING";
         const safeLogo = encodeURIComponent(config.logo);
 
         container.style.cursor = "pointer";
@@ -299,10 +307,10 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
                 <div class="station-meta-title">${config.name} (${config.display})</div>
             </div>
             <div class="fuel-pricing-grid">
-                <div class="price-box"><span class="price-type-label">REGULAR</span><span class="price-value-regular">${info.reg}</span></div>
-                <div class="price-box"><span class="price-type-label">DIESEL</span><span class="price-value-diesel">${(info.dsl === "0" || !info.dsl) ? "---" : info.dsl}</span></div>
+                <div class="price-box"><span class="price-type-label">REGULAR</span><span class="price-value-regular">${regPrice}</span></div>
+                <div class="price-box"><span class="price-type-label">DIESEL</span><span class="price-value-diesel">${dslPrice}</span></div>
             </div>
-            <div class="sync-timestamp-label">Updated: ${info.date} &bull; Click to Update</div>
+            <div class="sync-timestamp-label">Updated: ${updateDate} &bull; Click to Update</div>
         `;
         currentIdx = (currentIdx + 1) % stationIds.length;
     };
@@ -312,7 +320,7 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
     if (stationIds.length > 1) gasMonitorRotator = setInterval(renderCurrentStation, 5000);
 }
 
-/* === SECTION 8: Advertising Partners Strip Engine (Sections 6 & 8) === */
+/* === SECTION 8: Advertising Partners Strip Engine === */
 async function loadPartnersStrips(cacheBuster) {
     const topGrid = document.getElementById('partners-grid-top');
     const bottomGrid = document.getElementById('partners-grid-bottom');
@@ -411,7 +419,7 @@ async function processDataPipelines() {
 
     const endpoints = window.globalAppConfig?.regional_endpoints || {};
 
-    // 1. Business Spotlight (Reads spotlight.json / business_spotlight.json)
+    // 1. FIXED Business Spotlight Loader (Full Structural Traversal)
     try {
         const spotlightEndpoint = cleanRawUrl(endpoints.Business_Spotlight) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/spotlight.json";
         const spotlightRes = await fetch(spotlightEndpoint + '?' + cb);
@@ -420,8 +428,10 @@ async function processDataPipelines() {
         
         if (spotlightData && spotlightTarget) {
             const townKey = ACTIVE_TOWN.jsonKey || "louisville";
-            const maps = spotlightData.maps || spotlightData.business_spotlights?.cities_towns_villages || spotlightData;
-            const activeSpotlight = maps[townKey] || (Array.isArray(spotlightData) ? spotlightData[0] : spotlightData);
+            const activeSpotlight = spotlightData[townKey] 
+                || spotlightData.maps?.[townKey] 
+                || spotlightData.business_spotlights?.cities_towns_villages?.[townKey]
+                || (Array.isArray(spotlightData) ? spotlightData[0] : null);
 
             if (activeSpotlight) {
                 const img = activeSpotlight.src || activeSpotlight.image_url || activeSpotlight.imageurl || activeSpotlight.image;
@@ -460,10 +470,9 @@ async function processDataPipelines() {
         }
     } catch(e) { console.error("Section 3 error", e); }
 
-    // Initialize Dynamic Section 3 Slideshow from config.json
     await initializeSection3Slideshow(cb);
 
-    // 3. Historical Timeline Engine (Fetches townhistory JSONs)
+    // 3. Historical Timeline Engine
     try {
         const historyTree = window.globalAppConfig?.town_history_tree || {};
         const activeHistoryKey = ACTIVE_TOWN.historyKey || "louisville";
@@ -486,7 +495,7 @@ async function processDataPipelines() {
         }
     } catch(e) { console.error("Timeline data error", e); }
 
-    // 4. Calendar Bulletin Engine (With Robust Date Parser)
+    // 4. Calendar Bulletin Engine
     try {
         const bulletinEndpoint = endpoints.apps_script_bulletin_url || "https://script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec";
         const res = await fetch(bulletinEndpoint + '?feed=true&' + cb);
@@ -541,7 +550,7 @@ async function processDataPipelines() {
         }
     } catch(e) { console.error("Local news error", e); }
 
-    // 6. Integrations: Directory Links, Partners, Footer, ScoreStream & Gas Monitor
+    // 6. Integrations
     await loadLocalLinksDirectory(cb);
     await loadPartnersStrips(cb);
     await loadFooterDataPipeline(cb);
