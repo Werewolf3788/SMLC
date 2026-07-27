@@ -7,7 +7,7 @@
           "category": "Landmarks",
           "images": [
             {
-            "id": "flora_school",
+              "id": "flora_school",
               "name": "Flora Sports Mascot",
               "imageurl": "https://raw.githubusercontent.com/Werewolf3788/Testpages/426b3c31cdfacdf89a868df2778395819a4d4fe7/images/Flora.jpeg",
               "alt": "Flora High School Wolves sports logo featuring a stylized wolf head with one orange and one blue eye, set against a dark background with orange and blue text.",
@@ -104,5 +104,4 @@
       ]
     }
   }
-  
-
+}
