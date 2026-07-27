@@ -1,0 +1,22 @@
+/* === SECTION: Articles Data Store === */
+/* Version: 1.0.0 | Timestamp: 2026-07-27T00:07:00Z */
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-07-27T00:07:00Z",
+  "articles": [
+    {
+      "id": "art-001",
+      "town": "Lousisville",
+      "title": "Renewable Energy Feature",
+      "header": "Harvesting the Sun",
+      "header2": "How the quiet fields of Louisville, Illinois, became a powerhouse for the state's clean energy future.",
+      "description": "In the heart of Clay County, the landscape is shifting. Historically known for its rich soil and agricultural prowess, Louisville is now home to some of the most significant solar initiatives in Illinois. The introduction of the Maple Flats Solar Project has transformed 7,000 acres of rural land into a high-tech energy hub.\n\nThis transition isn't just about environmental impact; it's a massive economic engine. By repurposing land for photovoltaic arrays, the community is securing a legacy of energy leadership. Local residents are seeing the benefits through programs like Nexamp’s Community Solar, which allows families to save on electric costs without installing their own panels.\n\nWhile the Little Wabash River once powered the town's early industry, it is now the Illinois sky that provides the next great resource, proving that small towns can lead the charge in a global energy revolution. The synergy between heritage and high-tech is defining the new Louisville."
+",
+      "imageUrl": "https://cdn.sanity.io/images/t3nokka8/production/0829329ca97c80f5dc4aa3c78a1614f424feb09d-2000x1799.webp?auto=format",
+      "meta": {
+        "layoutCoordinate": "1.1.1",
+        "gaLabel": "article_lousiville_renewable_energy"
+      }
+    }
+    ]
+}
