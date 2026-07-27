@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-07-27_05:28
+   Active Version: 2026-07-27_07:15
    File: style.css
    Description: Master Stylesheet - Flora IL Custom Granite Blend (#FC4F00 & #0C0B82)
    ========================================================================== */
@@ -649,6 +649,32 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 .partner-card h4 a:hover {
 	color: #FC4F00 !important;
 	text-decoration: underline !important;
+}
+
+/* === SECTION 6 & 8: Mobile 2-Card Side-By-Side Layout (No Horizontal Scroll) === */
+@media (max-width: 768px) {
+	.partners-horizontal-strip {
+		display: grid !important;
+		grid-template-columns: 1fr 1fr !important; /* Forces exactly 2 columns side-by-side */
+		gap: 12px !important;
+		overflow-x: hidden !important; /* Disables side scrolling */
+		padding-bottom: 0 !important;
+	}
+
+	.partner-card {
+		max-width: 100% !important;
+		flex: none !important;
+		padding: 10px !important;
+	}
+
+	.partner-logo-box {
+		height: 80px !important;
+	}
+
+	.partner-card h4 {
+		font-size: 13px !important;
+		margin-top: 6px !important;
+	}
 }
 
 /* ==========================================================================
