@@ -1,7 +1,7 @@
 /* ==========================================================================
-   Active Version: 2026-07-26_20:10
-   File: script.js
-   Description: Louisville IL Community Portal - Config-Driven Pipeline Engine
+   Active Version: 2026-07-26_20:20
+   File: sourcetown.js
+   Description: Louisville IL Community Portal - Root Pipeline Engine
    ========================================================================== */
 
 /* === SECTION 1: Town Alignment Matrix === */
@@ -81,9 +81,6 @@ function getActiveTownConfig() {
 const ACTIVE_TOWN = getActiveTownConfig();
 
 /* === SECTION 2: Global State Tracking === */
-let globalSlideshowTicker = null;
-let calendarLiveExpirationTicker = null;
-let partnersRotationTicker = null;
 let gasMonitorRotator = null;
 window.calendarCachedEvents = [];
 window.newsCacheBlock = [];
@@ -196,12 +193,12 @@ function applyDynamicUTMTracking() {
     });
 }
 
-/* === SECTION 5: ScoreStream Integration Driven by sports.json / config.json === */
+/* === SECTION 5: ScoreStream Sports Integration === */
 async function loadScorestreamSportsWidget(cb) {
     const widgetContainer = document.querySelector('.scorestream-widget-container');
     if (!widgetContainer) return;
 
-    let targetBannerId = "68601"; // Fallback default
+    let targetBannerId = "68601";
 
     try {
         const sportsUrl = 'https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/sports.json?' + cb;
@@ -228,8 +225,6 @@ async function loadScorestreamSportsWidget(cb) {
     sportsScript.src = "https://scorestream.com/apiJsCdn/widgets/embed.js";
     sportsScript.async = true;
     document.body.appendChild(sportsScript);
-
-    console.log(`ScoreStream sports widget populated for ${ACTIVE_TOWN.primaryName} (ID: ${targetBannerId})`);
 }
 
 /* === SECTION 6: Firebase Fuel Price Monitor Engine === */
@@ -360,7 +355,7 @@ async function loadLocalLinksDirectory(cacheBuster) {
     }
 }
 
-/* === SECTION 8: Master Data Pipeline Orchestrator (Fully Bound to config.json) === */
+/* === SECTION 8: Master Data Pipeline Orchestrator === */
 async function processDataPipelines() {
     const cb = getSmartCacheBuster();
 
@@ -369,20 +364,19 @@ async function processDataPipelines() {
         const configUrl = 'https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/config.json?' + cb;
         const configRes = await fetch(configUrl);
         window.globalAppConfig = await configRes.json();
-        console.log("Master config.json bound successfully:", window.globalAppConfig);
     } catch(e) {
-        console.error("Master config.json fetch fault, relying on fallback endpoints", e);
+        console.error("Master config.json fetch fault, using fallbacks", e);
     }
 
     const endpoints = window.globalAppConfig?.regional_endpoints || {};
 
-    // 1. Business Spotlight Loader (Reads config.json -> Business_Spotlight)
+    // 1. Business Spotlight Loader
     try {
         const spotlightEndpoint = cleanRawUrl(endpoints.Business_Spotlight) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/spotlight.json";
         const spotlightRes = await fetch(spotlightEndpoint + '?' + cb);
         const spotlightData = await spotlightRes.json();
         
-        const spotlightTarget = document.querySelector('.clay-county-news-box.spotlight-clipping') || document.querySelector('.business-spotlight-showcase-card');
+        const spotlightTarget = document.querySelector('.clay-county-news-box.spotlight-clipping');
         if (spotlightData && spotlightTarget) {
             const activeSpotlight = Array.isArray(spotlightData) ? spotlightData[0] : spotlightData;
             spotlightTarget.innerHTML = `
@@ -406,9 +400,9 @@ async function processDataPipelines() {
             const targetRow = rows.find(r => (r.Town || "").toUpperCase() === ACTIVE_TOWN.primaryName.toUpperCase());
             if (targetRow) {
                 const rTitle = document.getElementById('right-card-meta-title'); if (rTitle) rTitle.innerText = targetRow.Title;
-                const i1 = document.getElementById('dual-img-1'); if (i1) { i1.src = targetRow.ImageUrl1; i1.onclick = () => fireLightbox(targetRow.ImageUrl1, targetRow.Header1, "ARCHIVE VIEW", targetRow.Description1, targetRow.source_url || ''); }
+                const i1 = document.getElementById('dual-img-1'); if (i1) { i1.src = targetRow.ImageUrl1; i1.onclick = () => fireLightbox(targetRow.ImageUrl1, targetRow.Header1, "ARCHIVE VIEW", targetRow.Description1, ''); }
                 const h1 = document.getElementById('dual-header-1'); if (h1) h1.innerText = targetRow.Header1;
-                const i2 = document.getElementById('dual-img-2'); if (i2) { i2.src = targetRow.ImageUrl2; i2.onclick = () => fireLightbox(targetRow.ImageUrl2, targetRow.Header2, "ARCHIVE VIEW", targetRow.Description1, targetRow.source_url || ''); }
+                const i2 = document.getElementById('dual-img-2'); if (i2) { i2.src = targetRow.ImageUrl2; i2.onclick = () => fireLightbox(targetRow.ImageUrl2, targetRow.Header2, "ARCHIVE VIEW", targetRow.Description1, ''); }
                 const h2 = document.getElementById('dual-header-2'); if (h2) h2.innerText = targetRow.Header2;
                 const desc1 = document.getElementById('right-card-meta-desc1'); if (desc1) desc1.innerText = targetRow.Description1;
                 const desc2 = document.getElementById('desc2-target-1'); if (desc2) desc2.innerText = targetRow.Description2;
@@ -416,7 +410,7 @@ async function processDataPipelines() {
         }
     } catch(e) { console.error("Section 3 JSON data error", e); }
 
-    // 3. Section 5 Timeline Loader (Reads config.json -> town_history_tree)
+    // 3. Section 5 Timeline Loader
     try {
         const historyTree = window.globalAppConfig?.town_history_tree || {};
         const activeHistoryKey = ACTIVE_TOWN.historyKey || "louisville";
@@ -437,7 +431,7 @@ async function processDataPipelines() {
         }
     } catch(e) { console.error("Timeline data error", e); }
 
-    // 4. Calendar Bulletin Engine (Reads config.json -> apps_script_bulletin_url)
+    // 4. Calendar Bulletin Engine
     try {
         const bulletinEndpoint = endpoints.apps_script_bulletin_url || "https://script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec";
         const res = await fetch(bulletinEndpoint + '?feed=true&' + cb);
@@ -461,7 +455,7 @@ async function processDataPipelines() {
         }
     } catch(err) { console.error("Calendar Wire fault", err); }
 
-    // 5. Local News Matrix Pipeline (Reads config.json -> smlc_local_news_json)
+    // 5. Local News Matrix Pipeline
     try {
         const newsEndpoint = endpoints.smlc_local_news_json || "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/local-news/news_data.json";
         const res = await fetch(newsEndpoint + '?' + cb);
@@ -498,5 +492,5 @@ window.addEventListener('DOMContentLoaded', () => {
     applyDynamicUTMTracking();
     setupSmartTabsLogic();
     processDataPipelines();
-    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-26_20:10`);
+    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-26_20:20`);
 });
