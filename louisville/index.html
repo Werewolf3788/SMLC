@@ -1,6 +1,6 @@
 <!-- 
-  Active Version: 2026-07-26_20:15
-  Description: Louisville IL Community Portal - GitHub Production Ready Chassis
+  Active Version: 2026-07-26_20:20
+  Location: louisville/index.html
 -->
 <!DOCTYPE html>
 <html lang="en-US">
@@ -15,8 +15,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
     
-    <!-- Relative Local Stylesheet Import with Smart Cache-Buster -->
-    <link rel="stylesheet" href="./style.css?v=202607262015" />
+    <!-- Local Stylesheet inside louisville/ -->
+    <link rel="stylesheet" href="./style.css?v=202607262020" />
     
     <!-- Global Analytics Watermarks -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L376P3NPY4"></script>
@@ -31,7 +31,7 @@
 </head>
 <body data-town="louisville">
 
-    <!-- DYNAMIC FLOATING COMMEMORATIVE AND HOLIDAY OVERLAY HUD -->
+    <!-- DYNAMIC FLOATING COMMEMORATIVE HUD -->
     <div class="portal-floating-hud-track">
         <div id="hud-county-age-target" class="hud-floating-badge county-anniversary-badge" style="display: none;"></div>
         <div id="hud-holiday-title-target" class="hud-floating-badge holiday-celebration-badge" style="display: none;"></div>
@@ -39,7 +39,7 @@
 
     <!-- SECTION 1: HEADER BILLBOARD & STICKY MENU BAR -->
     <div id="global-header-container" class="site-brand-header">
-        <a href="./home?utm_campaign=werewolf3788profile&utm_source=HeaderBillboardLink&utm_medium=banner_click" class="header-billboard-link">
+        <a href="../home?utm_campaign=werewolf3788profile&utm_source=HeaderBillboardLink&utm_medium=banner_click" class="header-billboard-link">
             <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="SMLC Community Digital Network Map" class="header-billboard-img" />
         </a>
     </div>
@@ -48,12 +48,12 @@
         <div class="menu-inner">
             <nav>
                 <ul id="dynamic-menu-links" class="menu-links">
-                    <li><a href="./home?utm_campaign=werewolf3788profile&utm_source=NavHomeButton&utm_medium=nav_click">Home</a></li>
-                    <li><a href="./clay-city?utm_campaign=werewolf3788profile&utm_source=NavClayCityButton&utm_medium=nav_click">Clay City</a></li>
-                    <li><a href="./flora?utm_campaign=werewolf3788profile&utm_source=NavFloraButton&utm_medium=nav_click">Flora</a></li>
-                    <li><a href="./louisville?utm_campaign=werewolf3788profile&utm_source=NavLouisvilleButton&utm_medium=nav_click" class="active">Louisville</a></li>
-                    <li><a href="./sailor-springs?utm_campaign=werewolf3788profile&utm_source=NavSailorSpringsButton&utm_medium=nav_click">Sailor Springs</a></li>
-                    <li><a href="./xenia?utm_campaign=werewolf3788profile&utm_source=NavXeniaButton&utm_medium=nav_click">Xenia</a></li>
+                    <li><a href="../home?utm_campaign=werewolf3788profile&utm_source=NavHomeButton&utm_medium=nav_click">Home</a></li>
+                    <li><a href="../clay-city?utm_campaign=werewolf3788profile&utm_source=NavClayCityButton&utm_medium=nav_click">Clay City</a></li>
+                    <li><a href="../flora?utm_campaign=werewolf3788profile&utm_source=NavFloraButton&utm_medium=nav_click">Flora</a></li>
+                    <li><a href="./?utm_campaign=werewolf3788profile&utm_source=NavLouisvilleButton&utm_medium=nav_click" class="active">Louisville</a></li>
+                    <li><a href="../sailor-springs?utm_campaign=werewolf3788profile&utm_source=NavSailorSpringsButton&utm_medium=nav_click">Sailor Springs</a></li>
+                    <li><a href="../xenia?utm_campaign=werewolf3788profile&utm_source=NavXeniaButton&utm_medium=nav_click">Xenia</a></li>
                 </ul>
             </nav>
         </div>
@@ -397,14 +397,14 @@
         <div style="border-top:1px solid #333; padding-top:15px;">
             <p id="footer-copy-target">&copy; 2026 Louisville Community Portal. All rights reserved.</p>
             <p style="margin-top: 8px; opacity: 0.8; font-size: 12px; color: #aaaaaa;">
-                <strong>System Build Version:</strong> v1.0.0 | <strong>Active Version:</strong> 2026-07-26_20:15
+                <strong>System Build Version:</strong> v1.0.0 | <strong>Active Version:</strong> 2026-07-26_20:20
             </p>
         </div>
     </footer>
 
     <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top" style="position:fixed; bottom:20px; right:20px; padding:10px 15px; background:#222; color:#fff; border:1px solid var(--louis-gold); border-radius:4px; cursor:pointer;">↑</button>
 
-    <!-- Relative Script Import with Smart Cache-Buster -->
-    <script type="text/javascript" src="./script.js?v=202607262015"></script>
+    <!-- Correct relative path to sourcetown.js at the root level -->
+    <script type="text/javascript" src="../sourcetown.js?v=202607262020"></script>
 </body>
 </html>
