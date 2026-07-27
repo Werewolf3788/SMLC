@@ -71,17 +71,17 @@
           ]
         },
         {
-          "category": "Parks",
+          "category": "Communtity",
           "images": [
             {
-              "id": "louisville_School",
-              "name": "Louisville Sports Logo",
+              "id": "louisville_park",
+              "name": "Louisville Community Park",
               "imageurl": "https://pbs.twimg.com/profile_images/1152299246151974916/OaQlVtJk_400x400.jpg",
               "alt": "North Clay local park with sporting events",
               "source_url": "https://www.facebook.com/NorthClayPark/"
             },
             {
-              "id": "louisville_Summer",
+              "id": "louisville_LocalLinks",
               "name": "Louisville Town Home Page",
               "imageurl": "https://louisvilleil.com/wp-content/uploads/2022/12/cropped-sealofIllinoisseal.jpg.png",
               "alt": "Louisville is a Village of 1,200 citizens who for all intents and purposes are one large extended family. Accordingly, the mission of the Village of Louisville is committed to preserving its unique small town charm, spirit, and family-oriented atmosphere while promoting sensible growth that will ensure the preservation of the unique character and qualities of the Village citizenry. To that end, the Village will support high quality development and renovation that maintains and improves these unique qualities not only for the older generations of the community, but also for the younger generations of the Village, and that by increasing the residential, job, social, and recreational opportunities for all its citizens, they will wish to remain in the Village throughout their lives, establishing their own roots and place in the family-oriented community of the Village of Louisville.",
@@ -90,10 +90,10 @@
           ]
         },
         {
-          "category": "Louisville_Sign",
+          "category": "Louisville_Religion",
           "images": [
             {
-              "id": "louisville_auto_01",
+              "id": "louisville_church",
               "name": "Full Armor Christian Academy ",
               "imageurl": "https://www.fullarmorchristianacademy.com/uploads/9/8/1/9/98192958/experiend-the-fa-difference-banner_orig.jpg",
               "alt": "Offers a faith-based education for students from preschool (ages 3–5) through 12th grade. We focus on the whole child—helping them grow spiritually, academically, and personally, all with Christ at the center. Here, students are equipped to lead, serve, and make a difference in the world.",
