@@ -60,8 +60,13 @@
     "url": "https://louisvilleil.com"
   }
   {
-    "location": "Louisville, IL",
+    "location": "Flora, IL",
     "name": "Support My Local Community",
     "url": "https://www.supportmylocalcommunity.com"
   },
+  {
+    "location": "Louisville, IL",
+    "name": "Our Flora",
+    "url": "www.ourflora.com"
+  }
 ]
