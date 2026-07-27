@@ -1,11 +1,11 @@
 /* ==========================================================================
-   Active Version: 2026-07-27_05:37
+   Active Version: 2026-07-27_06:15
    File: sourcetown.js / script.js
-   Description: SMLC Community Portal Network - Universal Master Engine & Smart Filter
+   Description: SMLC Community Portal Network - Title-First Universal Master Engine
    Features:
-   - Universal Town Detection & Smart Keyword Filtering
+   - Title-First Town Detection & Smart Keyword Filtering
    - Clay County Home Hub Aggregator Mode (displays all towns)
-   - Resilient History Timeline pipeline with error fallback
+   - Resilient History Timeline & Local Links Pipelines
    - Fixed Gas Widget Flashing & Footer Data Pipeline Integration
    ========================================================================== */
 
@@ -23,15 +23,17 @@ const TOWN_ALIAS_MAP = {
 };
 
 function getActiveTownConfig() {
-    const htmlTownAttr = (document.documentElement.getAttribute('data-town') || document.body?.getAttribute('data-town') || "").toUpperCase();
-    if (htmlTownAttr && TOWN_ALIAS_MAP[htmlTownAttr]) return TOWN_ALIAS_MAP[htmlTownAttr];
-    
-    const pageTitle = document.title.toUpperCase();
+    // 1. FIRST PRIORITY: Parse HTML <title> tag
+    const pageTitle = (document.title || "").toUpperCase();
     for (const key in TOWN_ALIAS_MAP) {
         if (pageTitle.includes(key)) return TOWN_ALIAS_MAP[key];
     }
-    
-    // Default fallback: Clay County Home Hub if no specific town match is found
+
+    // 2. SECOND PRIORITY: Check data-town attribute on html/body tags
+    const htmlTownAttr = (document.documentElement.getAttribute('data-town') || document.body?.getAttribute('data-town') || "").toUpperCase();
+    if (htmlTownAttr && TOWN_ALIAS_MAP[htmlTownAttr]) return TOWN_ALIAS_MAP[htmlTownAttr];
+
+    // 3. FALLBACK: Default to Clay County Home Hub (Aggregator Mode)
     return TOWN_ALIAS_MAP["HOME"];
 }
 
@@ -295,7 +297,7 @@ function initializeFirebaseGasMonitor() {
         "48100": { town: "flora", display: "Flora", name: "CASEY'S", logo: "Casey's.png" },     
         "48101": { town: "flora", display: "Flora", name: "HUCK'S", logo: "Hucks.png" },      
         "128128": { town: "flora", display: "Flora", name: "MACH 1", logo: "Mach 1.png" },    
-        "120226": { town: "flora", display: "Flora", name: "FAST STOP", logo: "Fast stop.png" },  
+        "120226": { town: "flora", display: "Fast Stop", name: "FAST STOP", logo: "Fast stop.png" },  
         "48026": { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" }, 
         "87817": { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" },      
         "171711": { town: "clay-city", display: "Clay City", name: "CASEY'S", logo: "Casey's.png" },
@@ -480,32 +482,50 @@ async function loadFooterDataPipeline(cacheBuster) {
     } catch(e) { console.error("Footer JSON error:", e); }
 }
 
-/* === SECTION 10: Local Links Directory & Master Pipeline Orchestrator === */
+/* === SECTION 10: Local Links Directory Engine === */
 async function loadLocalLinksDirectory(cacheBuster) {
     const linkTarget = document.getElementById('local-links-target-container');
-    if(!linkTarget) return;
+    if (!linkTarget) return;
+
     try {
-        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/local_links.json?' + cacheBuster);
+        const linksEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.local_links) 
+            || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/local_links.json";
+
+        const res = await fetch(linksEndpoint + '?' + cacheBuster);
+        if (!res.ok) throw new Error(`HTTP ${res.status} when fetching local_links.json`);
+
         const data = await res.json();
-        if(Array.isArray(data)) {
-            const filteredLinks = data.filter(link => matchesActiveTown(link.name, link.location));
-            if(filteredLinks.length > 0) {
+        const rawList = Array.isArray(data) ? data : (data.links || data.local_links || []);
+
+        if (rawList.length > 0) {
+            const filteredLinks = rawList.filter(link => {
+                const displayName = link.name || link.title || link.label || "";
+                const displayLoc = link.location || link.town || link.city || link.category || "";
+                return matchesActiveTown(displayName, displayLoc);
+            });
+
+            if (filteredLinks.length > 0) {
                 linkTarget.innerHTML = filteredLinks.map(link => {
-                    const taggedUrl = attachUtmParameters(link.url);
+                    const name = link.name || link.title || link.label || "Local Resource";
+                    const targetRawUrl = link.url || link.link || link.href || "#";
+                    const taggedUrl = attachUtmParameters(targetRawUrl);
+
                     return `
-                        <div class="local-link-node" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #ddd;">
-                            <span style="font-weight: bold; font-size: 15px; color: #1a1a1a;">${link.name}</span> &mdash; 
-                            <a href="${taggedUrl}" target="_blank" class="local-link-anchor-btn" data-ga-label="local_link" style="font-weight: bold; color: var(--link-bright-blue);">Visit Site &rarr;</a>
+                        <div class="local-link-node" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #ddd; text-align: left;">
+                            <span style="font-weight: bold; font-size: 15px; color: #1a1a1a;">${name}</span> &mdash; 
+                            <a href="${taggedUrl}" target="_blank" class="local-link-anchor-btn" data-ga-label="local_link" style="font-weight: bold; color: var(--link-bright-blue); text-decoration: underline;">Visit Site &rarr;</a>
                         </div>
                     `;
                 }).join('');
             } else {
-                linkTarget.innerHTML = `<div style="font-style:italic; font-size:14px; color:#666;">No institutional links available for ${ACTIVE_TOWN.primaryName}.</div>`;
+                linkTarget.innerHTML = `<div style="font-style:italic; font-size:14px; color:#666; padding:10px 0;">No institutional links listed for ${ACTIVE_TOWN.primaryName}.</div>`;
             }
+        } else {
+            linkTarget.innerHTML = `<div style="font-style:italic; font-size:14px; color:#666; padding:10px 0;">Directory currently empty.</div>`;
         }
     } catch(e) {
-        console.error("Local links error", e);
-        linkTarget.innerHTML = `<div style="font-size:14px; color:#cc0000;">Directory segment offline.</div>`;
+        console.error("Local links directory fetch error:", e);
+        linkTarget.innerHTML = `<div style="font-size:13px; color:#cc0000; font-weight:bold; padding:10px 0;">Directory segment temporarily offline.</div>`;
     }
 }
 
@@ -729,5 +749,5 @@ async function processDataPipelines() {
 /* === SECTION Initialization === */
 window.addEventListener('DOMContentLoaded', () => {
     processDataPipelines();
-    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-27_05:37`);
+    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-27_06:15`);
 });
