@@ -1,24 +1,24 @@
 /* ==========================================================================
-   Active Version: 2026-07-26_23:00
-   File: sourcetown.js
-   Description: Louisville IL Community Portal - Fully Fixed Master Engine
-   Fixes Included:
-   - Click outside Lightbox overlay to close
-   - Fixed Date TBA calendar formatting bug (checks date, displayDate, event_date)
-   - Section 3 Slideshow Auto-Fader
-   - ScoreStream dynamic banner ID preserving ScoreStream API script
-   - Fixed Business Spotlight parsing for spotlight.json
+   Active Version: 2026-07-26_23:59
+   File: script.js / sourcetown.js
+   Description: Louisville IL Community Portal - Fully Synchronized Master Engine
+   Features:
+   - Dynamic Section 3 Slideshow Engine bound to config.json slideshow manifest
+   - ScoreStream Horizontal Sports Scoreboard bound to exact town IDs
+   - Firebase Real-Time Fuel Price Monitor
+   - Historical Timeline, Business Spotlight, & Calendar Feed Wire
+   - Dynamic Advertising Partners & OS-Aware Footer Contacts
    ========================================================================== */
 
 /* === SECTION 1: Geographically Correct Town Alignment Matrix === */
 const TOWN_ALIAS_MAP = {
-    "LOUISVILLE": { primaryName: "Louisville", jsonKey: "louisville", gasKey: ["louisville"], historyKey: "louisville", keywords: ["LOUISVILLE", "NORTH CLAY", "NC", "HOOSIER"], zipCodes: ["62858"] },
-    "FLORA": { primaryName: "Flora", jsonKey: "flora", gasKey: ["flora"], historyKey: "flora", keywords: ["FLORA", "FLO", "WOLVES"], zipCodes: ["62839"] },
-    "CLAY CITY": { primaryName: "Clay City", jsonKey: "clay_city", gasKey: ["clay-city"], historyKey: "clay_city", keywords: ["CLAY CITY", "CC"], zipCodes: ["62824"] },
-    "XENIA": { primaryName: "Xenia", jsonKey: "xenia", gasKey: ["xenia"], historyKey: "xenia", keywords: ["XENIA"], zipCodes: ["62899"] },
-    "IOLA": { primaryName: "Iola", jsonKey: "iola", gasKey: ["louisville"], historyKey: "iola", keywords: ["IOLA"], zipCodes: ["62849"] },
-    "SAILOR SPRINGS": { primaryName: "Sailor Springs", jsonKey: "sailor_springs", gasKey: ["louisville", "clay-city"], historyKey: "sailor_springs", keywords: ["SAILOR SPRINGS"], zipCodes: ["62879"] },
-    "INGRAHAM": { primaryName: "Ingraham", jsonKey: "louisville", gasKey: ["louisville", "clay-city"], historyKey: "ingraham", keywords: ["INGRAHAM"], zipCodes: ["62434"] }
+    "LOUISVILLE": { primaryName: "Louisville", jsonKey: "louisville", gasKey: ["louisville"], historyKey: "louisville", keywords: ["LOUISVILLE", "NORTH CLAY", "NC", "HOOSIER"], zipCodes: ["62858"], scorestreamId: "68601" },
+    "FLORA": { primaryName: "Flora", jsonKey: "flora", gasKey: ["flora"], historyKey: "flora", keywords: ["FLORA", "FLO", "WOLVES"], zipCodes: ["62839"], scorestreamId: "68602" },
+    "CLAY CITY": { primaryName: "Clay City", jsonKey: "clay_city", gasKey: ["clay-city"], historyKey: "clay_city", keywords: ["CLAY CITY", "CC"], zipCodes: ["62824"], scorestreamId: "64422" },
+    "XENIA": { primaryName: "Xenia", jsonKey: "clay_county_teams", gasKey: ["xenia"], historyKey: "xenia", keywords: ["XENIA"], zipCodes: ["62899"], scorestreamId: "68988" },
+    "IOLA": { primaryName: "Iola", jsonKey: "iola", gasKey: ["louisville"], historyKey: "iola", keywords: ["IOLA"], zipCodes: ["62849"], scorestreamId: "68601" },
+    "SAILOR SPRINGS": { primaryName: "Sailor Springs", jsonKey: "sailor_springs", gasKey: ["louisville", "clay-city"], historyKey: "sailor_springs", keywords: ["SAILOR SPRINGS"], zipCodes: ["62879"], scorestreamId: "68988" },
+    "INGRAHAM": { primaryName: "Ingraham", jsonKey: "louisville", gasKey: ["louisville", "clay-city"], historyKey: "ingraham", keywords: ["INGRAHAM"], zipCodes: ["62434"], scorestreamId: "68601" }
 };
 
 function getActiveTownConfig() {
@@ -33,12 +33,51 @@ function getActiveTownConfig() {
 
 const ACTIVE_TOWN = getActiveTownConfig();
 
-/* === SECTION 2: Global State & OS Handlers === */
+/* === SECTION 2: Global State Tracking === */
 let globalSlideshowTicker = null;
 let gasMonitorRotator = null;
 window.calendarCachedEvents = [];
 window.newsCacheBlock = [];
 window.globalAppConfig = null;
+
+/* === SECTION 3: Helper & Utility Functions === */
+function getSmartCacheBuster() { return "v=" + Math.floor(Date.now() / 3600000); }
+
+function cleanRawUrl(urlStr) {
+    if (!urlStr) return "";
+    return urlStr.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/").replace("/edit/", "/");
+}
+
+function matchesActiveTown(text, location) {
+    const combinedStr = ((text || "") + " " + (location || "")).toUpperCase();
+    return ACTIVE_TOWN.keywords.some(kw => combinedStr.includes(kw)) || ACTIVE_TOWN.zipCodes.some(zip => combinedStr.includes(zip));
+}
+
+function formatHumanTimestamp(rawString) {
+    if (!rawString || rawString === "undefined" || rawString === "null") return "Date TBA";
+    try {
+        const dateObj = new Date(rawString);
+        if (isNaN(dateObj.getTime())) return rawString;
+        return dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    } catch(e) { return rawString; }
+}
+
+function parseInteractiveContent(rawText) {
+    if (!rawText) return "";
+    let parsed = rawText;
+
+    parsed = parsed.replace(/(\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b)/g, (match) => {
+        const clean = match.replace(/[^\d]/g, '');
+        const isWhatsApp = clean.includes("6187084450");
+        return `<a href="javascript:void(0)" onclick="handlePhoneClick('${clean}', ${isWhatsApp})" style="color:#0258A3; font-weight:bold; text-decoration:underline;">${match}</a>`;
+    });
+
+    parsed = parsed.replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, (match) => {
+        return `<a href="mailto:${match}" style="color:#0258A3; font-weight:bold; text-decoration:underline;">${match}</a>`;
+    });
+
+    return parsed;
+}
 
 function isIOSDevice() {
     return /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -47,9 +86,7 @@ function isIOSDevice() {
 function buildOSMapUrl(addressText) {
     if (!addressText) return "#";
     const encoded = encodeURIComponent(addressText);
-    if (isIOSDevice()) {
-        return `maps://maps.apple.com/?daddr=${encoded}`;
-    }
+    if (isIOSDevice()) return `maps://maps.apple.com/?daddr=${encoded}`;
     return `https://www.google.com/maps/dir/?api=1&destination=${encoded}`;
 }
 
@@ -65,12 +102,11 @@ function handlePhoneClick(number, isWhatsAppEligible) {
     window.location.href = `tel:+1${cleanNum}`;
 }
 
-/* === SECTION 3: Lightbox & Modal Click-Outside Logic === */
+/* === SECTION 4: Lightbox Modal & Click Outside to Close === */
 function closeLightbox(event) {
     const overlay = document.getElementById('portal-global-lightbox');
     if (!overlay) return;
-    // Close if user clicked directly on background overlay or close button
-    if (!event || event.target === overlay || event.target.classList.contains('lightbox-close-btn')) {
+    if (!event || event.target === overlay || event.target.classList.contains('lightbox-close-btn') || event.target.tagName === 'BUTTON') {
         overlay.style.display = 'none';
     }
 }
@@ -100,59 +136,16 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl) {
     }
     if (overlay) {
         overlay.style.display = 'flex';
-        // Ensure click outside closes the lightbox
         overlay.onclick = closeLightbox;
     }
-}
-
-/* === SECTION 4: Helper & Date Formatter === */
-function getSmartCacheBuster() { return "v=" + Math.floor(Date.now() / 3600000); }
-
-function cleanRawUrl(urlStr) {
-    if (!urlStr) return "";
-    return urlStr.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/").replace("/edit/", "/");
-}
-
-function matchesActiveTown(text, location) {
-    const combinedStr = ((text || "") + " " + (location || "")).toUpperCase();
-    return ACTIVE_TOWN.keywords.some(kw => combinedStr.includes(kw)) || ACTIVE_TOWN.zipCodes.some(zip => combinedStr.includes(zip));
-}
-
-function formatHumanTimestamp(rawString) {
-    if (!rawString || rawString === "undefined" || rawString === "null") return "Date TBA";
-    try {
-        const dateObj = new Date(rawString);
-        if (isNaN(dateObj.getTime())) return rawString; // Return raw string if it's already pre-formatted text
-        return dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    } catch(e) { return rawString; }
-}
-
-function parseInteractiveContent(rawText) {
-    if (!rawText) return "";
-    let parsed = rawText;
-
-    parsed = parsed.replace(/(\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b)/g, (match) => {
-        const clean = match.replace(/[^\d]/g, '');
-        const isWhatsApp = clean.includes("6187084450");
-        return `<a href="javascript:void(0)" onclick="handlePhoneClick('${clean}', ${isWhatsApp})" style="color:#0258A3; font-weight:bold; text-decoration:underline;">${match}</a>`;
-    });
-
-    parsed = parsed.replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, (match) => {
-        return `<a href="mailto:${match}" style="color:#0258A3; font-weight:bold; text-decoration:underline;">${match}</a>`;
-    });
-
-    return parsed;
 }
 
 function openCalendarLightboxModal(idx) {
     const targetItem = window.calendarCachedEvents[idx];
     if(!targetItem) return;
     const title = targetItem.name || targetItem.title || "Community Event";
-    
-    // Robust date resolver fixes "Date TBA" bug
     const rawDate = targetItem.date || targetItem.displayDate || targetItem.event_date || targetItem.pubDate;
     const dateText = formatHumanTimestamp(rawDate);
-    
     const timeText = targetItem.time || targetItem.displayTime || "Time TBA";
     const rawLoc = targetItem.location || ACTIVE_TOWN.primaryName + ", IL";
     const mapUrl = buildOSMapUrl(rawLoc);
@@ -174,61 +167,58 @@ function openNewsLightboxModal(idx) {
     );
 }
 
-/* === SECTION 5: Section 3 Slideshow Auto-Rotator === */
-function initializeSection3Slideshow() {
-    const viewport = document.getElementById('louisville-slideshow') || document.querySelector('.slider-viewport') || document.getElementById('louisville-town-slideshow-matrix');
+/* === SECTION 5: Dynamic Section 3 Slideshow Engine (Reads config.json -> slideshow) === */
+async function initializeSection3Slideshow(cb) {
+    const viewport = document.getElementById('louisville-slideshow') || document.querySelector('.slider-viewport');
     if (!viewport) return;
-    
-    const slides = viewport.querySelectorAll('.slider-slide, img');
+
+    try {
+        const slideshowEndpoint = cleanRawUrl(window.globalAppConfig?.slideshow) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/town-images.json";
+        const res = await fetch(slideshowEndpoint + '?' + cb);
+        const data = await res.json();
+        
+        const townKey = ACTIVE_TOWN.jsonKey || "louisville";
+        const slidesList = data[townKey] || data.images || (Array.isArray(data) ? data : []);
+
+        if (Array.isArray(slidesList) && slidesList.length > 0) {
+            viewport.innerHTML = slidesList.map((item, idx) => `
+                <div class="slider-slide ${idx === 0 ? 'active' : ''}" style="position: absolute; inset: 0; opacity: ${idx === 0 ? 1 : 0}; transition: opacity 0.8s ease-in-out; z-index: ${idx === 0 ? 2 : 1};">
+                    <img src="${item.src || item.url || item.image}" alt="${item.alt || item.title || 'Town View'}" onclick="fireLightbox('${item.src || item.url || item.image}', '${(item.title || item.alt || '').replace(/'/g, "\\'")}', 'SLIDESHOW VIEW', '${(item.caption || '').replace(/'/g, "\\'")}', '')" style="width:100%; height:100%; object-fit:cover; cursor:pointer;">
+                    ${(item.caption || item.title) ? `<div class="slider-caption">${item.caption || item.title}</div>` : ''}
+                </div>
+            `).join('');
+        }
+    } catch(e) {
+        console.error("Slideshow JSON fetch error, keeping existing HTML slides:", e);
+    }
+
+    const slides = viewport.querySelectorAll('.slider-slide');
     if (slides.length <= 1) return;
 
     let currentSlideIdx = 0;
     if (globalSlideshowTicker) clearInterval(globalSlideshowTicker);
 
-    // Apply slideshow CSS styles dynamically
-    slides.forEach((slide, idx) => {
-        slide.style.transition = "opacity 0.8s ease-in-out";
-        slide.style.position = idx === 0 ? "relative" : "absolute";
-        slide.style.top = "0";
-        slide.style.left = "0";
-        slide.style.width = "100%";
-        slide.style.opacity = idx === 0 ? "1" : "0";
-    });
-
     globalSlideshowTicker = setInterval(() => {
         slides[currentSlideIdx].style.opacity = "0";
+        slides[currentSlideIdx].style.zIndex = "1";
         currentSlideIdx = (currentSlideIdx + 1) % slides.length;
         slides[currentSlideIdx].style.opacity = "1";
+        slides[currentSlideIdx].style.zIndex = "2";
     }, 4000);
 }
 
-/* === SECTION 6: ScoreStream Integration (Uses sports.json / spotlight.json IDs) === */
-async function loadScorestreamSportsWidget(cb) {
+/* === SECTION 6: ScoreStream Integration (Exact User IDs) === */
+function loadScorestreamSportsWidget() {
     const widgetContainer = document.querySelector('.scorestream-widget-container');
     if (!widgetContainer) return;
 
-    let targetBannerId = "68601"; // Louisville Default
-
-    try {
-        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/sports.json?' + cb);
-        const sportsData = await res.json();
-        const activeKey = ACTIVE_TOWN.jsonKey || "louisville";
-        
-        if (sportsData?.widgets?.[activeKey]?.banner_id) {
-            targetBannerId = sportsData.widgets[activeKey].banner_id;
-        } else if (sportsData?.widgets?.clay_county_teams?.banner_id) {
-            targetBannerId = sportsData.widgets.clay_county_teams.banner_id;
-        }
-    } catch(e) { 
-        console.error("Sports JSON fetch fallback:", e); 
-    }
-
+    const targetBannerId = ACTIVE_TOWN.scorestreamId || "68601";
     widgetContainer.setAttribute('data-user-widget-id', targetBannerId);
 
-    // Inject ScoreStream Embed JS if not already running
     if (!window.ScorestreamLoaded) {
         window.ScorestreamLoaded = true;
         const sportsScript = document.createElement('script');
+        sportsScript.type = 'text/javascript';
         sportsScript.src = "https://scorestream.com/apiJsCdn/widgets/embed.js";
         sportsScript.async = true;
         document.body.appendChild(sportsScript);
@@ -288,7 +278,6 @@ function bindFirebaseFuelDatabase(stationConfigs, container) {
 function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
     const gasTownsArray = Array.isArray(activeGasTowns) ? activeGasTowns : [activeGasTowns];
     const stationIds = Object.keys(stationConfigs).filter(id => gasTownsArray.includes(stationConfigs[id].town));
-    
     if (stationIds.length === 0) return;
 
     const updatePortalUrl = window.globalAppConfig?.regional_endpoints?.update_gas_portal_url || "https://www.supportmylocalcommunity.com/update-gas";
@@ -323,7 +312,7 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
     if (stationIds.length > 1) gasMonitorRotator = setInterval(renderCurrentStation, 5000);
 }
 
-/* === SECTION 8: Advertising Partners Pipeline === */
+/* === SECTION 8: Advertising Partners Strip Engine (Sections 6 & 8) === */
 async function loadPartnersStrips(cacheBuster) {
     const topGrid = document.getElementById('partners-grid-top');
     const bottomGrid = document.getElementById('partners-grid-bottom');
@@ -348,7 +337,7 @@ async function loadPartnersStrips(cacheBuster) {
     } catch(e) { console.error("Partners manifest error:", e); }
 }
 
-/* === SECTION 9: Footer Data Pipeline === */
+/* === SECTION 9: Footer Data Pipeline Engine === */
 async function loadFooterDataPipeline(cacheBuster) {
     try {
         const footerEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.footer_json) || 'https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/footer.json';
@@ -384,12 +373,39 @@ async function loadFooterDataPipeline(cacheBuster) {
     } catch(e) { console.error("Footer JSON error:", e); }
 }
 
-/* === SECTION 10: Master Data Pipeline Orchestrator === */
+/* === SECTION 10: Local Links Directory Engine === */
+async function loadLocalLinksDirectory(cacheBuster) {
+    const linkTarget = document.getElementById('local-links-target-container');
+    if(!linkTarget) return;
+    try {
+        const res = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/local_links.json?' + cacheBuster);
+        const data = await res.json();
+        if(Array.isArray(data)) {
+            const filteredLinks = data.filter(link => matchesActiveTown(link.name, link.location));
+            if(filteredLinks.length > 0) {
+                linkTarget.innerHTML = filteredLinks.map(link => `
+                    <div class="local-link-node" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #ddd;">
+                        <span style="font-weight: bold; font-size: 15px; color: #1a1a1a;">${link.name}</span> &mdash; 
+                        <a href="${link.url}" target="_blank" class="local-link-anchor-btn" style="font-weight: bold; color: var(--link-bright-blue);">Visit Site &rarr;</a>
+                    </div>
+                `).join('');
+            } else {
+                linkTarget.innerHTML = `<div style="font-style:italic; font-size:14px; color:#666;">No institutional links available for ${ACTIVE_TOWN.primaryName}.</div>`;
+            }
+        }
+    } catch(e) {
+        console.error("Local links error", e);
+        linkTarget.innerHTML = `<div style="font-size:14px; color:#cc0000;">Directory segment offline.</div>`;
+    }
+}
+
+/* === SECTION 11: Master Data Orchestrator === */
 async function processDataPipelines() {
     const cb = getSmartCacheBuster();
 
     try {
-        const configRes = await fetch('https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/config.json?' + cb);
+        const configUrl = 'https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/config.json?' + cb;
+        const configRes = await fetch(configUrl);
         window.globalAppConfig = await configRes.json();
     } catch(e) { console.error("Config fetch fault", e); }
 
@@ -444,9 +460,33 @@ async function processDataPipelines() {
         }
     } catch(e) { console.error("Section 3 error", e); }
 
-    initializeSection3Slideshow();
+    // Initialize Dynamic Section 3 Slideshow from config.json
+    await initializeSection3Slideshow(cb);
 
-    // 3. Calendar Bulletin Engine (With Robust Date Parser)
+    // 3. Historical Timeline Engine (Fetches townhistory JSONs)
+    try {
+        const historyTree = window.globalAppConfig?.town_history_tree || {};
+        const activeHistoryKey = ACTIVE_TOWN.historyKey || "louisville";
+        const historyEndpoint = historyTree[activeHistoryKey] || `https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/${activeHistoryKey.replace(/_/g, '-')}.json`;
+        
+        const res = await fetch(cleanRawUrl(historyEndpoint) + '?' + cb);
+        const payload = await res.json();
+        const historyRowTarget = document.getElementById('history-row-target');
+        const historyList = Array.isArray(payload) ? payload : (payload.history || payload.timeline || []);
+
+        if(historyList.length > 0 && historyRowTarget) {
+            historyRowTarget.innerHTML = historyList.map(evt => `
+                <div class="history-card" onclick="fireLightbox('${evt.image_url || evt.image || ''}', '${(evt.event || evt.title || '').replace(/'/g, "\\'")}', 'YEAR ${evt.year}', '${(evt.description || '').replace(/'/g, "\\'")}', '${evt.source_url || evt.link || ''}')">
+                    <h2>${evt.year}</h2>
+                    <h3>${evt.event || evt.title}</h3>
+                    <p>${evt.description || ''}</p>
+                    ${(evt.image_url || evt.image) ? `<div class="history-img-box"><img src="${evt.image_url || evt.image}" alt="${evt.event}"></div>` : ''}
+                </div>
+            `).join('');
+        }
+    } catch(e) { console.error("Timeline data error", e); }
+
+    // 4. Calendar Bulletin Engine (With Robust Date Parser)
     try {
         const bulletinEndpoint = endpoints.apps_script_bulletin_url || "https://script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec";
         const res = await fetch(bulletinEndpoint + '?feed=true&' + cb);
@@ -459,7 +499,6 @@ async function processDataPipelines() {
                 scroller.innerHTML = window.calendarCachedEvents.map((item, idx) => {
                     const mapUrl = buildOSMapUrl(item.location || ACTIVE_TOWN.primaryName);
                     const parsedDetails = parseInteractiveContent((item.details || item.description || "").substring(0, 90));
-                    
                     const rawDate = item.date || item.displayDate || item.event_date || item.pubDate;
                     const dateText = formatHumanTimestamp(rawDate);
 
@@ -479,7 +518,7 @@ async function processDataPipelines() {
         }
     } catch(err) { console.error("Calendar Wire fault", err); }
 
-    // 4. Local News Matrix Pipeline
+    // 5. Local News Matrix Pipeline
     try {
         const newsEndpoint = endpoints.smlc_local_news_json || "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/local-news/news_data.json";
         const res = await fetch(newsEndpoint + '?' + cb);
@@ -502,15 +541,16 @@ async function processDataPipelines() {
         }
     } catch(e) { console.error("Local news error", e); }
 
-    // 5. Integrations: Partners, Footer, ScoreStream & Gas Monitor
+    // 6. Integrations: Directory Links, Partners, Footer, ScoreStream & Gas Monitor
+    await loadLocalLinksDirectory(cb);
     await loadPartnersStrips(cb);
     await loadFooterDataPipeline(cb);
-    await loadScorestreamSportsWidget(cb);
+    loadScorestreamSportsWidget();
     initializeFirebaseGasMonitor();
 }
 
-/* === SECTION 11: App Initialization === */
+/* === SECTION 12: App Initialization === */
 window.addEventListener('DOMContentLoaded', () => {
     processDataPipelines();
-    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-26_23:00`);
+    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-26_23:59`);
 });
