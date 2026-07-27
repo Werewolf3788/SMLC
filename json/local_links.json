@@ -1,5 +1,40 @@
 [
   {
+    "location": "Global",
+    "name": "Donations",
+    "url": "https://streamelements.com/werewolf3788/tip"
+  },
+  {
+    "location": "Global",
+    "name": "Support My Local Community",
+    "url": "https://www.supportmylocalcommunity.com"
+  },
+  {
+    "location": "Global",
+    "name": "Our Flora",
+    "url": "https://www.ourflora.com"
+  },
+  {
+    "location": "Global",
+    "name": "S & K Venture Signs (Digital Advertising)",
+    "url": "https://skventuresigns.com"
+  },
+  {
+    "location": "Global",
+    "name": "Our Flora FB",
+    "url": "https://www.facebook.com/OurFloraIL/"
+  },
+  {
+    "location": "Global",
+    "name": "SMLC FB",
+    "url": "https://www.facebook.com/SupportMyLocalCommunity/"
+  },
+  {
+    "location": "Global",
+    "name": "S & K Venture FB",
+    "url": "https://www.facebook.com/SKVenturesInc"
+  },
+  {
     "location": "Flora, IL",
     "name": "Schools",
     "url": "https://www.floraschools.com"
@@ -58,15 +93,5 @@
     "location": "Louisville, IL",
     "name": "Village of Louisville",
     "url": "https://louisvilleil.com"
-  },
-  {
-    "location": "Flora, IL",
-    "name": "Support My Local Community",
-    "url": "https://www.supportmylocalcommunity.com"
-  },
-  {
-    "location": "Louisville, IL",
-    "name": "Our Flora",
-    "url": "www.ourflora.com"
   }
 ]
