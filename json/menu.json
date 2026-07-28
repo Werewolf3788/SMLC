@@ -1,26 +1,26 @@
 [
   {
     "name": "Home",
-    "url": "./SMLC/index.html"
+    "url": "./index.html"
   },
   {
     "name": "Clay City",
-    "url": "./SMLC/clay-city.html"
+    "url": "./clay-city.html"
   },
   {
     "name": "Flora",
-    "url": "./SMLC/flora.html"
+    "url": "./flora.html"
   },
   {
     "name": "Louisville",
-    "url": "https://werewolf3788.github.io/SMLC/louisville/index.html"
+    "url": "./louisville/index.html"
   },
   {
     "name": "Sailor Springs",
-    "url": "./SMLC/sailor-springs.html"
+    "url": "./sailor-springs.html"
   },
   {
     "name": "Xenia",
-    "url": "./SMLC/xenia.html"
+    "url": "./xenia.html"
   }
 ]
