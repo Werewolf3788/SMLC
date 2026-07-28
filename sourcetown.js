@@ -201,7 +201,7 @@ async function initializeSection3Slideshow(cb) {
     if (!viewport) return;
 
     try {
-        const slideshowEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.slideshow) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/town-images.json";
+        const slideshowEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.slideshow) || "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/town-images.json";
         const res = await fetch(slideshowEndpoint + '?' + cb);
         const data = await res.json();
         
@@ -351,7 +351,7 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
 
     const updatePortalUrl = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.gas_widget) 
         || cleanRawUrl(window.globalAppConfig?.regional_endpoints?.update_gas_github_source) 
-        || "https://werewolf3788.github.io/Testpages/update-gas.html";
+        || "https://werewolf3788.github.io/SMLC/update-gas.html";
 
     let currentIdx = 0;
 
@@ -407,7 +407,7 @@ async function loadPartnersStrips(cacheBuster) {
 
     try {
         const partnersEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.partners_json_manifest) 
-            || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/partners.json";
+            || "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/partners.json";
             
         const res = await fetch(partnersEndpoint + '?' + cacheBuster);
         const data = await res.json();
@@ -443,7 +443,7 @@ async function loadPartnersStrips(cacheBuster) {
 /* === SECTION 9: Footer Data Pipeline Engine === */
 async function loadFooterDataPipeline(cacheBuster) {
     try {
-        const footerEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.footer_json) || 'https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/footer.json';
+        const footerEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.footer_json) || 'https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/footer.json';
         const res = await fetch(footerEndpoint + '?' + cacheBuster);
         const data = await res.json();
         const contact = data?.footer_data?.contact_info;
@@ -492,7 +492,7 @@ async function loadLocalLinksDirectory(cacheBuster) {
 
     try {
         const linksEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.local_links) 
-            || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/local_links.json";
+            || "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/local_links.json";
 
         const res = await fetch(linksEndpoint + '?' + cacheBuster);
         if (!res.ok) throw new Error(`HTTP ${res.status} when fetching local_links.json`);
@@ -539,7 +539,7 @@ async function loadTownArticleData(cacheBuster) {
 
     try {
         const articleEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.town_artical) 
-            || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/artical.json";
+            || "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/artical.json";
             
         const res = await fetch(articleEndpoint + '?' + cacheBuster);
         const data = await res.json();
@@ -581,7 +581,7 @@ async function processDataPipelines() {
     const cb = getSmartCacheBuster();
 
     try {
-        const configUrl = 'https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/config.json?' + cb;
+        const configUrl = 'https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/config.json?' + cb;
         const configRes = await fetch(configUrl);
         window.globalAppConfig = await configRes.json();
     } catch(e) { console.error("Config fetch fault", e); }
@@ -590,7 +590,7 @@ async function processDataPipelines() {
 
     // 1. Business Spotlight Loader (Section 4.2.1)
     try {
-        const spotlightEndpoint = cleanRawUrl(endpoints.Business_Spotlight) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/spotlight.json";
+        const spotlightEndpoint = cleanRawUrl(endpoints.Business_Spotlight) || "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/spotlight.json";
         const spotlightRes = await fetch(spotlightEndpoint + '?' + cb);
         const spotlightData = await spotlightRes.json();
         const spotlightTarget = document.querySelector('.clay-county-news-box.spotlight-clipping');
@@ -628,7 +628,7 @@ async function processDataPipelines() {
 
     // 2. Section 3 Landmark Data
     try {
-        const section3Endpoint = cleanRawUrl(endpoints.Section_3) || "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/section3.json";
+        const section3Endpoint = cleanRawUrl(endpoints.Section_3) || "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/section3.json";
         const res = await fetch(section3Endpoint + '?' + cb);
         const rows = await res.json();
         if (Array.isArray(rows)) {
