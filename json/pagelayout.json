@@ -8,7 +8,7 @@
       "component_key": "Menu_Navigationbar",
       "enabled": true,
       "label": "Menu Bar",
-      "data_source": "https://github.com/Werewolf3788/Testpages/blob/main/json/menu.json"
+      "data_source": "https://github.com/Werewolf3788/SMLC/blob/main/json/menu.json"
     },
     {
       "coordinate": "3.2.2",
@@ -24,7 +24,7 @@
       "component_key": "vibrant_community_poi",
       "enabled": true,
       "label": "Point of Interest",
-      "data_source": "https://github.com/Werewolf3788/Testpages/blob/main/json/section3.json"
+      "data_source": "https://github.com/Werewolf3788/SMLC/blob/main/json/section3.json"
     },
     {
       "coordinate": "4.1.0",
@@ -32,7 +32,7 @@
       "component_key": "town_artical",
       "enabled": true,
       "label": "Town Article",
-      "data_source": "https://github.com/Werewolf3788/Testpages/blob/main/json/artical.json"
+      "data_source": "https://github.com/Werewolf3788/SMLC/blob/main/json/artical.json"
     },
     {
       "coordinate": "4.1.1",
@@ -40,7 +40,7 @@
       "component_key": "business_spotlight",
       "enabled": true,
       "label": "Business Spotlight",
-      "data_source": "https://github.com/Werewolf3788/Testpages/blob/main/json/spotlight.json"
+      "data_source": "https://github.com/Werewolf3788/SMLC/blob/main/json/spotlight.json"
     },
     {
       "coordinate": "4.1.2",
@@ -64,7 +64,7 @@
       "component_key": "scotts_partners",
       "enabled": true,
       "label": "Scott's Partners",
-      "data_source": "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/partners.json?v=2026-07-26_1222"
+      "data_source": "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/partners.json?v=2026-07-26_1222"
     },
     {
       "coordinate": "7.1.1",
@@ -112,7 +112,7 @@
       "component_key": "local_links",
       "enabled": true,
       "label": "Local Resources",
-      "data_source": "https://github.com/Werewolf3788/Testpages/blob/main/json/local_links.json"
+      "data_source": "https://github.com/Werewolf3788/SMLC/blob/main/json/local_links.json"
     },
     {
       "coordinate": "8.1.1",
@@ -120,7 +120,7 @@
       "component_key": "scotts_partners_secondary",
       "enabled": true,
       "label": "Partners",
-      "data_source": "https://raw.githubusercontent.com/Werewolf3788/Testpages/main/partners.json?v=2026-07-26_1222"
+      "data_source": "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/partners.json?v=2026-07-26_1222"
     },
     {
       "coordinate": "10.1.1",
@@ -128,7 +128,7 @@
       "component_key": "footer",
       "enabled": true,
       "label": "Footer",
-      "data_source": "https://github.com/Werewolf3788/Testpages/blob/main/json/footer.json"
+      "data_source": "https://github.com/Werewolf3788/SMLC/blob/main/json/footer.json"
     }
   ]
 }
