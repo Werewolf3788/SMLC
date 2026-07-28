@@ -4,10 +4,10 @@
     "cities_towns_villages": {
       "flora": {
         "location": "Flora",
-        "title": "Flora Chamber of Commerce & Local Businesses",
-        "image_url": "https://ourflora.com/wp-content/uploads/2025/02/R.jpg",
-        "description": "Discover local dining, shopping, and commercial developments in the heart of Flora, IL. Supporting homegrown businesses and community events.",
-        "website_url": "https://werewolf3788.github.io/Testpages/flora.html"
+        "title": "Our Flora",
+        "image_url": "https://ourflora.com/wp-content/uploads/2023/08/Ourflora.png",
+        "description": "Goto place for all infomration in the local community.",
+        "website_url": "https://ourflora.com"
       },
       "louisville": {
         "location": "Louisville",
