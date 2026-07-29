@@ -31,9 +31,10 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Run iCal Sync Script
+      - name: Decode Key & Run Sync Script
         env:
-          RAW_SECRET: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_BASE64: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
-          export FIREBASE_SERVICE_ACCOUNT=$(echo "$RAW_SECRET" | tr -d '\r\n')
+          node -e 'fs.writeFileSync("/tmp/gcp_key.json", Buffer.from(process.env.FIREBASE_BASE64.trim(), "base64").toString("utf8"))'
           node sync-ical.js
+          rm -f /tmp/gcp_key.json
