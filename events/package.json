@@ -1,0 +1,13 @@
+{
+  "name": "smlc-ical-sync",
+  "version": "1.0.0",
+  "description": "Sync SMLC iCal feed to Firestore",
+  "main": "sync-ical.js",
+  "scripts": {
+    "start": "node sync-ical.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "node-ical": "^0.18.0"
+  }
+}
