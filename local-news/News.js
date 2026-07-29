@@ -1,10 +1,10 @@
 /* === SECTION: File Header & Config === */
-// Active Version: v1.5.0 | Timestamp: 2026-07-29_13:40:00
-// Description: Local News Scraper (Conditional Proximity Matching for Google Alerts vs Local RSS)
+// Active Version: v1.6.0 | Timestamp: 2026-07-29_13:48:00
+// Description: Local News Scraper & Firestore Pipeline (rssfeed.json source import)
 
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
-import sourcesData from "./sources.json" with { type: "json" };
+import sourcesData from "./rssfeed.json" with { type: "json" };
 
 const firebaseConfig = {
     apiKey: "AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg",
@@ -20,7 +20,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* === SECTION: Global Overrides (Obituaries, Sales, Jobs) === */
+/* === SECTION: Global Keyword Overrides === */
 const GLOBAL_CATEGORY_KEYWORDS = [
     "obituary", "obituaries", "passed away", "funeral", 
     "for sale", "for rent", "land for sale", "property for sale", "real estate", 
@@ -29,7 +29,7 @@ const GLOBAL_CATEGORY_KEYWORDS = [
 
 /* === SECTION: Town Keyword Maps === */
 
-// 1. Broad Matching (For Local Outlets: WNOI, Freedom 92.9, Effingham Radio, etc.)
+// 1. Relaxed Town Matching (For Local Feeds like WNOI, Freedom 92.9, etc.)
 const LOCAL_TOWN_KEYWORD_MAP = {
     "Flora": ["flora", "floyd henson"],
     "Louisville": ["louisville", "north clay"],
@@ -42,7 +42,7 @@ const LOCAL_TOWN_KEYWORD_MAP = {
     "Unincorporated Clay County": ["hord", "wendelin", "oskaloosa", "riffle"]
 };
 
-// 2. Strict Matching Patterns (For Web Sweeps / Google Alerts ONLY)
+// 2. Strict Town Matching Patterns (For Web Sweeps / Google Alerts ONLY)
 const GOOGLE_ALERT_TOWN_REGEX_MAP = {
     "Flora": [
         /\bflora\b.*?\b(il|illinois)\b/i,
@@ -80,7 +80,7 @@ const GOOGLE_ALERT_TOWN_REGEX_MAP = {
     ]
 };
 
-/* === SECTION: Utilities === */
+/* === SECTION: Utilities & Extraction === */
 function extractTitle(item) {
     return item.title || item.headline || item.name || "";
 }
@@ -128,7 +128,7 @@ function resolveStoryTags(titleText, storyText, isGoogleAlert) {
     const detectedTowns = new Set();
 
     if (isGoogleAlert) {
-        // STRICT MODE: Require "Flora, IL" or "Flora Illinois" for Google Alerts
+        // STRICT MODE: Requires "Flora, IL" or "Flora Illinois" for Google Alerts
         for (const [townName, regexArray] of Object.entries(GOOGLE_ALERT_TOWN_REGEX_MAP)) {
             for (const pattern of regexArray) {
                 if (pattern.test(textBlob)) {
@@ -138,7 +138,7 @@ function resolveStoryTags(titleText, storyText, isGoogleAlert) {
             }
         }
     } else {
-        // RELAXED MODE: Match town name directly for local station feeds
+        // RELAXED MODE: Matches town name directly for local station feeds
         for (const [townName, keywords] of Object.entries(LOCAL_TOWN_KEYWORD_MAP)) {
             for (const kw of keywords) {
                 if (textBlob.includes(kw)) {
@@ -175,7 +175,7 @@ function isWithinPast48Hours(dateString) {
 
 /* === SECTION: Execution Pipeline === */
 async function runScraper() {
-    console.log(`Starting news pipeline... Loaded ${sourcesData.length} items from sources.json`);
+    console.log(`Starting news pipeline... Loaded ${sourcesData.length} items from rssfeed.json`);
     
     const writePromises = [];
     const processedKeys = new Set();
@@ -223,18 +223,21 @@ async function runScraper() {
             continue;
         }
 
+        const primaryLocation = tags.join(", ");
+
+        // 5. Write Complete Structure to Firestore Collection local_news
         const p = setDoc(doc(db, "local_news", docId), {
-            title: title || `${tags.join(", ")} Update`,
             date: articleDate,
             full_story: story,
             image: image,
             link: link,
+            location: primaryLocation,
             tags: tags,
-            location: tags.join(", "),
+            title: title || `${primaryLocation} Update`,
             updatedAt: new Date().toISOString()
         }, { merge: true })
         .then(() => {
-            console.log(`[SAVED] "${title}" -> Mode: ${isGoogleAlert ? 'Google Alert (Strict)' : 'Local Feed (Relaxed)'} | Tags: [${tags.join(", ")}]`);
+            console.log(`[SAVED] "${title}" -> Mode: ${isGoogleAlert ? 'Google Alert (Strict)' : 'Local Feed (Relaxed)'} | Location: ${primaryLocation}`);
             savedCount++;
         })
         .catch((err) => {
