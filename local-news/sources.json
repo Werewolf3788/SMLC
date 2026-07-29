@@ -1,11 +1,16 @@
 [
-    { "name": "WNOI Radio", "url": "https://www.wnoi.com/category/local/feed", "type": "rss" },
-    { "name": "Effingham Radio", "url": "https://www.effinghamradio.com/local-news/feed/", "type": "rss" },
-    { "name": "Freedom 92.9", "url": "https://freedom929.com/category/local-news/feed/", "type": "rss" },
-    { "name": "WFIW Radio", "url": "https://www.wfiwradio.com/local-news/feed/", "type": "rss" },
-    { "name": "WMIX 94", "url": "https://www.wmix94.com/local-news/feed/", "type": "rss" },
-    { "name": "Southern Illinois Now", "url": "https://southernillinoisnow.com/local-news/feed/", "type": "rss" },
-    { "name": "WSIL TV 3", "url": "https://www.wsiltv.com/search/?f=rss&t=article&l=50&s=start_time&sd=desc", "type": "rss" },
-    { "name": "Flora City Official", "url": "https://florail.govoffice2.com/index.asp?SEC=A8C9DDA7-E259-48EE-AD30-63ADE2D6CAD9", "type": "html" },
-    { "name": "Olney Gazette", "url": "https://olneygazettenews.com/", "type": "html" }
+  { "name": "WNOI Radio", "url": "https://www.wnoi.com/category/local/feed", "type": "rss" },
+  { "name": "Effingham Radio", "url": "https://www.effinghamradio.com/local-news/feed/", "type": "rss" },
+  { "name": "Freedom 92.9", "url": "https://freedom929.com/category/local-news/feed/", "type": "rss" },
+  { "name": "WFIW Radio", "url": "https://www.wfiwradio.com/local-news/feed/", "type": "rss" },
+  { "name": "WMIX 94", "url": "https://www.wmix94.com/local-news/feed/", "type": "rss" },
+  { "name": "Southern Illinois Now", "url": "https://southernillinoisnow.com/local-news/feed/", "type": "rss" },
+  { "name": "WSIL TV 3", "url": "https://www.wsiltv.com/search/?f=rss&t=article&l=50&s=start_time&sd=desc", "type": "rss" },
+  { "name": "Flora City Official", "url": "https://florail.govoffice2.com/index.asp?SEC=A8C9DDA7-E259-48EE-AD30-63ADE2D6CAD9", "type": "html" },
+  { "name": "Olney Gazette", "url": "https://olneygazettenews.com/", "type": "html" },
+  { "name": "Clay County Government", "url": "https://claycounty.illinois.gov/feed/", "type": "rss" },
+  { "name": "Wikipedia Clay County Edits", "url": "https://en.wikipedia.org/w/index.php?title=Special:Search&feed=atom&search=Clay+County+Illinois", "type": "rss" },
+  { "name": "Google Alert Feed 1", "url": "https://www.google.com/alerts/feeds/16385066500020016213/12503335251711666256", "type": "rss" },
+  { "name": "Google Alert Feed 2", "url": "https://www.google.com/alerts/feeds/16385066500020016213/15360615268943797723", "type": "rss" },
+  { "name": "Google Alert Feed 3", "url": "https://www.google.com/alerts/feeds/16385066500020016213/13545707528376645416", "type": "rss" }
 ]
