@@ -1,12 +1,12 @@
 /* === SECTION: File Header & Config === */
-// Active Version: v1.1.0 | Timestamp: 2026-07-29_11:12:00
-// Description: Local News Engine - Firebase v9+ Firestore Integration & Town Filter Matrix
+// Active Version: v1.1.0 | Timestamp: 2026-07-29_11:27:00
+// Description: Local News Engine - Firebase v9+ Firestore Integration & Master Clay County Keyword Filter Matrix
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics.js";
 import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// Your web app's Firebase configuration
+// Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg",
     authDomain: "smlc-fuel-monitor.firebaseapp.com",
@@ -18,26 +18,58 @@ const firebaseConfig = {
     measurementId: "G-687D605K75"
 };
 
-// Initialize Firebase
+// Initialize Firebase SDK
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const db = getFirestore(app);
 
-/* === SECTION: Text Processing & Filtering Utilities === */
+/* === SECTION: Master Clay County Keyword Mapping Matrix === */
+
+// Direct mapping dictionary: Maps all local identifiers, schools, sports teams, zip codes, and communities to primary Town categories
+const TOWN_KEYWORD_MAP = {
+    "Flora": [
+        "flora", "flora wolves", "flora pups", "harter", "harter township", "62839"
+    ],
+    "Louisville": [
+        "louisville", "hoosier", "hoosier township", "louisville township", 
+        "north clay", "nc indians", "nc cardinals", "blair township", "larkinsburg township", "62858"
+    ],
+    "Clay City": [
+        "clay city", "clay city wolves", "clay city pups", "clay city township", "62824"
+    ],
+    "Xenia": [
+        "xenia", "xenia township", "greendale", "62899"
+    ],
+    "Sailor Springs": [
+        "sailor springs", "pixley", "pixley township", "62879"
+    ],
+    "Iola": [
+        "iola", "songer", "songer township"
+    ],
+    "Ingraham": [
+        "ingraham", "62434"
+    ],
+    "Bible Grove": [
+        "bible grove", "bible grove township"
+    ],
+    "Unincorporated Clay County": [
+        "bethel", "camp travis", "hord", "jordon", "oskaloosa", 
+        "oskaloosa township", "riffle", "wendelin", "stanford township"
+    ]
+};
+
+// Fallback keywords for general county news
+const CLAY_COUNTY_FALLBACKS = ["clay county", "clay county news", "state news", "illinois news"];
+
+/* === SECTION: Text Processing & Formatting Utilities === */
+
+// Formats dollar amounts to prevent soft wraps and bolds text
 function formatMoney(text) {
     if (!text) return "";
     return text.replace(/(\$\d+(?:,\d{3})*(?:\.\d{2})?)/g, '<span style="white-space: nowrap; font-weight: bold;">$1</span>');
 }
 
-const CLAY_TOWNS = [
-    "flora", "louisville", "clay city", "xenia", "iola", "sailor springs",
-    "bible grove", "blair", "harter", "hoosier", "larkinsburg", 
-    "oskaloosa", "pixley", "songer", "stanford"
-];
-
-const CLAY_COUNTY_KEYWORDS = ["clay county", "state news", "illinois news"];
-
-// Removes "© Copyright..." text from WNOI
+// Removes "© Copyright..." boilerplate text from WNOI stories
 function cleanStoryBody(storyText) {
     if (!storyText) return "";
     return storyText
@@ -45,21 +77,7 @@ function cleanStoryBody(storyText) {
         .trim();
 }
 
-// Determines Location tag
-function resolveStoryLocation(item) {
-    if (item.location) return item.location; // Use stored location if present
-
-    const textBlob = `${item.title || ""} ${item.full_story || ""}`.toLowerCase();
-    
-    for (const town of CLAY_TOWNS) {
-        if (textBlob.includes(town)) {
-            return town.replace(/\b\w/g, char => char.toUpperCase());
-        }
-    }
-    return "Clay County";
-}
-
-// Appends UTM parameters to external links
+// Appends Google Analytics UTM tracking parameters to outbound links
 function appendUTMParameters(url) {
     if (!url) return "#";
     try {
@@ -74,16 +92,55 @@ function appendUTMParameters(url) {
     }
 }
 
-// Drops Fairfield, Effingham, and non-Clay County stories
+/* === SECTION: Location Resolution Engine === */
+
+// Dynamic Location Resolver Engine
+function resolveStoryLocation(item) {
+    if (item.location) return item.location; // Respect pre-tagged Firestore location if present
+
+    const textBlob = `${item.title || ""} ${item.full_story || ""}`.toLowerCase();
+
+    // 1. High-priority check for Bible Grove (handles shared 62858 zip with Louisville)
+    if (textBlob.includes("bible grove")) {
+        return "Bible Grove";
+    }
+
+    // 2. Match against town keywords, schools, sports teams, townships, and zip codes
+    for (const [townName, keywords] of Object.entries(TOWN_KEYWORD_MAP)) {
+        for (const kw of keywords) {
+            if (textBlob.includes(kw)) {
+                return townName;
+            }
+        }
+    }
+
+    // 3. Fallback check for general Clay County news
+    for (const fallbackKw of CLAY_COUNTY_FALLBACKS) {
+        if (textBlob.includes(fallbackKw)) {
+            return "Clay County";
+        }
+    }
+
+    // 4. Return null if NO local matching keywords exist
+    return null;
+}
+
+// Master Article Filter
 function isClayCountyArticle(item) {
     const textBlob = `${item.title || ""} ${item.full_story || ""} ${item.location || ""}`.toLowerCase();
-    if (textBlob.includes("fairfield") || textBlob.includes("effingham")) return false;
-    
-    const allLocations = [...CLAY_TOWNS, ...CLAY_COUNTY_KEYWORDS];
-    return allLocations.some(place => textBlob.includes(place));
+
+    // Immediately drop neighboring county spillover stories
+    if (textBlob.includes("fairfield") || textBlob.includes("effingham")) {
+        return false;
+    }
+
+    // Reject stories that do not map to any local town, school, zip code, or county keyword
+    const resolvedLoc = resolveStoryLocation(item);
+    return resolvedLoc !== null;
 }
 
 /* === SECTION: News Rendering Pipeline === */
+
 document.addEventListener('DOMContentLoaded', async () => {
     const summaryContainer = document.getElementById('town-summaries'); 
     const fullContainer = document.getElementById('full-news-container'); 
@@ -91,14 +148,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const newsRef = collection(db, "local_news");
         const newsQuery = query(newsRef, orderBy("date", "desc"));
-        const querySnapshot = await getDocs(newsQuery);
+        const querySnapshot = await getDocs(newsRef);
         
         const rawData = [];
         querySnapshot.forEach((doc) => {
             rawData.push({ id: doc.id, ...doc.data() });
         });
 
-        // Dynamic Injection: Location resolving, copyright cleaning, and UTM tagging
+        // Dynamic In-Memory Processing Engine
         const processedData = rawData.map(item => {
             const locationTag = resolveStoryLocation(item);
             const cleanedStory = cleanStoryBody(item.full_story);
@@ -106,13 +163,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             return {
                 ...item,
-                location: locationTag,
-                full_story: cleanedStory,
-                link: utmLink
+                location: locationTag,      // Injects target town location tag
+                full_story: cleanedStory,   // Strips copyright statements
+                link: utmLink               // Attaches UTM campaign parameters
             };
         });
 
-        // Filter down to allowed articles
+        // Apply strict master Clay County filter
         const filteredData = processedData.filter(isClayCountyArticle);
 
         // MODE A: FRONT PAGE GRID
@@ -161,6 +218,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </article>`;
             });
 
+            // Smooth scroll to target article anchor if hash is present in URL
             setTimeout(() => {
                 const hashId = window.location.hash.substring(1); 
                 if (hashId) {
