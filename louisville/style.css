@@ -174,9 +174,10 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	.dv-custom-article-wrapper { grid-template-columns: 1fr; padding: 0 20px; }
 }
 
-/* SECTION 4.1: ARTICLE CONTAINER (LEFT BOX) */
-.section4-left-article-box,
-.dv-custom-article-wrapper .article-container {
+/* ==========================================================================
+   SECTION 4.1: ARTICLE CONTAINER & NEWSPAPER STYLING
+   ========================================================================== */
+.section4-left-article-box {
 	width: 100%;
 	background: #ffffff !important;
 	box-shadow: 0 10px 40px rgba(0,0,0,0.6);
@@ -184,72 +185,78 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	overflow: hidden;
 	padding: 0;
 	font-family: 'Libre Baskerville', serif !important;
-	color: #1a1a1a;
+	color: #1a1a1a !important;
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
 }
-.section4-centered-article-header,
-.dv-custom-article-wrapper .hero-section {
-	background: linear-gradient(180deg, #eb1c24 0%, #1a1a1a 100%);
-	color: white;
-	padding: clamp(35px, 6vh, 70px) 24px;
-	text-align: center;
-	border-bottom: 8px solid var(--louis-gold);
+
+.section4-centered-article-header {
+	background: linear-gradient(180deg, #eb1c24 0%, #1a1a1a 100%) !important;
+	color: #ffffff !important;
+	padding: clamp(35px, 6vh, 60px) 24px !important;
+	text-align: center !important;
+	border-bottom: 8px solid var(--louis-gold) !important;
 }
+
 .category-tag {
 	font-family: 'Oswald', sans-serif !important;
-	background: var(--louis-gold);
-	color: #000;
-	padding: 6px 18px;
-	display: inline-block;
-	letter-spacing: 2px;
-	font-size: 0.95rem;
-	font-weight: bold;
-	margin-bottom: 18px;
+	background: var(--louis-gold) !important;
+	color: #000000 !important;
+	padding: 6px 18px !important;
+	display: inline-block !important;
+	letter-spacing: 2px !important;
+	font-size: 0.95rem !important;
+	font-weight: bold !important;
+	margin-bottom: 18px !important;
+	text-transform: uppercase !important;
 }
-.article-stacked-title,
-.dv-custom-article-wrapper h1 {
+
+.article-stacked-title {
 	font-family: 'Montserrat', sans-serif !important;
-	font-size: clamp(2.4rem, 5vw, 4rem) !important;
-	line-height: 1.05 !important;
-	margin: 0 auto 18px !important;
-	text-transform: uppercase;
+	font-size: clamp(2.2rem, 4.5vw, 3.8rem) !important;
+	line-height: 1.1 !important;
+	margin: 0 auto 16px !important;
+	text-transform: uppercase !important;
 	color: #ffffff !important;
 	text-align: center !important;
 }
-.article-stacked-deck,
-.dv-custom-article-wrapper .deck {
-	font-size: 1.3rem;
-	font-style: italic;
-	opacity: 0.95;
-	color: #ffffff;
-	margin: 0 auto;
+
+.article-stacked-deck {
+	font-size: 1.25rem !important;
+	font-style: italic !important;
+	opacity: 0.95 !important;
+	color: #ffffff !important;
+	margin: 0 auto !important;
 	text-align: center !important;
+	max-width: 900px;
 }
-.article-body-content,
-.dv-custom-article-wrapper .article-body {
-	padding: 36px;
-	font-size: 1.15rem;
+
+.article-body-content {
+	padding: 36px !important;
+	font-size: 1.15rem !important;
+	color: #1a1a1a !important;
+	background-color: #ffffff !important;
 }
-.article-body-content p,
-.dv-custom-article-wrapper .article-body p {
-	margin-bottom: 1.5em;
-	text-align: justify;
+
+.article-body-content p {
+	margin-bottom: 1.5em !important;
+	text-align: justify !important;
 	font-family: 'Libre Baskerville', serif !important;
 	color: #1a1a1a !important;
-	line-height: 1.8;
+	line-height: 1.8 !important;
 }
+
 .article-footer {
-	background: #f4f4f4;
-	padding: 20px 36px;
-	border-top: 1px solid #ddd;
+	background: #f4f4f4 !important;
+	padding: 18px 36px !important;
+	border-top: 1px solid #ddd !important;
 	font-family: 'Oswald', sans-serif !important;
-	display: flex;
-	justify-content: space-between;
-	font-size: 0.9rem;
-	color: #555;
-	text-transform: uppercase;
+	display: flex !important;
+	justify-content: space-between !important;
+	font-size: 0.9rem !important;
+	color: #555555 !important;
+	text-transform: uppercase !important;
 }
 
 /* SECTION 4.2: RIGHT SIDE WIDGET STACK */
