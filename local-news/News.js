@@ -1,6 +1,6 @@
 /* === SECTION: File Header & Config === */
-// Active Version: v1.1.6 | Timestamp: 2026-07-29_12:18:00
-// Description: Local News Backend Scraper & Firestore Writer
+// Active Version: v1.1.8 | Timestamp: 2026-07-29_12:26:00
+// Description: Local News Backend Scraper & Firestore Writer (48-Hour Filter)
 
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
@@ -37,7 +37,7 @@ const TOWN_KEYWORD_MAP = {
 
 const CLAY_COUNTY_FALLBACKS = ["clay county", "clay county news", "state news", "illinois news"];
 
-/* === SECTION: Text Processing & Formatting Utilities === */
+/* === SECTION: Text & Time Filtering Utilities === */
 function cleanStoryBody(storyText) {
     if (!storyText) return "";
     return storyText
@@ -48,7 +48,7 @@ function cleanStoryBody(storyText) {
 function resolveStoryLocation(item) {
     if (item.location) return item.location;
 
-    const textBlob = `${item.title || ""} ${item.full_story || ""}`.toLowerCase();
+    const textBlob = `${item.title || ""} ${item.full_story || ""} ${item.description || ""}`.toLowerCase();
 
     if (textBlob.includes("bible grove")) {
         return "Bible Grove";
@@ -72,7 +72,7 @@ function resolveStoryLocation(item) {
 }
 
 function isClayCountyArticle(item) {
-    const textBlob = `${item.title || ""} ${item.full_story || ""} ${item.location || ""}`.toLowerCase();
+    const textBlob = `${item.title || ""} ${item.full_story || ""} ${item.description || ""}`.toLowerCase();
 
     if (textBlob.includes("fairfield") || textBlob.includes("effingham")) {
         return false;
@@ -81,25 +81,47 @@ function isClayCountyArticle(item) {
     return true;
 }
 
+function isWithinPast48Hours(dateString) {
+    if (!dateString) return true; // Keep item if no date is provided so we don't accidentally drop valid stories
+
+    const articleTime = new Date(dateString).getTime();
+    if (isNaN(articleTime)) return true; // Fallback for unparseable dates
+
+    const FortyEightHoursInMs = 48 * 60 * 60 * 1000;
+    const cutoffTime = Date.now() - FortyEightHoursInMs;
+
+    return articleTime >= cutoffTime;
+}
+
 /* === SECTION: Execution Pipeline === */
 async function runScraper() {
-    console.log(`Starting news pipeline... Loaded ${sourcesData.length} items from sources.json`);
+    console.log(`Starting news pipeline... Loaded ${sourcesData.length} total items from sources.json`);
     
     const writePromises = [];
+    let skippedExclusionCount = 0;
+    let skippedOutdatedCount = 0;
 
     for (const item of sourcesData) {
+        // 1. Check Location & Keyword Exclusion
         if (!isClayCountyArticle(item)) {
-            console.log(`[SKIPPED] "${item.title}" - Filtered by exclusion rules`);
+            skippedExclusionCount++;
+            continue;
+        }
+
+        // 2. Check 48-Hour Time Window
+        if (!isWithinPast48Hours(item.date)) {
+            console.log(`[SKIPPED - TOO OLD] "${item.title || 'Untitled'}" (${item.date})`);
+            skippedOutdatedCount++;
             continue;
         }
 
         const docId = item.id || `news_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
         const locationTag = resolveStoryLocation(item);
-        const cleanedStory = cleanStoryBody(item.full_story);
+        const cleanedStory = cleanStoryBody(item.full_story || item.description || "");
 
-        // Push write promise to tracking array
+        // Build Firestore document promise
         const p = setDoc(doc(db, "local_news", docId), {
-            title: item.title || "",
+            title: item.title || "Clay County Local News",
             date: item.date || new Date().toISOString(),
             full_story: cleanedStory,
             image: item.image || "",
@@ -108,18 +130,18 @@ async function runScraper() {
             updatedAt: new Date().toISOString()
         }, { merge: true })
         .then(() => {
-            console.log(`[SUCCESS] Saved to Firestore: "${item.title}" (${locationTag})`);
+            console.log(`[SAVED] "${item.title || docId}" (${item.date || 'No Date'}) -> Tagged: ${locationTag}`);
         })
         .catch((err) => {
-            console.error(`[ERROR] Failed writing "${item.title}":`, err.message);
+            console.error(`[ERROR] Failed to save "${item.title}":`, err.message);
         });
 
         writePromises.push(p);
     }
 
-    // Await all background writes before letting Node terminate
+    // Wait for all writes to finish before closing Node
     await Promise.all(writePromises);
-    console.log(`Pipeline complete. ${writePromises.length} articles processed.`);
+    console.log(`Pipeline complete! Saved ${writePromises.length} articles to Firestore. (Skipped ${skippedOutdatedCount} older than 48h, ${skippedExclusionCount} non-local).`);
     process.exit(0);
 }
 
