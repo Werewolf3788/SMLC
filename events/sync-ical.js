@@ -2,12 +2,12 @@
  * PROJECT: Support My Local Community / Ourflora - Clay County, IL
  * PURPOSE: Parse public Google Calendar .ics feed & sync active 720-hr events to Firestore
  * LEAD DEVELOPER: Werewolf3788
- * VERSION: v1.1.3 (Multiline Secret Flattening Fix)
+ * VERSION: v1.3.0 (Split Secret Architecture)
  */
 
 /* === SECTION: File Header & Config === */
-// Active Version: v1.1.3 | Timestamp: 2026-07-29_16:15:00
-// CSS / JS Imports: ?v=20260729_161500
+// Active Version: v1.3.0 | Timestamp: 2026-07-29_17:18:00
+// CSS / JS Imports: ?v=20260729_171800
 
 const ical = require('node-ical');
 const admin = require('firebase-admin');
@@ -15,21 +15,31 @@ const admin = require('firebase-admin');
 const ICAL_URL = "https://calendar.google.com/calendar/ical/09907fc6fff214b9dad96172ef13e7b80d62ea80cf22b504d096a47f277a9d2b%40group.calendar.google.com/public/basic.ics";
 const TARGET_TIMEZONE = "America/Chicago";
 
-const rawSecret = process.env.FIREBASE_SERVICE_ACCOUNT;
+/* === SECTION: Firebase Auth Construction === */
+const keyId = process.env.FIREBASE_KEY_ID;
+let privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
-if (!rawSecret) {
-  console.error("CRITICAL ERROR: FIREBASE_SERVICE_ACCOUNT environment variable is missing in GitHub Repository Secrets.");
+if (!keyId || !privateKey) {
+  console.error("CRITICAL ERROR: Missing FIREBASE_KEY_ID or FIREBASE_PRIVATE_KEY in environment.");
   process.exit(1);
 }
 
-let serviceAccount;
-try {
-  serviceAccount = JSON.parse(rawSecret);
-} catch (parseErr) {
-  console.error("CRITICAL ERROR: Failed to parse FIREBASE_SERVICE_ACCOUNT. Length:", rawSecret.length);
-  console.error("Error details:", parseErr.message);
-  process.exit(1);
-}
+// Convert literal \n sequences to actual newlines if GitHub Actions escapes them
+privateKey = privateKey.replace(/\\n/g, '\n');
+
+const serviceAccount = {
+  type: "service_account",
+  project_id: "smlc-fuel-monitor",
+  private_key_id: keyId,
+  private_key: privateKey,
+  client_email: "firebase-adminsdk-fbsvc@smlc-fuel-monitor.iam.gserviceaccount.com",
+  client_id: "103996680740929680277",
+  auth_uri: "https://accounts.google.com/o/oauth2/auth",
+  token_uri: "https://oauth2.googleapis.com/token",
+  auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40smlc-fuel-monitor.iam.gserviceaccount.com",
+  universe_domain": "googleapis.com"
+};
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -38,6 +48,7 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
+/* === SECTION: Core Sync Logic === */
 async function syncICalToFirestore() {
   console.log("Fetching live .ics feed from Google Calendar...");
 
