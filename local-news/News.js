@@ -1,9 +1,12 @@
 /* === SECTION: File Header & Config === */
-// Active Version: v1.1.2 | Timestamp: 2026-07-29_11:50:00
+// Active Version: v1.1.4 | Timestamp: 2026-07-29_12:12:00
 // Description: Local News Backend Scraper & Firestore Writer
 
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
+
+// Read sources.json directly from the local repository directory
+import sourcesData from "./sources.json" with { type: "json" };
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -102,24 +105,12 @@ function isClayCountyArticle(item) {
 
 /* === SECTION: Execution Pipeline === */
 async function runScraper() {
-    console.log("Fetching local news sources JSON...");
-    
-    // Remote GitHub raw URL for sources
-    const jsonUrl = "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/local-news/sources.json";
+    console.log("Processing local news from sources.json...");
     
     try {
-        const response = await fetch(jsonUrl, {
-            headers: { 'Accept': 'application/json' }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
         let processedCount = 0;
 
-        for (const item of data) {
+        for (const item of sourcesData) {
             if (!isClayCountyArticle(item)) continue;
 
             const docId = item.id || `news_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
