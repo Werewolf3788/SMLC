@@ -1,6 +1,6 @@
 /* === SECTION: File Header & Config === */
-// Active Version: v1.1.8 | Timestamp: 2026-07-29_12:26:00
-// Description: Local News Backend Scraper & Firestore Writer (48-Hour Filter)
+// Active Version: v1.1.9 | Timestamp: 2026-07-29_12:30:00
+// Description: Local News Backend Scraper & Firestore Writer (Flexible Property Mapping)
 
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
@@ -37,18 +37,34 @@ const TOWN_KEYWORD_MAP = {
 
 const CLAY_COUNTY_FALLBACKS = ["clay county", "clay county news", "state news", "illinois news"];
 
-/* === SECTION: Text & Time Filtering Utilities === */
-function cleanStoryBody(storyText) {
-    if (!storyText) return "";
-    return storyText
+/* === SECTION: Text & Property Extraction Utilities === */
+function extractTitle(item) {
+    return item.title || item.headline || item.name || "Clay County Local News";
+}
+
+function extractStory(item) {
+    const rawStory = item.full_story || item.story || item.content || item.description || item.body || "";
+    return rawStory
         .replace(/[\u00a9\u24b8\u2122]?\s*Copyright\s+\d{4},?\s*WNOI[\s\S]*/gi, '')
         .trim();
 }
 
-function resolveStoryLocation(item) {
+function extractLink(item) {
+    return item.link || item.url || item.source_url || "#";
+}
+
+function extractImage(item) {
+    return item.image || item.imageUrl || item.img || item.media || "";
+}
+
+function extractDate(item) {
+    return item.date || item.pubDate || item.publishedAt || item.timestamp || new Date().toISOString();
+}
+
+function resolveStoryLocation(item, titleText, storyText) {
     if (item.location) return item.location;
 
-    const textBlob = `${item.title || ""} ${item.full_story || ""} ${item.description || ""}`.toLowerCase();
+    const textBlob = `${titleText} ${storyText}`.toLowerCase();
 
     if (textBlob.includes("bible grove")) {
         return "Bible Grove";
@@ -71,8 +87,8 @@ function resolveStoryLocation(item) {
     return "Clay County";
 }
 
-function isClayCountyArticle(item) {
-    const textBlob = `${item.title || ""} ${item.full_story || ""} ${item.description || ""}`.toLowerCase();
+function isClayCountyArticle(titleText, storyText) {
+    const textBlob = `${titleText} ${storyText}`.toLowerCase();
 
     if (textBlob.includes("fairfield") || textBlob.includes("effingham")) {
         return false;
@@ -82,66 +98,64 @@ function isClayCountyArticle(item) {
 }
 
 function isWithinPast48Hours(dateString) {
-    if (!dateString) return true; // Keep item if no date is provided so we don't accidentally drop valid stories
+    if (!dateString) return true;
 
     const articleTime = new Date(dateString).getTime();
-    if (isNaN(articleTime)) return true; // Fallback for unparseable dates
+    if (isNaN(articleTime)) return true;
 
     const FortyEightHoursInMs = 48 * 60 * 60 * 1000;
-    const cutoffTime = Date.now() - FortyEightHoursInMs;
-
-    return articleTime >= cutoffTime;
+    return articleTime >= (Date.now() - FortyEightHoursInMs);
 }
 
 /* === SECTION: Execution Pipeline === */
 async function runScraper() {
-    console.log(`Starting news pipeline... Loaded ${sourcesData.length} total items from sources.json`);
+    console.log(`Starting news pipeline... Loaded ${sourcesData.length} items from sources.json`);
     
     const writePromises = [];
-    let skippedExclusionCount = 0;
-    let skippedOutdatedCount = 0;
 
     for (const item of sourcesData) {
-        // 1. Check Location & Keyword Exclusion
-        if (!isClayCountyArticle(item)) {
-            skippedExclusionCount++;
+        const title = extractTitle(item);
+        const story = extractStory(item);
+        const link = extractLink(item);
+        const image = extractImage(item);
+        const articleDate = extractDate(item);
+
+        // 1. Filter out excluded regions
+        if (!isClayCountyArticle(title, story)) {
+            console.log(`[SKIPPED - NON-LOCAL] "${title}"`);
             continue;
         }
 
-        // 2. Check 48-Hour Time Window
-        if (!isWithinPast48Hours(item.date)) {
-            console.log(`[SKIPPED - TOO OLD] "${item.title || 'Untitled'}" (${item.date})`);
-            skippedOutdatedCount++;
+        // 2. Filter out items older than 48 hours
+        if (!isWithinPast48Hours(articleDate)) {
+            console.log(`[SKIPPED - OUTDATED] "${title}" (${articleDate})`);
             continue;
         }
 
         const docId = item.id || `news_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-        const locationTag = resolveStoryLocation(item);
-        const cleanedStory = cleanStoryBody(item.full_story || item.description || "");
+        const locationTag = resolveStoryLocation(item, title, story);
 
-        // Build Firestore document promise
         const p = setDoc(doc(db, "local_news", docId), {
-            title: item.title || "Clay County Local News",
-            date: item.date || new Date().toISOString(),
-            full_story: cleanedStory,
-            image: item.image || "",
-            link: item.link || "#",
+            title: title,
+            date: articleDate,
+            full_story: story,
+            image: image,
+            link: link,
             location: locationTag,
             updatedAt: new Date().toISOString()
         }, { merge: true })
         .then(() => {
-            console.log(`[SAVED] "${item.title || docId}" (${item.date || 'No Date'}) -> Tagged: ${locationTag}`);
+            console.log(`[SAVED] "${title}" -> Tagged: ${locationTag}`);
         })
         .catch((err) => {
-            console.error(`[ERROR] Failed to save "${item.title}":`, err.message);
+            console.error(`[ERROR] Failed writing "${title}":`, err.message);
         });
 
         writePromises.push(p);
     }
 
-    // Wait for all writes to finish before closing Node
     await Promise.all(writePromises);
-    console.log(`Pipeline complete! Saved ${writePromises.length} articles to Firestore. (Skipped ${skippedOutdatedCount} older than 48h, ${skippedExclusionCount} non-local).`);
+    console.log(`Pipeline complete! Successfully processed and updated ${writePromises.length} articles in Firestore.`);
     process.exit(0);
 }
 
