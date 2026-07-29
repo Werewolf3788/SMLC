@@ -1,0 +1,19 @@
+import Parser from 'rss-parser';
+const parser = new Parser();
+
+async function parseFeed(source) {
+    const feed = await parser.parseURL(source.url);
+    
+    // Loop through individual articles, NOT the feed header
+    return feed.items.map(item => ({
+        source_name: source.name,
+        source_url: source.url,
+        title: item.title,
+        link: item.link,
+        date: item.isoDate || item.pubDate,
+        // Check content encoded, content, or summary for full story
+        full_story: item['content:encoded'] || item.content || item.contentSnippet || item.summary || "",
+        // Extract enclosure URL or media content for image
+        image: item.enclosure?.url || item['media:content']?.$?.url || ""
+    }));
+}
