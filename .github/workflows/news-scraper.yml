@@ -19,17 +19,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
-      # Installs project dependencies (Puppeteer, Firebase SDK, Cheerio, etc.)
+      # Installs Firebase SDK for Node execution
       - name: Install dependencies
         run: |
           if [ -f package.json ]; then
             npm ci || npm install
+          else
+            npm install firebase
           fi
 
       - name: Execute News Scraper Engine
-        run: node News.js
+        run: node local-news/News.js
         env:
-          # Optional: Pass sensitive keys/credentials as repository secrets if applicable
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
