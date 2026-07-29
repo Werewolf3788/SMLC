@@ -2,12 +2,12 @@
  * PROJECT: Support My Local Community / Ourflora - Clay County, IL
  * PURPOSE: Parse public Google Calendar .ics feed & sync active 720-hr events to Firestore
  * LEAD DEVELOPER: Werewolf3788
- * VERSION: v1.3.0 (Split Secret Architecture)
+ * VERSION: v1.3.1 (Fixed Typo on Line 39)
  */
 
 /* === SECTION: File Header & Config === */
-// Active Version: v1.3.0 | Timestamp: 2026-07-29_17:18:00
-// CSS / JS Imports: ?v=20260729_171800
+// Active Version: v1.3.1 | Timestamp: 2026-07-29_17:28:00
+// CSS / JS Imports: ?v=20260729_172800
 
 const ical = require('node-ical');
 const admin = require('firebase-admin');
@@ -36,9 +36,9 @@ const serviceAccount = {
   client_id: "103996680740929680277",
   auth_uri: "https://accounts.google.com/o/oauth2/auth",
   token_uri: "https://oauth2.googleapis.com/token",
-  auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40smlc-fuel-monitor.iam.gserviceaccount.com",
-  universe_domain": "googleapis.com"
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40smlc-fuel-monitor.iam.gserviceaccount.com",
+  universe_domain: "googleapis.com"
 };
 
 admin.initializeApp({
