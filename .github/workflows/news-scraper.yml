@@ -1,0 +1,35 @@
+name: Scheduled Local News Scraper Pipeline
+
+on:
+  schedule:
+    # Runs every 6 hours at minute 0 (00:00, 06:00, 12:00, 18:00 UTC)
+    - cron: '0 */6 * * *'
+  # Allows you to trigger the workflow manually from the GitHub Actions tab anytime
+  workflow_dispatch:
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # Installs project dependencies (Puppeteer, Firebase SDK, Cheerio, etc.)
+      - name: Install dependencies
+        run: |
+          if [ -f package.json ]; then
+            npm ci || npm install
+          fi
+
+      - name: Execute News Scraper Engine
+        run: node News.js
+        env:
+          # Optional: Pass sensitive keys/credentials as repository secrets if applicable
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
