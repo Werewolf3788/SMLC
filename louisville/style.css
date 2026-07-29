@@ -185,84 +185,50 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	.dv-custom-article-wrapper { grid-template-columns: 1fr; padding: 0 20px; }
 }
 
-/* SECTION 4.1: ARTICLE CONTAINER (RESTORED ORIGINAL FONT & COLORS) */
-.section4-left-article-box,
-.dv-custom-article-wrapper .article-container {
-	width: 100%;
-	background: #ffffff !important;
-	box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-	border-radius: 8px;
-	overflow: hidden;
-	padding: 0;
-	font-family: 'Libre Baskerville', serif !important;
-	color: #1a1a1a;
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
-}
-.section4-centered-article-header,
-.dv-custom-article-wrapper .hero-section {
-	background: linear-gradient(180deg, #eb1c24 0%, #1a1a1a 100%);
-	color: white;
-	padding: clamp(35px, 6vh, 70px) 24px;
-	text-align: center;
-	border-bottom: 8px solid var(--louis-gold);
-}
-.category-tag {
-	font-family: 'Oswald', sans-serif !important;
-	background: var(--louis-gold);
-	color: #000;
-	padding: 6px 18px;
-	display: inline-block;
-	letter-spacing: 2px;
-	font-size: 0.95rem;
-	font-weight: bold;
-	margin-bottom: 18px;
-}
-.article-stacked-title,
-.dv-custom-article-wrapper h1 {
-	font-family: 'Montserrat', sans-serif !important;
-	font-size: clamp(2.4rem, 5vw, 4rem) !important;
-	line-height: 1.05 !important;
-	margin: 0 auto 18px !important;
-	text-transform: uppercase;
-	color: #ffffff !important;
-	text-align: center !important;
-}
-.article-stacked-deck,
-.dv-custom-article-wrapper .deck {
-	font-size: 1.3rem;
-	font-style: italic;
-	opacity: 0.95;
-	color: #ffffff;
-	margin: 0 auto;
-	text-align: center !important;
-}
-.article-body-content,
-.dv-custom-article-wrapper .article-body {
-	padding: 36px;
-	font-size: 1.15rem;
-}
-.article-body-content p,
-.dv-custom-article-wrapper .article-body p {
-	margin-bottom: 1.5em;
-	text-align: justify;
-	font-family: 'Libre Baskerville', serif !important;
-	color: #1a1a1a !important;
-	line-height: 1.8;
-}
-.article-footer {
-	background: #f4f4f4;
-	padding: 20px 36px;
-	border-top: 1px solid #ddd;
-	font-family: 'Oswald', sans-serif !important;
-	display: flex;
-	justify-content: space-between;
-	font-size: 0.9rem;
-	color: #555;
-	text-transform: uppercase;
+/* ==========================================================================
+   SECTION 4.1: ARTICLE CONTAINER (EXACT COMPUTED SPECIFICATIONS)
+   ========================================================================== */
+.section4-left-article-box {
+	display: block !important;
+	flex-basis: 68% !important;
+	flex-grow: 0 !important;
+	flex-shrink: 0 !important;
+	
+	width: 100% !important;
+	max-width: 952px !important;
+	min-height: auto !important;
+	
+	background-color: rgb(255, 253, 246) !important; /* #fffdf5 retro cream */
+	color: rgb(51, 51, 51) !important;
+	
+	border: 2px solid rgb(34, 34, 34) !important;
+	border-radius: 0px !important;
+	box-shadow: rgba(255, 255, 255, 0.1) 10px 10px 0px 0px !important;
+	box-sizing: border-box !important;
+	
+	padding: 40px !important;
+	margin: 0px !important;
+	
+	font-family: sans-serif !important;
+	font-size: 16px !important;
+	font-weight: 400 !important;
+	line-height: normal !important;
+	text-align: start !important;
+	
+	overflow: visible !important;
+	position: static !important;
+	z-index: auto !important;
 }
 
+/* Paragraph spacing & typography inside 4.1 */
+.section4-left-article-box p {
+	font-family: 'Times New Roman', Times, serif !important;
+	font-size: 16px !important;
+	line-height: 1.6 !important;
+	color: rgb(51, 51, 51) !important;
+	margin-bottom: 1.5em !important;
+	text-align: justify !important;
+}
 /* SECTION 4.2: RIGHT SIDE WIDGET STACK */
 .section4-right-widgets-stack,
 .dv-custom-article-wrapper .sidebar {
