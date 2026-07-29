@@ -32,7 +32,7 @@ jobs:
         run: npm install
 
       - name: Run iCal Sync Script
-        env:
-          FIREBASE_KEY_ID: ${{ secrets.FIREBASE_KEY_ID }}
-          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+      env:
+  FIREBASE_KEY_ID: ${{ secrets.FIREBASE_KEY_ID }}
+  FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
         run: node sync-ical.js
