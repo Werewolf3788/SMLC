@@ -2,12 +2,12 @@
  * PROJECT: Support My Local Community / Ourflora - Clay County, IL
  * PURPOSE: Parse public Google Calendar .ics feed & sync active 720-hr events to Firestore
  * LEAD DEVELOPER: Werewolf3788
- * VERSION: v1.1.0 (Subdirectory Build + 12-Hour Automation)
+ * VERSION: v1.1.1 (JSON Sanitization Fix)
  */
 
 /* === SECTION: File Header & Config === */
-// Active Version: v1.1.0 | Timestamp: 2026-07-29_15:51:00
-// CSS / JS Imports: ?v=20260729_155100
+// Active Version: v1.1.1 | Timestamp: 2026-07-29_16:00:00
+// CSS / JS Imports: ?v=20260729_160000
 
 const ical = require('node-ical');
 const admin = require('firebase-admin');
@@ -20,7 +20,15 @@ if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
   process.exit(1);
 }
 
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+// Clean and parse the secret securely
+let serviceAccount;
+try {
+  const rawSecret = process.env.FIREBASE_SERVICE_ACCOUNT.trim();
+  serviceAccount = JSON.parse(rawSecret);
+} catch (parseErr) {
+  console.error("CRITICAL ERROR: Failed to parse FIREBASE_SERVICE_ACCOUNT as valid JSON. Check your GitHub Secret formatting.", parseErr);
+  process.exit(1);
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -50,9 +58,7 @@ async function syncICalToFirestore() {
         const start = new Date(ev.start);
         const end = new Date(ev.end);
 
-        // Strict 720-hour rolling window filter:
-        // 1. Must NOT have ended yet (end > now)
-        // 2. Must start within 720 hours from right now (start <= now + 720 hours)
+        // Strict 720-hour rolling window filter
         const isStillActive = end && end.getTime() > now.getTime();
         const startsWithin720Hours = start && start.getTime() <= future720Hours.getTime();
 
