@@ -31,10 +31,16 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Decode Key & Run Sync Script
+      - name: Run iCal Sync Script
         env:
           FIREBASE_BASE64: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
-          node -e 'fs.writeFileSync("/tmp/gcp_key.json", Buffer.from(process.env.FIREBASE_BASE64.trim(), "base64").toString("utf8"))'
+          node -e '
+            const fs = require("fs");
+            const raw = (process.env.FIREBASE_BASE64 || "").trim();
+            if (!raw) { console.error("Secret FIREBASE_SERVICE_ACCOUNT is empty!"); process.exit(1); }
+            const decoded = Buffer.from(raw, "base64").toString("utf8");
+            fs.writeFileSync("/tmp/gcp_key.json", decoded);
+          '
           node sync-ical.js
           rm -f /tmp/gcp_key.json
