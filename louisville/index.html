@@ -1,6 +1,7 @@
 <!-- 
-  Active Version: 2026-07-27_05:25
-  Location: louisville/index.html
+   Active Version: 2026-07-29_20:15
+   Location: louisville/index.html
+   Engine Target: ../sourcetown.js?v=202607292015
 -->
 <!DOCTYPE html>
 <html lang="en-US">
@@ -15,8 +16,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
     
-    <!-- Local Stylesheet inside louisville/ -->
-    <link rel="stylesheet" href="./style.css?v=202607270525" />
+    <!-- Local Stylesheet -->
+    <link rel="stylesheet" href="./style.css?v=202607292015" />
     
     <!-- Global Analytics Watermarks -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L376P3NPY4"></script>
@@ -118,7 +119,8 @@
 
     <!-- SECTION 4: 2-COLUMN LAYOUT -->
     <div class="section4-two-box-wrapper">
-        <div class="section4-left-article-box">
+        <!-- LEFT ARTICLE COLUMN (COORD 4.1) -->
+        <div id="town-article-target" class="section4-left-article-box">
             <header class="section4-centered-article-header">
                 <div class="category-tag">Renewable Energy Feature</div>
                 <h1 class="article-stacked-title">Harvesting the Sun</h1>
@@ -143,7 +145,7 @@
             </div>
         </div>
 
-        <!-- RIGHT SIDEBAR: BUSINESS SPOTLIGHT & FUEL MONITOR -->
+        <!-- RIGHT SIDEBAR: BUSINESS SPOTLIGHT & FUEL MONITOR (COORD 4.2) -->
         <aside class="section4-right-widgets-stack">
             <div class="clay-county-news-box spotlight-clipping">
                 <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
@@ -153,7 +155,7 @@
                 <span class="biz-title" id="spotlight-asset-name">Local Merchant</span>
                 <span class="biz-location" id="spotlight-asset-loc">Louisville, IL</span>
                 <p class="biz-description" id="spotlight-asset-desc">Supporting local commerce across Clay County.</p>
-                <a href="#" id="spotlight-asset-link" target="_blank" class="spotlight-btn">Visit Business &rarr;</a>
+                <a href="javascript:void(0)" id="spotlight-asset-link" class="spotlight-btn">Read More &rarr;</a>
             </div>
 
             <div id="fuel-monitor-target-box" class="fuel-monitor-billboard-card">
@@ -205,7 +207,7 @@
     <section class="smlc-three-column-portal-wrapper" id="adaptive-time-portal-chassis">
         <div class="portal-grid-layout-fixed">
             
-            <!-- COLUMN 7.1 -->
+            <!-- COLUMN 7.1: CALENDAR BULLETIN -->
             <div class="portal-column-cell-box left-cell-stack">
                 <div class="clay-county-news-box event-clipping">
                     <div class="clipping-tag">Community Bulletin</div>
@@ -228,7 +230,7 @@
                             <p class="clipping-tagline" id="month-tagline">Upcoming Events</p> 
                         </div>
                         
-                        <div id="bulletin-scroller-target">
+                        <div id="bulletin-scroller-target" class="controlled-scroll-container">
                             <div style="text-align:center; padding: 20px; font-style:italic;">Loading community calendar...</div>
                         </div>
                         
@@ -240,7 +242,7 @@
                 </div>
             </div>
 
-            <!-- COLUMN 7.2 -->
+            <!-- COLUMN 7.2: LOCAL NEWS & BUSINESS DIRECTORY -->
             <div class="portal-column-cell-box center-cell-stack">
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">Louisville News</h2>
@@ -249,7 +251,7 @@
                             <span class="black-tag">SMLC Newsroom</span>
                             <p class="clipping-tagline">Louisville Local Dispatches</p>
                         </div>
-                        <div id="news-matrix-target" class="news-dynamic-masonry">
+                        <div id="news-matrix-target" class="news-dynamic-masonry controlled-scroll-container">
                             <div class="feed-loading-placeholder">Reconstructing localized newsroom dispatches...</div>
                         </div>
                     </div>
@@ -265,7 +267,7 @@
                 </div>
             </div>
 
-            <!-- COLUMN 7.3 -->
+            <!-- COLUMN 7.3: FACEBOOK GROUP & LOCAL LINKS DIRECTORY -->
             <div class="portal-column-cell-box right-cell-stack">
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">SMLC Facebook</h2>
@@ -306,7 +308,7 @@
                         </div>
 
                         <div class="scrollable-directory-stream">
-                            <div id="local-links-target-container" class="local-links-stream">
+                            <div id="local-links-target-container" class="local-links-stream controlled-scroll-container">
                                 <div style="font-style:italic; font-size:12px; color:#666;">Loading directory links...</div>
                             </div>
                         </div>
@@ -342,7 +344,7 @@
         </section>
     </div>
 
-    <!-- LIGHTBOX OVERLAY -->
+    <!-- UNIVERSAL LIGHTBOX OVERLAY -->
     <div id="portal-global-lightbox" class="lightbox-overlay-mask" onclick="closeLightbox(event)">
         <div class="lightbox-modal-window">
             <div class="lightbox-header-bar" style="padding:15px; border-bottom:2px solid #222; display:flex; justify-content:space-between; align-items:center;">
@@ -387,14 +389,14 @@
         <div style="border-top:1px solid #333; padding-top:15px;">
             <p id="footer-copy-target">&copy; 2026 Louisville Community Portal. All rights reserved.</p>
             <p style="margin-top: 8px; opacity: 0.8; font-size: 12px; color: #aaaaaa;">
-                <strong>System Build Version:</strong> v1.0.0 | <strong>Active Version:</strong> 2026-07-27_05:25
+                <strong>System Build Version:</strong> v1.0.0 | <strong>Active Version:</strong> 2026-07-29_20:15
             </p>
         </div>
     </footer>
 
     <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top" style="position:fixed; bottom:20px; right:20px; padding:10px 15px; background:#222; color:#fff; border:1px solid var(--louis-gold); border-radius:4px; cursor:pointer;">↑</button>
 
-    <!-- Correct relative path to sourcetown.js at the root level -->
-    <script type="text/javascript" src="../sourcetown.js?v=202607270525"></script>
+    <!-- Master Engine -->
+    <script type="text/javascript" src="../sourcetown.js?v=202607292015"></script>
 </body>
 </html>
