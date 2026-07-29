@@ -1,9 +1,10 @@
 /* === SECTION: File Header & Config === */
-// Active Version: v1.6.0 | Timestamp: 2026-07-29_13:48:00
-// Description: Local News Scraper & Firestore Pipeline (rssfeed.json source import)
+// Active Version: v1.7.0 | Timestamp: 2026-07-29_13:54:00
+// Description: Complete Local News Scraper & Firestore Pipeline with Dynamic RSS Parsing
 
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
+import Parser from "rss-parser";
 import sourcesData from "./rssfeed.json" with { type: "json" };
 
 const firebaseConfig = {
@@ -19,6 +20,15 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const rssParser = new Parser({
+    customFields: {
+        item: [
+            ['content:encoded', 'contentEncoded'],
+            ['media:content', 'mediaContent'],
+            ['media:thumbnail', 'mediaThumbnail']
+        ]
+    }
+});
 
 /* === SECTION: Global Keyword Overrides === */
 const GLOBAL_CATEGORY_KEYWORDS = [
@@ -80,38 +90,44 @@ const GOOGLE_ALERT_TOWN_REGEX_MAP = {
     ]
 };
 
-/* === SECTION: Utilities & Extraction === */
-function extractTitle(item) {
-    return item.title || item.headline || item.name || "";
-}
-
+/* === SECTION: Extraction Helpers === */
 function extractStory(item) {
-    const rawStory = item.full_story || item.story || item.content || item.description || item.body || "";
+    const rawStory = item.contentEncoded || item.content || item.contentSnippet || item.summary || item.description || "";
     return rawStory
+        .replace(/<[^>]+>/g, '') // Strips HTML tags for clean paragraph text
         .replace(/[\u00a9\u24b8\u2122]?\s*Copyright\s+\d{4},?\s*WNOI[\s\S]*/gi, '')
         .trim();
 }
 
-function extractLink(item) {
-    return item.link || item.url || item.source_url || "#";
-}
-
 function extractImage(item) {
-    if (item.image || item.imageUrl || item.img || item.media) {
-        return item.image || item.imageUrl || item.img || item.media;
+    if (item.enclosure && item.enclosure.url) {
+        return item.enclosure.url;
     }
-    const rawStory = item.full_story || item.story || item.content || item.description || "";
-    const imgMatch = rawStory.match(/<img[^>]+src=["']([^"']+)["']/i);
+    if (item.mediaContent && item.mediaContent.$ && item.mediaContent.$.url) {
+        return item.mediaContent.$.url;
+    }
+    if (item.mediaThumbnail && item.mediaThumbnail.$ && item.mediaThumbnail.$.url) {
+        return item.mediaThumbnail.$.url;
+    }
+    
+    // Fallback: Check for HTML <img> tag inside story content
+    const rawContent = item.contentEncoded || item.content || item.description || "";
+    const imgMatch = rawContent.match(/<img[^>]+src=["']([^"']+)["']/i);
     return (imgMatch && imgMatch[1]) ? imgMatch[1] : "";
 }
 
-function extractDate(item) {
-    return item.date || item.pubDate || item.publishedAt || item.timestamp || new Date().toISOString();
+function generateUniqueKey(title) {
+    const cleanTitle = (title || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    return `news_${cleanTitle.slice(0, 30)}`;
 }
 
-function generateUniqueKey(title, link) {
-    const cleanTitle = title.toLowerCase().replace(/[^a-z0-9]/g, "");
-    return `news_${cleanTitle.slice(0, 30)}`;
+function isWithinPast48Hours(dateString) {
+    if (!dateString) return true;
+    const articleTime = new Date(dateString).getTime();
+    if (isNaN(articleTime)) return true;
+
+    const FortyEightHoursInMs = 48 * 60 * 60 * 1000;
+    return articleTime >= (Date.now() - FortyEightHoursInMs);
 }
 
 /* === SECTION: Location & Category Resolution === */
@@ -164,19 +180,44 @@ function resolveStoryTags(titleText, storyText, isGoogleAlert) {
     return null;
 }
 
-function isWithinPast48Hours(dateString) {
-    if (!dateString) return true;
-    const articleTime = new Date(dateString).getTime();
-    if (isNaN(articleTime)) return true;
+/* === SECTION: Dynamic Feed Fetching === */
+async function fetchAllFeedItems() {
+    const extractedArticles = [];
 
-    const FortyEightHoursInMs = 48 * 60 * 60 * 1000;
-    return articleTime >= (Date.now() - FortyEightHoursInMs);
+    for (const source of sourcesData) {
+        if (source.type !== "rss") continue;
+
+        try {
+            console.log(`Fetching feed: ${source.name} (${source.url})`);
+            const feed = await rssParser.parseURL(source.url);
+
+            for (const item of feed.items) {
+                extractedArticles.push({
+                    title: item.title || "",
+                    link: item.link || source.url,
+                    date: item.isoDate || item.pubDate || new Date().toISOString(),
+                    full_story: extractStory(item),
+                    image: extractImage(item),
+                    source_name: source.name,
+                    source_url: source.url
+                });
+            }
+        } catch (err) {
+            console.error(`[FEED ERROR] Failed parsing ${source.name}:`, err.message);
+        }
+    }
+
+    return extractedArticles;
 }
 
 /* === SECTION: Execution Pipeline === */
 async function runScraper() {
-    console.log(`Starting news pipeline... Loaded ${sourcesData.length} items from rssfeed.json`);
+    console.log(`Starting news pipeline... Loaded ${sourcesData.length} sources from rssfeed.json`);
     
+    // Fetch all individual feed items across every source
+    const articles = await fetchAllFeedItems();
+    console.log(`Extracted ${articles.length} individual items to process.`);
+
     const writePromises = [];
     const processedKeys = new Set();
 
@@ -184,15 +225,23 @@ async function runScraper() {
     let duplicateCount = 0;
     let skippedCount = 0;
 
-    for (const item of sourcesData) {
-        const title = extractTitle(item);
-        const story = extractStory(item);
-        const link = extractLink(item);
-        const image = extractImage(item);
-        const articleDate = extractDate(item);
+    for (const item of articles) {
+        const title = item.title;
+        const story = item.full_story;
+        const link = item.link;
+        const image = item.image;
+        const articleDate = item.date;
 
-        // Filter out feed header titles
-        if (title === "Freedom 92.9" || title === "WNOI Radio" || link.endsWith('/feed/')) {
+        // Strict Filter: Drop empty site headers, static links, or items missing content
+        if (
+            !title || 
+            title === "Freedom 92.9" || 
+            title === "WNOI Radio" || 
+            title === "Flora City Official" || 
+            link.endsWith('/feed/') || 
+            (!story && !image)
+        ) {
+            skippedCount++;
             continue;
         }
 
@@ -203,7 +252,7 @@ async function runScraper() {
         }
 
         // 2. Deduplication Check
-        const docId = generateUniqueKey(title, link);
+        const docId = generateUniqueKey(title);
         if (processedKeys.has(docId)) {
             console.log(`[DUPLICATE INTERCEPTED] "${title}"`);
             duplicateCount++;
@@ -211,12 +260,12 @@ async function runScraper() {
         }
         processedKeys.add(docId);
 
-        // 3. Detect if item came from a Google Alert feed
-        const sourceName = (item.source_name || item.name || "").toLowerCase();
-        const sourceUrl = (item.source_url || link || "").toLowerCase();
+        // 3. Detect Google Alert Feed
+        const sourceName = (item.source_name || "").toLowerCase();
+        const sourceUrl = (item.source_url || "").toLowerCase();
         const isGoogleAlert = sourceName.includes("google alert") || sourceUrl.includes("google.com/alerts");
 
-        // 4. Resolve Tags
+        // 4. Resolve Location Tags
         const tags = resolveStoryTags(title, story, isGoogleAlert);
         if (!tags || tags.length === 0) {
             skippedCount++;
@@ -233,11 +282,11 @@ async function runScraper() {
             link: link,
             location: primaryLocation,
             tags: tags,
-            title: title || `${primaryLocation} Update`,
+            title: title,
             updatedAt: new Date().toISOString()
         }, { merge: true })
         .then(() => {
-            console.log(`[SAVED] "${title}" -> Mode: ${isGoogleAlert ? 'Google Alert (Strict)' : 'Local Feed (Relaxed)'} | Location: ${primaryLocation}`);
+            console.log(`[SAVED] "${title}" -> Location: ${primaryLocation}`);
             savedCount++;
         })
         .catch((err) => {
