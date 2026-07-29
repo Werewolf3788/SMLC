@@ -1,17 +1,13 @@
 /* ==========================================================================
-   Active Version: 2026-07-29_20:15_SMART_DOM
+   Active Version: 2026-07-29_22:00_SMART_GLOBAL
    File: sourcetown.js / script.js
-   Description: SMLC Community Portal Network - Universal Smart DOM Engine
-   Architecture: SmartJS Dynamic HTML Auto-Reader & Federated Data Pipeline
-   Features & Rules:
-   - Smart DOM Auto-Detection: Reads HTML target IDs and data-town attributes directly from HTML
-   - Active Menu State Sync: Dynamically highlights active town tab (yellow active font)
-   - Universal Lightbox Rule: All Read More, thumbnails, and images trigger full lightbox views
-   - Calendar Bulletin: Firestore /smlc_events alignment with controlled 5-item scrolling
-   - Local News Pipeline: Firestore /local_news alignment with controlled 5-item scrolling
-   - History Timeline (sec_5): Ascending chronological year sort (smallest year on far left)
-   - Business Spotlight (sec_4_2): SmartJS object unpacker with Town -> Global fallback
-   - Local Links (sec_7_3_2): Alphabetical A-Z sort with controlled 5-item scrolling
+   Description: SMLC Community Portal Network - Master Dynamic Engine
+   Architecture: Pure Real-Time WebSockets & Smart Global Combiner
+   Updates:
+   - Smart Global Combiner: Automatically merges /global/sections and /towns/{Town}/sections.
+   - Business Spotlight Fix: Safely parses single objects vs numerical arrays for sec_4_2.
+   - 100% Live Sync: Persistent real-time listeners for instant Firebase updates.
+   - Deep Node Extraction: Auto-drills into sec_7_3_2/links/0/website seamlessly.
    ========================================================================== */
 
 /* === SECTION 1: Geographically Correct Town Alignment Matrix === */
@@ -47,62 +43,42 @@ let gasMonitorRotator = null;
 window.calendarCachedEvents = [];
 window.newsCacheBlock = [];
 window.menuCachedItems = [];
-window.globalAppConfig = null;
 window.masterCountyData = null;
 window.firebaseApp = null;
+window.firebaseDatabase = null;
 window.firebaseFirestore = null;
-window.firebaseAnalytics = null;
 
-/* === SECTION 3: SmartJS Core Utilities & Firebase SDK Init === */
-function getSmartCacheBuster() { return "v=" + Math.floor(Date.now() / 3600000); }
-
+/* === SECTION 3: SmartJS Core Utilities (Upgraded for Global Single Objects) === */
 function cleanRawUrl(urlStr) {
     if (!urlStr) return "";
     return urlStr.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/").replace("/edit/", "/");
 }
 
-/* Initialize Firebase SDK v9+ dynamically for Analytics & Firestore */
-async function initializeFirebaseAnalytics() {
-    try {
-        const { initializeApp } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js");
-        const { getAnalytics, logEvent } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-analytics.js");
-        const { getFirestore } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js");
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg",
-            authDomain: "smlc-fuel-monitor.firebaseapp.com",
-            databaseURL: "https://smlc-fuel-monitor-default-rtdb.firebaseio.com",
-            projectId: "smlc-fuel-monitor",
-            storageBucket: "smlc-fuel-monitor.firebasestorage.app",
-            messagingSenderId: "22397440085",
-            appId: "1:22397440085:web:c00e716858ed58895bc4dc",
-            measurementId: "G-687D605K75"
-        };
-
-        if (!window.firebaseApp) {
-            window.firebaseApp = initializeApp(firebaseConfig);
-        }
-        window.firebaseAnalytics = getAnalytics(window.firebaseApp);
-        window.firebaseFirestore = getFirestore(window.firebaseApp);
-        
-        logEvent(window.firebaseAnalytics, 'news_portal_view', {
-            town: ACTIVE_TOWN.primaryName,
-            page_title: document.title
-        });
-    } catch(e) {
-        console.warn("Firebase Analytics / Firestore dynamic load warning:", e);
-    }
-}
-
-/* SMARTJS NORMALIZER: Converts any node (Array or {"0": {}, "1": {}, ... "9999": {}}) to a clean sorted array */
+/* SMARTJS NORMALIZER: Now handles both lists and single spotlight objects perfectly */
 function smartNormalizeList(dataNode) {
     if (!dataNode) return [];
-    if (Array.isArray(dataNode)) return dataNode.filter(item => item && (typeof item === 'object' || String(item).trim() !== ""));
+    if (Array.isArray(dataNode)) return dataNode.filter(item => item && typeof item === 'object');
+    
     if (typeof dataNode === 'object') {
-        return Object.keys(dataNode)
-            .sort((a, b) => (parseInt(a, 10) || 0) - (parseInt(b, 10) || 0))
-            .map(key => dataNode[key])
-            .filter(item => item && (typeof item === 'object' || String(item).trim() !== ""));
+        // Auto-drill past wrapper keys from Firebase structure
+        if (dataNode.items) return smartNormalizeList(dataNode.items);
+        if (dataNode.links) return smartNormalizeList(dataNode.links);
+        if (dataNode.spotlight) return smartNormalizeList(dataNode.spotlight);
+        
+        const keys = Object.keys(dataNode);
+        
+        // If keys are purely numerical ("0", "1", "2"), it's an array built as an object
+        const isNumerical = keys.length > 0 && keys.every(k => !isNaN(parseInt(k, 10)));
+        
+        if (isNumerical) {
+            return keys
+                .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
+                .map(k => dataNode[k])
+                .filter(item => item && typeof item === 'object');
+        } else {
+            // It's a single item (like a direct Business Spotlight object) -> Wrap in array
+            return [dataNode];
+        }
     }
     return [];
 }
@@ -168,14 +144,10 @@ function attachUtmParameters(urlStr) {
     if (!urlStr || urlStr === "#" || urlStr.startsWith("javascript:")) return urlStr;
     try {
         const pageTitle = encodeURIComponent((document.title || "smlc_page").trim());
-        const utmSource = "smlc_portal";
-        const utmMedium = "town_article";
-        
         const urlObj = new URL(urlStr, window.location.origin);
-        urlObj.searchParams.set("utm_source", utmSource);
-        urlObj.searchParams.set("utm_medium", utmMedium);
+        urlObj.searchParams.set("utm_source", "smlc_portal");
+        urlObj.searchParams.set("utm_medium", "town_article");
         urlObj.searchParams.set("utm_campaign", pageTitle);
-        
         return urlObj.toString();
     } catch(e) {
         const connector = urlStr.includes("?") ? "&" : "?";
@@ -184,14 +156,11 @@ function attachUtmParameters(urlStr) {
     }
 }
 
-function isIOSDevice() {
-    return /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-}
-
 function buildOSMapUrl(addressText) {
     if (!addressText) return "#";
     const encoded = encodeURIComponent(addressText);
-    if (isIOSDevice()) return `maps://maps.apple.com/?daddr=${encoded}`;
+    const isIOSDevice = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (isIOSDevice) return `maps://maps.apple.com/?daddr=${encoded}`;
     return `https://www.google.com/maps/dir/?api=1&destination=${encoded}`;
 }
 
@@ -207,14 +176,13 @@ function handlePhoneClick(number, isWhatsAppEligible) {
     window.location.href = `tel:+1${cleanNum}`;
 }
 
-/* === SECTION 4: Smart DOM Navigation Menu Engine & Active Tab Highlighter === */
+/* === SECTION 4: Navigation Menu Pipeline === */
 function renderNavigationMenuPipeline(globalMenuNode, townMenuNode) {
     const menuTarget = document.getElementById('dynamic-menu-links') || document.getElementById('main-nav-menu-target') || document.querySelector('.menu-links');
     if (!menuTarget) return;
 
     window.menuCachedItems = [...smartNormalizeList(globalMenuNode), ...smartNormalizeList(townMenuNode)];
     
-    // Existing static links check in HTML
     const existingLinks = menuTarget.querySelectorAll('a');
     const activePageTitle = (document.title || "").toUpperCase();
     const activeTownAttr = (document.documentElement.getAttribute('data-town') || document.body?.getAttribute('data-town') || "").toUpperCase();
@@ -329,12 +297,9 @@ function openNewsLightboxModal(idx) {
 }
 
 /* === SECTION 6: Dynamic Section 3.1.1 Slideshow Engine === */
-async function initializeSection3Slideshow(resolvedSections) {
+function initializeSection3Slideshow(slidesList) {
     const viewport = document.getElementById('louisville-slideshow') || document.getElementById('flora-slideshow') || document.querySelector('.slider-viewport');
     if (!viewport) return;
-
-    const slideshowData = resolvedSections["3.1.1"];
-    let slidesList = smartNormalizeList(slideshowData?.items || slideshowData);
 
     if (slidesList.length > 0) {
         viewport.innerHTML = slidesList.map((item, idx) => {
@@ -367,66 +332,7 @@ async function initializeSection3Slideshow(resolvedSections) {
     }, 4000);
 }
 
-/* === SECTION 7: Firebase Fuel Price Monitor Engine === */
-async function initializeFirebaseGasMonitor() {
-    const gasContainer = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
-    if (!gasContainer) return;
-
-    const stationConfigs = {
-        "48100": { town: "flora", display: "Flora", name: "CASEY'S", logo: "Casey's.png" },     
-        "48101": { town: "flora", display: "Flora", name: "HUCK'S", logo: "Hucks.png" },      
-        "128128": { town: "flora", display: "Flora", name: "MACH 1", logo: "Mach 1.png" },    
-        "120226": { town: "flora", display: "Flora", name: "FAST STOP", logo: "Fast stop.png" },  
-        "48026": { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" }, 
-        "171711": { town: "clay-city", display: "Clay City", name: "CASEY'S", logo: "Casey's.png" },
-        "181818": { town: "xenia", display: "Xenia", name: "KNAPP'S", logo: "Knapps.png" }  
-    };
-
-    try {
-        let getDatabase, ref, onValue;
-
-        if (window.firebaseApp && window.firebaseDb) {
-            getDatabase = window.firebaseGetDatabase;
-            ref = window.firebaseRef;
-            onValue = window.firebaseOnValue;
-            bindFirebaseFuelDatabaseModular(window.firebaseDb, ref, onValue, stationConfigs, gasContainer);
-        } else {
-            const appModule = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js");
-            const dbModule = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js");
-
-            const firebaseConfig = {
-                apiKey: "AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg",
-                authDomain: "smlc-fuel-monitor.firebaseapp.com",
-                databaseURL: "https://smlc-fuel-monitor-default-rtdb.firebaseio.com",
-                projectId: "smlc-fuel-monitor",
-                storageBucket: "smlc-fuel-monitor.firebasestorage.app",
-                messagingSenderId: "22397440085",
-                appId: "1:22397440085:web:c00e716858ed58895bc4dc"
-            };
-
-            if (!window.firebaseApp) {
-                window.firebaseApp = appModule.initializeApp(firebaseConfig);
-            }
-            const db = dbModule.getDatabase(window.firebaseApp);
-
-            bindFirebaseFuelDatabaseModular(db, dbModule.ref, dbModule.onValue, stationConfigs, gasContainer);
-        }
-    } catch(e) {
-        console.error("Firebase Gas Monitor load failed:", e);
-    }
-}
-
-function bindFirebaseFuelDatabaseModular(db, refFn, onValueFn, stationConfigs, container) {
-    const fuelRef = refFn(db, 'fuel_prices');
-    
-    onValueFn(fuelRef, (snap) => {
-        const val = snap.val();
-        if (val) renderGasBillboardUI(val, stationConfigs, ACTIVE_TOWN.gasKey, container);
-    }, (error) => {
-        console.error("Firebase Fuel Prices onValue error:", error);
-    });
-}
-
+/* === SECTION 7: Live Gas Index Monitor === */
 function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
     const gasTownsArray = Array.isArray(activeGasTowns) ? activeGasTowns : [activeGasTowns];
     const stationIds = Object.keys(stationConfigs).filter(id => gasTownsArray.includes(stationConfigs[id].town));
@@ -437,10 +343,7 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
         gasMonitorRotator = null;
     }
 
-    const updatePortalUrl = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.gas_widget) 
-        || cleanRawUrl(window.globalAppConfig?.regional_endpoints?.update_gas_github_source) 
-        || "https://werewolf3788.github.io/SMLC/update-gas.html";
-
+    const updatePortalUrl = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.gas_widget) || "https://werewolf3788.github.io/SMLC/update-gas.html";
     let currentIdx = 0;
 
     const renderCurrentStation = () => {
@@ -452,7 +355,7 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
         let dslPrice = info.dsl || info.diesel || "---";
         if (dslPrice === "0" || !dslPrice) dslPrice = "---";
 
-        const updateDate = info.date || info.updated || "PENDING";
+        const updateDate = info.date || info.updated || "LIVE";
         const safeLogo = encodeURIComponent(config.logo);
 
         container.style.cursor = "pointer";
@@ -481,17 +384,14 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
 }
 
 /* === SECTION 8: Section 4.2 Business Spotlight Engine === */
-function loadBusinessSpotlight(resolvedSections) {
+function loadBusinessSpotlight(spotlightList) {
     const nameTarget = document.getElementById('spotlight-asset-name');
     const imgTarget = document.getElementById('spotlight-asset-img');
     const locTarget = document.getElementById('spotlight-asset-loc');
     const descTarget = document.getElementById('spotlight-asset-desc');
     const linkTarget = document.getElementById('spotlight-asset-link');
-
-    let rawSpotlightData = resolvedSections["4.2"];
-    let spotlightList = smartNormalizeList(rawSpotlightData);
     
-    let activeSpotlight = spotlightList.length > 0 ? spotlightList[0] : (typeof rawSpotlightData === 'object' ? rawSpotlightData : null);
+    let activeSpotlight = spotlightList.length > 0 ? spotlightList[0] : null;
     if (!activeSpotlight) return;
 
     const img = smartExtractValue(activeSpotlight.image1?.image1 || activeSpotlight.image || activeSpotlight.image1 || activeSpotlight.image_url);
@@ -517,13 +417,10 @@ function loadBusinessSpotlight(resolvedSections) {
     }
 }
 
-/* === SECTION 9: Section 5 Historical Timeline Engine (Ascending Chronological Sort) === */
-function loadTownHistoryTimeline(resolvedSections) {
+/* === SECTION 9: Section 5 Historical Timeline Engine === */
+function loadTownHistoryTimeline(historyList) {
     const historyRowTarget = document.getElementById('history-row-target');
     if (!historyRowTarget) return;
-
-    let rawHistoryData = resolvedSections["5"];
-    let historyList = smartNormalizeList(rawHistoryData);
 
     if (historyList.length > 0) {
         historyList.sort((a, b) => {
@@ -537,7 +434,6 @@ function loadTownHistoryTimeline(resolvedSections) {
             const titleVal = smartExtractValue(evt.title?.content || evt.title || evt.Title || evt.event) || `Historical Milestone (${yearVal})`;
             const descVal = smartExtractValue(evt.description?.content || evt.description || evt.Description);
             const imgVal = smartExtractValue(evt.image1?.image1 || evt.image || evt.image1 || evt.image_url);
-            
             const altText = getSafeAltText(evt.image1?.alt || evt.alt, null, titleVal, `Historical photo from ${yearVal}`).replace(/'/g, "\\'");
 
             return `
@@ -554,8 +450,8 @@ function loadTownHistoryTimeline(resolvedSections) {
     }
 }
 
-/* === SECTION 10: Calendar Bulletin Engine (Firestore /smlc_events & Controlled Scroll) === */
-async function loadCalendarBulletinEngine(cb) {
+/* === SECTION 10: Calendar Bulletin Engine === */
+function renderCalendarBulletinUI(eventsArray) {
     const scroller = document.getElementById('bulletin-scroller-target');
     if (!scroller) return;
 
@@ -563,69 +459,43 @@ async function loadCalendarBulletinEngine(cb) {
     scroller.style.overflowY = "auto";
     scroller.style.paddingRight = "5px";
 
-    try {
-        let eventsArray = [];
+    if (eventsArray.length > 0) {
+        window.calendarCachedEvents = eventsArray.filter(item => {
+            const nameStr = smartExtractValue(item.title || item.name);
+            const descStr = smartExtractValue(item.desc || item.details || item.description);
+            const locStr = smartExtractValue(item.addr || item.location);
+            return matchesActiveTown(nameStr + " " + descStr, locStr);
+        });
 
-        if (window.firebaseFirestore) {
-            try {
-                const { collection, getDocs, query, orderBy } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js");
-                const eventsRef = collection(window.firebaseFirestore, 'smlc_events');
-                const eventsQuery = query(eventsRef, orderBy('start', 'asc'));
-                const querySnap = await getDocs(eventsQuery);
+        if (window.calendarCachedEvents.length > 0) {
+            scroller.innerHTML = window.calendarCachedEvents.map((item, idx) => {
+                const eventTitle = smartExtractValue(item.title || item.name) || "Community Event";
+                const rawLocation = smartExtractValue(item.addr || item.location) || ACTIVE_TOWN.primaryName + ", IL";
+                const mapUrl = buildOSMapUrl(rawLocation);
+                const rawDetails = smartExtractValue(item.desc || item.details || item.description);
+                const parsedDetails = parseInteractiveContent(rawDetails.substring(0, 95));
+                const displayDateStr = smartExtractValue(item.displayDate) || formatHumanTimestamp(item.start || item.date);
 
-                querySnap.forEach((docSnap) => {
-                    eventsArray.push({ id: docSnap.id, ...docSnap.data() });
-                });
-            } catch (fsErr) {
-                console.warn("Firestore events query error, attempting RTDB fallback:", fsErr);
-            }
-        }
-
-        if (eventsArray.length === 0) {
-            const firebaseEventsNode = window.masterCountyData?.global?.events || window.masterCountyData?.events;
-            eventsArray = smartNormalizeList(firebaseEventsNode);
-        }
-
-        if (eventsArray.length > 0) {
-            window.calendarCachedEvents = eventsArray.filter(item => {
-                const nameStr = smartExtractValue(item.title || item.name);
-                const descStr = smartExtractValue(item.desc || item.details || item.description);
-                const locStr = smartExtractValue(item.addr || item.location);
-                return matchesActiveTown(nameStr + " " + descStr, locStr);
-            });
-
-            if (window.calendarCachedEvents.length > 0) {
-                scroller.innerHTML = window.calendarCachedEvents.map((item, idx) => {
-                    const eventTitle = smartExtractValue(item.title || item.name) || "Community Event";
-                    const rawLocation = smartExtractValue(item.addr || item.location) || ACTIVE_TOWN.primaryName + ", IL";
-                    const mapUrl = buildOSMapUrl(rawLocation);
-                    const rawDetails = smartExtractValue(item.desc || item.details || item.description);
-                    const parsedDetails = parseInteractiveContent(rawDetails.substring(0, 95));
-                    const displayDateStr = smartExtractValue(item.displayDate) || formatHumanTimestamp(item.start || item.date);
-
-                    return `
-                        <div class="divi-event-item" style="margin-bottom:15px; padding-bottom:10px; border-bottom:1px dashed #ccc;">
-                            <div class="divi-event-date" style="font-size:12px; color:#d9534f; font-weight:bold;">${displayDateStr}</div>
-                            <div class="divi-event-title" style="font-size:16px; font-weight:bold;">${eventTitle}</div>
-                            <div class="event-info-text" style="font-size:13px; color:#333;">
-                                <strong>Where:</strong> <a href="${mapUrl}" target="_blank" style="color:#0258A3; text-decoration:underline;">${rawLocation}</a>
-                            </div>
-                            <div style="font-size:13px; color:#555; margin-top:4px;">${parsedDetails}...</div>
-                            <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:#0258A3; font-weight:bold; cursor:pointer; margin-top:6px;">Read More &rarr;</div>
+                return `
+                    <div class="divi-event-item" style="margin-bottom:15px; padding-bottom:10px; border-bottom:1px dashed #ccc;">
+                        <div class="divi-event-date" style="font-size:12px; color:#d9534f; font-weight:bold;">${displayDateStr}</div>
+                        <div class="divi-event-title" style="font-size:16px; font-weight:bold;">${eventTitle}</div>
+                        <div class="event-info-text" style="font-size:13px; color:#333;">
+                            <strong>Where:</strong> <a href="${mapUrl}" target="_blank" style="color:#0258A3; text-decoration:underline;">${rawLocation}</a>
                         </div>
-                    `;
-                }).join('');
-            } else {
-                scroller.innerHTML = `<div style="text-align:center; padding: 20px; font-style:italic;">No upcoming events currently scheduled for ${ACTIVE_TOWN.primaryName}.</div>`;
-            }
+                        <div style="font-size:13px; color:#555; margin-top:4px;">${parsedDetails}...</div>
+                        <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:#0258A3; font-weight:bold; cursor:pointer; margin-top:6px;">Read More &rarr;</div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            scroller.innerHTML = `<div style="text-align:center; padding: 20px; font-style:italic;">No upcoming events currently scheduled for ${ACTIVE_TOWN.primaryName}.</div>`;
         }
-    } catch (err) {
-        console.error("Calendar Bulletin Engine error:", err);
     }
 }
 
-/* === SECTION 11: Local News Pipeline Engine (Firestore /local_news & Controlled Scroll) === */
-async function loadLocalNewsMatrix(cb) {
+/* === SECTION 11: Local News Pipeline Engine === */
+function renderLocalNewsMatrixUI(newsArray) {
     const targetGrid = document.getElementById('news-matrix-target');
     if (!targetGrid) return;
 
@@ -633,74 +503,45 @@ async function loadLocalNewsMatrix(cb) {
     targetGrid.style.overflowY = "auto";
     targetGrid.style.paddingRight = "5px";
 
-    try {
-        let newsArray = [];
+    if (newsArray.length > 0) {
+        window.newsCacheBlock = newsArray.filter(item => {
+            const titleStr = smartExtractValue(item.title);
+            const storyStr = smartExtractValue(item.full_story || item.description);
+            const locStr = smartExtractValue(item.location);
+            return matchesActiveTown(titleStr + " " + storyStr, locStr);
+        });
 
-        if (window.firebaseFirestore) {
-            try {
-                const { collection, getDocs, query, orderBy } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js");
-                const newsRef = collection(window.firebaseFirestore, 'local_news');
-                const newsQuery = query(newsRef, orderBy('date', 'desc'));
-                const querySnap = await getDocs(newsQuery);
+        if (window.newsCacheBlock.length > 0) {
+            targetGrid.innerHTML = window.newsCacheBlock.map((story, idx) => {
+                const storyTitle = smartExtractValue(story.title) || "Local News Dispatch";
+                const storyImg = smartExtractValue(story.image || story.image1 || story.image_url);
+                const storyDesc = smartExtractValue(story.full_story || story.description);
+                const altText = getSafeAltText(story.alt || story.alt1, null, storyTitle, "Local News Photo");
 
-                querySnap.forEach((docSnap) => {
-                    newsArray.push({ id: docSnap.id, ...docSnap.data() });
-                });
-            } catch (fsErr) {
-                console.warn("Firestore news query error, attempting RTDB fallback:", fsErr);
-            }
+                return `
+                    <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
+                        ${storyImg ? `<img src="${storyImg}" alt="${altText}" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})">` : ''}
+                        <div style="font-size:12px; color:#d9534f; font-weight:bold; margin-top:10px;">${formatHumanTimestamp(story.date || story.pubDate)}</div>
+                        <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${storyTitle}</div>
+                        <div style="font-size:14px; color:#444;">"${storyDesc.substring(0, 110)}..."</div>
+                        <div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: #0258A3; font-weight: bold; cursor: pointer; margin-top: 10px;">Read More &rarr;</div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            targetGrid.innerHTML = `<div style="text-align:center; padding: 20px; font-style:italic;">No recent dispatches found for ${ACTIVE_TOWN.primaryName}.</div>`;
         }
-
-        if (newsArray.length === 0) {
-            const firebaseNewsNode = window.masterCountyData?.global?.news || window.masterCountyData?.news;
-            newsArray = smartNormalizeList(firebaseNewsNode);
-        }
-
-        if (newsArray.length > 0) {
-            window.newsCacheBlock = newsArray.filter(item => {
-                const titleStr = smartExtractValue(item.title);
-                const storyStr = smartExtractValue(item.full_story || item.description);
-                const locStr = smartExtractValue(item.location);
-                return matchesActiveTown(titleStr + " " + storyStr, locStr);
-            });
-
-            if (window.newsCacheBlock.length > 0) {
-                targetGrid.innerHTML = window.newsCacheBlock.map((story, idx) => {
-                    const storyTitle = smartExtractValue(story.title) || "Local News Dispatch";
-                    const storyImg = smartExtractValue(story.image || story.image1 || story.image_url);
-                    const storyDesc = smartExtractValue(story.full_story || story.description);
-                    const altText = getSafeAltText(story.alt || story.alt1, null, storyTitle, "Local News Photo");
-
-                    return `
-                        <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
-                            ${storyImg ? `<img src="${storyImg}" alt="${altText}" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})">` : ''}
-                            <div style="font-size:12px; color:#d9534f; font-weight:bold; margin-top:10px;">${formatHumanTimestamp(story.date || story.pubDate)}</div>
-                            <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${storyTitle}</div>
-                            <div style="font-size:14px; color:#444;">"${storyDesc.substring(0, 110)}..."</div>
-                            <div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: #0258A3; font-weight: bold; cursor: pointer; margin-top: 10px;">Read More &rarr;</div>
-                        </div>
-                    `;
-                }).join('');
-            } else {
-                targetGrid.innerHTML = `<div style="text-align:center; padding: 20px; font-style:italic;">No recent dispatches found for ${ACTIVE_TOWN.primaryName}.</div>`;
-            }
-        }
-    } catch(e) {
-        console.error("Local news engine error:", e);
     }
 }
 
-/* === SECTION 12: Local Links Directory Engine (Section 7.3.2 Path & Controlled Scroll) === */
-function loadLocalLinksDirectory(resolvedSections) {
+/* === SECTION 12: Local Links Directory Engine === */
+function loadLocalLinksDirectory(rawList) {
     const linkTarget = document.getElementById('local-links-target-container');
     if (!linkTarget) return;
 
     linkTarget.style.maxHeight = "250px";
     linkTarget.style.overflowY = "auto";
     linkTarget.style.paddingRight = "5px";
-
-    const linksObj = resolvedSections["7.3.2"];
-    const rawList = smartNormalizeList(linksObj?.links || linksObj);
 
     if (rawList.length > 0) {
         rawList.sort((a, b) => {
@@ -727,7 +568,7 @@ function loadLocalLinksDirectory(resolvedSections) {
 }
 
 /* === SECTION 13: Advertising Partners Strip Engine === */
-function loadPartnersStrips(globalData, resolvedSections) {
+function loadPartnersStrips(partnersList) {
     const topGrid = document.getElementById('partners-grid-top') 
         || document.querySelector('.scotts-partners-top') 
         || document.querySelectorAll('.partner-card-container')[0];
@@ -735,8 +576,6 @@ function loadPartnersStrips(globalData, resolvedSections) {
     const bottomGrid = document.getElementById('partners-grid-bottom') 
         || document.querySelector('.scotts-partners-bottom') 
         || document.querySelectorAll('.partner-card-container')[1];
-
-    const partnersList = smartNormalizeList(resolvedSections["partners"]);
 
     if (partnersList.length > 0) {
         const partnerCardsHtml = partnersList.map(p => {
@@ -762,11 +601,7 @@ function loadPartnersStrips(globalData, resolvedSections) {
 }
 
 /* === SECTION 14: Footer Data Pipeline Engine === */
-function loadFooterDataPipeline(globalData, activeTownKey) {
-    const townsObj = window.masterCountyData?.towns || {};
-    const matchedTownKey = Object.keys(townsObj).find(k => k.toLowerCase() === activeTownKey.toLowerCase());
-    const townFooter = matchedTownKey ? townsObj[matchedTownKey]?.footer : null;
-    const globalFooter = globalData?.footer;
+function loadFooterDataPipeline(globalFooter, townFooter) {
     const footer = townFooter || globalFooter;
 
     if (footer) {
@@ -796,11 +631,10 @@ function loadFooterDataPipeline(globalData, activeTownKey) {
 }
 
 /* === SECTION 15: Section 4.1 Town Article Engine === */
-function loadTownArticleData(resolvedSections) {
+function loadTownArticleData(articleObj) {
     const articleTarget = document.getElementById('town-article-target') || document.querySelector('.town-article-container');
     if (!articleTarget) return;
 
-    const articleObj = resolvedSections["4.1"];
     if (articleObj) {
         const title = smartExtractValue(articleObj.title?.title || articleObj.title) || "Town Article";
         const h1 = smartExtractValue(articleObj.header1?.header1 || articleObj.header1);
@@ -824,73 +658,140 @@ function loadTownArticleData(resolvedSections) {
     }
 }
 
-/* === MASTER DATA PIPELINE INITIALIZER (Firebase RTDB & Firestore Master Fetch) === */
-async function processDataPipelines() {
-    const cb = getSmartCacheBuster();
-    
-    // Initialize Firebase SDK for Analytics & Firestore
-    await initializeFirebaseAnalytics();
-
-    const firebaseMasterUrl = `https://smlc-fuel-monitor-default-rtdb.firebaseio.com/master_county_data.json?${cb}`;
-
+/* === MASTER REAL-TIME WEBSOCKET DATA PIPELINE INITIALIZER === */
+async function initializePureLiveFirebasePipelines() {
     try {
-        const res = await fetch(firebaseMasterUrl);
-        window.masterCountyData = await res.json();
-    } catch(e) {
-        console.error("Firebase Master JSON fetch error:", e);
-        return;
+        const { initializeApp } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js");
+        const { getAnalytics, logEvent } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-analytics.js");
+        const { getDatabase, ref, onValue } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js");
+        const { getFirestore, collection, onSnapshot, query, orderBy } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js");
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg",
+            authDomain: "smlc-fuel-monitor.firebaseapp.com",
+            databaseURL: "https://smlc-fuel-monitor-default-rtdb.firebaseio.com",
+            projectId: "smlc-fuel-monitor",
+            storageBucket: "smlc-fuel-monitor.firebasestorage.app",
+            messagingSenderId: "22397440085",
+            appId: "1:22397440085:web:c00e716858ed58895bc4dc",
+            measurementId: "G-687D605K75"
+        };
+
+        if (!window.firebaseApp) {
+            window.firebaseApp = initializeApp(firebaseConfig);
+        }
+        window.firebaseDatabase = getDatabase(window.firebaseApp);
+        window.firebaseFirestore = getFirestore(window.firebaseApp);
+        window.firebaseAnalytics = getAnalytics(window.firebaseApp);
+
+        logEvent(window.firebaseAnalytics, 'news_portal_view', {
+            town: ACTIVE_TOWN.primaryName,
+            page_title: document.title
+        });
+
+        /* ==========================================================================
+           1. REALTIME DATABASE LIVE LISTENER (WITH SMART GLOBAL MERGE)
+           ========================================================================== */
+        const masterRef = ref(window.firebaseDatabase, 'master_county_data');
+        onValue(masterRef, (snapshot) => {
+            window.masterCountyData = snapshot.val();
+            if (!window.masterCountyData) return;
+
+            const globalData = window.masterCountyData.global || {};
+            const globalSections = globalData.sections || {};
+            
+            const townsObj = window.masterCountyData.towns || {};
+            const activeTownKey = ACTIVE_TOWN.primaryName; 
+            const matchedTownKey = Object.keys(townsObj).find(k => k.toLowerCase() === activeTownKey.toLowerCase()) || activeTownKey;
+            const activeTownObj = townsObj[matchedTownKey] || {};
+            const townSections = activeTownObj.sections || {};
+
+            /* THE SMART GLOBAL LIST COMBINER (For Slideshow, History, Links) */
+            function mergeListSection(key) {
+                const townList = smartNormalizeList(townSections[key]);
+                const globalList = smartNormalizeList(globalSections[key]);
+                // Returns combined array: Town items first, Global items appended
+                return [...townList, ...globalList]; 
+            }
+
+            /* THE SMART GLOBAL SINGLE-OBJECT FALLBACK (For Article, Spotlight) */
+            function fallbackSingleSection(key) {
+                const t = townSections[key];
+                const g = globalSections[key];
+                // If Town has data, use it. Otherwise, strictly fallback to Global node.
+                if (t && Object.keys(t).length > 0) return t;
+                return g || null;
+            }
+
+            // Live Render RTDB Sections Using Smart Global Logic
+            renderNavigationMenuPipeline(globalData.menu, activeTownObj.menu);
+            initializeSection3Slideshow(mergeListSection("sec_3_1_1"));
+            loadTownArticleData(fallbackSingleSection("sec_4_1"));
+            loadBusinessSpotlight(mergeListSection("sec_4_2")); // spotlight treated as list to support multiple, Town overrides Global
+            loadTownHistoryTimeline(mergeListSection("sec_5"));
+            loadLocalLinksDirectory(mergeListSection("sec_7_3_2"));
+            loadPartnersStrips([...smartNormalizeList(globalSections.partners), ...smartNormalizeList(townSections.partners)]);
+            loadFooterDataPipeline(globalData.footer, activeTownObj.footer);
+        });
+
+        /* ==========================================================================
+           2. REALTIME DATABASE LIVE LISTENER: /fuel_prices
+           ========================================================================== */
+        const stationConfigs = {
+            "48100": { town: "flora", display: "Flora", name: "CASEY'S", logo: "Casey's.png" },     
+            "48101": { town: "flora", display: "Flora", name: "HUCK'S", logo: "Hucks.png" },      
+            "128128": { town: "flora", display: "Flora", name: "MACH 1", logo: "Mach 1.png" },    
+            "120226": { town: "flora", display: "Flora", name: "FAST STOP", logo: "Fast stop.png" },  
+            "48026": { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" }, 
+            "171711": { town: "clay-city", display: "Clay City", name: "CASEY'S", logo: "Casey's.png" },
+            "181818": { town: "xenia", display: "Xenia", name: "KNAPP'S", logo: "Knapps.png" }  
+        };
+
+        const fuelRef = ref(window.firebaseDatabase, 'fuel_prices');
+        const gasContainer = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
+        
+        onValue(fuelRef, (snapshot) => {
+            const val = snapshot.val();
+            if (val && gasContainer) {
+                renderGasBillboardUI(val, stationConfigs, ACTIVE_TOWN.gasKey, gasContainer);
+            }
+        });
+
+        /* ==========================================================================
+           3. CLOUD FIRESTORE LIVE LISTENER: /smlc_events
+           ========================================================================== */
+        const eventsRef = collection(window.firebaseFirestore, 'smlc_events');
+        const eventsQuery = query(eventsRef, orderBy('start', 'asc'));
+        
+        onSnapshot(eventsQuery, (snapshot) => {
+            const eventsArray = [];
+            snapshot.forEach((docSnap) => {
+                eventsArray.push({ id: docSnap.id, ...docSnap.data() });
+            });
+            renderCalendarBulletinUI(eventsArray);
+        });
+
+        /* ==========================================================================
+           4. CLOUD FIRESTORE LIVE LISTENER: /local_news
+           ========================================================================== */
+        const newsRef = collection(window.firebaseFirestore, 'local_news');
+        const newsQuery = query(newsRef, orderBy('date', 'desc'));
+        
+        onSnapshot(newsQuery, (snapshot) => {
+            const newsArray = [];
+            snapshot.forEach((docSnap) => {
+                newsArray.push({ id: docSnap.id, ...docSnap.data() });
+            });
+            renderLocalNewsMatrixUI(newsArray);
+        });
+
+    } catch (err) {
+        console.error("Pure Live Firebase Initialization Error:", err);
     }
-
-    const globalData = window.masterCountyData?.global || {};
-    const globalSections = globalData.sections || {};
-    
-    // Case-Insensitive Town Node Search
-    const townsObj = window.masterCountyData?.towns || {};
-    const activeTownKey = ACTIVE_TOWN.jsonKey || "Louisville";
-    const matchedTownKey = Object.keys(townsObj).find(k => k.toLowerCase() === activeTownKey.toLowerCase());
-    const activeTownObj = matchedTownKey ? townsObj[matchedTownKey] : {};
-    const townSections = activeTownObj.sections || {};
-
-    // Smart Fallback Helper: Checks Town-specific section first, falls back to Global
-    function resolveSection(key) {
-        return townSections[key] || globalSections[key] || null;
-    }
-
-    // Resolved master map using Firebase-safe keys
-    const resolvedSections = {
-        "3.1.1": resolveSection("sec_3_1_1"),
-        "3.1.2": resolveSection("sec_3_1_2"),
-        "3.2.1": resolveSection("sec_3_2_1"),
-        "3.2.2": resolveSection("sec_3_2_2"),
-        "3.2.3": resolveSection("sec_3_2_3"),
-        "3.2.4": resolveSection("sec_3_2_4"),
-        "4.1": resolveSection("sec_4_1"),
-        "4.2": resolveSection("sec_4_2"),
-        "5": resolveSection("sec_5"),
-        "7.3.2": resolveSection("sec_7_3_2"),
-        "partners": [...smartNormalizeList(globalSections.partners), ...smartNormalizeList(townSections.partners)]
-    };
-
-    // Render Navigation Menu
-    renderNavigationMenuPipeline(globalData.menu, activeTownObj.menu);
-
-    // Render components using resolved dataset
-    initializeSection3Slideshow(resolvedSections);
-    loadTownArticleData(resolvedSections);
-    loadBusinessSpotlight(resolvedSections);
-    loadTownHistoryTimeline(resolvedSections);
-    await loadCalendarBulletinEngine(cb);
-    await loadLocalNewsMatrix(cb);
-    loadLocalLinksDirectory(resolvedSections);
-    loadPartnersStrips(globalData, resolvedSections);
-    loadFooterDataPipeline(globalData, activeTownKey);
-
-    // Gas Monitor
-    await initializeFirebaseGasMonitor();
 }
 
 /* === INITIALIZATION === */
 window.addEventListener('DOMContentLoaded', () => {
-    processDataPipelines();
-    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-29_20:15_SMART_DOM`);
+    initializePureLiveFirebasePipelines();
+    console.log(`Pure Live Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-29_22:00_SMART_GLOBAL`);
 });
