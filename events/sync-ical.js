@@ -2,12 +2,12 @@
  * PROJECT: Support My Local Community / Ourflora - Clay County, IL
  * PURPOSE: Parse public Google Calendar .ics feed & sync active 720-hr events to Firestore
  * LEAD DEVELOPER: Werewolf3788
- * VERSION: v1.1.2 (Robust Environment JSON Parsing)
+ * VERSION: v1.1.3 (Multiline Secret Flattening Fix)
  */
 
 /* === SECTION: File Header & Config === */
-// Active Version: v1.1.2 | Timestamp: 2026-07-29_16:05:00
-// CSS / JS Imports: ?v=20260729_160500
+// Active Version: v1.1.3 | Timestamp: 2026-07-29_16:15:00
+// CSS / JS Imports: ?v=20260729_161500
 
 const ical = require('node-ical');
 const admin = require('firebase-admin');
@@ -22,24 +22,11 @@ if (!rawSecret) {
   process.exit(1);
 }
 
-// Clean and safely parse secret
 let serviceAccount;
 try {
-  let cleanedSecret = rawSecret.trim();
-  
-  // Handle escaped string quotes if wrapped accidentally
-  if (cleanedSecret.startsWith('"') && cleanedSecret.endsWith('"')) {
-    cleanedSecret = JSON.parse(cleanedSecret);
-  }
-
-  // Handle Base64 encoded secrets
-  if (!cleanedSecret.startsWith('{')) {
-    cleanedSecret = Buffer.from(cleanedSecret, 'base64').toString('utf8');
-  }
-
-  serviceAccount = JSON.parse(cleanedSecret);
+  serviceAccount = JSON.parse(rawSecret);
 } catch (parseErr) {
-  console.error("CRITICAL ERROR: Failed to parse FIREBASE_SERVICE_ACCOUNT. Input length:", rawSecret ? rawSecret.length : 0);
+  console.error("CRITICAL ERROR: Failed to parse FIREBASE_SERVICE_ACCOUNT. Length:", rawSecret.length);
   console.error("Error details:", parseErr.message);
   process.exit(1);
 }
