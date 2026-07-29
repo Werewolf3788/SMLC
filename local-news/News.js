@@ -1,12 +1,11 @@
 /* === SECTION: File Header & Config === */
-// Active Version: v1.3.0 | Timestamp: 2026-07-29_12:50:00
-// Description: Local News Scraper (Array-Based Location Tagging for Web Filtering)
+// Active Version: v1.5.0 | Timestamp: 2026-07-29_13:40:00
+// Description: Local News Scraper (Conditional Proximity Matching for Google Alerts vs Local RSS)
 
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 import sourcesData from "./sources.json" with { type: "json" };
 
-// Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg",
     authDomain: "smlc-fuel-monitor.firebaseapp.com",
@@ -21,8 +20,17 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* === SECTION: Master Town Mapping Matrix === */
-const TOWN_KEYWORD_MAP = {
+/* === SECTION: Global Overrides (Obituaries, Sales, Jobs) === */
+const GLOBAL_CATEGORY_KEYWORDS = [
+    "obituary", "obituaries", "passed away", "funeral", 
+    "for sale", "for rent", "land for sale", "property for sale", "real estate", 
+    "hiring", "job opening", "help wanted", "now hiring", "employment opportunity"
+];
+
+/* === SECTION: Town Keyword Maps === */
+
+// 1. Broad Matching (For Local Outlets: WNOI, Freedom 92.9, Effingham Radio, etc.)
+const LOCAL_TOWN_KEYWORD_MAP = {
     "Flora": ["flora", "floyd henson"],
     "Louisville": ["louisville", "north clay"],
     "Clay City": ["clay city"],
@@ -34,7 +42,45 @@ const TOWN_KEYWORD_MAP = {
     "Unincorporated Clay County": ["hord", "wendelin", "oskaloosa", "riffle"]
 };
 
-/* === SECTION: Extraction Utilities === */
+// 2. Strict Matching Patterns (For Web Sweeps / Google Alerts ONLY)
+const GOOGLE_ALERT_TOWN_REGEX_MAP = {
+    "Flora": [
+        /\bflora\b.*?\b(il|illinois)\b/i,
+        /\bflora\s*,?\s*(il|illinois)\b/i,
+        /\bfloyd henson\b/i
+    ],
+    "Louisville": [
+        /\blouisville\b.*?\b(il|illinois)\b/i,
+        /\blouisville\s*,?\s*(il|illinois)\b/i,
+        /\bnorth clay\b/i
+    ],
+    "Clay City": [
+        /\bclay city\b.*?\b(il|illinois)\b/i,
+        /\bclay city\s*,?\s*(il|illinois)\b/i
+    ],
+    "Xenia": [
+        /\bxenia\b.*?\b(il|illinois)\b/i,
+        /\bxenia\s*,?\s*(il|illinois)\b/i
+    ],
+    "Sailor Springs": [
+        /\bsailor springs\b.*?\b(il|illinois)\b/i,
+        /\bsailor springs\s*,?\s*(il|illinois)\b/i
+    ],
+    "Iola": [
+        /\biola\b.*?\b(il|illinois)\b/i,
+        /\biola\s*,?\s*(il|illinois)\b/i
+    ],
+    "Ingraham": [
+        /\bingraham\b.*?\b(il|illinois)\b/i,
+        /\bingraham\s*,?\s*(il|illinois)\b/i
+    ],
+    "Bible Grove": [
+        /\bbible grove\b.*?\b(il|illinois)\b/i,
+        /\bbible grove\s*,?\s*(il|illinois)\b/i
+    ]
+};
+
+/* === SECTION: Utilities === */
 function extractTitle(item) {
     return item.title || item.headline || item.name || "";
 }
@@ -51,46 +97,75 @@ function extractLink(item) {
 }
 
 function extractImage(item) {
-    return item.image || item.imageUrl || item.img || item.media || "";
+    if (item.image || item.imageUrl || item.img || item.media) {
+        return item.image || item.imageUrl || item.img || item.media;
+    }
+    const rawStory = item.full_story || item.story || item.content || item.description || "";
+    const imgMatch = rawStory.match(/<img[^>]+src=["']([^"']+)["']/i);
+    return (imgMatch && imgMatch[1]) ? imgMatch[1] : "";
 }
 
 function extractDate(item) {
     return item.date || item.pubDate || item.publishedAt || item.timestamp || new Date().toISOString();
 }
 
-function resolveStoryTags(titleText, storyText) {
+function generateUniqueKey(title, link) {
+    const cleanTitle = title.toLowerCase().replace(/[^a-z0-9]/g, "");
+    return `news_${cleanTitle.slice(0, 30)}`;
+}
+
+/* === SECTION: Location & Category Resolution === */
+function resolveStoryTags(titleText, storyText, isGoogleAlert) {
     const textBlob = `${titleText} ${storyText}`.toLowerCase();
+
+    // 1. Obituaries, Sales/Rent, Jobs -> Global "Clay County"
+    for (const globalKw of GLOBAL_CATEGORY_KEYWORDS) {
+        if (textBlob.includes(globalKw)) {
+            return ["Clay County"];
+        }
+    }
+
     const detectedTowns = new Set();
 
-    // 1. Detect all explicit town mentions
-    for (const [townName, keywords] of Object.entries(TOWN_KEYWORD_MAP)) {
-        for (const kw of keywords) {
-            if (textBlob.includes(kw)) {
-                detectedTowns.add(townName);
-                break;
+    if (isGoogleAlert) {
+        // STRICT MODE: Require "Flora, IL" or "Flora Illinois" for Google Alerts
+        for (const [townName, regexArray] of Object.entries(GOOGLE_ALERT_TOWN_REGEX_MAP)) {
+            for (const pattern of regexArray) {
+                if (pattern.test(textBlob)) {
+                    detectedTowns.add(townName);
+                    break;
+                }
+            }
+        }
+    } else {
+        // RELAXED MODE: Match town name directly for local station feeds
+        for (const [townName, keywords] of Object.entries(LOCAL_TOWN_KEYWORD_MAP)) {
+            for (const kw of keywords) {
+                if (textBlob.includes(kw)) {
+                    detectedTowns.add(townName);
+                    break;
+                }
             }
         }
     }
 
     const mentionsClayCounty = textBlob.includes("clay county");
 
-    // Rule A: 3+ Towns OR explicit "Clay County" -> Global Tag
+    // 3+ Towns OR explicit "Clay County" -> Global Tag
     if (detectedTowns.size >= 3 || mentionsClayCounty) {
         return ["Clay County"];
     }
 
-    // Rule B: 1 or 2 Towns -> Array of specific towns
+    // 1 or 2 Towns -> Array of detected towns
     if (detectedTowns.size > 0) {
         return Array.from(detectedTowns);
     }
 
-    // Rule C: No matches -> Return null to skip
     return null;
 }
 
 function isWithinPast48Hours(dateString) {
     if (!dateString) return true;
-
     const articleTime = new Date(dateString).getTime();
     if (isNaN(articleTime)) return true;
 
@@ -103,6 +178,10 @@ async function runScraper() {
     console.log(`Starting news pipeline... Loaded ${sourcesData.length} items from sources.json`);
     
     const writePromises = [];
+    const processedKeys = new Set();
+
+    let savedCount = 0;
+    let duplicateCount = 0;
     let skippedCount = 0;
 
     for (const item of sourcesData) {
@@ -112,36 +191,51 @@ async function runScraper() {
         const image = extractImage(item);
         const articleDate = extractDate(item);
 
-        // 1. Time Filter (Past 48 Hours)
+        // Filter out feed header titles
+        if (title === "Freedom 92.9" || title === "WNOI Radio" || link.endsWith('/feed/')) {
+            continue;
+        }
+
+        // 1. Recency Check (Past 48 Hours)
         if (!isWithinPast48Hours(articleDate)) {
-            console.log(`[SKIPPED - OUTDATED] "${title || 'Untitled'}" (${articleDate})`);
             skippedCount++;
             continue;
         }
 
-        // 2. Resolve Tags Array
-        const tags = resolveStoryTags(title, story);
+        // 2. Deduplication Check
+        const docId = generateUniqueKey(title, link);
+        if (processedKeys.has(docId)) {
+            console.log(`[DUPLICATE INTERCEPTED] "${title}"`);
+            duplicateCount++;
+            continue;
+        }
+        processedKeys.add(docId);
+
+        // 3. Detect if item came from a Google Alert feed
+        const sourceName = (item.source_name || item.name || "").toLowerCase();
+        const sourceUrl = (item.source_url || link || "").toLowerCase();
+        const isGoogleAlert = sourceName.includes("google alert") || sourceUrl.includes("google.com/alerts");
+
+        // 4. Resolve Tags
+        const tags = resolveStoryTags(title, story, isGoogleAlert);
         if (!tags || tags.length === 0) {
-            console.log(`[SKIPPED - NO TOWN OR COUNTY MATCH] "${title || 'Untitled'}"`);
             skippedCount++;
             continue;
         }
 
-        const docId = item.id || `news_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-
-        // Save to Firestore with `tags` array and legacy `location` string
         const p = setDoc(doc(db, "local_news", docId), {
             title: title || `${tags.join(", ")} Update`,
             date: articleDate,
             full_story: story,
             image: image,
             link: link,
-            tags: tags,                             // Output: ["Flora"] or ["Flora", "Louisville"] or ["Clay County"]
-            location: tags.join(", "),             // Output: "Flora" or "Flora, Louisville" or "Clay County"
+            tags: tags,
+            location: tags.join(", "),
             updatedAt: new Date().toISOString()
         }, { merge: true })
         .then(() => {
-            console.log(`[SAVED] "${title}" -> Tags: [${tags.map(t => `"${t}"`).join(", ")}]`);
+            console.log(`[SAVED] "${title}" -> Mode: ${isGoogleAlert ? 'Google Alert (Strict)' : 'Local Feed (Relaxed)'} | Tags: [${tags.join(", ")}]`);
+            savedCount++;
         })
         .catch((err) => {
             console.error(`[ERROR] Failed writing "${title}":`, err.message);
@@ -151,7 +245,7 @@ async function runScraper() {
     }
 
     await Promise.all(writePromises);
-    console.log(`Pipeline complete! Successfully saved ${writePromises.length} articles. (Skipped ${skippedCount} items).`);
+    console.log(`Pipeline complete! Saved: ${savedCount} | Duplicates: ${duplicateCount} | Skipped: ${skippedCount}`);
     process.exit(0);
 }
 
