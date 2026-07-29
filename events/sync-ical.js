@@ -2,12 +2,12 @@
  * PROJECT: Support My Local Community / Ourflora - Clay County, IL
  * PURPOSE: Parse public Google Calendar .ics feed & sync active 720-hr events to Firestore
  * LEAD DEVELOPER: Werewolf3788
- * VERSION: v1.1.1 (JSON Sanitization Fix)
+ * VERSION: v1.1.2 (Robust Environment JSON Parsing)
  */
 
 /* === SECTION: File Header & Config === */
-// Active Version: v1.1.1 | Timestamp: 2026-07-29_16:00:00
-// CSS / JS Imports: ?v=20260729_160000
+// Active Version: v1.1.2 | Timestamp: 2026-07-29_16:05:00
+// CSS / JS Imports: ?v=20260729_160500
 
 const ical = require('node-ical');
 const admin = require('firebase-admin');
@@ -15,18 +15,32 @@ const admin = require('firebase-admin');
 const ICAL_URL = "https://calendar.google.com/calendar/ical/09907fc6fff214b9dad96172ef13e7b80d62ea80cf22b504d096a47f277a9d2b%40group.calendar.google.com/public/basic.ics";
 const TARGET_TIMEZONE = "America/Chicago";
 
-if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+const rawSecret = process.env.FIREBASE_SERVICE_ACCOUNT;
+
+if (!rawSecret) {
   console.error("CRITICAL ERROR: FIREBASE_SERVICE_ACCOUNT environment variable is missing in GitHub Repository Secrets.");
   process.exit(1);
 }
 
-// Clean and parse the secret securely
+// Clean and safely parse secret
 let serviceAccount;
 try {
-  const rawSecret = process.env.FIREBASE_SERVICE_ACCOUNT.trim();
-  serviceAccount = JSON.parse(rawSecret);
+  let cleanedSecret = rawSecret.trim();
+  
+  // Handle escaped string quotes if wrapped accidentally
+  if (cleanedSecret.startsWith('"') && cleanedSecret.endsWith('"')) {
+    cleanedSecret = JSON.parse(cleanedSecret);
+  }
+
+  // Handle Base64 encoded secrets
+  if (!cleanedSecret.startsWith('{')) {
+    cleanedSecret = Buffer.from(cleanedSecret, 'base64').toString('utf8');
+  }
+
+  serviceAccount = JSON.parse(cleanedSecret);
 } catch (parseErr) {
-  console.error("CRITICAL ERROR: Failed to parse FIREBASE_SERVICE_ACCOUNT as valid JSON. Check your GitHub Secret formatting.", parseErr);
+  console.error("CRITICAL ERROR: Failed to parse FIREBASE_SERVICE_ACCOUNT. Input length:", rawSecret ? rawSecret.length : 0);
+  console.error("Error details:", parseErr.message);
   process.exit(1);
 }
 
