@@ -1,7 +1,7 @@
 /* ==========================================================================
-   Active Version: 2026-07-29_20:15
+   Active Version: 2026-07-29_22:30
    File: style.css
-   Description: Master Stylesheet - Active Tab Highlighting, Controlled Scroll Containers & Universal Lightbox
+   Description: Master Stylesheet - Header Barrier, Dynamic Widgets, & Compact Cards
    ========================================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&family=Playfair+Display:wght@700;900&display=swap');
 
@@ -68,7 +68,7 @@ body {
 a { color: var(--link-bright-blue) !important; text-decoration: none; }
 
 /* ==========================================================================
-   SECTION 1: HEADER & DYNAMIC MENU BAR (ACTIVE TAB HIGHLIGHTING)
+   SECTION 1: HEADER & MENU BAR (FLUSH HARD BARRIER - NO OVERLAP)
    ========================================================================== */
 .site-brand-header { 
 	width: 100% !important; 
@@ -92,14 +92,14 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	height: auto !important; 
 	display: block !important; 
 	margin: 0 !important;
-	vertical-align: bottom !important;
+	vertical-align: bottom !important; /* Prevents 3px browser spacing gap under image */
 }
 
 .menu-bar { 
 	width: 100% !important; 
 	background: var(--louis-red) !important; 
-	padding: 12px 0; 
-	position: relative !important;
+	padding: 16px 0; 
+	position: relative !important; /* Prevents sticky header bleeding over hero image */
 	top: 0; 
 	z-index: 100 !important; 
 	border-bottom: 4px solid var(--louis-gold); 
@@ -108,26 +108,9 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 }
 
 .menu-inner { width: var(--container-width); margin: 0 auto; display: flex; justify-content: center; }
-.menu-links { display: flex; flex-wrap: wrap; list-style: none; gap: 16px; margin: 0; padding: 0; align-items: center; }
-
-/* Inactive Tabs: White Font */
-.menu-links a { 
-	color: #ffffff !important; 
-	font-size: 16px; 
-	font-weight: 800; 
-	padding: 8px 16px; 
-	text-transform: uppercase; 
-	letter-spacing: 1px; 
-	transition: all 0.2s ease-in-out;
-	border: 2px solid transparent;
-	border-radius: 6px;
-}
-
-.menu-links a:hover {
-	color: var(--louis-gold) !important;
-	border-color: var(--louis-gold);
-	background: rgba(0, 0, 0, 0.4) !important;
-}
+.menu-links { display: flex; flex-wrap: wrap; list-style: none; gap: 20px; margin: 0; padding: 0; }
+.menu-links a { color: var(--louis-gold) !important; font-size: 16px; font-weight: 800; padding: 10px 18px; text-transform: uppercase; letter-spacing: 1px; }
+.menu-links a:hover, .menu-links a.active { color: #ffffff !important; border: 2px solid var(--louis-gold); background: rgba(0, 0, 0, 0.6) !important; border-radius: 8px; }
 
 /* ACTIVE TOWN TAB: Yellow Font & Dark Frame */
 .menu-links a.active,
@@ -167,7 +150,7 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 .slider-viewport { width: 100%; height: 360px; position: relative; overflow: hidden; border: 2px solid #222; background: #000; }
 .slider-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 0.8s ease-in-out; }
 .slider-slide.active { opacity: 1; }
-.slider-slide img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+.slider-slide img { width: 100%; height: 100%; object-fit: cover; }
 .slider-caption { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.85); color: #ffffff; padding: 12px; font-size: 1.2rem; font-weight: bold; text-align: center; }
 
 .section3-about-box { background: rgba(18, 18, 18, 0.9); border: 1px solid rgba(255, 255, 255, 0.2); border-left: 5px solid var(--louis-gold); padding: 24px; border-radius: 8px; }
@@ -183,9 +166,10 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 .section3-landmark-desc { font-size: 18px !important; color: #dddddd !important; line-height: 1.6; margin: 0; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 18px; }
 
 /* ==========================================================================
-   SECTION 4: 2-BOX SPLIT LAYOUT
+   SECTION 4: 2-BOX SPLIT LAYOUT (ARTICLE + RIGHT WIDGET STACK)
    ========================================================================== */
-.section4-two-box-wrapper {
+.section4-two-box-wrapper,
+.dv-custom-article-wrapper {
 	display: grid;
 	grid-template-columns: 2fr 1fr;
 	gap: clamp(24px, 3.5vw, 60px);
@@ -197,10 +181,13 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	background-color: transparent !important;
 }
 @media (max-width: 1024px) {
-	.section4-two-box-wrapper { grid-template-columns: 1fr; padding: 0 20px; }
+	.section4-two-box-wrapper,
+	.dv-custom-article-wrapper { grid-template-columns: 1fr; padding: 0 20px; }
 }
 
-.section4-left-article-box {
+/* SECTION 4.1: ARTICLE CONTAINER (LEFT BOX) */
+.section4-left-article-box,
+.dv-custom-article-wrapper .article-container {
 	width: 100%;
 	background: #ffffff !important;
 	box-shadow: 0 10px 40px rgba(0,0,0,0.6);
@@ -213,7 +200,8 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	flex-direction: column;
 	justify-content: space-between;
 }
-.section4-centered-article-header {
+.section4-centered-article-header,
+.dv-custom-article-wrapper .hero-section {
 	background: linear-gradient(180deg, #eb1c24 0%, #1a1a1a 100%);
 	color: white;
 	padding: clamp(35px, 6vh, 70px) 24px;
@@ -231,7 +219,8 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	font-weight: bold;
 	margin-bottom: 18px;
 }
-.article-stacked-title {
+.article-stacked-title,
+.dv-custom-article-wrapper h1 {
 	font-family: 'Montserrat', sans-serif !important;
 	font-size: clamp(2.4rem, 5vw, 4rem) !important;
 	line-height: 1.05 !important;
@@ -240,7 +229,8 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	color: #ffffff !important;
 	text-align: center !important;
 }
-.article-stacked-deck {
+.article-stacked-deck,
+.dv-custom-article-wrapper .deck {
 	font-size: 1.3rem;
 	font-style: italic;
 	opacity: 0.95;
@@ -248,11 +238,13 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	margin: 0 auto;
 	text-align: center !important;
 }
-.article-body-content {
+.article-body-content,
+.dv-custom-article-wrapper .article-body {
 	padding: 36px;
 	font-size: 1.15rem;
 }
-.article-body-content p {
+.article-body-content p,
+.dv-custom-article-wrapper .article-body p {
 	margin-bottom: 1.5em;
 	text-align: justify;
 	font-family: 'Libre Baskerville', serif !important;
@@ -271,15 +263,18 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	text-transform: uppercase;
 }
 
-.section4-right-widgets-stack {
+/* SECTION 4.2: RIGHT SIDE WIDGET STACK */
+.section4-right-widgets-stack,
+.dv-custom-article-wrapper .sidebar {
 	display: flex !important;
 	flex-direction: column !important;
 	gap: 30px !important;
 	justify-content: flex-start !important;
 }
 
-/* BUSINESS SPOTLIGHT CARD */
-.clay-county-news-box.spotlight-clipping {
+/* SECTION 4.2.2.1: BUSINESS SPOTLIGHT CARD */
+.clay-county-news-box.spotlight-clipping,
+.business-spotlight-showcase-card {
 	width: 100% !important;
 	padding: 28px !important;
 	border: 2px solid #222 !important;
@@ -301,7 +296,24 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	margin: -28px -28px 20px -28px;
 	border-bottom: 2px solid #000;
 }
-.spotlight-image-wrap {
+.news-box-header {
+	text-align: center;
+	border-top: 4px double #222;
+	border-bottom: 2px solid #222;
+	padding: 14px 0;
+	margin-bottom: 20px;
+}
+.news-box-header h3 {
+	font-family: "Times New Roman", Times, serif !important;
+	font-weight: 900 !important;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+	margin: 0 !important;
+	color: #222 !important;
+	font-size: 26px !important;
+	line-height: 1.2 !important;
+}
+.spotlight-image-wrap, .showcase-media-canvas {
 	width: 100%;
 	height: auto;
 	border: 2px solid #222;
@@ -309,13 +321,12 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	overflow: hidden;
 	background-color: #eee;
 }
-.spotlight-image-wrap img {
+.spotlight-image-wrap img, .showcase-media-canvas img {
 	width: 100%;
 	display: block;
-	cursor: pointer;
 	filter: grayscale(10%) contrast(110%);
 }
-.biz-title {
+.biz-title, #spotlight-asset-name {
 	font-family: "Times New Roman", Times, serif !important;
 	font-size: 24px !important;
 	font-weight: bold;
@@ -324,7 +335,7 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	display: block;
 	margin-bottom: 6px;
 }
-.biz-location {
+.biz-location, #spotlight-asset-loc {
 	font-size: 13px !important;
 	text-transform: uppercase;
 	letter-spacing: 2px;
@@ -334,7 +345,7 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	text-align: center;
 	margin-bottom: 16px;
 }
-.biz-description {
+.biz-description, #spotlight-asset-desc {
 	font-size: 16px !important;
 	line-height: 1.6;
 	color: #333333 !important;
@@ -342,7 +353,7 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	margin-bottom: 22px;
 	text-align: justify;
 }
-.spotlight-btn {
+.spotlight-btn, #spotlight-asset-link {
 	display: block;
 	text-align: center;
 	background-color: #222;
@@ -354,16 +365,15 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	text-decoration: none !important;
 	font-size: 15px;
 	border: 2px solid #222;
-	cursor: pointer;
 	transition: all 0.3s;
 }
-.spotlight-btn:hover {
+.spotlight-btn:hover, #spotlight-asset-link:hover {
 	background-color: var(--louis-gold) !important;
 	color: #000000 !important;
 	border-color: #000000 !important;
 }
 
-/* FUEL INDEX MONITOR GAS WIDGET */
+/* SECTION 4.2.2.2: FUEL INDEX MONITOR GAS WIDGET */
 .fuel-monitor-billboard-card {
 	background-color: #fffdf5 !important;
 	border: 2px solid #000000 !important;
@@ -441,7 +451,7 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 }
 
 /* ==========================================================================
-   SECTION 5: HISTORICAL TIMELINE
+   SECTION 5: HISTORICAL TIMELINE - NEWSPAPER CARD SPECIFICATIONS
    ========================================================================== */
 .historical-timeline-chassis-wrapper {
 	width: 100% !important;
@@ -450,6 +460,7 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	box-sizing: border-box;
 }
 
+.timeline-full-width-container,
 .timeline-inner-bounds {
 	width: 100% !important;
 	max-width: 100% !important;
@@ -461,6 +472,7 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	margin-bottom: 40px !important;
 }
 
+.timeline-row-1-header title1,
 .main-timeline-center-title-node {
 	font-family: 'Playfair Display', Georgia, serif !important;
 	font-size: 52px !important;
@@ -479,6 +491,7 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	text-shadow: 1px 1px 4px #000000 !important;
 }
 
+.timeline-5x2-full-grid,
 .timeline-row-2-cards {
 	display: grid !important;
 	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
@@ -499,15 +512,12 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	text-align: left !important;
 	height: 100% !important;
 	width: 100% !important;
-	cursor: pointer !important;
-	transition: transform 0.2s ease !important;
+	margin: 0 !important;
+	box-sizing: border-box !important;
 }
 
-.history-card:hover {
-	transform: translateY(-4px) !important;
-}
-
-.history-card h2 {
+.history-card h2,
+.history-card h2.history-year-title {
 	font-family: 'Times New Roman', Times, serif !important;
 	font-size: 32px !important;
 	font-weight: 900 !important;
@@ -518,7 +528,8 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	line-height: 1.1 !important;
 }
 
-.history-card h3 {
+.history-card h3,
+.history-card h3.history-event-header {
 	font-family: 'Playfair Display', Georgia, serif !important;
 	font-size: 20px !important;
 	font-weight: 700 !important;
@@ -527,7 +538,8 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	line-height: 1.3 !important;
 }
 
-.history-card p {
+.history-card p,
+.history-card p.history-desc-text {
 	font-family: 'Times New Roman', Times, serif !important;
 	font-size: 16px !important;
 	line-height: 1.6 !important;
@@ -555,9 +567,10 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 }
 
 /* ==========================================================================
-   SECTION 6 & 8: PARTNERS STRIP
+   SECTION 6 & 8: PARTNERS STRIP (EDGE-TO-EDGE FULL SCREEN SPREAD)
    ========================================================================== */
-.widescreen-strip-container {
+.widescreen-strip-container,
+.section8-town-images-strip {
 	width: 100% !important;
 	max-width: 100vw !important;
 	background-color: #001a40 !important;
@@ -619,7 +632,8 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	padding: 8px !important;
 }
 
-.partner-logo-box img {
+.partner-logo-box img,
+.partner-card img {
 	max-width: 100% !important;
 	max-height: 100% !important;
 	width: auto !important;
@@ -638,8 +652,18 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	line-height: 1.2 !important;
 }
 
+.partner-card h4 a {
+	color: #000000 !important;
+	text-decoration: none !important;
+}
+
+.partner-card h4 a:hover {
+	color: #0258A3 !important;
+	text-decoration: underline !important;
+}
+
 /* ==========================================================================
-   SECTION 7: CONTROLLED SCROLLING CONTAINERS (5-ITEM CAPPING RULE)
+   SECTION 7: THREE COLUMN INTERFACE & RETRO CARDS
    ========================================================================== */
 .smlc-three-column-portal-wrapper { 
 	width: 100%; 
@@ -659,6 +683,7 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 .portal-column-cell-box { display: flex !important; flex-direction: column !important; gap: 36px !important; justify-content: flex-start !important; height: auto !important; }
 .card-module-wrapper { display: flex !important; flex-direction: column !important; height: auto !important; }
 
+/* MODULE HEADING HEADER BOX (#A44F0B) */
 .et_pb_module_heading {
 	background-color: #A44F0B !important;
 	color: #ffffff !important;
@@ -674,52 +699,115 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	display: block !important;
 }
 
-/* CONTROLLED SCROLL CONTAINER ENFORCEMENT */
-.controlled-scroll-container,
-#bulletin-scroller-target,
-#news-matrix-target,
-#local-links-target-container {
-	max-height: 520px !important;
-	overflow-y: auto !important;
-	padding-right: 8px !important;
-	scrollbar-width: thin;
-	scrollbar-color: var(--louis-red) #fffdf5;
+/* SECTION 7.1.1: EVENT CLIPPING SUBMISSION BOX (RESTORED ORIGINAL STYLES) */
+.clay-county-news-box.event-clipping {
+	box-sizing: border-box !important;
+	width: 100% !important;
+	max-width: 480px !important;
+	margin: 20px auto !important;
+	padding: 25px !important;
+	border: 2px solid #222 !important;
+	background-color: #fffdf5 !important;
+	box-shadow: 6px 6px 0px #222 !important;
+	font-family: "Times New Roman", Times, serif !important;
+	position: relative !important;
+	align-self: center !important;
 }
 
-.controlled-scroll-container::-webkit-scrollbar,
-#bulletin-scroller-target::-webkit-scrollbar,
-#news-matrix-target::-webkit-scrollbar,
-#local-links-target-container::-webkit-scrollbar {
-	width: 6px;
+.clipping-tag {
+	position: absolute !important;
+	top: -12px !important;
+	left: 15px !important;
+	background: #222 !important;
+	color: #fff !important;
+	font-size: 10px !important;
+	padding: 3px 10px !important;
+	text-transform: uppercase !important;
+	font-weight: bold !important;
+	letter-spacing: 1px !important;
+	z-index: 10 !important;
 }
 
-.controlled-scroll-container::-webkit-scrollbar-thumb,
-#bulletin-scroller-target::-webkit-scrollbar-thumb,
-#news-matrix-target::-webkit-scrollbar-thumb,
-#local-links-target-container::-webkit-scrollbar-thumb {
-	background-color: var(--louis-red);
-	border-radius: 4px;
+.event-clipping-header {
+	text-align: center !important;
+	border-top: 4px double #222 !important;
+	border-bottom: 2px solid #222 !important;
+	padding: 15px 0 !important;
+	margin-bottom: 20px !important;
+	margin-top: 5px !important;
 }
 
-.news-clipping-wrapper,
-.newspaper-feed-chassis {
+.event-clipping-header h3 {
+	font-family: "Times New Roman", Times, serif !important;
+	font-weight: 900 !important;
+	text-transform: uppercase !important;
+	letter-spacing: 1px !important;
+	margin: 0 !important;
+	color: #d9534f !important;
+	font-size: 26px !important;
+	line-height: 1.1 !important;
+}
+
+.event-clipping-text {
+	font-size: 16px !important;
+	line-height: 1.5 !important;
+	color: #222 !important;
+	text-align: center !important;
+	margin-bottom: 20px !important;
+	font-style: italic !important;
+}
+
+.event-clipping-btn {
+	display: block !important;
+	text-align: center !important;
+	background-color: #222 !important;
+	color: #fff !important;
+	padding: 14px !important;
+	text-transform: uppercase !important;
+	font-weight: bold !important;
+	letter-spacing: 2px !important;
+	text-decoration: none !important;
+	font-size: 14px !important;
+	border: 1px solid #222 !important;
+	transition: all 0.3s !important;
+}
+
+.event-clipping-btn:hover {
+	background-color: #d9534f !important;
+	border-color: #d9534f !important;
+	color: #fff !important;
+}
+
+.clipping-footer {
+	display: block !important;
+	text-align: center !important;
+	font-size: 10px !important;
+	color: #666 !important;
+	margin-top: 15px !important;
+	text-transform: uppercase !important;
+	letter-spacing: 1px !important;
+}
+
+/* SECTION 7.1.2: DYNAMIC COMMUNITY CALENDAR BULLETIN FEED */
+.news-clipping-wrapper {
 	background-color: #fffdf5;
 	box-shadow: 6px 6px 0px rgba(0,0,0,0.6); 
 	border: 2px solid #222;
 	font-family: 'Times New Roman', Times, serif;
 	color: #222;
 	width: 100%;
+	max-width: 100%;
+	margin: 0 auto;
+	overflow: hidden;
 	padding: 28px;
 	border-radius: 6px;
 }
-
 .clipping-masthead {
 	text-align: center;
 	padding-bottom: 16px;
 	border-bottom: 4px double #222; 
 	margin-bottom: 22px; 
 }
-
 .black-tag {
 	background: #000;
 	color: #fff;
@@ -731,7 +819,6 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	letter-spacing: 1px;
 	line-height: 1;
 }
-
 .clipping-tagline {
 	font-size: 13px;
 	text-transform: uppercase;
@@ -739,6 +826,102 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	margin: 12px 0 0 0;
 	letter-spacing: 1px;
 	color: #444;
+}
+#divi-event-list,
+#bulletin-scroller-target {
+	max-height: 560px !important;
+	overflow-y: auto !important;
+	padding-right: 8px !important;
+}
+.divi-event-item {
+	border-bottom: 1px dashed #777;
+	padding: 18px 0;
+	text-align: left;
+}
+.divi-event-item:last-child {
+	border-bottom: none;
+}
+.divi-event-date {
+	color: #cc0000;
+	font-weight: bold;
+	font-size: 15px;
+	text-transform: uppercase;
+}
+.divi-event-title {
+	font-size: 22px; 
+	font-weight: bold;
+	margin: 6px 0;
+	line-height: 1.25;
+}
+.event-info-text {
+	font-size: 16px;
+	line-height: 1.5;
+	color: #333;
+}
+.event-snippet {
+	font-size: 15px;
+	color: #555;
+	font-style: italic;
+	margin: 10px 0;
+	line-height: 1.5;
+	display: block;
+}
+.full-details {
+	display: none;
+	font-size: 15px;
+	color: #222;
+	margin: 12px 0;
+	line-height: 1.6;
+	background: rgba(0,0,0,0.04);
+	padding: 12px;
+	border-left: 4px solid #cc0000;
+}
+.read-more-btn {
+	color: #cc0000;
+	text-decoration: underline;
+	font-weight: bold;
+	font-size: 14px;
+	cursor: pointer;
+	text-transform: uppercase;
+	display: inline-block;
+	margin-top: 6px;
+}
+.cal-links { 
+	margin-top: 16px;
+	font-size: 14px;
+}
+.cal-label {
+	display: block;
+	font-size: 12px;
+	text-transform: uppercase;
+	font-weight: bold;
+	color: #666;
+	margin-bottom: 6px;
+	letter-spacing: 0.5px;
+}
+.cal-text-link {
+	color: #cc0000 !important;
+	text-decoration: none !important;
+	font-weight: bold;
+	text-transform: uppercase;
+	font-size: 13px;
+}
+.cal-text-link:hover { text-decoration: underline !important; }
+
+/* SECTION 7.2: CENTER COLUMN RETRO CONTAINERS */
+.newspaper-feed-chassis {
+	background-color: #fffdf5 !important; 
+	border: 3px double #222222 !important; 
+	box-shadow: 6px 6px 0px #222222 !important; 
+	padding: 28px !important;
+	border-radius: 6px;
+	color: #222222 !important;
+}
+.news-dynamic-masonry {
+	max-height: 560px !important;
+	overflow-y: auto !important;
+	padding-right: 8px !important;
+	text-align: left !important;
 }
 
 /* SECTION 7.3.1: FACEBOOK INVITATION CARD */
@@ -813,6 +996,7 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	font-weight: bold !important;
 	display: block !important;
 	letter-spacing: 0.5px !important;
+	text-transform: none !important;
 }
 
 .invitation-body-text {
@@ -854,6 +1038,7 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	text-align: center !important;
 }
 
+/* SECTION 7.2.3: CLAY COUNTY BUSINESS DIRECTORY BUTTON */
 .town-directory-interactive-btn-s7 {
 	background-color: #000000 !important;
 	color: var(--louis-gold) !important;
