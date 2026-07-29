@@ -1,6 +1,6 @@
 /* === SECTION: File Header & Config === */
-// Active Version: v1.1.9 | Timestamp: 2026-07-29_12:30:00
-// Description: Local News Backend Scraper & Firestore Writer (Flexible Property Mapping)
+// Active Version: v1.3.0 | Timestamp: 2026-07-29_12:50:00
+// Description: Local News Scraper (Array-Based Location Tagging for Web Filtering)
 
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
@@ -18,28 +18,25 @@ const firebaseConfig = {
     measurementId: "G-687D605K75"
 };
 
-// Initialize Firebase & Firestore
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* === SECTION: Master Clay County Keyword Mapping Matrix === */
+/* === SECTION: Master Town Mapping Matrix === */
 const TOWN_KEYWORD_MAP = {
-    "Flora": ["flora", "flora wolves", "flora pups", "harter", "harter township", "62839"],
-    "Louisville": ["louisville", "hoosier", "hoosier township", "louisville township", "north clay", "nc indians", "nc cardinals", "blair township", "larkinsburg township", "62858"],
-    "Clay City": ["clay city", "clay city wolves", "clay city pups", "clay city township", "62824"],
-    "Xenia": ["xenia", "xenia township", "greendale", "62899"],
-    "Sailor Springs": ["sailor springs", "pixley", "pixley township", "62879"],
-    "Iola": ["iola", "songer", "songer township"],
-    "Ingraham": ["ingraham", "62434"],
-    "Bible Grove": ["bible grove", "bible grove township"],
-    "Unincorporated Clay County": ["bethel", "camp travis", "hord", "jordon", "oskaloosa", "oskaloosa township", "riffle", "wendelin", "stanford township"]
+    "Flora": ["flora", "floyd henson"],
+    "Louisville": ["louisville", "north clay"],
+    "Clay City": ["clay city"],
+    "Xenia": ["xenia"],
+    "Sailor Springs": ["sailor springs"],
+    "Iola": ["iola"],
+    "Ingraham": ["ingraham"],
+    "Bible Grove": ["bible grove"],
+    "Unincorporated Clay County": ["hord", "wendelin", "oskaloosa", "riffle"]
 };
 
-const CLAY_COUNTY_FALLBACKS = ["clay county", "clay county news", "state news", "illinois news"];
-
-/* === SECTION: Text & Property Extraction Utilities === */
+/* === SECTION: Extraction Utilities === */
 function extractTitle(item) {
-    return item.title || item.headline || item.name || "Clay County Local News";
+    return item.title || item.headline || item.name || "";
 }
 
 function extractStory(item) {
@@ -61,40 +58,34 @@ function extractDate(item) {
     return item.date || item.pubDate || item.publishedAt || item.timestamp || new Date().toISOString();
 }
 
-function resolveStoryLocation(item, titleText, storyText) {
-    if (item.location) return item.location;
-
+function resolveStoryTags(titleText, storyText) {
     const textBlob = `${titleText} ${storyText}`.toLowerCase();
+    const detectedTowns = new Set();
 
-    if (textBlob.includes("bible grove")) {
-        return "Bible Grove";
-    }
-
+    // 1. Detect all explicit town mentions
     for (const [townName, keywords] of Object.entries(TOWN_KEYWORD_MAP)) {
         for (const kw of keywords) {
             if (textBlob.includes(kw)) {
-                return townName;
+                detectedTowns.add(townName);
+                break;
             }
         }
     }
 
-    for (const fallbackKw of CLAY_COUNTY_FALLBACKS) {
-        if (textBlob.includes(fallbackKw)) {
-            return "Clay County";
-        }
+    const mentionsClayCounty = textBlob.includes("clay county");
+
+    // Rule A: 3+ Towns OR explicit "Clay County" -> Global Tag
+    if (detectedTowns.size >= 3 || mentionsClayCounty) {
+        return ["Clay County"];
     }
 
-    return "Clay County";
-}
-
-function isClayCountyArticle(titleText, storyText) {
-    const textBlob = `${titleText} ${storyText}`.toLowerCase();
-
-    if (textBlob.includes("fairfield") || textBlob.includes("effingham")) {
-        return false;
+    // Rule B: 1 or 2 Towns -> Array of specific towns
+    if (detectedTowns.size > 0) {
+        return Array.from(detectedTowns);
     }
 
-    return true;
+    // Rule C: No matches -> Return null to skip
+    return null;
 }
 
 function isWithinPast48Hours(dateString) {
@@ -112,6 +103,7 @@ async function runScraper() {
     console.log(`Starting news pipeline... Loaded ${sourcesData.length} items from sources.json`);
     
     const writePromises = [];
+    let skippedCount = 0;
 
     for (const item of sourcesData) {
         const title = extractTitle(item);
@@ -120,32 +112,36 @@ async function runScraper() {
         const image = extractImage(item);
         const articleDate = extractDate(item);
 
-        // 1. Filter out excluded regions
-        if (!isClayCountyArticle(title, story)) {
-            console.log(`[SKIPPED - NON-LOCAL] "${title}"`);
+        // 1. Time Filter (Past 48 Hours)
+        if (!isWithinPast48Hours(articleDate)) {
+            console.log(`[SKIPPED - OUTDATED] "${title || 'Untitled'}" (${articleDate})`);
+            skippedCount++;
             continue;
         }
 
-        // 2. Filter out items older than 48 hours
-        if (!isWithinPast48Hours(articleDate)) {
-            console.log(`[SKIPPED - OUTDATED] "${title}" (${articleDate})`);
+        // 2. Resolve Tags Array
+        const tags = resolveStoryTags(title, story);
+        if (!tags || tags.length === 0) {
+            console.log(`[SKIPPED - NO TOWN OR COUNTY MATCH] "${title || 'Untitled'}"`);
+            skippedCount++;
             continue;
         }
 
         const docId = item.id || `news_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-        const locationTag = resolveStoryLocation(item, title, story);
 
+        // Save to Firestore with `tags` array and legacy `location` string
         const p = setDoc(doc(db, "local_news", docId), {
-            title: title,
+            title: title || `${tags.join(", ")} Update`,
             date: articleDate,
             full_story: story,
             image: image,
             link: link,
-            location: locationTag,
+            tags: tags,                             // Output: ["Flora"] or ["Flora", "Louisville"] or ["Clay County"]
+            location: tags.join(", "),             // Output: "Flora" or "Flora, Louisville" or "Clay County"
             updatedAt: new Date().toISOString()
         }, { merge: true })
         .then(() => {
-            console.log(`[SAVED] "${title}" -> Tagged: ${locationTag}`);
+            console.log(`[SAVED] "${title}" -> Tags: [${tags.map(t => `"${t}"`).join(", ")}]`);
         })
         .catch((err) => {
             console.error(`[ERROR] Failed writing "${title}":`, err.message);
@@ -155,7 +151,7 @@ async function runScraper() {
     }
 
     await Promise.all(writePromises);
-    console.log(`Pipeline complete! Successfully processed and updated ${writePromises.length} articles in Firestore.`);
+    console.log(`Pipeline complete! Successfully saved ${writePromises.length} articles. (Skipped ${skippedCount} items).`);
     process.exit(0);
 }
 
