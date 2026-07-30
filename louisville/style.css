@@ -239,7 +239,95 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	padding-left: 16px !important;
 }
 
-/* 4. Article Paragraphs & Bolded Keywords */
+/* ==========================================================================
+   SECTION 4.1: RETRO NEWSPAPER CONTAINER (RESTORED CARD BACKGROUND)
+   ========================================================================== */
+.section4-left-article-box {
+	display: block !important;
+	flex-basis: 68% !important;
+	flex-grow: 0 !important;
+	flex-shrink: 0 !important;
+	
+	width: 100% !important;
+	max-width: 952px !important;
+	min-height: auto !important;
+	
+	/* Restores the solid retro newspaper card background */
+	background-color: rgb(255, 253, 246) !important; /* #fffdf5 retro cream */
+	color: rgb(51, 51, 51) !important;
+	
+	border: 2px solid rgb(34, 34, 34) !important;
+	border-radius: 0px !important;
+	box-shadow: rgba(255, 255, 255, 0.1) 10px 10px 0px 0px !important;
+	box-sizing: border-box !important;
+	
+	padding: 40px !important;
+	margin: 0px !important;
+	
+	font-family: sans-serif !important;
+	font-size: 16px !important;
+	font-weight: 400 !important;
+	line-height: normal !important;
+	text-align: start !important;
+	
+	overflow: visible !important;
+	position: static !important;
+	z-index: auto !important;
+}
+
+/* ==========================================================================
+   SECTION 4.1: INNER TYPOGRAPHY & ACCENTS
+   ========================================================================== */
+
+/* Top Category Tag / Badge */
+.section4-left-article-box h1,
+.section4-left-article-box .category-tag {
+	display: inline-block !important;
+	background-color: var(--town-accent, #EB1C24) !important;
+	color: #FFFFFF !important;
+	font-family: Arial, sans-serif !important;
+	font-size: 13px !important;
+	font-weight: 800 !important;
+	text-transform: uppercase !important;
+	letter-spacing: 1px !important;
+	padding: 6px 12px !important;
+	margin-top: 0 !important;
+	margin-bottom: 24px !important;
+	border: none !important;
+	border-radius: 0px !important;
+}
+
+/* Main Article Headline */
+.section4-left-article-box h2,
+.section4-left-article-box .article-stacked-title {
+	font-family: 'Times New Roman', Times, serif !important;
+	font-size: clamp(2.4rem, 4vw, 3.5rem) !important;
+	font-weight: 700 !important;
+	color: #222222 !important;
+	line-height: 1.1 !important;
+	margin-top: 0 !important;
+	margin-bottom: 20px !important;
+	text-align: left !important;
+	border: none !important;
+}
+
+/* Subtitle with Vertical Accent Bar */
+.section4-left-article-box h3,
+.section4-left-article-box .article-stacked-deck,
+.section4-left-article-box .subtitle {
+	font-family: 'Times New Roman', Times, serif !important;
+	font-size: 1.25rem !important;
+	font-style: italic !important;
+	color: #333333 !important;
+	margin-top: 0 !important;
+	margin-bottom: 30px !important;
+	line-height: 1.5 !important;
+	text-align: left !important;
+	border-left: 5px solid var(--town-accent, #EB1C24) !important;
+	padding-left: 16px !important;
+}
+
+/* Article Body Paragraphs */
 .section4-left-article-box p {
 	font-family: 'Times New Roman', Times, serif !important;
 	font-size: 18px !important;
