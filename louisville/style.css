@@ -1,7 +1,7 @@
 /* ==========================================================================
-   Active Version: 2026-07-30_14:00
+   Active Version: 2026-07-30_16:45
    File: style.css
-   Description: Master Stylesheet - Multi-Section Wallpapers, Granular Contrasts & Layout Fixes
+   Description: Master Stylesheet - Wallpapers, Glow Effects & Theme Custom Variables
    ========================================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&family=Playfair+Display:wght@700;900&display=swap');
 
@@ -22,6 +22,9 @@
 	--retro-text: #1a1a1a;
 	--retro-shadow: 6px 6px 0px #000000;
 
+	/* Theme Custom Variables */
+	--theme-color: #3498db;
+
 	/* Granite Color Tokens */
 	--granite-red: #4a0305;
 	--granite-dark: #1c1c1e;
@@ -37,6 +40,19 @@ html[data-town="LOUISVILLE"] body {
 }
 
 * { font-family: 'Times New Roman', Times, serif !important; box-sizing: border-box; }
+
+/* Dynamic Glow Effect Component */
+.glow-effect {
+	background: linear-gradient(135deg, #6e8efb, #a777e3) !important;
+	box-shadow: 0 0 15px rgba(110, 142, 251, 0.6) !important;
+	transition: all 0.3s ease !important;
+}
+
+/* Custom Theme Card */
+.card {
+	background-color: var(--theme-color) !important;
+	border: 2px solid var(--theme-color) !important;
+}
 
 /* ==========================================================================
    BODY BACKGROUND & GRANITE BLEND
@@ -92,7 +108,7 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	height: auto !important; 
 	display: block !important; 
 	margin: 0 !important;
-	vertical-align: bottom !important; /* Prevents 3px browser spacing gap under image */
+	vertical-align: bottom !important; /* Prevents browser spacing gap under image */
 }
 
 .menu-bar { 
@@ -193,10 +209,10 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 .section4-two-box-wrapper,
 .dv-custom-article-wrapper {
 	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr)); /* Equal 1:1 balance for compact cards */
+	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: clamp(24px, 3.5vw, 40px);
 	width: 100%;
-	max-width: 1200px; /* Locks width so cards stay compact */
+	max-width: 1200px;
 	padding: 40px clamp(20px, 3.5vw, 60px);
 	margin: 50px auto;
 	align-items: start !important;
@@ -238,7 +254,6 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	box-sizing: border-box !important;
 }
 
-/* Image containment inside the tighter card width */
 .article-body-content img,
 .section4-left-article-box img,
 .section4-left-article-box p img {
