@@ -1,15 +1,15 @@
 /* ==========================================================================
-   Active Version: 2026-07-30_15:30
+   Active Version: 2026-07-30_16:15
    File: sourcetown.js / script.js
-   Description: SMLC Community Portal Network - SPA Title-First Universal Master Engine
-   Features & Architecture Standards:
-   - 100% Code Preservation: Zero code stripped or deleted
-   - SPA-Ready Execution: Hash routing support (#/route) with dynamic re-initialization
-   - Universal Lightbox Engine: All images map to overlay with alt, title, meta & UTM links
-   - Dynamic Auto-Hide Safeguard: Broken/empty image cards collapse gracefully (safeSetImageSource)
-   - Realtime Firebase Listeners: /master_county_data/towns/{Town}/ & global menu fallback
-   - Section 6 & 8 Advertising Engine: Full-Pool Fixed-Card Interior Slideshow with Offset Seed
-   - Non-Stop Partner Rotation: Runs continuously, pauses ONLY when mouse hovers or mobile touch holds over section
+   Description: SMLC Community Portal Network - Universal Master Engine
+   Upgrades:
+   - Controlled High-Density Scrolling: Calendar, News, History & Links auto-scroll if > 5 items
+   - Calendar Image Extraction: Auto-detects image URLs/tags inside description text
+   - Bulletin Feed View: Displays extracted image as a clean thumbnail
+   - Lightbox Modal View: Displays extracted image at standard size with full details
+   - Add Event to Calendar: Google Calendar URL + Browser Native .ics iCal/Outlook Download
+   - Local Links: Displays Town-Specific + Global/County-Wide Links
+   - Universal Calendar: Displays ALL county events across every town portal
    ========================================================================== */
 
 /* === SECTION 1: Geographically Correct Town Alignment Matrix === */
@@ -26,19 +26,14 @@ const TOWN_ALIAS_MAP = {
 };
 
 function getActiveTownConfig() {
-    // 1. Check URL Hash Route for SPA Navigation (#/flora, #/louisville)
     const hashRoute = (window.location.hash || "").replace("#/", "").replace("#", "").toUpperCase();
-    if (hashRoute && TOWN_ALIAS_MAP[hashRoute]) {
-        return TOWN_ALIAS_MAP[hashRoute];
-    }
+    if (hashRoute && TOWN_ALIAS_MAP[hashRoute]) return TOWN_ALIAS_MAP[hashRoute];
 
-    // 2. Parse HTML <title> tag
     const pageTitle = (document.title || "").toUpperCase();
     for (const key in TOWN_ALIAS_MAP) {
         if (pageTitle.includes(key)) return TOWN_ALIAS_MAP[key];
     }
 
-    // 3. Check data-town attribute on html/body tags
     const htmlTownAttr = (document.documentElement.getAttribute('data-town') || document.body?.getAttribute('data-town') || "").toUpperCase();
     if (htmlTownAttr) {
         for (const key in TOWN_ALIAS_MAP) {
@@ -48,7 +43,6 @@ function getActiveTownConfig() {
         }
     }
 
-    // 4. FALLBACK: Default to Clay County Home Hub (Aggregator Mode)
     return TOWN_ALIAS_MAP["HOME"];
 }
 
@@ -93,6 +87,42 @@ function formatHumanTimestamp(rawString) {
     } catch(e) { return rawString; }
 }
 
+/* Helper: Apply Max-Height Scroll Constraint to Containers with > 5 Items */
+function applyHighDensityScrollLimits(containerElement, itemCount, maxHeightPx = 480) {
+    if (!containerElement) return;
+    if (itemCount > 5) {
+        containerElement.style.maxHeight = `${maxHeightPx}px`;
+        containerElement.style.overflowY = "auto";
+        containerElement.style.paddingRight = "6px";
+    } else {
+        containerElement.style.maxHeight = "none";
+        containerElement.style.overflowY = "visible";
+        containerElement.style.paddingRight = "0px";
+    }
+}
+
+/* Helper: Extracts Image URLs from Text & Cleans Description Text */
+function extractImageFromText(rawText) {
+    if (!rawText) return { imageUrl: null, cleanText: "" };
+
+    let imageUrl = null;
+    let cleanText = rawText;
+
+    const imgTagMatch = cleanText.match(/<img[^>]+src=["']([^"']+)["']/i);
+    if (imgTagMatch && imgTagMatch[1]) {
+        imageUrl = imgTagMatch[1];
+        cleanText = cleanText.replace(/<img[^>]*>/gi, '');
+    } else {
+        const directUrlMatch = cleanText.match(/(https?:\/\/[^\s<>"']+\.(?:png|jpg|jpeg|gif|webp)(?:\?[^\s<>"']*)?)/i);
+        if (directUrlMatch && directUrlMatch[1]) {
+            imageUrl = directUrlMatch[1];
+            cleanText = cleanText.replace(directUrlMatch[1], '');
+        }
+    }
+
+    return { imageUrl: imageUrl ? imageUrl.trim() : null, cleanText: cleanText.trim() };
+}
+
 function parseInteractiveContent(rawText) {
     if (!rawText) return "";
     let parsed = rawText;
@@ -114,14 +144,10 @@ function attachUtmParameters(urlStr) {
     if (!urlStr || urlStr === "#" || urlStr.startsWith("javascript:")) return urlStr;
     try {
         const pageTitle = encodeURIComponent((document.title || "smlc_portal").trim());
-        const utmSource = "smlc_portal";
-        const utmMedium = "town_article";
-        
         const urlObj = new URL(urlStr, window.location.origin);
-        urlObj.searchParams.set("utm_source", utmSource);
-        urlObj.searchParams.set("utm_medium", utmMedium);
+        urlObj.searchParams.set("utm_source", "smlc_portal");
+        urlObj.searchParams.set("utm_medium", "town_article");
         urlObj.searchParams.set("utm_campaign", pageTitle);
-        
         return urlObj.toString();
     } catch(e) {
         const connector = urlStr.includes("?") ? "&" : "?";
@@ -177,6 +203,78 @@ function safeSetImageSource(imgElement, srcUrl, fallbackWrapper = null) {
     imgElement.src = srcUrl;
 }
 
+/* === SECTION 3B: Calendar Export Utilities === */
+function generateGoogleCalendarUrl(event) {
+    const title = encodeURIComponent(event.name || event.title || "Community Event");
+    const rawDetails = event.details || event.description || "Community Event in Clay County, IL";
+    const { cleanText } = extractImageFromText(rawDetails);
+    const details = encodeURIComponent(cleanText);
+    const location = encodeURIComponent(event.location || "Clay County, IL");
+    
+    let startIso = "";
+    let endIso = "";
+
+    try {
+        const rawDate = event.date || event.displayDate || event.event_date || Date.now();
+        const startDate = new Date(rawDate);
+        if (!isNaN(startDate.getTime())) {
+            startIso = startDate.toISOString().replace(/-|:|\.\d\d\d/g, "");
+            const endDate = new Date(startDate.getTime() + (2 * 60 * 60 * 1000));
+            endIso = endDate.toISOString().replace(/-|:|\.\d\d\d/g, "");
+        }
+    } catch(e) {}
+
+    const datesParam = (startIso && endIso) ? `&dates=${startIso}/${endIso}` : '';
+    return `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}${datesParam}`;
+}
+
+function downloadIcsCalendarFile(idx) {
+    const event = window.calendarCachedEvents[idx];
+    if (!event) return;
+
+    const title = event.name || event.title || "Community Event";
+    const rawDetails = event.details || event.description || "";
+    const { cleanText } = extractImageFromText(rawDetails);
+    const details = cleanText.replace(/\n/g, "\\n");
+    const location = event.location || "Clay County, IL";
+    
+    let startIso = new Date().toISOString().replace(/-|:|\.\d\d\d/g, "");
+    let endIso = new Date(Date.now() + 7200000).toISOString().replace(/-|:|\.\d\d\d/g, "");
+
+    try {
+        const rawDate = event.date || event.displayDate || event.event_date;
+        const d = new Date(rawDate);
+        if (!isNaN(d.getTime())) {
+            startIso = d.toISOString().replace(/-|:|\.\d\d\d/g, "");
+            endIso = new Date(d.getTime() + 7200000).toISOString().replace(/-|:|\.\d\d\d/g, "");
+        }
+    } catch(e) {}
+
+    const icsData = 
+`BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//SMLC Community Portal//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+SUMMARY:${title}
+DESCRIPTION:${details}
+LOCATION:${location}
+DTSTART:${startIso}
+DTEND:${endIso}
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR`;
+
+    const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.setAttribute('download', `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 /* === SECTION 4: Lightbox Modal & Universal Click Handler === */
 function closeLightbox(event) {
     const overlay = document.getElementById('portal-global-lightbox');
@@ -219,6 +317,7 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = ""
 function openCalendarLightboxModal(idx) {
     const targetItem = window.calendarCachedEvents[idx];
     if(!targetItem) return;
+
     const title = targetItem.name || targetItem.title || "Community Event";
     const rawDate = targetItem.date || targetItem.displayDate || targetItem.event_date || targetItem.pubDate;
     const dateText = formatHumanTimestamp(rawDate);
@@ -226,9 +325,24 @@ function openCalendarLightboxModal(idx) {
     const rawLoc = targetItem.location || ACTIVE_TOWN.primaryName + ", IL";
     const mapUrl = buildOSMapUrl(rawLoc);
     
-    let details = targetItem.details || targetItem.description || "No details provided.";
+    const rawDetails = targetItem.details || targetItem.description || "No details provided.";
+    const explicitImg = targetItem.imageUrl || targetItem.image || targetItem.img;
+    const { imageUrl: textImgUrl, cleanText } = extractImageFromText(rawDetails);
+    
+    const finalEventImg = explicitImg || textImgUrl || '';
     const metaHeader = `${dateText} @ ${timeText} | Location: <a href="${mapUrl}" target="_blank" style="color:#d9534f; text-decoration:underline;">${rawLoc}</a>`;
-    fireLightbox('', title, metaHeader, details, '', title);
+    
+    const googleCalUrl = generateGoogleCalendarUrl(targetItem);
+    const calActionHtml = `
+        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd; display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="${googleCalUrl}" target="_blank" style="background:#4285F4; color:#fff; padding:6px 12px; border-radius:4px; text-decoration:none; font-size:13px; font-weight:bold;">+ Add to Google Calendar</a>
+            <button onclick="downloadIcsCalendarFile(${idx})" style="background:#34A853; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:13px; font-weight:bold;">+ Download iCal / Outlook (.ics)</button>
+        </div>
+    `;
+
+    const lightboxImageHtml = finalEventImg ? `<div style="margin-bottom:15px; text-align:center;"><img src="${finalEventImg}" alt="${title}" style="max-width:100%; max-height:350px; border-radius:6px; object-fit:contain; box-shadow:0 2px 8px rgba(0,0,0,0.15);" /></div>` : '';
+
+    fireLightbox(finalEventImg, title, metaHeader, lightboxImageHtml + cleanText + calActionHtml, '', title);
 }
 
 function openNewsLightboxModal(idx) {
@@ -378,7 +492,6 @@ function bindFirebaseServices(stationConfigs, gasContainer) {
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
-    // 1. Fuel Prices Sync
     if (gasContainer) {
         db.ref('fuel_prices').on('value', (snap) => {
             const val = snap.val();
@@ -386,14 +499,10 @@ function bindFirebaseServices(stationConfigs, gasContainer) {
         });
     }
 
-    // 2. Dynamic Section 4.1 Article Image Listener
     bindFirebaseArticleImage(db);
-
-    // 3. Dynamic Section 1 Header Navigation Menu Listener
     bindFirebaseMenuEngine(db);
 }
 
-/* Dynamic Section 4.1 Article Image Listener matching Firebase Tree Structure */
 function bindFirebaseArticleImage(db) {
     const articleImgTarget = document.getElementById('sec-4-1-article-img');
     if (!articleImgTarget) return;
@@ -415,7 +524,6 @@ function bindFirebaseArticleImage(db) {
     });
 }
 
-/* Dynamic Section 1 Navigation Menu Listener syncing /master_county_data/global/menu */
 function bindFirebaseMenuEngine(db) {
     const menuContainer = document.getElementById('dynamic-menu-links');
     if (!menuContainer) return;
@@ -516,12 +624,8 @@ async function loadPartnersStrips(cacheBuster) {
         const partnersList = Array.isArray(data) ? data : (data.partners || []);
 
         if (partnersList.length > 0) {
-            // Section 6 receives full pool starting at index offset 0
-            if (topGrid) {
-                renderFixedCardSlideshow(topGrid, partnersList, 0, 'section6');
-            }
+            if (topGrid) renderFixedCardSlideshow(topGrid, partnersList, 0, 'section6');
 
-            // Section 8 receives full pool with an offset shift seed
             if (bottomGrid) {
                 const offsetSeed = Math.floor(partnersList.length / 2) || 1;
                 renderFixedCardSlideshow(bottomGrid, partnersList, offsetSeed, 'section8');
@@ -534,21 +638,9 @@ async function loadPartnersStrips(cacheBuster) {
     }
 }
 
-/**
- * Renders fixed-position card slots where interior details (image, text, link) 
- * continuously slide/cross-fade through the FULL partner dataset.
- * Pauses ONLY when mouse hovers or mobile touch holds over the ENTIRE section.
- * 
- * @param {HTMLElement} containerElement - Grid container target (Section 6 or Section 8)
- * @param {Array} partnerPool - Full partner manifest array
- * @param {Number} offsetSeed - Starting shift index to offset Section 8 from Section 6
- * @param {String} sectionId - Identifier ('section6' or 'section8') for timer tracking
- * @param {Number} cardsToShow - Number of fixed cards visible on screen at once
- */
 function renderFixedCardSlideshow(containerElement, partnerPool, offsetSeed = 0, sectionId = 'section6', cardsToShow = 5) {
     if (!containerElement || !partnerPool.length) return;
 
-    // Apply fixed horizontal layout
     containerElement.style.display = "flex";
     containerElement.style.justifyContent = "space-between";
     containerElement.style.alignItems = "center";
@@ -560,7 +652,6 @@ function renderFixedCardSlideshow(containerElement, partnerPool, offsetSeed = 0,
     const totalCards = Math.min(cardsToShow, poolSize);
     const cardSlotsData = [];
 
-    // Distribute full partner pool across each card slot, factoring in the offset seed
     for (let slotIndex = 0; slotIndex < totalCards; slotIndex++) {
         const slotRotationQueue = [];
         for (let step = 0; step < poolSize; step++) {
@@ -572,7 +663,6 @@ function renderFixedCardSlideshow(containerElement, partnerPool, offsetSeed = 0,
         cardSlotsData.push(slotRotationQueue);
     }
 
-    // Render fixed HTML card shells
     containerElement.innerHTML = cardSlotsData.map((slot, idx) => {
         const initialPartner = slot[0];
         const initialUrl = attachUtmParameters(initialPartner.websiteUrl || initialPartner.url || '#');
@@ -589,19 +679,13 @@ function renderFixedCardSlideshow(containerElement, partnerPool, offsetSeed = 0,
         `;
     }).join('');
 
-    // --- Section-Wide Hover & Touch Event Listeners ---
     let isSectionPaused = false;
-
-    // Desktop Mouse Hover Pause/Resume
     containerElement.addEventListener('mouseenter', () => { isSectionPaused = true; });
     containerElement.addEventListener('mouseleave', () => { isSectionPaused = false; });
-
-    // Mobile Touch Hold Pause/Resume
     containerElement.addEventListener('touchstart', () => { isSectionPaused = true; }, { passive: true });
     containerElement.addEventListener('touchend', () => { isSectionPaused = false; });
     containerElement.addEventListener('touchcancel', () => { isSectionPaused = false; });
 
-    // Attach interior content rotators
     const cardNodes = containerElement.querySelectorAll('.fixed-slide-card');
 
     cardNodes.forEach((cardNode) => {
@@ -612,7 +696,6 @@ function renderFixedCardSlideshow(containerElement, partnerPool, offsetSeed = 0,
             let currentItemIdx = 0;
 
             const timerInstance = setInterval(() => {
-                // Skip transition tick if mouse hover or touch hold is active on this section
                 if (isSectionPaused) return;
 
                 currentItemIdx = (currentItemIdx + 1) % slotRotationItems.length;
@@ -693,7 +776,7 @@ async function loadFooterDataPipeline(cacheBuster) {
     } catch(e) { console.error("Footer JSON error:", e); }
 }
 
-/* === SECTION 10: Local Links Directory Engine === */
+/* === SECTION 10: Local Links Directory Engine (High Density Controlled Scroll > 5 Items) === */
 async function loadLocalLinksDirectory(cacheBuster) {
     const linkTarget = document.getElementById('local-links-target-container');
     if (!linkTarget) return;
@@ -712,18 +795,25 @@ async function loadLocalLinksDirectory(cacheBuster) {
             const filteredLinks = rawList.filter(link => {
                 const displayName = link.name || link.title || link.label || "";
                 const displayLoc = link.location || link.town || link.city || link.category || "";
-                return matchesActiveTown(displayName, displayLoc);
+                const isGlobal = (displayLoc.toUpperCase() === "GLOBAL" || displayLoc.toUpperCase() === "ALL" || displayLoc.toUpperCase() === "CLAY COUNTY");
+                
+                return matchesActiveTown(displayName, displayLoc) || isGlobal;
             });
+
+            // Enforce Scroll Limits if > 5 items
+            applyHighDensityScrollLimits(linkTarget, filteredLinks.length, 360);
 
             if (filteredLinks.length > 0) {
                 linkTarget.innerHTML = filteredLinks.map(link => {
                     const name = link.name || link.title || link.label || "Local Resource";
                     const targetRawUrl = link.url || link.link || link.href || "#";
                     const taggedUrl = attachUtmParameters(targetRawUrl);
+                    const displayLoc = link.location || link.town || "County Wide";
 
                     return `
                         <div class="local-link-node" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #ddd; text-align: left;">
-                            <span style="font-weight: bold; font-size: 15px; color: #1a1a1a;">${name}</span> &mdash; 
+                            <span style="font-weight: bold; font-size: 15px; color: #1a1a1a;">${name}</span>
+                            <span style="font-size: 12px; color: #666; margin-left: 6px;">(${displayLoc})</span> &mdash; 
                             <a href="${taggedUrl}" target="_blank" class="local-link-anchor-btn" data-ga-label="local_link" style="font-weight: bold; color: var(--link-bright-blue); text-decoration: underline;">Visit Site &rarr;</a>
                         </div>
                     `;
@@ -858,7 +948,7 @@ async function processDataPipelines() {
 
     await initializeSection3Slideshow(cb);
 
-    // 3. Historical Timeline Engine
+    // 3. Historical Timeline Engine (High Density Controlled Scroll > 5 Items)
     const historyRowTarget = document.getElementById('history-row-target');
     try {
         const historyTree = window.globalAppConfig?.town_history_tree || {};
@@ -874,6 +964,8 @@ async function processDataPipelines() {
         const historyList = Array.isArray(payload) ? payload : (payload.history || payload.timeline || []);
 
         if (historyList.length > 0 && historyRowTarget) {
+            applyHighDensityScrollLimits(historyRowTarget, historyList.length, 520);
+
             historyRowTarget.innerHTML = historyList.map(evt => `
                 <div class="history-card" onclick="fireLightbox('${evt.image_url || evt.image || ''}', '${(evt.event || evt.title || '').replace(/'/g, "\\'")}', 'YEAR ${evt.year}', '${(evt.description || '').replace(/'/g, "\\'")}', '${evt.source_url || evt.link || ''}', '${(evt.event || evt.title || '').replace(/'/g, "\\'")}')">
                     <h2>${evt.year}</h2>
@@ -892,7 +984,7 @@ async function processDataPipelines() {
         }
     }
 
-    // 4. Calendar Bulletin Engine
+    // 4. Universal Calendar Bulletin Engine (High Density Controlled Scroll > 5 Items)
     try {
         const bulletinEndpoint = endpoints.apps_script_bulletin_url || "https://script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec";
         const res = await fetch(bulletinEndpoint + '?feed=true&' + cb);
@@ -900,33 +992,72 @@ async function processDataPipelines() {
         const scroller = document.getElementById('bulletin-scroller-target');
 
         if (Array.isArray(elements) && elements.length > 0) {
-            window.calendarCachedEvents = elements.filter(item => matchesActiveTown((item.name || item.title || "") + " " + (item.details || item.description || ""), item.location));
+            window.calendarCachedEvents = elements;
+            
             if (scroller && window.calendarCachedEvents.length > 0) {
-                scroller.innerHTML = window.calendarCachedEvents.map((item, idx) => {
-                    const mapUrl = buildOSMapUrl(item.location || ACTIVE_TOWN.primaryName);
-                    const parsedDetails = parseInteractiveContent((item.details || item.description || "").substring(0, 90));
+                applyHighDensityScrollLimits(scroller, window.calendarCachedEvents.length, 500);
+
+                const webcalFeedUrl = "https://script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec?feed=ics";
+                const googleSubUrl = `https://www.google.com/calendar/render?cid=webcal://${encodeURIComponent(webcalFeedUrl.replace(/^https?:\/\//, ''))}`;
+
+                const subscriptionHeaderHtml = `
+                    <div style="background:#f8f9fa; border:1px solid #e2e8f0; padding:10px; border-radius:6px; margin-bottom:15px; text-align:center;">
+                        <span style="font-size:12px; font-weight:bold; color:#333; display:block; margin-bottom:6px;">SUBSCRIBE TO FULL COUNTY CALENDAR</span>
+                        <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
+                            <a href="${googleSubUrl}" target="_blank" style="font-size:11px; font-weight:bold; color:#fff; background:#4285F4; padding:4px 8px; border-radius:4px; text-decoration:none;">Subscribe in Google Calendar</a>
+                            <a href="webcal://${webcalFeedUrl.replace(/^https?:\/\//, '')}" style="font-size:11px; font-weight:bold; color:#fff; background:#34A853; padding:4px 8px; border-radius:4px; text-decoration:none;">Subscribe in Apple / iCal</a>
+                        </div>
+                    </div>
+                `;
+
+                const eventsHtml = window.calendarCachedEvents.map((item, idx) => {
+                    const eventLoc = item.location || "Clay County, IL";
+                    const mapUrl = buildOSMapUrl(eventLoc);
+                    
+                    const rawDetails = item.details || item.description || "";
+                    const explicitImg = item.imageUrl || item.image || item.img;
+                    const { imageUrl: textImgUrl, cleanText } = extractImageFromText(rawDetails);
+                    
+                    const finalEventImg = explicitImg || textImgUrl || '';
+                    const parsedDetails = parseInteractiveContent(cleanText.substring(0, 90));
                     const rawDate = item.date || item.displayDate || item.event_date || item.pubDate;
                     const dateText = formatHumanTimestamp(rawDate);
+                    const googleCalUrl = generateGoogleCalendarUrl(item);
+
+                    const thumbnailHtml = finalEventImg ? `
+                        <div style="margin-top:8px; margin-bottom:8px; text-align:left;">
+                            <img src="${finalEventImg}" alt="${item.name || item.title}" onclick="openCalendarLightboxModal(${idx})" style="width:70px; height:70px; object-fit:cover; border-radius:4px; cursor:pointer; border:1px solid #ddd;" onerror="this.parentElement.style.display='none';" />
+                        </div>
+                    ` : '';
 
                     return `
                         <div class="divi-event-item" style="margin-bottom:15px; padding-bottom:10px; border-bottom:1px dashed #ccc;">
                             <div class="divi-event-date" style="font-size:12px; color:#d9534f; font-weight:bold;">${dateText} &bull; ${item.time || item.displayTime || 'TBA'}</div>
                             <div class="divi-event-title" style="font-size:16px; font-weight:bold;">${item.name || item.title}</div>
                             <div class="event-info-text" style="font-size:13px; color:#333;">
-                                <strong>Where:</strong> <a href="${mapUrl}" target="_blank" style="color:#0258A3; text-decoration:underline;">${item.location || ACTIVE_TOWN.primaryName}</a>
+                                <strong>Where:</strong> <a href="${mapUrl}" target="_blank" style="color:#0258A3; text-decoration:underline;">${eventLoc}</a>
                             </div>
+                            ${thumbnailHtml}
                             <div style="font-size:13px; color:#555; margin-top:4px;">${parsedDetails}...</div>
-                            <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:#0258A3; font-weight:bold; cursor:pointer; margin-top:6px;">Read More &rarr;</div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; flex-wrap:wrap; gap:6px;">
+                                <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:#0258A3; font-weight:bold; cursor:pointer; font-size:13px;">Read Details &rarr;</div>
+                                <div style="display:flex; gap:6px;">
+                                    <a href="${googleCalUrl}" target="_blank" title="Add to Google Calendar" style="font-size:11px; background:#e8f0fe; color:#1a73e8; padding:3px 6px; border-radius:3px; text-decoration:none; font-weight:bold;">+ Google Cal</a>
+                                    <a href="javascript:void(0)" onclick="downloadIcsCalendarFile(${idx})" title="Download iCal Event" style="font-size:11px; background:#e6f4ea; color:#137333; padding:3px 6px; border-radius:3px; text-decoration:none; font-weight:bold;">+ iCal</a>
+                                </div>
+                            </div>
                         </div>
                     `;
                 }).join('');
+
+                scroller.innerHTML = subscriptionHeaderHtml + eventsHtml;
             } else if (scroller) {
-                scroller.innerHTML = `<div style="text-align:center; padding: 20px; font-style:italic;">No upcoming events currently scheduled for ${ACTIVE_TOWN.primaryName}.</div>`;
+                scroller.innerHTML = `<div style="text-align:center; padding: 20px; font-style:italic;">No upcoming events currently scheduled in Clay County.</div>`;
             }
         }
     } catch(err) { console.error("Calendar Wire fault", err); }
 
-    // 5. Local News Matrix Pipeline
+    // 5. Local News Matrix Pipeline (High Density Controlled Scroll > 5 Items)
     try {
         const newsEndpoint = cleanRawUrl(endpoints.smlc_local_news_json) || "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/local-news/news_data.json";
         const res = await fetch(newsEndpoint + '?' + cb);
@@ -935,7 +1066,10 @@ async function processDataPipelines() {
         
         if (Array.isArray(newsArray) && targetGrid) {
             window.newsCacheBlock = newsArray.filter(item => matchesActiveTown(item.title + " " + item.full_story, item.location));
+            
             if (window.newsCacheBlock.length > 0) {
+                applyHighDensityScrollLimits(targetGrid, window.newsCacheBlock.length, 520);
+
                 targetGrid.innerHTML = window.newsCacheBlock.map((story, idx) => `
                     <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
                         ${story.image ? `<img src="${story.image}" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})" onerror="this.style.display='none';">` : ''}
@@ -968,5 +1102,5 @@ window.addEventListener('hashchange', () => {
 /* Initial Application Hydration */
 window.addEventListener('DOMContentLoaded', () => {
     processDataPipelines();
-    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-30_15:30`);
+    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-30_16:15`);
 });
