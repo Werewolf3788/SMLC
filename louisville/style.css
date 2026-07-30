@@ -1,0 +1,1240 @@
+/* ==========================================================================
+   Active Version: 2026-07-30_16:30
+   File: style.css
+   Description: Master Stylesheet - Wide 2-Column Split, Custom Section Wallpapers & High-Contrast Standards
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&family=Playfair+Display:wght@700;900&display=swap');
+
+:root {
+	--container-width: 96%;
+	--louis-red: #EB1C24;
+	--louis-black: #000000;
+	--louis-gold: #FFC10E;
+	
+	--primary: #EB1C24;
+	--secondary: #000000;
+	
+	--dynamic-bg: #121212;
+	--dynamic-text: #FFFFFF;
+	--link-bright-blue: #3182CE;
+
+	--retro-bg: #fffdf5;
+	--retro-text: #1a1a1a;
+	--retro-shadow: 6px 6px 0px #000000;
+
+	/* Granite Color Tokens */
+	--granite-red: #4a0305;
+	--granite-dark: #1c1c1e;
+	--granite-mid: #2c2c2e;
+	--granite-black: #0a0a0a;
+}
+
+body[data-town="louisville"],
+html[data-town="LOUISVILLE"] body { 
+	--town-accent: var(--louis-red); 
+	--town-secondary: var(--louis-black); 
+	--town-detail: var(--louis-gold); 
+}
+
+* { font-family: 'Times New Roman', Times, serif !important; box-sizing: border-box; }
+
+/* ==========================================================================
+   BODY BACKGROUND & GRANITE BLEND
+   ========================================================================== */
+html, body {
+	width: 100%;
+	min-height: 100vh;
+	margin: 0; 
+	padding: 0;
+}
+
+body {
+	font-size: 16px;
+	background-color: #0a0a0a !important;
+	background-image: linear-gradient(180deg, 
+		var(--granite-red) 0%, 
+		#2e080a 15%, 
+		var(--granite-mid) 38%, 
+		var(--granite-dark) 65%, 
+		var(--granite-black) 90%, 
+		#000000 100%) !important;
+	background-attachment: fixed !important;
+	background-repeat: no-repeat !important;
+	background-size: cover !important;
+	color: var(--dynamic-text);
+	-webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--link-bright-blue) !important; text-decoration: none; }
+
+/* ==========================================================================
+   SECTION 1: HEADER & MENU BAR (FLUSH HARD BARRIER - NO OVERLAP)
+   ========================================================================== */
+.site-brand-header { 
+	width: 100% !important; 
+	margin: 0 !important; 
+	padding: 0 !important; 
+	background: linear-gradient(180deg, #0C71C3 0%, #0a5da1 100%); 
+	display: block !important; 
+	position: relative !important;
+	z-index: 10 !important;
+	overflow: hidden !important;
+}
+
+.site-brand-header a { 
+	width: 100% !important; 
+	display: block !important; 
+	margin: 0 !important; 
+}
+
+.site-brand-header img { 
+	width: 100% !important; 
+	height: auto !important; 
+	display: block !important; 
+	margin: 0 !important;
+	vertical-align: bottom !important;
+}
+
+.menu-bar { 
+	width: 100% !important; 
+	background: var(--louis-red) !important; 
+	padding: clamp(10px, 1.2vw, 18px) 0; 
+	position: relative !important; 
+	top: 0; 
+	z-index: 100 !important; 
+	border-bottom: 4px solid var(--louis-gold); 
+	margin-top: 0 !important;
+	box-shadow: 0 4px 12px rgba(0,0,0,0.8);
+}
+
+.menu-inner { width: var(--container-width); margin: 0 auto; display: flex; justify-content: center; }
+.menu-links { display: flex; flex-wrap: wrap; list-style: none; gap: clamp(12px, 1.5vw, 24px); margin: 0; padding: 0; }
+.menu-links a { color: #ffffff !important; font-size: 16px; font-weight: 800; padding: 10px 18px; text-transform: uppercase; letter-spacing: 1px; }
+.menu-links a:hover, .menu-links a.active { color: var(--louis-gold) !important; border: 2px solid var(--louis-gold); background: rgba(0, 0, 0, 0.6) !important; border-radius: 8px; }
+
+/* ==========================================================================
+   SECTION 2: HERO BANNER WALLPAPER (ROYAL CRIMSON & CARBON RADIAL GLOW)
+   ========================================================================== */
+.main-container { width: var(--container-width); max-width: 100%; margin: 0 auto; padding: 36px clamp(20px, 3vw, 60px); }
+
+.town-hero-banner { 
+	width: 100%; 
+	padding: clamp(36px, 5vh, 72px) 0; 
+	display: flex; 
+	align-items: center; 
+	justify-content: center; 
+	border-bottom: 4px solid var(--louis-gold); 
+	border-radius: 16px; 
+	text-align: center; 
+	margin-bottom: 36px; 
+	background-color: #1a0203 !important;
+	background-image: 
+		radial-gradient(circle at 50% 30%, rgba(235, 28, 36, 0.45) 0%, rgba(0, 0, 0, 0.95) 75%),
+		repeating-linear-gradient(45deg, rgba(255, 193, 14, 0.05) 0px, rgba(255, 193, 14, 0.05) 2px, transparent 2px, transparent 10px) !important;
+	position: relative; 
+	overflow: hidden; 
+	box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+}
+
+.seat-badge { display: inline-block; padding: 8px 22px; background-color: var(--louis-gold); color: #000000; font-weight: 900; text-transform: uppercase; font-size: 14px; border-radius: 6px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+.town-title { font-size: clamp(2.8rem, 5vw, 4.5rem); font-weight: 900; text-transform: none !important; margin: 0; letter-spacing: 1px; text-align: center; }
+.outlined-headline { color: #ffffff !important; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 3px 3px 6px rgba(0,0,0,0.9); }
+.town-established-meta { font-size: 15px; letter-spacing: 2px; font-weight: 700; color: var(--louis-gold); margin: 10px 0 0 0; text-align: center !important; }
+.river-marquee { margin-top: 20px; font-size: 14px; font-family: monospace; font-weight: 700; color: #ffffff; background-color: rgba(0, 0, 0, 0.75); padding: 8px 22px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.2); width: max-content; margin-left: auto; margin-right: auto; }
+
+/* ==========================================================================
+   SECTION 3: SPLIT LAYOUT WALLPAPER (METALLIC COPPER & SLATE GEOMETRIC GRID)
+   ========================================================================== */
+.section3-split-layout { 
+	width: 100%; 
+	padding: clamp(36px, 5vh, 72px) clamp(20px, 3.5vw, 80px); 
+	background-color: #141218 !important;
+	background-image: 
+		linear-gradient(135deg, rgba(40, 18, 12, 0.85) 0%, rgba(15, 15, 20, 0.95) 100%),
+		linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+		linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px) !important;
+	background-size: cover, 40px 40px, 40px 40px !important;
+	border-top: 3px solid rgba(255, 193, 14, 0.3);
+	border-bottom: 3px solid rgba(255, 193, 14, 0.3);
+}
+
+.section3-container-grid { width: 100%; max-width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 36px; }
+.section3-row-1 { width: 100%; text-align: center !important; }
+.section3-main-title { font-size: clamp(2.2rem, 4vw, 3.4rem) !important; font-weight: bold; color: var(--louis-gold) !important; margin: 0 0 18px 0; text-shadow: 2px 2px 5px rgba(0,0,0,0.9); text-align: center !important; }
+.section3-intro-text { font-size: clamp(1rem, 1.3vw, 1.25rem) !important; color: #ffffff !important; line-height: 1.6; margin: 0 auto; max-width: 1200px; text-shadow: 1px 1px 3px rgba(0,0,0,0.9); text-align: center !important; }
+.section3-row-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: clamp(24px, 3.5vw, 60px); align-items: start !important; }
+@media (max-width: 1024px) { .section3-row-2 { grid-template-columns: 1fr; gap: 36px; } }
+
+.section3-left-col { display: flex !important; flex-direction: column !important; gap: 24px; height: auto !important; }
+.section3-slideshow-box { background: #111; border: 2px solid #333; border-radius: 8px; padding: 20px; width: 100%; }
+.slider-viewport { width: 100%; height: 360px; position: relative; overflow: hidden; border: 2px solid #222; background: #000; }
+.slider-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 0.8s ease-in-out; }
+.slider-slide.active { opacity: 1; }
+.slider-slide img { width: 100%; height: 100%; object-fit: cover; }
+.slider-caption { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.85); color: #ffffff; padding: 12px; font-size: 1.2rem; font-weight: bold; text-align: center; }
+
+.section3-about-box { background: rgba(18, 18, 18, 0.9); border: 1px solid rgba(255, 255, 255, 0.2); border-left: 5px solid var(--louis-gold); padding: 24px; border-radius: 8px; }
+.section3-about-tag { color: var(--louis-gold); font-size: 15px !important; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 12px; }
+.section3-about-text { font-size: 18px !important; color: #ffffff !important; line-height: 1.6; margin: 0; }
+
+.section3-right-col { display: flex !important; flex-direction: column !important; height: auto !important; }
+.section3-landmark-card { background: rgba(18, 18, 18, 0.92); border: 1px solid rgba(255, 255, 255, 0.2); border-top: 5px solid var(--louis-gold); padding: 32px; border-radius: 8px; text-align: left; height: auto !important; }
+.section3-landmark-title { font-size: clamp(1.4rem, 2.2vw, 2rem) !important; font-weight: bold; color: var(--louis-gold) !important; margin: 0 0 20px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 15px; }
+.section3-landmark-images { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 20px; }
+.section3-landmark-img-wrap img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; border: 2px solid #333; cursor: pointer; }
+.section3-landmark-caption { display: block; color: #ffffff; font-size: 15px !important; margin-top: 8px; font-weight: bold; text-align: center; }
+.section3-landmark-desc { font-size: 18px !important; color: #dddddd !important; line-height: 1.6; margin: 0; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 18px; }
+
+/* ==========================================================================
+   SECTION 4: 2-BOX SPLIT LAYOUT (WIDE SPREAD WITH LARGE CENTER GAP)
+   ========================================================================== */
+.section4-two-box-wrapper,
+.dv-custom-article-wrapper {
+	display: grid;
+	grid-template-columns: 1.2fr 1fr;
+	gap: clamp(32px, 5vw, 100px) !important;
+	width: 100% !important;
+	max-width: 100% !important;
+	padding: 40px clamp(20px, 4vw, 80px) !important;
+	margin: 40px auto;
+	align-items: start !important;
+	background-color: transparent !important;
+}
+
+@media (max-width: 1024px) {
+	.section4-two-box-wrapper,
+	.dv-custom-article-wrapper { 
+		grid-template-columns: 1fr; 
+		gap: 36px !important;
+		padding: 24px 20px !important; 
+	}
+}
+
+/* ==========================================================================
+   SECTION 4.1: ARTICLE CONTAINER & PROPORTIONAL IMAGE FIX
+   ========================================================================== */
+.section4-left-article-box {
+	width: 100% !important;
+	max-width: 100% !important;
+	background: #ffffff !important;
+	box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+	border-radius: 8px;
+	overflow: hidden !important;
+	padding: 0;
+	font-family: 'Libre Baskerville', serif !important;
+	color: #1a1a1a !important;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	box-sizing: border-box !important;
+}
+
+.article-body-content img,
+.section4-left-article-box img,
+.section4-left-article-box p img {
+	width: 100% !important;
+	max-width: 100% !important;
+	height: auto !important;
+	max-height: 380px !important;
+	object-fit: cover !important;
+	display: block !important;
+	margin: 16px auto !important;
+	border-radius: 6px !important;
+	border: 2px solid #222222 !important;
+	box-shadow: 4px 4px 0px #000000 !important;
+	box-sizing: border-box !important;
+}
+
+.article-centered-header,
+.section4-centered-article-header {
+	background: linear-gradient(180deg, #eb1c24 0%, #1a1a1a 100%) !important;
+	color: #ffffff !important;
+	padding: clamp(28px, 4vh, 52px) 24px !important;
+	text-align: center !important;
+	border-bottom: 8px solid var(--louis-gold) !important;
+}
+
+.category-tag {
+	font-family: 'Oswald', sans-serif !important;
+	background: var(--louis-gold) !important;
+	color: #000000 !important;
+	padding: 6px 18px !important;
+	display: inline-block !important;
+	letter-spacing: 2px !important;
+	font-size: 0.95rem !important;
+	font-weight: bold !important;
+	margin-bottom: 18px !important;
+	text-transform: uppercase !important;
+}
+
+.article-stacked-title {
+	font-family: 'Montserrat', sans-serif !important;
+	font-size: clamp(2rem, 4vw, 3.5rem) !important;
+	line-height: 1.1 !important;
+	margin: 0 auto 16px !important;
+	text-transform: uppercase !important;
+	color: #ffffff !important;
+	text-align: center !important;
+}
+
+.article-stacked-deck {
+	font-size: 1.25rem !important;
+	font-style: italic !important;
+	opacity: 0.95 !important;
+	color: #ffffff !important;
+	margin: 0 auto !important;
+	text-align: center !important;
+	max-width: 900px;
+}
+
+.article-body-content {
+	padding: clamp(20px, 3vw, 40px) !important;
+	font-size: 1.15rem !important;
+	color: #1a1a1a !important;
+	background-color: #ffffff !important;
+	box-sizing: border-box !important;
+}
+
+.article-body-content figure {
+	margin: 24px 0 !important;
+	padding: 0 !important;
+	width: 100% !important;
+	max-width: 100% !important;
+}
+
+.article-body-content figcaption {
+	font-size: 0.95rem !important;
+	font-style: italic !important;
+	text-align: center !important;
+	color: #555555 !important;
+	margin-top: 8px !important;
+}
+
+.article-body-content p {
+	margin-bottom: 1.5em !important;
+	text-align: justify !important;
+	font-family: 'Libre Baskerville', serif !important;
+	color: #1a1a1a !important;
+	line-height: 1.8 !important;
+}
+
+.article-footer {
+	background: #f4f4f4 !important;
+	padding: 18px 36px !important;
+	border-top: 1px solid #ddd !important;
+	font-family: 'Oswald', sans-serif !important;
+	display: flex !important;
+	justify-content: space-between !important;
+	font-size: 0.9rem !important;
+	color: #555555 !important;
+	text-transform: uppercase !important;
+}
+
+/* SECTION 4.2: RIGHT SIDE WIDGET STACK */
+.section4-right-widgets-stack,
+.dv-custom-article-wrapper .sidebar {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 30px !important;
+	justify-content: flex-start !important;
+}
+
+/* SECTION 4.2.2.1: BUSINESS SPOTLIGHT CARD */
+.clay-county-news-box.spotlight-clipping,
+.business-spotlight-showcase-card {
+	width: 100% !important;
+	padding: 28px !important;
+	border: 2px solid #222 !important;
+	background-color: #fffdf5 !important;
+	box-shadow: 6px 6px 0px #000000 !important;
+	font-family: Arial, sans-serif !important;
+	position: relative !important;
+	border-radius: 6px;
+}
+.sidebar-widget-title {
+	background-color: var(--louis-red) !important;
+	color: #ffffff !important;
+	font-family: 'Oswald', sans-serif !important;
+	font-size: 20px !important;
+	font-weight: 700 !important;
+	text-transform: uppercase;
+	text-align: center;
+	padding: 10px 14px;
+	margin: -28px -28px 20px -28px;
+	border-bottom: 2px solid #000;
+}
+.news-box-header {
+	text-align: center;
+	border-top: 4px double #222;
+	border-bottom: 2px solid #222;
+	padding: 14px 0;
+	margin-bottom: 20px;
+}
+.news-box-header h3 {
+	font-family: "Times New Roman", Times, serif !important;
+	font-weight: 900 !important;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+	margin: 0 !important;
+	color: #222 !important;
+	font-size: 26px !important;
+	line-height: 1.2 !important;
+}
+.spotlight-image-wrap, .showcase-media-canvas {
+	width: 100%;
+	height: auto;
+	border: 2px solid #222;
+	margin-bottom: 18px;
+	overflow: hidden;
+	background-color: #eee;
+}
+.spotlight-image-wrap img, .showcase-media-canvas img {
+	width: 100%;
+	display: block;
+	filter: grayscale(10%) contrast(110%);
+}
+.biz-title, #spotlight-asset-name {
+	font-family: "Times New Roman", Times, serif !important;
+	font-size: 24px !important;
+	font-weight: bold;
+	color: #1a1a1a !important;
+	text-align: center;
+	display: block;
+	margin-bottom: 6px;
+}
+.biz-location, #spotlight-asset-loc {
+	font-size: 13px !important;
+	text-transform: uppercase;
+	letter-spacing: 2px;
+	color: #d9534f !important;
+	font-weight: bold;
+	display: block;
+	text-align: center;
+	margin-bottom: 16px;
+}
+.biz-description, #spotlight-asset-desc {
+	font-size: 16px !important;
+	line-height: 1.6;
+	color: #333333 !important;
+	padding: 0 6px;
+	margin-bottom: 22px;
+	text-align: justify;
+}
+.spotlight-btn, #spotlight-asset-link {
+	display: block;
+	text-align: center;
+	background-color: #222;
+	color: #fff !important;
+	padding: 14px;
+	text-transform: uppercase;
+	font-weight: bold;
+	letter-spacing: 1px;
+	text-decoration: none !important;
+	font-size: 15px;
+	border: 2px solid #222;
+	transition: all 0.3s;
+}
+.spotlight-btn:hover, #spotlight-asset-link:hover {
+	background-color: var(--louis-gold) !important;
+	color: #000000 !important;
+	border-color: #000000 !important;
+}
+
+/* SECTION 4.2.2.2: FUEL INDEX MONITOR GAS WIDGET */
+.fuel-monitor-billboard-card {
+	background-color: #fffdf5 !important;
+	border: 2px solid #000000 !important;
+	box-shadow: 6px 6px 0px #000000 !important;
+	border-radius: 6px !important;
+	padding: 24px !important;
+	color: #222222 !important;
+}
+.fuel-station-header {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	border-bottom: 2px solid #000;
+	padding-bottom: 12px;
+	margin-bottom: 18px;
+}
+.station-logo-frame {
+	width: 50px;
+	height: 50px;
+	border: 2px solid #000;
+	border-radius: 6px;
+	overflow: hidden;
+}
+.station-logo-frame img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.station-meta-title {
+	font-family: 'Oswald', sans-serif !important;
+	font-size: 18px;
+	font-weight: bold;
+	color: #000;
+	letter-spacing: 1px;
+}
+.fuel-pricing-grid { 
+	display: grid !important; 
+	grid-template-columns: 1fr 1fr !important; 
+	gap: 16px !important; 
+}
+.fuel-pricing-grid .price-box { 
+	padding: 16px 10px; 
+	background: #000000 !important; 
+	border: 2px solid #000000 !important; 
+	border-radius: 6px; 
+	text-align: center; 
+	box-shadow: inset 0 0 10px rgba(0,0,0,0.9) !important; 
+}
+.price-type-label { 
+	display: block; 
+	font-size: 13px !important; 
+	color: #aaaaaa !important; 
+	font-weight: bold; 
+	margin-bottom: 4px; 
+	text-transform: uppercase; 
+}
+.price-value-regular { 
+	color: #39ff14 !important;
+	font-size: 28px !important; 
+	font-weight: 900 !important; 
+	text-shadow: 0 0 10px rgba(57, 255, 20, 0.7);
+}
+.price-value-diesel { 
+	color: #eb1c24 !important;
+	font-size: 28px !important; 
+	font-weight: 900 !important; 
+	text-shadow: 0 0 10px rgba(235, 28, 36, 0.7);
+}
+.sync-timestamp-label {
+	font-size: 12px;
+	color: #555;
+	text-align: center;
+	margin-top: 12px;
+	font-style: italic;
+}
+
+/* ==========================================================================
+   SECTION 5: HISTORICAL TIMELINE WALLPAPER (VINTAGE DEEP EMERALD STRIPES)
+   ========================================================================== */
+.historical-timeline-chassis-wrapper {
+	width: 100% !important;
+	padding: clamp(36px, 5vh, 72px) clamp(20px, 3.5vw, 80px) !important;
+	background-color: #07140e !important;
+	background-image: 
+		linear-gradient(180deg, rgba(8, 30, 20, 0.9) 0%, rgba(5, 12, 8, 0.95) 100%),
+		repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 20px, transparent 20px, transparent 40px) !important;
+	box-sizing: border-box;
+	border-radius: 12px;
+	border-top: 4px solid var(--louis-gold);
+	border-bottom: 4px solid var(--louis-gold);
+}
+
+.timeline-full-width-container,
+.timeline-inner-bounds {
+	width: 100% !important;
+	max-width: 100% !important;
+	margin: 0 auto !important;
+}
+
+.timeline-row-1-header {
+	text-align: center !important;
+	margin-bottom: 40px !important;
+}
+
+.timeline-row-1-header title1,
+.main-timeline-center-title-node {
+	font-family: 'Playfair Display', Georgia, serif !important;
+	font-size: clamp(2.2rem, 4vw, 3.5rem) !important;
+	font-weight: 900 !important;
+	color: var(--louis-gold) !important;
+	display: block !important;
+	margin-bottom: 12px !important;
+	text-shadow: 2px 2px 8px #000000 !important;
+}
+
+.main-timeline-sub-caption-node {
+	font-family: 'Times New Roman', Times, serif !important;
+	font-size: clamp(1rem, 1.3vw, 1.25rem) !important;
+	color: #FFFFFF !important;
+	font-weight: 700 !important;
+	text-shadow: 1px 1px 4px #000000 !important;
+}
+
+.timeline-5x2-full-grid,
+.timeline-row-2-cards {
+	display: grid !important;
+	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
+	gap: clamp(20px, 2.5vw, 40px) !important;
+	width: 100% !important;
+	align-items: stretch !important;
+}
+
+.history-card {
+	background-color: #fffdf5 !important;
+	border: 2px solid #000000 !important;
+	box-shadow: 6px 6px 0px #000000 !important;
+	border-radius: 6px !important;
+	padding: 26px !important;
+	display: flex !important;
+	flex-direction: column !important;
+	justify-content: flex-start !important;
+	text-align: left !important;
+	height: 100% !important;
+	width: 100% !important;
+	margin: 0 !important;
+	box-sizing: border-box !important;
+}
+
+.history-card h2,
+.history-card h2.history-year-title {
+	font-family: 'Times New Roman', Times, serif !important;
+	font-size: 32px !important;
+	font-weight: 900 !important;
+	color: #0258A3 !important;
+	margin: 0 0 12px 0 !important;
+	padding-bottom: 8px !important;
+	border-bottom: 2px solid #222222 !important;
+	line-height: 1.1 !important;
+}
+
+.history-card h3,
+.history-card h3.history-event-header {
+	font-family: 'Playfair Display', Georgia, serif !important;
+	font-size: 20px !important;
+	font-weight: 700 !important;
+	color: #000000 !important;
+	margin: 0 0 16px 0 !important;
+	line-height: 1.3 !important;
+}
+
+.history-card p,
+.history-card p.history-desc-text {
+	font-family: 'Times New Roman', Times, serif !important;
+	font-size: 16px !important;
+	line-height: 1.6 !important;
+	color: #222222 !important;
+	margin: 0 0 22px 0 !important;
+	flex-grow: 1 !important;
+}
+
+.history-card .history-img-box {
+	width: 100% !important;
+	height: 200px !important;
+	margin-top: auto !important;
+	overflow: hidden !important;
+	border: 2px solid #000000 !important;
+	border-radius: 4px !important;
+	background-color: #eeeeee !important;
+}
+
+.history-card .history-img-box img {
+	width: 100% !important;
+	height: 100% !important;
+	object-fit: cover !important;
+	display: block !important;
+	filter: grayscale(10%) contrast(105%);
+}
+
+/* ==========================================================================
+   SECTION 6 & 8: PARTNERS STRIP WALLPAPER (MIDNIGHT SAPPHIRE TECH SLATE)
+   ========================================================================== */
+.widescreen-strip-container,
+.section8-town-images-strip {
+	width: 100% !important;
+	max-width: 100vw !important;
+	background-color: #02122b !important;
+	background-image: 
+		radial-gradient(ellipse at top, rgba(12, 113, 195, 0.35) 0%, rgba(2, 18, 43, 0.95) 70%),
+		repeating-linear-gradient(-45deg, rgba(255, 193, 14, 0.04) 0px, rgba(255, 193, 14, 0.04) 1px, transparent 1px, transparent 12px) !important;
+	padding: 36px clamp(20px, 4vw, 80px) !important;
+	box-sizing: border-box !important;
+	margin: 0 !important;
+	border-top: 3px solid var(--louis-gold);
+	border-bottom: 3px solid var(--louis-gold);
+}
+
+.showcase-widget.full-bleed-widget {
+	width: 100% !important;
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+	padding: 0 !important;
+	margin: 0 !important;
+}
+
+.partners-horizontal-strip {
+	display: flex !important;
+	justify-content: space-between !important;
+	align-items: center !important;
+	gap: clamp(16px, 2.5vw, 40px) !important;
+	overflow-x: auto !important;
+	width: 100% !important;
+	padding-bottom: 10px !important;
+}
+
+.partner-card {
+	flex: 1 1 200px !important;
+	max-width: 280px !important;
+	background: #ffffff !important;
+	border: 2px solid #000000 !important;
+	border-radius: 6px !important;
+	padding: 16px !important;
+	box-shadow: 4px 4px 0px #000000 !important;
+	text-align: center !important;
+	color: #000000 !important;
+	height: auto !important;
+	display: flex !important;
+	flex-direction: column !important;
+	justify-content: space-between !important;
+	transition: transform 0.2s ease !important;
+}
+
+.partner-card:hover {
+	transform: translateY(-3px) !important;
+}
+
+.partner-logo-box {
+	width: 100% !important;
+	height: 110px !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	overflow: hidden !important;
+	background-color: #f9f9f9 !important;
+	border: 1px solid #ddd !important;
+	border-radius: 4px !important;
+	padding: 8px !important;
+}
+
+.partner-logo-box img,
+.partner-card img {
+	max-width: 100% !important;
+	max-height: 100% !important;
+	width: auto !important;
+	height: auto !important;
+	object-fit: contain !important;
+	display: block !important;
+	cursor: pointer !important;
+}
+
+.partner-card h4 {
+	font-family: 'Times New Roman', Times, serif !important;
+	font-size: 15px !important;
+	font-weight: bold !important;
+	margin: 10px 0 0 0 !important;
+	color: #000000 !important;
+	line-height: 1.2 !important;
+}
+
+.partner-card h4 a {
+	color: #000000 !important;
+	text-decoration: none !important;
+}
+
+.partner-card h4 a:hover {
+	color: #0258A3 !important;
+	text-decoration: underline !important;
+}
+
+/* ==========================================================================
+   SECTION 7: THREE COLUMN INTERFACE WALLPAPER (OBSIDIAN & WINE TAPESTRY)
+   ========================================================================== */
+.smlc-three-column-portal-wrapper { 
+	width: 100%; 
+	padding: clamp(36px, 5vh, 72px) clamp(20px, 4vw, 80px) !important; 
+	background-color: #0f0a0c !important; 
+	background-image: 
+		radial-gradient(circle at 50% 50%, rgba(164, 79, 11, 0.25) 0%, rgba(15, 10, 12, 0.98) 80%),
+		repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 6px) !important;
+	border-top: 4px solid var(--louis-gold);
+	border-bottom: 4px solid var(--louis-gold);
+}
+
+.portal-grid-layout-fixed { 
+	display: grid; 
+	grid-template-columns: repeat(3, 1fr) !important; 
+	gap: clamp(24px, 3.5vw, 60px) !important; 
+	width: 100%; 
+	align-items: start !important; 
+}
+@media (max-width: 1024px) { .portal-grid-layout-fixed { grid-template-columns: 1fr !important; gap: 36px !important; } }
+
+.portal-column-cell-box { display: flex !important; flex-direction: column !important; gap: 36px !important; justify-content: flex-start !important; height: auto !important; }
+.card-module-wrapper { display: flex !important; flex-direction: column !important; height: auto !important; }
+
+/* MODULE HEADING HEADER BOX (#A44F0B) */
+.et_pb_module_heading {
+	background-color: #A44F0B !important;
+	color: #ffffff !important;
+	font-family: "Playfair Display", Georgia, "Times New Roman", serif !important;
+	font-size: 24px !important;
+	font-weight: bold !important;
+	text-align: center !important;
+	margin: 0 0 16px 0 !important;
+	padding: 12px 18px !important;
+	border: 2px solid #000000 !important;
+	box-shadow: 4px 4px 0px #000000 !important;
+	border-radius: 4px !important;
+	display: block !important;
+}
+
+/* SECTION 7.1.1: EVENT CLIPPING SUBMISSION BOX */
+.clay-county-news-box.event-clipping {
+	box-sizing: border-box !important;
+	width: 100% !important;
+	max-width: 480px !important;
+	margin: 20px auto !important;
+	padding: 25px !important;
+	border: 2px solid #222 !important;
+	background-color: #fffdf5 !important;
+	box-shadow: 6px 6px 0px #222 !important;
+	font-family: "Times New Roman", Times, serif !important;
+	position: relative !important;
+	align-self: center !important;
+}
+
+.clipping-tag {
+	position: absolute !important;
+	top: -12px !important;
+	left: 15px !important;
+	background: #222 !important;
+	color: #fff !important;
+	font-size: 10px !important;
+	padding: 3px 10px !important;
+	text-transform: uppercase !important;
+	font-weight: bold !important;
+	letter-spacing: 1px !important;
+	z-index: 10 !important;
+}
+
+.event-clipping-header {
+	text-align: center !important;
+	border-top: 4px double #222 !important;
+	border-bottom: 2px solid #222 !important;
+	padding: 15px 0 !important;
+	margin-bottom: 20px !important;
+	margin-top: 5px !important;
+}
+
+.event-clipping-header h3 {
+	font-family: "Times New Roman", Times, serif !important;
+	font-weight: 900 !important;
+	text-transform: uppercase !important;
+	letter-spacing: 1px !important;
+	margin: 0 !important;
+	color: #d9534f !important;
+	font-size: 26px !important;
+	line-height: 1.1 !important;
+}
+
+.event-clipping-text {
+	font-size: 16px !important;
+	line-height: 1.5 !important;
+	color: #222 !important;
+	text-align: center !important;
+	margin-bottom: 20px !important;
+	font-style: italic !important;
+}
+
+.event-clipping-btn {
+	display: block !important;
+	text-align: center !important;
+	background-color: #222 !important;
+	color: #fff !important;
+	padding: 14px !important;
+	text-transform: uppercase !important;
+	font-weight: bold !important;
+	letter-spacing: 2px !important;
+	text-decoration: none !important;
+	font-size: 14px !important;
+	border: 1px solid #222 !important;
+	transition: all 0.3s !important;
+}
+
+.event-clipping-btn:hover {
+	background-color: #d9534f !important;
+	border-color: #d9534f !important;
+	color: #fff !important;
+}
+
+.clipping-footer {
+	display: block !important;
+	text-align: center !important;
+	font-size: 10px !important;
+	color: #666 !important;
+	margin-top: 15px !important;
+	text-transform: uppercase !important;
+	letter-spacing: 1px !important;
+}
+
+/* SECTION 7.1.2: DYNAMIC COMMUNITY CALENDAR BULLETIN FEED */
+.news-clipping-wrapper {
+	background-color: #fffdf5;
+	box-shadow: 6px 6px 0px rgba(0,0,0,0.6); 
+	border: 2px solid #222;
+	font-family: 'Times New Roman', Times, serif;
+	color: #222;
+	width: 100%;
+	max-width: 100%;
+	margin: 0 auto;
+	overflow: hidden;
+	padding: 28px;
+	border-radius: 6px;
+}
+.clipping-masthead {
+	text-align: center;
+	padding-bottom: 16px;
+	border-bottom: 4px double #222; 
+	margin-bottom: 22px; 
+}
+.black-tag {
+	background: #000;
+	color: #fff;
+	text-transform: uppercase;
+	font-size: 22px;
+	font-weight: bold;
+	padding: 6px 18px;
+	display: inline-block;
+	letter-spacing: 1px;
+	line-height: 1;
+}
+.clipping-tagline {
+	font-size: 13px;
+	text-transform: uppercase;
+	font-weight: bold;
+	margin: 12px 0 0 0;
+	letter-spacing: 1px;
+	color: #444;
+}
+#divi-event-list,
+#bulletin-scroller-target {
+	max-height: 560px !important;
+	overflow-y: auto !important;
+	padding-right: 8px !important;
+}
+.divi-event-item {
+	border-bottom: 1px dashed #777;
+	padding: 18px 0;
+	text-align: left;
+}
+.divi-event-item:last-child {
+	border-bottom: none;
+}
+.divi-event-date {
+	color: #cc0000;
+	font-weight: bold;
+	font-size: 15px;
+	text-transform: uppercase;
+}
+.divi-event-title {
+	font-size: 22px; 
+	font-weight: bold;
+	margin: 6px 0;
+	line-height: 1.25;
+}
+.event-info-text {
+	font-size: 16px;
+	line-height: 1.5;
+	color: #333;
+}
+.event-snippet {
+	font-size: 15px;
+	color: #555;
+	font-style: italic;
+	margin: 10px 0;
+	line-height: 1.5;
+	display: block;
+}
+.full-details {
+	display: none;
+	font-size: 15px;
+	color: #222;
+	margin: 12px 0;
+	line-height: 1.6;
+	background: rgba(0,0,0,0.04);
+	padding: 12px;
+	border-left: 4px solid #cc0000;
+}
+.read-more-btn {
+	color: #cc0000;
+	text-decoration: underline;
+	font-weight: bold;
+	font-size: 14px;
+	cursor: pointer;
+	text-transform: uppercase;
+	display: inline-block;
+	margin-top: 6px;
+}
+
+/* SECTION 7.2: CENTER COLUMN RETRO CONTAINERS */
+.newspaper-feed-chassis {
+	background-color: #fffdf5 !important; 
+	border: 3px double #222222 !important; 
+	box-shadow: 6px 6px 0px #222222 !important; 
+	padding: 28px !important;
+	border-radius: 6px;
+	color: #222222 !important;
+}
+.news-dynamic-masonry {
+	max-height: 560px !important;
+	overflow-y: auto !important;
+	padding-right: 8px !important;
+	text-align: left !important;
+}
+
+/* SECTION 7.3.1: FACEBOOK INVITATION CARD */
+.clay-county-news-box.group-invitation-master {
+	box-sizing: border-box !important;
+	width: 100% !important;
+	max-width: 400px !important;
+	margin: 20px auto !important;
+	padding: 25px !important;
+	border: 3px double #222 !important;
+	background-color: #fffdf5 !important;
+	box-shadow: 6px 6px 0px #222 !important;
+	font-family: Arial, sans-serif !important;
+	position: relative !important;
+	text-align: center !important;
+	align-self: center !important;
+}
+
+.notice-tag-red {
+	background: #d9534f !important;
+	color: #fff !important;
+	font-size: 11px !important;
+	padding: 4px 15px !important;
+	text-transform: uppercase !important;
+	font-weight: bold !important;
+	display: inline-block !important;
+	position: absolute !important;
+	top: -15px !important;
+	left: 50% !important;
+	transform: translateX(-50%) !important;
+	border: 1px solid #222 !important;
+	box-shadow: 2px 2px 0px #222 !important;
+	z-index: 10 !important;
+	white-space: nowrap !important;
+}
+
+.polaroid-wrap {
+	background: #fff !important;
+	padding: 10px 10px 25px 10px !important;
+	border: 1px solid #ccc !important;
+	box-shadow: 3px 3px 8px rgba(0,0,0,0.2) !important;
+	transform: rotate(-3deg) !important;
+	margin-bottom: 20px !important;
+}
+
+.polaroid-wrap img {
+	width: 100% !important;
+	display: block !important;
+	filter: grayscale(20%) sepia(10%) !important;
+}
+
+.invitation-header-main {
+	border-top: 4px double #222 !important;
+	border-bottom: 1px solid #222 !important;
+	padding: 12px 0 !important;
+	margin-bottom: 15px !important;
+}
+
+.invitation-header-main h3 {
+	font-family: "Times New Roman", Times, serif !important;
+	font-weight: 900 !important;
+	text-transform: uppercase !important;
+	font-size: 20px !important;
+	margin: 0 0 5px 0 !important;
+	color: #222 !important;
+	line-height: 1.1 !important;
+}
+
+.sub-header-text {
+	font-size: 11px !important;
+	color: #444 !important;
+	font-weight: bold !important;
+	display: block !important;
+	letter-spacing: 0.5px !important;
+	text-transform: none !important;
+}
+
+.invitation-body-text {
+	font-family: "Times New Roman", Times, serif !important;
+	font-size: 15px !important;
+	line-height: 1.4 !important;
+	color: #333 !important;
+	font-style: italic !important;
+	margin-bottom: 20px !important;
+	padding: 0 10px !important;
+}
+
+.fb-action-btn {
+	display: block !important;
+	background-color: #222 !important;
+	color: #fff !important;
+	padding: 12px !important;
+	text-transform: uppercase !important;
+	font-weight: bold !important;
+	letter-spacing: 1px !important;
+	text-decoration: none !important;
+	font-size: 13px !important;
+	border: 2px solid #222 !important;
+	transition: all 0.3s ease !important;
+}
+
+.fb-action-btn:hover {
+	background-color: #fffdf5 !important;
+	color: #222 !important;
+}
+
+.community-voice-footer {
+	display: block !important;
+	margin-top: 15px !important;
+	font-size: 9px !important;
+	color: #777 !important;
+	text-transform: lowercase !important;
+	letter-spacing: 1px !important;
+	text-align: center !important;
+}
+
+/* SECTION 7.2.3: CLAY COUNTY BUSINESS DIRECTORY BANNER & BUTTON CONTAINER */
+.town-directory-container-s7 {
+	display: flex !important;
+	flex-direction: column !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 100% !important;
+	margin-top: 10px !important;
+}
+
+.town-directory-banner-s7 {
+	width: 100% !important;
+	max-width: 100% !important;
+	height: auto !important;
+	display: block !important;
+	margin: 0 0 18px 0 !important;
+	border: 2px solid #000000 !important;
+	box-shadow: 6px 6px 0px #000000 !important;
+	border-radius: 6px !important;
+	object-fit: contain !important;
+	background-color: #ffffff !important;
+	cursor: pointer !important;
+}
+
+.town-directory-interactive-btn-s7 {
+	background-color: #000000 !important;
+	color: var(--louis-gold) !important;
+	border: 2px solid var(--louis-gold) !important;
+	border-radius: 31px !important;
+	cursor: pointer;
+	display: inline-block;
+	font-size: 17px;
+	font-weight: 800;
+	padding: 14px 28px;
+	text-align: center;
+	text-decoration: none !important;
+	transition: all 0.3s ease;
+}
+.town-directory-interactive-btn-s7:hover {
+	background-color: var(--louis-gold) !important;
+	color: #000000 !important;
+}
+
+/* ==========================================================================
+   SECTION 9 & 10: BOLD PRINT MATRIX & PROCLAMATION CARD WALLPAPER
+   ========================================================================== */
+.section9-bold-print-wrapper,
+.section10-message-chassis {
+	width: 100% !important;
+	box-sizing: border-box !important;
+	margin: 40px auto !important;
+	padding: 20px;
+	background-color: #120306 !important;
+	background-image: 
+		linear-gradient(135deg, rgba(74, 3, 5, 0.8) 0%, rgba(10, 10, 10, 0.95) 100%),
+		repeating-linear-gradient(60deg, rgba(255, 193, 14, 0.03) 0px, rgba(255, 193, 14, 0.03) 1px, transparent 1px, transparent 14px) !important;
+	border-radius: 8px;
+	border: 1px solid var(--louis-gold);
+}
+
+.section10-proclamation-card-box {
+	background: #fffdf5 !important;
+	border: 2px solid #222222 !important;
+	padding: 30px !important;
+	box-shadow: 6px 6px 0px #000000 !important;
+	border-radius: 6px !important;
+	color: #222222 !important;
+	text-align: center !important;
+}
+
+.proclamation-body-text {
+	font-family: 'Times New Roman', Times, serif !important;
+	font-size: 18px !important;
+	font-weight: 900 !important;
+	line-height: 1.7 !important;
+	margin-bottom: 18px !important;
+	color: #1a1a1a !important;
+}
+
+.proclamation-contact-text {
+	font-family: 'Oswald', sans-serif !important;
+	font-size: 16px !important;
+	font-weight: 700 !important;
+	text-transform: uppercase !important;
+	letter-spacing: 1px !important;
+	color: #000000 !important;
+}
+
+.proclamation-contact-text a {
+	color: #0258A3 !important;
+	font-weight: 900 !important;
+	text-decoration: underline !important;
+}
+
+.proclamation-contact-text a:hover {
+	color: #eb1c24 !important;
+}
+
+/* ==========================================================================
+   FOOTER MATRIX
+   ========================================================================== */
+.site-global-footer-matrix { width: 100% !important; background-color: #000000 !important; color: #ffffff !important; padding: 45px 0 25px 0 !important; border-top: 4px solid var(--louis-gold) !important; text-align: center !important; }
+.site-global-footer-matrix p, .site-global-footer-matrix span { color: #ffffff !important; font-size: 15px !important; }
+
+/* ==========================================================================
+   LIGHTBOX MODAL (UNIVERSAL OVERLAY)
+   ========================================================================== */
+.lightbox-overlay-mask { 
+	position: fixed !important; 
+	top: 0 !important; 
+	left: 0 !important; 
+	width: 100% !important; 
+	height: 100% !important; 
+	background-color: rgba(0, 0, 0, 0.88) !important; 
+	backdrop-filter: blur(8px) !important; 
+	z-index: 10000 !important; 
+	display: none; 
+	align-items: center !important; 
+	justify-content: center !important; 
+	padding: 24px !important; 
+	cursor: pointer !important;
+}
+.lightbox-overlay-mask.active-show { display: flex !important; }
+.lightbox-modal-window { 
+	background: #fffdf5 !important; 
+	border: 2px solid #222 !important; 
+	box-shadow: 12px 12px 0px #000 !important; 
+	max-width: 56rem !important; 
+	width: 100% !important; 
+	border-radius: 6px !important; 
+	display: flex !important; 
+	flex-direction: column !important; 
+	max-height: 90vh !important; 
+	overflow: hidden !important; 
+	color: #1a1a1a !important; 
+	cursor: default !important;
+}
+.lightbox-modal-window p, .lightbox-modal-window h3 { color: #1a1a1a !important; font-size: 16px !important; }
