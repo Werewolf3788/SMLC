@@ -1,15 +1,14 @@
 /* ==========================================================================
-   Active Version: 2026-07-30_16:15
+   Active Version: 2026-07-30_17:00
    File: sourcetown.js / script.js
-   Description: SMLC Community Portal Network - Universal Master Engine
+   Description: SMLC Community Portal Network - Universal Title-First SPA Master Engine
    Upgrades:
+   - High-Contrast Subscription & Calendar Export Buttons (Fixed Blue-on-Blue contrast issue)
+   - Sections 6 & 8 Advertising Engine: Full-Pool Fixed-Card Rotator with Offset Seed
+   - Section Pause Control: Continuously slides, pauses ONLY on mouse hover or mobile touch-hold
    - Controlled High-Density Scrolling: Calendar, News, History & Links auto-scroll if > 5 items
    - Calendar Image Extraction: Auto-detects image URLs/tags inside description text
-   - Bulletin Feed View: Displays extracted image as a clean thumbnail
-   - Lightbox Modal View: Displays extracted image at standard size with full details
-   - Add Event to Calendar: Google Calendar URL + Browser Native .ics iCal/Outlook Download
-   - Local Links: Displays Town-Specific + Global/County-Wide Links
-   - Universal Calendar: Displays ALL county events across every town portal
+   - Universal Calendar & Directory: Displays ALL county events & Global links across all town portals
    ========================================================================== */
 
 /* === SECTION 1: Geographically Correct Town Alignment Matrix === */
@@ -26,14 +25,17 @@ const TOWN_ALIAS_MAP = {
 };
 
 function getActiveTownConfig() {
+    // 1. Hash Navigation Priority (#/louisville, #/flora)
     const hashRoute = (window.location.hash || "").replace("#/", "").replace("#", "").toUpperCase();
     if (hashRoute && TOWN_ALIAS_MAP[hashRoute]) return TOWN_ALIAS_MAP[hashRoute];
 
+    // 2. Document Title Priority
     const pageTitle = (document.title || "").toUpperCase();
     for (const key in TOWN_ALIAS_MAP) {
         if (pageTitle.includes(key)) return TOWN_ALIAS_MAP[key];
     }
 
+    // 3. Body/HTML Attribute Priority
     const htmlTownAttr = (document.documentElement.getAttribute('data-town') || document.body?.getAttribute('data-town') || "").toUpperCase();
     if (htmlTownAttr) {
         for (const key in TOWN_ALIAS_MAP) {
@@ -43,12 +45,13 @@ function getActiveTownConfig() {
         }
     }
 
+    // 4. Default Aggregator Hub
     return TOWN_ALIAS_MAP["HOME"];
 }
 
 let ACTIVE_TOWN = getActiveTownConfig();
 
-/* === SECTION 2: Global State Tracking & Interval Clearer === */
+/* === SECTION 2: Global State Tracking & Timer Purger === */
 let globalSlideshowTicker = null;
 let gasMonitorRotator = null;
 let section6PartnerTimer = null;
@@ -335,8 +338,8 @@ function openCalendarLightboxModal(idx) {
     const googleCalUrl = generateGoogleCalendarUrl(targetItem);
     const calActionHtml = `
         <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd; display: flex; gap: 10px; flex-wrap: wrap;">
-            <a href="${googleCalUrl}" target="_blank" style="background:#4285F4; color:#fff; padding:6px 12px; border-radius:4px; text-decoration:none; font-size:13px; font-weight:bold;">+ Add to Google Calendar</a>
-            <button onclick="downloadIcsCalendarFile(${idx})" style="background:#34A853; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:13px; font-weight:bold;">+ Download iCal / Outlook (.ics)</button>
+            <a href="${googleCalUrl}" target="_blank" style="background:#1a73e8; color:#ffffff !important; padding:6px 12px; border-radius:4px; text-decoration:none; font-size:13px; font-weight:bold;">+ Add to Google Calendar</a>
+            <button onclick="downloadIcsCalendarFile(${idx})" style="background:#1e7e34; color:#ffffff !important; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:13px; font-weight:bold;">+ Download iCal / Outlook (.ics)</button>
         </div>
     `;
 
@@ -800,7 +803,6 @@ async function loadLocalLinksDirectory(cacheBuster) {
                 return matchesActiveTown(displayName, displayLoc) || isGlobal;
             });
 
-            // Enforce Scroll Limits if > 5 items
             applyHighDensityScrollLimits(linkTarget, filteredLinks.length, 360);
 
             if (filteredLinks.length > 0) {
@@ -1004,8 +1006,8 @@ async function processDataPipelines() {
                     <div style="background:#f8f9fa; border:1px solid #e2e8f0; padding:10px; border-radius:6px; margin-bottom:15px; text-align:center;">
                         <span style="font-size:12px; font-weight:bold; color:#333; display:block; margin-bottom:6px;">SUBSCRIBE TO FULL COUNTY CALENDAR</span>
                         <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
-                            <a href="${googleSubUrl}" target="_blank" style="font-size:11px; font-weight:bold; color:#fff; background:#4285F4; padding:4px 8px; border-radius:4px; text-decoration:none;">Subscribe in Google Calendar</a>
-                            <a href="webcal://${webcalFeedUrl.replace(/^https?:\/\//, '')}" style="font-size:11px; font-weight:bold; color:#fff; background:#34A853; padding:4px 8px; border-radius:4px; text-decoration:none;">Subscribe in Apple / iCal</a>
+                            <a href="${googleSubUrl}" target="_blank" style="font-size:11px; font-weight:bold; color:#ffffff !important; background:#1a73e8; padding:6px 12px; border-radius:4px; text-decoration:none; display:inline-block;">Subscribe in Google Calendar</a>
+                            <a href="webcal://${webcalFeedUrl.replace(/^https?:\/\//, '')}" style="font-size:11px; font-weight:bold; color:#ffffff !important; background:#1e7e34; padding:6px 12px; border-radius:4px; text-decoration:none; display:inline-block;">Subscribe in Apple / iCal</a>
                         </div>
                     </div>
                 `;
@@ -1102,5 +1104,5 @@ window.addEventListener('hashchange', () => {
 /* Initial Application Hydration */
 window.addEventListener('DOMContentLoaded', () => {
     processDataPipelines();
-    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-30_16:15`);
+    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-30_17:00`);
 });
