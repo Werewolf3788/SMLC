@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-07-29_22:00_SMART_GLOBAL
+   Active Version: 2026-07-29_23:15_SMART_GLOBAL
    File: sourcetown.js / script.js
    Description: SMLC Community Portal Network - Master Dynamic Engine
    Architecture: Pure Real-Time WebSockets & Smart Global Combiner
@@ -9,6 +9,7 @@
    - 100% Live Sync: Persistent real-time listeners for instant Firebase updates.
    - Deep Node Extraction: Auto-drills into sec_7_3_2/links/0/website seamlessly.
    - Section 4.1 Image Fix: Extracts and renders image1/image1 nested Firebase node into article.
+   - Calendar Engine Upgrade: 5-item visible scroll window + dynamic Add to GCal / iCal & Feed Subscriptions.
    ========================================================================== */
 
 /* === SECTION 1: Geographically Correct Town Alignment Matrix === */
@@ -177,6 +178,53 @@ function handlePhoneClick(number, isWhatsAppEligible) {
     window.location.href = `tel:+1${cleanNum}`;
 }
 
+/* === CALENDAR HELPER UTILITIES: EVENT URL GENERATORS === */
+function generateGoogleCalendarUrl(title, details, location, startStr) {
+    const startDate = new Date(startStr);
+    const validStart = !isNaN(startDate.getTime()) ? startDate : new Date();
+    const endDate = new Date(validStart.getTime() + (60 * 60 * 1000)); // Default 1 hr duration
+
+    const formatGCalDate = (d) => d.toISOString().replace(/-|:|\.\d\d\d/g, "");
+    
+    const baseUrl = "https://calendar.google.com/calendar/render?action=TEMPLATE";
+    const textParam = `&text=${encodeURIComponent(title || 'Community Event')}`;
+    const datesParam = `&dates=${formatGCalDate(validStart)}/${formatGCalDate(endDate)}`;
+    const detailsParam = `&details=${encodeURIComponent(details || '')}`;
+    const locationParam = `&location=${encodeURIComponent(location || '')}`;
+
+    return `${baseUrl}${textParam}${datesParam}${detailsParam}${locationParam}`;
+}
+
+function downloadSingleICalEvent(title, details, location, startStr) {
+    const startDate = new Date(startStr);
+    const validStart = !isNaN(startDate.getTime()) ? startDate : new Date();
+    const endDate = new Date(validStart.getTime() + (60 * 60 * 1000));
+
+    const formatICalDate = (d) => d.toISOString().replace(/-|:|\.\d\d\d/g, "");
+
+    const icsContent = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//SMLC Community Portal Network//EN",
+        "BEGIN:VEVENT",
+        `SUMMARY:${title || 'Community Event'}`,
+        `DESCRIPTION:${(details || '').replace(/\n/g, '\\n')}`,
+        `LOCATION:${location || ''}`,
+        `DTSTART:${formatICalDate(validStart)}`,
+        `DTEND:${formatICalDate(endDate)}`,
+        "END:VEVENT",
+        "END:VCALENDAR"
+    ].join("\r\n");
+
+    const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = window.URL.createObjectURL(blob);
+    link.setAttribute("download", `${(title || "event").toLowerCase().replace(/[^a-z0-9]/g, "_")}.ics`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 /* === SECTION 4: Navigation Menu Pipeline === */
 function renderNavigationMenuPipeline(globalMenuNode, townMenuNode) {
     const menuTarget = document.getElementById('dynamic-menu-links') || document.getElementById('main-nav-menu-target') || document.querySelector('.menu-links');
@@ -272,14 +320,28 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl) {
 function openCalendarLightboxModal(idx) {
     const targetItem = window.calendarCachedEvents[idx];
     if(!targetItem) return;
+
     const title = smartExtractValue(targetItem.title || targetItem.name || "Community Event");
     const displayDateStr = smartExtractValue(targetItem.displayDate) || formatHumanTimestamp(targetItem.start || targetItem.date);
     const rawLoc = smartExtractValue(targetItem.addr || targetItem.location) || ACTIVE_TOWN.primaryName + ", IL";
     const mapUrl = buildOSMapUrl(rawLoc);
-    
     let details = smartExtractValue(targetItem.desc || targetItem.details || targetItem.description) || "No details provided.";
+    
+    const startIso = targetItem.start || targetItem.date || new Date().toISOString();
+    const gcalUrl = generateGoogleCalendarUrl(title, details, rawLoc, startIso);
+
     const metaHeader = `${displayDateStr} | Location: <a href="${mapUrl}" target="_blank" style="color:#d9534f; text-decoration:underline;">${rawLoc}</a>`;
-    fireLightbox('', title, metaHeader, details, smartExtractValue(targetItem.subscribeGoogle || targetItem.subscribeICal));
+    
+    // Inject individual Add to Calendar action buttons into body content
+    const interactiveBody = `
+        ${details}
+        <div class="single-event-actions-bar" style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed #ccc; display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="${gcalUrl}" target="_blank" class="event-action-btn gcal-btn" style="background:#4285F4; color:#fff; padding:8px 14px; font-size:12px; font-weight:bold; text-decoration:none; border-radius:4px; display:inline-block;">&plus; Add to Google Calendar</a>
+            <button onclick="downloadSingleICalEvent('${title.replace(/'/g, "\\'")}', '${details.replace(/'/g, "\\'")}', '${rawLoc.replace(/'/g, "\\'")}', '${startIso}')" class="event-action-btn ical-btn" style="background:#333; color:#fff; padding:8px 14px; font-size:12px; font-weight:bold; border:none; border-radius:4px; cursor:pointer;">&plus; Add to iCal Event</button>
+        </div>
+    `;
+
+    fireLightbox('', title, metaHeader, interactiveBody, smartExtractValue(targetItem.website || targetItem.url));
 }
 
 function openNewsLightboxModal(idx) {
@@ -451,16 +513,32 @@ function loadTownHistoryTimeline(historyList) {
     }
 }
 
-/* === SECTION 10: Calendar Bulletin Engine === */
+/* === SECTION 10: Calendar Bulletin Engine (5 Visible Items + Full Scroll Depth + Feed Subscriptions) === */
 function renderCalendarBulletinUI(eventsArray) {
     const scroller = document.getElementById('bulletin-scroller-target');
     if (!scroller) return;
 
-    scroller.style.maxHeight = "480px";
+    /* Enforce container sizing for 5 items with deep scrolling */
+    scroller.style.maxHeight = "580px";
     scroller.style.overflowY = "auto";
-    scroller.style.paddingRight = "5px";
+    scroller.style.paddingRight = "8px";
+
+    /* Render Feed Subscription Bar at top of container if target exists */
+    const subContainer = document.getElementById('calendar-subscription-bar');
+    if (subContainer) {
+        const globalGCalSub = "https://calendar.google.com/calendar/render?cid=smlc_events";
+        const globalICalSub = "webcal://smlc-fuel-monitor-default-rtdb.firebaseio.com/smlc_events.ics";
+
+        subContainer.innerHTML = `
+            <div class="calendar-sub-strip">
+                <a href="${globalGCalSub}" target="_blank" class="cal-sub-btn gcal-sub">&plus; Subscribe Google Calendar</a>
+                <a href="${globalICalSub}" class="cal-sub-btn ical-sub">&plus; Subscribe iCal Feed</a>
+            </div>
+        `;
+    }
 
     if (eventsArray.length > 0) {
+        /* Filter and retain ALL matching events into state */
         window.calendarCachedEvents = eventsArray.filter(item => {
             const nameStr = smartExtractValue(item.title || item.name);
             const descStr = smartExtractValue(item.desc || item.details || item.description);
@@ -469,6 +547,7 @@ function renderCalendarBulletinUI(eventsArray) {
         });
 
         if (window.calendarCachedEvents.length > 0) {
+            /* Map ALL events to the DOM (first 5 visible, rest revealed upon scrolling) */
             scroller.innerHTML = window.calendarCachedEvents.map((item, idx) => {
                 const eventTitle = smartExtractValue(item.title || item.name) || "Community Event";
                 const rawLocation = smartExtractValue(item.addr || item.location) || ACTIVE_TOWN.primaryName + ", IL";
@@ -478,7 +557,7 @@ function renderCalendarBulletinUI(eventsArray) {
                 const displayDateStr = smartExtractValue(item.displayDate) || formatHumanTimestamp(item.start || item.date);
 
                 return `
-                    <div class="divi-event-item" style="margin-bottom:15px; padding-bottom:10px; border-bottom:1px dashed #ccc;">
+                    <div class="divi-event-item" style="margin-bottom:15px; padding-bottom:10px; border-bottom:1px dashed #ccc; min-height: 100px;">
                         <div class="divi-event-date" style="font-size:12px; color:#d9534f; font-weight:bold;">${displayDateStr}</div>
                         <div class="divi-event-title" style="font-size:16px; font-weight:bold;">${eventTitle}</div>
                         <div class="event-info-text" style="font-size:13px; color:#333;">
@@ -806,5 +885,5 @@ async function initializePureLiveFirebasePipelines() {
 /* === INITIALIZATION === */
 window.addEventListener('DOMContentLoaded', () => {
     initializePureLiveFirebasePipelines();
-    console.log(`Pure Live Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-29_22:00_SMART_GLOBAL`);
+    console.log(`Pure Live Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-29_23:15_SMART_GLOBAL`);
 });
