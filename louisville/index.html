@@ -1,7 +1,7 @@
 <!-- 
-   Active Version: 2026-07-30_14:35
+   Active Version: 2026-07-30_16:30
    Location: louisville/index.html
-   Description: Louisville SMLC Town Square Portal Skeleton
+   Description: Louisville SMLC Town Square Portal Skeleton - SPA & Lightbox Ready
 -->
 <!DOCTYPE html>
 <html lang="en-US">
@@ -16,8 +16,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
     
-    <!-- Local Stylesheet inside louisville/ -->
-    <link rel="stylesheet" href="./style.css?v=202607301435" />
+    <!-- Local Stylesheet inside louisville/ with Smart Cache-Busting -->
+    <link rel="stylesheet" href="./style.css?v=202607301630" />
     
     <!-- Global Analytics Watermarks -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L376P3NPY4"></script>
@@ -271,7 +271,7 @@
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">Business Directory</h2>
                     <div class="town-directory-container-s7">
-                        <img src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png?v=20260730_1435" 
+                        <img src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png?v=20260730_1630" 
                              alt="Support My Local Community Logo" 
                              class="town-directory-banner-s7 lightbox-triggerable-element" />
                         <a href="https://clay-county-business-directory.supportmylocalcommunity.com/" target="_blank" class="town-directory-interactive-btn-s7" style="width: 100%;" data-ga-label="section7_directory_btn">
@@ -403,50 +403,14 @@
         <div style="border-top:1px solid #333; padding-top:15px;">
             <p id="footer-copy-target">&copy; 2026 Louisville Community Portal. All rights reserved.</p>
             <p style="margin-top: 8px; opacity: 0.8; font-size: 12px; color: #aaaaaa;">
-                <strong>System Build Version:</strong> v1.0.0 | <strong>Active Version:</strong> 2026-07-30_14:35
+                <strong>System Build Version:</strong> v1.0.0 | <strong>Active Version:</strong> 2026-07-30_16:30
             </p>
         </div>
     </footer>
 
     <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top" style="position:fixed; bottom:20px; right:20px; padding:10px 15px; background:#222; color:#fff; border:1px solid var(--louis-gold); border-radius:4px; cursor:pointer;">↑</button>
 
-    <!-- DYNAMIC TOWN-AWARE FIREBASE IMAGE LISTENER -->
-    <script type="text/javascript">
-        document.addEventListener('DOMContentLoaded', () => {
-            const currentTownKey = (typeof ACTIVE_TOWN !== 'undefined' && ACTIVE_TOWN.jsonKey) 
-                ? ACTIVE_TOWN.jsonKey 
-                : (document.body.getAttribute('data-town') || 'global').toLowerCase();
-
-            const checkFirebase = setInterval(() => {
-                if (typeof firebase !== 'undefined' && firebase.apps.length) {
-                    clearInterval(checkFirebase);
-                    const db = firebase.database();
-                    const targetImg = document.getElementById('sec-4-1-article-img');
-
-                    if (!targetImg) return;
-
-                    const townPath = `master_county_data/${currentTownKey}/sections/sec_4_1/image1/image1`;
-                    const globalPath = `master_county_data/global/sections/sec_4_1/image1/image1`;
-
-                    db.ref(townPath).on('value', (snapshot) => {
-                        const townImgUrl = snapshot.val();
-                        if (townImgUrl) {
-                            targetImg.src = townImgUrl;
-                        } else {
-                            db.ref(globalPath).on('value', (globalSnap) => {
-                                const globalImgUrl = globalSnap.val();
-                                if (globalImgUrl) {
-                                    targetImg.src = globalImgUrl;
-                                }
-                            });
-                        }
-                    });
-                }
-            }, 300);
-        });
-    </script>
-
     <!-- Relative path to master engine -->
-    <script type="text/javascript" src="../sourcetown.js?v=202607301435"></script>
+    <script type="text/javascript" src="../sourcetown.js?v=202607301630"></script>
 </body>
 </html>
