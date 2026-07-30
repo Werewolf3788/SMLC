@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-07-29_22:45
+   Active Version: 2026-07-29_23:15
    File: style.css
    Description: Master Stylesheet - Header Barrier, Dynamic Widgets, & Compact Cards
    ========================================================================== */
@@ -812,7 +812,7 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	letter-spacing: 1px !important;
 }
 
-/* SECTION 7.2.2: DYNAMIC COMMUNITY CALENDAR BULLETIN FEED (BANNER IMAGE BANNER INTEGRATED) */
+/* SECTION 7.2.2: DYNAMIC COMMUNITY CALENDAR BULLETIN FEED (BANNER IMAGE INTEGRATED) */
 .news-clipping-wrapper {
 	background-color: #fffdf5;
 	box-shadow: 6px 6px 0px rgba(0,0,0,0.6); 
@@ -1107,6 +1107,62 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	font-weight: bold !important;
 	font-size: 16px !important;
 	text-decoration: underline !important;
+}
+
+/* ==========================================================================
+   CALENDAR BULLETIN & LIGHTBOX EVENT ACTION BUTTONS
+   ========================================================================== */
+.calendar-sub-strip {
+	display: flex !important;
+	justify-content: center !important;
+	gap: 12px !important;
+	margin: 12px 0 18px 0 !important;
+	flex-wrap: wrap !important;
+}
+
+.cal-sub-btn {
+	font-family: Arial, sans-serif !important;
+	font-size: 12px !important;
+	font-weight: 800 !important;
+	text-transform: uppercase !important;
+	padding: 8px 14px !important;
+	border-radius: 4px !important;
+	text-decoration: none !important;
+	transition: all 0.2s ease !important;
+	border: 1px solid #000000 !important;
+}
+
+.cal-sub-btn.gcal-sub {
+	background-color: var(--louis-gold) !important;
+	color: #000000 !important;
+	box-shadow: 2px 2px 0px #000000 !important;
+}
+
+.cal-sub-btn.gcal-sub:hover {
+	background-color: #000000 !important;
+	color: var(--louis-gold) !important;
+}
+
+.cal-sub-btn.ical-sub {
+	background-color: #222222 !important;
+	color: #ffffff !important;
+	box-shadow: 2px 2px 0px #000000 !important;
+}
+
+.cal-sub-btn.ical-sub:hover {
+	background-color: var(--louis-red) !important;
+	color: #ffffff !important;
+}
+
+/* Lightbox Single Event Action Buttons */
+.single-event-actions-bar .event-action-btn {
+	font-family: Arial, sans-serif !important;
+	transition: transform 0.15s ease, opacity 0.2s ease !important;
+}
+
+.single-event-actions-bar .event-action-btn:hover {
+	opacity: 0.9 !important;
+	transform: translateY(-1px) !important;
 }
 
 /* ==========================================================================
