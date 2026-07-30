@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-07-29_22:45
+   Active Version: 2026-07-30_13:37
    File: style.css
    Description: Master Stylesheet - Header Barrier, Dynamic Widgets, & Compact Cards
    ========================================================================== */
@@ -112,17 +112,6 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 .menu-links a { color: var(--louis-gold) !important; font-size: 16px; font-weight: 800; padding: 10px 18px; text-transform: uppercase; letter-spacing: 1px; }
 .menu-links a:hover, .menu-links a.active { color: #ffffff !important; border: 2px solid var(--louis-gold); background: rgba(0, 0, 0, 0.6) !important; border-radius: 8px; }
 
-/* ACTIVE TOWN TAB: Yellow Font & Dark Frame */
-.menu-links a.active,
-body[data-town="louisville"] .menu-links a[href*="louisville"],
-body[data-town="louisville"] .menu-links a[href*="./"] { 
-	color: var(--louis-gold) !important; 
-	border: 2px solid var(--louis-gold) !important; 
-	background: rgba(0, 0, 0, 0.8) !important; 
-	border-radius: 6px; 
-	box-shadow: 0 0 10px rgba(255, 193, 14, 0.4);
-}
-
 /* ==========================================================================
    SECTION 2: HERO BANNER
    ========================================================================== */
@@ -186,162 +175,125 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 }
 
 /* ==========================================================================
-   SECTION 4.1: INNER TYPOGRAPHY & DYNAMIC TOWN BADGE ACCENTS
-   ========================================================================== */
-
-/* 1. Category Badge (Uses Master Town Color) */
-.section4-left-article-box h1,
-.section4-left-article-box .category-tag {
-	display: inline-block !important;
-	background-color: var(--town-accent) !important; /* DYNAMIC TOWN COLOR */
-	color: #FFFFFF !important;
-	font-family: Arial, sans-serif !important;
-	font-size: 13px !important;
-	font-weight: 800 !important;
-	text-transform: uppercase !important;
-	letter-spacing: 1px !important;
-	padding: 6px 12px !important;
-	margin-top: 0 !important;
-	margin-bottom: 24px !important;
-	border: none !important;
-	border-radius: 0px !important;
-}
-
-/* 2. Main Article Title ("Harvesting the Sun") */
-.section4-left-article-box h2,
-.section4-left-article-box .article-stacked-title {
-	font-family: 'Times New Roman', Times, serif !important;
-	font-size: clamp(2.4rem, 4vw, 3.5rem) !important;
-	font-weight: 700 !important;
-	color: #222222 !important;
-	line-height: 1.1 !important;
-	margin-top: 0 !important;
-	margin-bottom: 20px !important;
-	text-align: left !important;
-	border: none !important;
-}
-
-/* 3. Italic Subtitle with Dynamic Vertical Accent Bar */
-.section4-left-article-box h3,
-.section4-left-article-box .article-stacked-deck,
-.section4-left-article-box .subtitle {
-	font-family: 'Times New Roman', Times, serif !important;
-	font-size: 1.25rem !important;
-	font-style: italic !important;
-	color: #333333 !important;
-	margin-top: 0 !important;
-	margin-bottom: 30px !important;
-	line-height: 1.5 !important;
-	text-align: left !important;
-	
-	/* The Accent Bar dynamically matches the town color */
-	border-left: 5px solid var(--town-accent) !important;
-	padding-left: 16px !important;
-}
-
-/* ==========================================================================
-   SECTION 4.1: RETRO NEWSPAPER CONTAINER (RESTORED CARD BACKGROUND)
+   SECTION 4.1: ARTICLE CONTAINER & HARD IMAGE CONTAINMENT FIX
    ========================================================================== */
 .section4-left-article-box {
-	display: block !important;
-	flex-basis: 68% !important;
-	flex-grow: 0 !important;
-	flex-shrink: 0 !important;
-	
 	width: 100% !important;
-	max-width: 952px !important;
-	min-height: auto !important;
-	
-	/* Restores the solid retro newspaper card background */
-	background-color: rgb(255, 253, 246) !important; /* #fffdf5 retro cream */
-	color: rgb(51, 51, 51) !important;
-	
-	border: 2px solid rgb(34, 34, 34) !important;
-	border-radius: 0px !important;
-	box-shadow: rgba(255, 255, 255, 0.1) 10px 10px 0px 0px !important;
+	max-width: 100% !important;
+	background: #ffffff !important;
+	box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+	border-radius: 8px;
+	overflow: hidden !important; /* Forces all internal elements to stay inside card */
+	padding: 0;
+	font-family: 'Libre Baskerville', serif !important;
+	color: #1a1a1a !important;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
 	box-sizing: border-box !important;
-	
-	padding: 40px !important;
-	margin: 0px !important;
-	
-	font-family: sans-serif !important;
-	font-size: 16px !important;
-	font-weight: 400 !important;
-	line-height: normal !important;
-	text-align: start !important;
-	
-	overflow: visible !important;
-	position: static !important;
-	z-index: auto !important;
 }
 
-/* ==========================================================================
-   SECTION 4.1: INNER TYPOGRAPHY & ACCENTS
-   ========================================================================== */
+.section4-centered-article-header {
+	background: linear-gradient(180deg, #eb1c24 0%, #1a1a1a 100%) !important;
+	color: #ffffff !important;
+	padding: clamp(35px, 6vh, 60px) 24px !important;
+	text-align: center !important;
+	border-bottom: 8px solid var(--louis-gold) !important;
+}
 
-/* Top Category Tag / Badge */
-.section4-left-article-box h1,
-.section4-left-article-box .category-tag {
+.category-tag {
+	font-family: 'Oswald', sans-serif !important;
+	background: var(--louis-gold) !important;
+	color: #000000 !important;
+	padding: 6px 18px !important;
 	display: inline-block !important;
-	background-color: var(--town-accent, #EB1C24) !important;
-	color: #FFFFFF !important;
-	font-family: Arial, sans-serif !important;
-	font-size: 13px !important;
-	font-weight: 800 !important;
+	letter-spacing: 2px !important;
+	font-size: 0.95rem !important;
+	font-weight: bold !important;
+	margin-bottom: 18px !important;
 	text-transform: uppercase !important;
-	letter-spacing: 1px !important;
-	padding: 6px 12px !important;
-	margin-top: 0 !important;
-	margin-bottom: 24px !important;
-	border: none !important;
-	border-radius: 0px !important;
 }
 
-/* Main Article Headline */
-.section4-left-article-box h2,
-.section4-left-article-box .article-stacked-title {
-	font-family: 'Times New Roman', Times, serif !important;
-	font-size: clamp(2.4rem, 4vw, 3.5rem) !important;
-	font-weight: 700 !important;
-	color: #222222 !important;
+.article-stacked-title {
+	font-family: 'Montserrat', sans-serif !important;
+	font-size: clamp(2.2rem, 4.5vw, 3.8rem) !important;
 	line-height: 1.1 !important;
-	margin-top: 0 !important;
-	margin-bottom: 20px !important;
-	text-align: left !important;
-	border: none !important;
+	margin: 0 auto 16px !important;
+	text-transform: uppercase !important;
+	color: #ffffff !important;
+	text-align: center !important;
 }
 
-/* Subtitle with Vertical Accent Bar */
-.section4-left-article-box h3,
-.section4-left-article-box .article-stacked-deck,
-.section4-left-article-box .subtitle {
-	font-family: 'Times New Roman', Times, serif !important;
+.article-stacked-deck {
 	font-size: 1.25rem !important;
 	font-style: italic !important;
-	color: #333333 !important;
-	margin-top: 0 !important;
-	margin-bottom: 30px !important;
-	line-height: 1.5 !important;
-	text-align: left !important;
-	border-left: 5px solid var(--town-accent, #EB1C24) !important;
-	padding-left: 16px !important;
+	opacity: 0.95 !important;
+	color: #ffffff !important;
+	margin: 0 auto !important;
+	text-align: center !important;
+	max-width: 900px;
 }
 
-/* Article Body Paragraphs */
-.section4-left-article-box p {
-	font-family: 'Times New Roman', Times, serif !important;
-	font-size: 18px !important;
-	line-height: 1.7 !important;
-	color: #222222 !important;
-	margin-bottom: 1.8em !important;
+.article-body-content {
+	padding: 36px !important;
+	font-size: 1.15rem !important;
+	color: #1a1a1a !important;
+	background-color: #ffffff !important;
+	box-sizing: border-box !important;
+}
+
+/* Force ALL inline images in the article body to lock strictly within padding */
+.article-body-content img,
+.section4-left-article-box img,
+.section4-left-article-box p img,
+.article-hero-image img {
+	width: 100% !important;
+	max-width: 100% !important;
+	height: auto !important;
+	display: block !important;
+	margin: 20px auto !important;
+	border-radius: 6px !important;
+	border: 2px solid #222222 !important;
+	box-shadow: 4px 4px 0px #000000 !important;
+	object-fit: cover !important;
+	box-sizing: border-box !important;
+}
+
+.article-body-content figure {
+	margin: 24px 0 !important;
+	padding: 0 !important;
+	width: 100% !important;
+	max-width: 100% !important;
+}
+
+.article-body-content figcaption {
+	font-size: 0.95rem !important;
+	font-style: italic !important;
+	text-align: center !important;
+	color: #555555 !important;
+	margin-top: 8px !important;
+}
+
+.article-body-content p {
+	margin-bottom: 1.5em !important;
 	text-align: justify !important;
+	font-family: 'Libre Baskerville', serif !important;
+	color: #1a1a1a !important;
+	line-height: 1.8 !important;
 }
 
-.section4-left-article-box p strong,
-.section4-left-article-box p b {
-	font-weight: 700 !important;
-	color: #111111 !important;
+.article-footer {
+	background: #f4f4f4 !important;
+	padding: 18px 36px !important;
+	border-top: 1px solid #ddd !important;
+	font-family: 'Oswald', sans-serif !important;
+	display: flex !important;
+	justify-content: space-between !important;
+	font-size: 0.9rem !important;
+	color: #555555 !important;
+	text-transform: uppercase !important;
 }
+
 /* SECTION 4.2: RIGHT SIDE WIDGET STACK */
 .section4-right-widgets-stack,
 .dv-custom-article-wrapper .sidebar {
@@ -375,7 +327,24 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	margin: -28px -28px 20px -28px;
 	border-bottom: 2px solid #000;
 }
-.spotlight-image-wrap {
+.news-box-header {
+	text-align: center;
+	border-top: 4px double #222;
+	border-bottom: 2px solid #222;
+	padding: 14px 0;
+	margin-bottom: 20px;
+}
+.news-box-header h3 {
+	font-family: "Times New Roman", Times, serif !important;
+	font-weight: 900 !important;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+	margin: 0 !important;
+	color: #222 !important;
+	font-size: 26px !important;
+	line-height: 1.2 !important;
+}
+.spotlight-image-wrap, .showcase-media-canvas {
 	width: 100%;
 	height: auto;
 	border: 2px solid #222;
@@ -383,10 +352,9 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	overflow: hidden;
 	background-color: #eee;
 }
-.spotlight-image-wrap img {
+.spotlight-image-wrap img, .showcase-media-canvas img {
 	width: 100%;
 	display: block;
-	cursor: pointer;
 	filter: grayscale(10%) contrast(110%);
 }
 .biz-title, #spotlight-asset-name {
@@ -523,6 +491,7 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	box-sizing: border-box;
 }
 
+.timeline-full-width-container,
 .timeline-inner-bounds {
 	width: 100% !important;
 	max-width: 100% !important;
@@ -534,6 +503,7 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	margin-bottom: 40px !important;
 }
 
+.timeline-row-1-header title1,
 .main-timeline-center-title-node {
 	font-family: 'Playfair Display', Georgia, serif !important;
 	font-size: 52px !important;
@@ -552,6 +522,7 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	text-shadow: 1px 1px 4px #000000 !important;
 }
 
+.timeline-5x2-full-grid,
 .timeline-row-2-cards {
 	display: grid !important;
 	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
@@ -576,7 +547,8 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	box-sizing: border-box !important;
 }
 
-.history-card h2 {
+.history-card h2,
+.history-card h2.history-year-title {
 	font-family: 'Times New Roman', Times, serif !important;
 	font-size: 32px !important;
 	font-weight: 900 !important;
@@ -587,7 +559,8 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	line-height: 1.1 !important;
 }
 
-.history-card h3 {
+.history-card h3,
+.history-card h3.history-event-header {
 	font-family: 'Playfair Display', Georgia, serif !important;
 	font-size: 20px !important;
 	font-weight: 700 !important;
@@ -596,7 +569,8 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	line-height: 1.3 !important;
 }
 
-.history-card p {
+.history-card p,
+.history-card p.history-desc-text {
 	font-family: 'Times New Roman', Times, serif !important;
 	font-size: 16px !important;
 	line-height: 1.6 !important;
@@ -626,7 +600,8 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 /* ==========================================================================
    SECTION 6 & 8: PARTNERS STRIP (EDGE-TO-EDGE FULL SCREEN SPREAD)
    ========================================================================== */
-.widescreen-strip-container {
+.widescreen-strip-container,
+.section8-town-images-strip {
 	width: 100% !important;
 	max-width: 100vw !important;
 	background-color: #001a40 !important;
@@ -688,7 +663,8 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	padding: 8px !important;
 }
 
-.partner-logo-box img {
+.partner-logo-box img,
+.partner-card img {
 	max-width: 100% !important;
 	max-height: 100% !important;
 	width: auto !important;
@@ -754,7 +730,7 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	display: block !important;
 }
 
-/* SECTION 7.1.1: EVENT CLIPPING SUBMISSION BOX (RESTORED ORIGINAL FONT & COLORS) */
+/* SECTION 7.1.1: EVENT CLIPPING SUBMISSION BOX */
 .clay-county-news-box.event-clipping {
 	box-sizing: border-box !important;
 	width: 100% !important;
@@ -882,32 +858,101 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	letter-spacing: 1px;
 	color: #444;
 }
-
-/* CONTROLLED SCROLL CONTAINER ENFORCEMENT */
-.controlled-scroll-container,
-#bulletin-scroller-target,
-#news-matrix-target,
-#local-links-target-container {
-	max-height: 520px !important;
+#divi-event-list,
+#bulletin-scroller-target {
+	max-height: 560px !important;
 	overflow-y: auto !important;
 	padding-right: 8px !important;
-	scrollbar-width: thin;
-	scrollbar-color: var(--louis-red) #fffdf5;
 }
-
-.controlled-scroll-container::-webkit-scrollbar,
-#bulletin-scroller-target::-webkit-scrollbar,
-#news-matrix-target::-webkit-scrollbar,
-#local-links-target-container::-webkit-scrollbar {
-	width: 6px;
+.divi-event-item {
+	border-bottom: 1px dashed #777;
+	padding: 18px 0;
+	text-align: left;
 }
+.divi-event-item:last-child {
+	border-bottom: none;
+}
+.divi-event-date {
+	color: #cc0000;
+	font-weight: bold;
+	font-size: 15px;
+	text-transform: uppercase;
+}
+.divi-event-title {
+	font-size: 22px; 
+	font-weight: bold;
+	margin: 6px 0;
+	line-height: 1.25;
+}
+.event-info-text {
+	font-size: 16px;
+	line-height: 1.5;
+	color: #333;
+}
+.event-snippet {
+	font-size: 15px;
+	color: #555;
+	font-style: italic;
+	margin: 10px 0;
+	line-height: 1.5;
+	display: block;
+}
+.full-details {
+	display: none;
+	font-size: 15px;
+	color: #222;
+	margin: 12px 0;
+	line-height: 1.6;
+	background: rgba(0,0,0,0.04);
+	padding: 12px;
+	border-left: 4px solid #cc0000;
+}
+.read-more-btn {
+	color: #cc0000;
+	text-decoration: underline;
+	font-weight: bold;
+	font-size: 14px;
+	cursor: pointer;
+	text-transform: uppercase;
+	display: inline-block;
+	margin-top: 6px;
+}
+.cal-links { 
+	margin-top: 16px;
+	font-size: 14px;
+}
+.cal-label {
+	display: block;
+	font-size: 12px;
+	text-transform: uppercase;
+	font-weight: bold;
+	color: #666;
+	margin-bottom: 6px;
+	letter-spacing: 0.5px;
+}
+.cal-text-link {
+	color: #cc0000 !important;
+	text-decoration: none !important;
+	font-weight: bold;
+	text-transform: uppercase;
+	font-size: 13px;
+}
+.cal-text-link:hover { text-decoration: underline !important; }
 
-.controlled-scroll-container::-webkit-scrollbar-thumb,
-#bulletin-scroller-target::-webkit-scrollbar-thumb,
-#news-matrix-target::-webkit-scrollbar-thumb,
-#local-links-target-container::-webkit-scrollbar-thumb {
-	background-color: var(--louis-red);
-	border-radius: 4px;
+/* SECTION 7.2: CENTER COLUMN RETRO CONTAINERS */
+.newspaper-feed-chassis {
+	background-color: #fffdf5 !important; 
+	border: 3px double #222222 !important; 
+	box-shadow: 6px 6px 0px #222222 !important; 
+	padding: 28px !important;
+	border-radius: 6px;
+	color: #222222 !important;
+}
+.news-dynamic-masonry {
+	max-height: 560px !important;
+	overflow-y: auto !important;
+	padding-right: 8px !important;
+	text-align: left !important;
 }
 
 /* SECTION 7.3.1: FACEBOOK INVITATION CARD */
@@ -1024,7 +1069,32 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	text-align: center !important;
 }
 
-/* SECTION 7.2.3: CLAY COUNTY BUSINESS DIRECTORY BUTTON */
+/* SECTION 7.2.3: CLAY COUNTY BUSINESS DIRECTORY BANNER & BUTTON CONTAINER */
+.town-directory-container-s7 {
+	display: flex !important;
+	flex-direction: column !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 100% !important;
+	margin-top: 10px !important;
+}
+
+/* Directory Image Banner placed under header and above button */
+.town-directory-banner-s7 {
+	width: 100% !important;
+	max-width: 100% !important;
+	height: auto !important;
+	display: block !important;
+	margin: 0 0 18px 0 !important;
+	border: 2px solid #000000 !important;
+	box-shadow: 6px 6px 0px #000000 !important;
+	border-radius: 6px !important;
+	object-fit: contain !important;
+	background-color: #ffffff !important;
+	cursor: pointer !important;
+}
+
+/* Directory Interactive Button */
 .town-directory-interactive-btn-s7 {
 	background-color: #000000 !important;
 	color: var(--louis-gold) !important;
@@ -1045,13 +1115,61 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 }
 
 /* ==========================================================================
+   SECTION 9 & 10: BOLD PRINT MATRIX & PROCLAMATION CARD
+   ========================================================================== */
+.section9-bold-print-wrapper,
+.section10-message-chassis {
+	width: 100% !important;
+	box-sizing: border-box !important;
+	margin: 40px auto !important;
+}
+
+.section10-proclamation-card-box {
+	background: #fffdf5 !important;
+	border: 2px solid #222222 !important;
+	padding: 30px !important;
+	box-shadow: 6px 6px 0px #000000 !important;
+	border-radius: 6px !important;
+	color: #222222 !important;
+	text-align: center !important;
+}
+
+.proclamation-body-text {
+	font-family: 'Times New Roman', Times, serif !important;
+	font-size: 18px !important;
+	font-weight: 900 !important; /* Heavy Bold Print */
+	line-height: 1.7 !important;
+	margin-bottom: 18px !important;
+	color: #1a1a1a !important;
+}
+
+.proclamation-contact-text {
+	font-family: 'Oswald', sans-serif !important;
+	font-size: 16px !important;
+	font-weight: 700 !important; /* Bold Print */
+	text-transform: uppercase !important;
+	letter-spacing: 1px !important;
+	color: #000000 !important;
+}
+
+.proclamation-contact-text a {
+	color: #0258A3 !important;
+	font-weight: 900 !important;
+	text-decoration: underline !important;
+}
+
+.proclamation-contact-text a:hover {
+	color: #eb1c24 !important;
+}
+
+/* ==========================================================================
    FOOTER MATRIX
    ========================================================================== */
 .site-global-footer-matrix { width: 100% !important; background-color: #000000 !important; color: #ffffff !important; padding: 45px 0 25px 0 !important; border-top: 4px solid var(--louis-gold) !important; text-align: center !important; }
 .site-global-footer-matrix p, .site-global-footer-matrix span { color: #ffffff !important; font-size: 15px !important; }
 
 /* ==========================================================================
-   LIGHTBOX MODAL ENGINE OVERLAY
+   LIGHTBOX MODAL (WITH CLICK OUTSIDE TO CLOSE SUPPORT)
    ========================================================================== */
 .lightbox-overlay-mask { 
 	position: fixed !important; 
