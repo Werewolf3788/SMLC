@@ -1,25 +1,24 @@
 /* ==========================================================================
-   Active Version: 2026-07-30_14:15
+   Active Version: 2026-07-30_14:45
    File: sourcetown.js / script.js
    Description: SMLC Community Portal Network - Title-First Universal Master Engine
    Fixes:
-   - Fixed Louisville duplicate station mapping (48026/87817) causing widget flashing
-   - Enforced strict static mode for single-station towns (Louisville, Clay City, Xenia)
-   - Smooth 4-station rotator engine for Flora IL
-   - Section 6 & Section 8 Offset Split Infinite Marquee Rotator
+   - Dynamic Firebase Realtime Database tree resolver matching exact coordinate paths (/master_county_data/towns/{Town}/sections/)
+   - Automatic fallback to /master_county_data/global/ sections if specific town node is absent
+   - Section 6 & Section 8 Fixed-Card Interior Slideshow Engine
    ========================================================================== */
 
 /* === SECTION 1: Geographically Correct Town Alignment Matrix === */
 const TOWN_ALIAS_MAP = {
-    "HOME": { primaryName: "Clay County", jsonKey: "all", gasKey: ["louisville", "flora", "clay-city", "xenia"], historyKey: "all", keywords: [], zipCodes: [], isHome: true, scorestreamId: "68601" },
-    "CLAY COUNTY": { primaryName: "Clay County", jsonKey: "all", gasKey: ["louisville", "flora", "clay-city", "xenia"], historyKey: "all", keywords: [], zipCodes: [], isHome: true, scorestreamId: "68601" },
-    "LOUISVILLE": { primaryName: "Louisville", jsonKey: "louisville", gasKey: ["louisville"], historyKey: "louisville", keywords: ["LOUISVILLE", "NORTH CLAY", "NC", "HOOSIER"], zipCodes: ["62858"], scorestreamId: "68601" },
-    "FLORA": { primaryName: "Flora", jsonKey: "flora", gasKey: ["flora"], historyKey: "flora", keywords: ["FLORA", "FLO", "WOLVES"], zipCodes: ["62839"], scorestreamId: "68602" },
-    "CLAY CITY": { primaryName: "Clay City", jsonKey: "clay_city", gasKey: ["clay-city"], historyKey: "clay_city", keywords: ["CLAY CITY", "CC"], zipCodes: ["62824"], scorestreamId: "64422" },
-    "XENIA": { primaryName: "Xenia", jsonKey: "clay_county_teams", gasKey: ["xenia"], historyKey: "xenia", keywords: ["XENIA"], zipCodes: ["62899"], scorestreamId: "68988" },
-    "IOLA": { primaryName: "Iola", jsonKey: "iola", gasKey: ["louisville"], historyKey: "iola", keywords: ["IOLA"], zipCodes: ["62849"], scorestreamId: "68601" },
-    "SAILOR SPRINGS": { primaryName: "Sailor Springs", jsonKey: "sailor_springs", gasKey: ["louisville", "clay-city"], historyKey: "sailor_springs", keywords: ["SAILOR SPRINGS"], zipCodes: ["62879"], scorestreamId: "68988" },
-    "INGRAHAM": { primaryName: "Ingraham", jsonKey: "louisville", gasKey: ["louisville", "clay-city"], historyKey: "ingraham", keywords: ["INGRAHAM"], zipCodes: ["62434"], scorestreamId: "68601" }
+    "HOME": { primaryName: "Clay County", dbTownKey: "Global", jsonKey: "all", gasKey: ["louisville", "flora", "clay-city", "xenia"], historyKey: "all", keywords: [], zipCodes: [], isHome: true, scorestreamId: "68601" },
+    "CLAY COUNTY": { primaryName: "Clay County", dbTownKey: "Global", jsonKey: "all", gasKey: ["louisville", "flora", "clay-city", "xenia"], historyKey: "all", keywords: [], zipCodes: [], isHome: true, scorestreamId: "68601" },
+    "LOUISVILLE": { primaryName: "Louisville", dbTownKey: "Louisville", jsonKey: "louisville", gasKey: ["louisville"], historyKey: "louisville", keywords: ["LOUISVILLE", "NORTH CLAY", "NC", "HOOSIER"], zipCodes: ["62858"], scorestreamId: "68601" },
+    "FLORA": { primaryName: "Flora", dbTownKey: "Flora", jsonKey: "flora", gasKey: ["flora"], historyKey: "flora", keywords: ["FLORA", "FLO", "WOLVES"], zipCodes: ["62839"], scorestreamId: "68602" },
+    "CLAY CITY": { primaryName: "Clay City", dbTownKey: "Clay City", jsonKey: "clay_city", gasKey: ["clay-city"], historyKey: "clay_city", keywords: ["CLAY CITY", "CC"], zipCodes: ["62824"], scorestreamId: "64422" },
+    "XENIA": { primaryName: "Xenia", dbTownKey: "Xenia", jsonKey: "clay_county_teams", gasKey: ["xenia"], historyKey: "xenia", keywords: ["XENIA"], zipCodes: ["62899"], scorestreamId: "68988" },
+    "IOLA": { primaryName: "Iola", dbTownKey: "Iola", jsonKey: "iola", gasKey: ["louisville"], historyKey: "iola", keywords: ["IOLA"], zipCodes: ["62849"], scorestreamId: "68601" },
+    "SAILOR SPRINGS": { primaryName: "Sailor Springs", dbTownKey: "Sailor Springs", jsonKey: "sailor_springs", gasKey: ["louisville", "clay-city"], historyKey: "sailor_springs", keywords: ["SAILOR SPRINGS"], zipCodes: ["62879"], scorestreamId: "68988" },
+    "INGRAHAM": { primaryName: "Ingraham", dbTownKey: "Ingraham", jsonKey: "louisville", gasKey: ["louisville", "clay-city"], historyKey: "ingraham", keywords: ["INGRAHAM"], zipCodes: ["62434"], scorestreamId: "68601" }
 };
 
 function getActiveTownConfig() {
@@ -31,7 +30,13 @@ function getActiveTownConfig() {
 
     // 2. SECOND PRIORITY: Check data-town attribute on html/body tags
     const htmlTownAttr = (document.documentElement.getAttribute('data-town') || document.body?.getAttribute('data-town') || "").toUpperCase();
-    if (htmlTownAttr && TOWN_ALIAS_MAP[htmlTownAttr]) return TOWN_ALIAS_MAP[htmlTownAttr];
+    if (htmlTownAttr) {
+        for (const key in TOWN_ALIAS_MAP) {
+            if (key === htmlTownAttr || TOWN_ALIAS_MAP[key].primaryName.toUpperCase() === htmlTownAttr) {
+                return TOWN_ALIAS_MAP[key];
+            }
+        }
+    }
 
     // 3. FALLBACK: Default to Clay County Home Hub (Aggregator Mode)
     return TOWN_ALIAS_MAP["HOME"];
@@ -42,8 +47,6 @@ const ACTIVE_TOWN = getActiveTownConfig();
 /* === SECTION 2: Global State Tracking === */
 let globalSlideshowTicker = null;
 let gasMonitorRotator = null;
-let topMarqueeTimer = null;
-let bottomMarqueeTimer = null;
 window.calendarCachedEvents = [];
 window.newsCacheBlock = [];
 window.globalAppConfig = null;
@@ -335,6 +338,31 @@ function bindFirebaseFuelDatabase(stationConfigs, container) {
         const val = snap.val();
         if (val) renderGasBillboardUI(val, stationConfigs, ACTIVE_TOWN.gasKey, container);
     });
+
+    // Initialize Dynamic Section 4.1 Article Image Listener
+    bindFirebaseArticleImage(db);
+}
+
+/* Dynamic Section 4.1 Article Image Listener matching Firebase Tree Structure */
+function bindFirebaseArticleImage(db) {
+    const articleImgTarget = document.getElementById('sec-4-1-article-img');
+    if (!articleImgTarget) return;
+
+    const townName = ACTIVE_TOWN.dbTownKey || "Louisville";
+    const townPath = `master_county_data/towns/${townName}/sections/sec_4_1/image1/image1`;
+    const globalPath = `master_county_data/global/sections/sec_4_1/image1/image1`;
+
+    db.ref(townPath).on('value', (snapshot) => {
+        const townImgUrl = snapshot.val();
+        if (townImgUrl) {
+            articleImgTarget.src = townImgUrl;
+        } else {
+            db.ref(globalPath).on('value', (globalSnap) => {
+                const globalImgUrl = globalSnap.val();
+                if (globalImgUrl) articleImgTarget.src = globalImgUrl;
+            });
+        }
+    });
 }
 
 function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
@@ -390,7 +418,7 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
     }
 }
 
-/* === SECTION 8: Sections 6 & 8 Advertising Partners Continuous Marquee Engine === */
+/* === SECTION 8: Sections 6 & 8 Advertising Partners Fixed Slideshow Engine === */
 async function loadPartnersStrips(cacheBuster) {
     const topGrid = document.getElementById('partners-grid-top') 
         || document.querySelector('.scotts-partners-top') 
@@ -406,43 +434,19 @@ async function loadPartnersStrips(cacheBuster) {
             
         const res = await fetch(partnersEndpoint + '?' + cacheBuster);
         const data = await res.json();
-        let partnersList = Array.isArray(data) ? data : (data.partners || []);
+        const partnersList = Array.isArray(data) ? data : (data.partners || []);
 
         if (partnersList.length > 0) {
-            // Guarantee enough cards to fill horizontal space by duplicating if set is small
-            while (partnersList.length < 10) {
-                partnersList = partnersList.concat(partnersList);
-            }
-
-            // Split offset: Section 6 takes First Half, Section 8 takes Second Half (Offset)
             const midpoint = Math.ceil(partnersList.length / 2);
-            const section6List = partnersList.slice(0, midpoint);
-            const section8List = partnersList.slice(midpoint);
+            const section6Pool = partnersList.slice(0, midpoint);
+            const section8Pool = partnersList.slice(midpoint);
 
-            const buildCardMarkup = (p) => {
-                const targetRawUrl = p.websiteUrl || p.url || '#';
-                const taggedUrl = attachUtmParameters(targetRawUrl);
-                const imgSrc = p.image || p.logo || '';
-                const partnerName = p.name || 'Local Partner';
-
-                return `
-                    <div class="partner-card" style="flex: 0 0 240px; min-width: 240px;">
-                        <div class="partner-logo-box">
-                            <img src="${imgSrc}" alt="${partnerName}" onclick="window.open('${taggedUrl}', '_blank')" style="cursor:pointer;">
-                        </div>
-                        <h4><a href="${taggedUrl}" target="_blank" data-ga-label="partner_link">${partnerName}</a></h4>
-                    </div>
-                `;
-            };
-
-            if (topGrid) {
-                topGrid.innerHTML = section6List.map(buildCardMarkup).join('');
-                initializeMarqueeScroller(topGrid, 'top');
+            if (topGrid && section6Pool.length > 0) {
+                renderFixedCardSlideshow(topGrid, section6Pool);
             }
 
-            if (bottomGrid) {
-                bottomGrid.innerHTML = section8List.map(buildCardMarkup).join('');
-                initializeMarqueeScroller(bottomGrid, 'bottom');
+            if (bottomGrid && section8Pool.length > 0) {
+                renderFixedCardSlideshow(bottomGrid, section8Pool.length > 0 ? section8Pool : section6Pool);
             }
         } else {
             console.warn("Partners manifest loaded but contained no items.");
@@ -452,44 +456,86 @@ async function loadPartnersStrips(cacheBuster) {
     }
 }
 
-/* Continuous Horizontal Left-Scrolling Marquee Engine */
-function initializeMarqueeScroller(gridElement, position) {
-    if (!gridElement) return;
+function renderFixedCardSlideshow(containerElement, partnerPool, cardsToShow = 5) {
+    if (!containerElement || !partnerPool.length) return;
 
-    // Apply strict horizontal row formatting
-    gridElement.style.display = "flex";
-    gridElement.style.flexWrap = "nowrap";
-    gridElement.style.overflowX = "hidden";
-    gridElement.style.gap = "24px";
-    gridElement.style.alignItems = "center";
+    containerElement.style.display = "flex";
+    containerElement.style.justifyContent = "space-between";
+    containerElement.style.alignItems = "center";
+    containerElement.style.gap = "20px";
+    containerElement.style.width = "100%";
+    containerElement.style.flexWrap = "wrap";
 
-    let isPaused = false;
+    const totalCards = Math.min(cardsToShow, partnerPool.length);
+    const cardSlotsData = [];
 
-    // Pause animation when visitor hovers over any partner card
-    gridElement.addEventListener('mouseenter', () => { isPaused = true; });
-    gridElement.addEventListener('mouseleave', () => { isPaused = false; });
-
-    const stepScroll = () => {
-        if (!isPaused) {
-            gridElement.scrollLeft += 1; // 1px smooth leftward push
-            const firstCard = gridElement.firstElementChild;
-            if (firstCard) {
-                const cardWidth = firstCard.offsetWidth + 24; // Card width + gap
-                if (gridElement.scrollLeft >= cardWidth) {
-                    gridElement.appendChild(firstCard); // Cycle lead card to the end of the line
-                    gridElement.scrollLeft -= cardWidth; // Reset scroll offset seamlessly
-                }
-            }
+    for (let i = 0; i < totalCards; i++) {
+        const slotPool = [];
+        for (let j = i; j < partnerPool.length; j += totalCards) {
+            slotPool.push(partnerPool[j]);
         }
-    };
+        cardSlotsData.push(slotPool);
+    }
 
-    if (position === 'top' && topMarqueeTimer) clearInterval(topMarqueeTimer);
-    if (position === 'bottom' && bottomMarqueeTimer) clearInterval(bottomMarqueeTimer);
+    containerElement.innerHTML = cardSlotsData.map((slot, idx) => {
+        const initialPartner = slot[0];
+        const initialUrl = attachUtmParameters(initialPartner.websiteUrl || initialPartner.url || '#');
+        const initialImg = initialPartner.image || initialPartner.logo || '';
+        const initialName = initialPartner.name || 'Local Partner';
 
-    const timer = setInterval(stepScroll, 25); // ~40fps smooth motion
+        return `
+            <div class="partner-card fixed-slide-card" data-slot-index="${idx}" style="flex: 1 1 180px; max-width: 260px; transition: opacity 0.4s ease;">
+                <div class="partner-logo-box">
+                    <img class="partner-card-img" src="${initialImg}" alt="${initialName}" onclick="window.open(this.closest('.partner-card').querySelector('a').href, '_blank')" style="cursor:pointer;">
+                </div>
+                <h4><a class="partner-card-link" href="${initialUrl}" target="_blank" data-ga-label="partner_link">${initialName}</a></h4>
+            </div>
+        `;
+    }).join('');
 
-    if (position === 'top') topMarqueeTimer = timer;
-    if (position === 'bottom') bottomMarqueeTimer = timer;
+    const cardNodes = containerElement.querySelectorAll('.fixed-slide-card');
+
+    cardNodes.forEach((cardNode) => {
+        const slotIdx = parseInt(cardNode.getAttribute('data-slot-index'), 10);
+        const slotRotationItems = cardSlotsData[slotIdx];
+
+        if (slotRotationItems && slotRotationItems.length > 1) {
+            let currentItemIdx = 0;
+            let isHovered = false;
+
+            cardNode.addEventListener('mouseenter', () => { isHovered = true; });
+            cardNode.addEventListener('mouseleave', () => { isHovered = false; });
+
+            setInterval(() => {
+                if (isHovered) return;
+
+                currentItemIdx = (currentItemIdx + 1) % slotRotationItems.length;
+                const nextItem = slotRotationItems[currentItemIdx];
+                const nextUrl = attachUtmParameters(nextItem.websiteUrl || nextItem.url || '#');
+                const nextImg = nextItem.image || nextItem.logo || '';
+                const nextName = nextItem.name || 'Local Partner';
+
+                cardNode.style.opacity = '0';
+
+                setTimeout(() => {
+                    const imgEl = cardNode.querySelector('.partner-card-img');
+                    const linkEl = cardNode.querySelector('.partner-card-link');
+
+                    if (imgEl) {
+                        imgEl.src = nextImg;
+                        imgEl.alt = nextName;
+                    }
+
+                    if (linkEl) {
+                        linkEl.href = nextUrl;
+                        linkEl.innerText = nextName;
+                    }
+
+                    cardNode.style.opacity = '1';
+                }, 400);
+            }, 4000 + (slotIdx * 800));
+        }
+    });
 }
 
 /* === SECTION 9: Footer Data Pipeline Engine === */
@@ -804,5 +850,5 @@ async function processDataPipelines() {
 /* === SECTION Initialization === */
 window.addEventListener('DOMContentLoaded', () => {
     processDataPipelines();
-    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-30_14:15`);
+    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-30_14:45`);
 });
