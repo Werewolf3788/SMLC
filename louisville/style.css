@@ -175,123 +175,35 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 }
 
 /* ==========================================================================
-   SECTION 4.1: ARTICLE CONTAINER & HARD IMAGE CONTAINMENT FIX
+   SECTION 4.1: ARTICLE CONTAINER & COMPACT INLINE IMAGE FIX
    ========================================================================== */
 .section4-left-article-box {
 	width: 100% !important;
-	max-width: 100% !important;
 	background: #ffffff !important;
 	box-shadow: 0 10px 40px rgba(0,0,0,0.6);
 	border-radius: 8px;
-	overflow: hidden !important; /* Forces all internal elements to stay inside card */
+	overflow: hidden !important;
 	padding: 0;
 	font-family: 'Libre Baskerville', serif !important;
 	color: #1a1a1a !important;
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
-	box-sizing: border-box !important;
 }
 
-.section4-centered-article-header {
-	background: linear-gradient(180deg, #eb1c24 0%, #1a1a1a 100%) !important;
-	color: #ffffff !important;
-	padding: clamp(35px, 6vh, 60px) 24px !important;
-	text-align: center !important;
-	border-bottom: 8px solid var(--louis-gold) !important;
-}
-
-.category-tag {
-	font-family: 'Oswald', sans-serif !important;
-	background: var(--louis-gold) !important;
-	color: #000000 !important;
-	padding: 6px 18px !important;
-	display: inline-block !important;
-	letter-spacing: 2px !important;
-	font-size: 0.95rem !important;
-	font-weight: bold !important;
-	margin-bottom: 18px !important;
-	text-transform: uppercase !important;
-}
-
-.article-stacked-title {
-	font-family: 'Montserrat', sans-serif !important;
-	font-size: clamp(2.2rem, 4.5vw, 3.8rem) !important;
-	line-height: 1.1 !important;
-	margin: 0 auto 16px !important;
-	text-transform: uppercase !important;
-	color: #ffffff !important;
-	text-align: center !important;
-}
-
-.article-stacked-deck {
-	font-size: 1.25rem !important;
-	font-style: italic !important;
-	opacity: 0.95 !important;
-	color: #ffffff !important;
-	margin: 0 auto !important;
-	text-align: center !important;
-	max-width: 900px;
-}
-
-.article-body-content {
-	padding: 36px !important;
-	font-size: 1.15rem !important;
-	color: #1a1a1a !important;
-	background-color: #ffffff !important;
-	box-sizing: border-box !important;
-}
-
-/* Force ALL inline images in the article body to lock strictly within padding */
+/* Constrain images inside the article to fit cleanly without stretching the card height */
 .article-body-content img,
 .section4-left-article-box img,
-.section4-left-article-box p img,
-.article-hero-image img {
-	width: 100% !important;
+.section4-left-article-box p img {
+	width: auto !important;
 	max-width: 100% !important;
-	height: auto !important;
+	max-height: 280px !important; /* Locks height to keep card compact */
+	object-fit: cover !important;
 	display: block !important;
 	margin: 20px auto !important;
 	border-radius: 6px !important;
 	border: 2px solid #222222 !important;
 	box-shadow: 4px 4px 0px #000000 !important;
-	object-fit: cover !important;
-	box-sizing: border-box !important;
-}
-
-.article-body-content figure {
-	margin: 24px 0 !important;
-	padding: 0 !important;
-	width: 100% !important;
-	max-width: 100% !important;
-}
-
-.article-body-content figcaption {
-	font-size: 0.95rem !important;
-	font-style: italic !important;
-	text-align: center !important;
-	color: #555555 !important;
-	margin-top: 8px !important;
-}
-
-.article-body-content p {
-	margin-bottom: 1.5em !important;
-	text-align: justify !important;
-	font-family: 'Libre Baskerville', serif !important;
-	color: #1a1a1a !important;
-	line-height: 1.8 !important;
-}
-
-.article-footer {
-	background: #f4f4f4 !important;
-	padding: 18px 36px !important;
-	border-top: 1px solid #ddd !important;
-	font-family: 'Oswald', sans-serif !important;
-	display: flex !important;
-	justify-content: space-between !important;
-	font-size: 0.9rem !important;
-	color: #555555 !important;
-	text-transform: uppercase !important;
 }
 
 /* SECTION 4.2: RIGHT SIDE WIDGET STACK */
