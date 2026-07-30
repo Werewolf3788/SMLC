@@ -8,6 +8,7 @@
    - Business Spotlight Fix: Safely parses single objects vs numerical arrays for sec_4_2.
    - 100% Live Sync: Persistent real-time listeners for instant Firebase updates.
    - Deep Node Extraction: Auto-drills into sec_7_3_2/links/0/website seamlessly.
+   - Section 4.1 Image Fix: Extracts and renders image1/image1 nested Firebase node into article.
    ========================================================================== */
 
 /* === SECTION 1: Geographically Correct Town Alignment Matrix === */
@@ -90,7 +91,7 @@ function smartExtractValue(field) {
         return smartExtractValue(
             field.content || field.grid || field.year || field.title || 
             field.description || field.desc || field.image || field.image1 || field.imageUrl ||
-            field.url || field.website || field.full_story || field.details || field.name
+            field.url || field.website || field.full_story || field.details || field.name || field.category || field.tag
         );
     }
     return String(field).trim();
@@ -630,26 +631,38 @@ function loadFooterDataPipeline(globalFooter, townFooter) {
     }
 }
 
-/* === SECTION 15: Section 4.1 Town Article Engine === */
+/* === SECTION 15: Section 4.1 Town Article Engine (Includes image1 Extraction) === */
 function loadTownArticleData(articleObj) {
-    const articleTarget = document.getElementById('town-article-target') || document.querySelector('.town-article-container');
+    const articleTarget = document.getElementById('town-article-target') || document.querySelector('.section4-left-article-box') || document.querySelector('.town-article-container');
     if (!articleTarget) return;
 
     if (articleObj) {
+        const tag = smartExtractValue(articleObj.category || articleObj.tag) || "RENEWABLE ENERGY FEATURE";
         const title = smartExtractValue(articleObj.title?.title || articleObj.title) || "Town Article";
         const h1 = smartExtractValue(articleObj.header1?.header1 || articleObj.header1);
         const p1 = smartExtractValue(articleObj.paragraph1?.paragraph1 || articleObj.paragraph1);
         const p2 = smartExtractValue(articleObj.paragraph2?.paragraph2 || articleObj.paragraph2);
+        
+        // Dynamic image1 extraction from Firebase node
+        const imgUrl = smartExtractValue(articleObj.image1?.image1 || articleObj.image1 || articleObj.image || articleObj.imageUrl);
+        const altText = getSafeAltText(articleObj.image1?.alt || articleObj.alt, null, title, "Article Image");
 
-        const subtitle = h1 ? `<h3 class="town-article-subtitle" style="font-size: 1.1rem; color: #555; margin-bottom: 15px;">${h1}</h3>` : "";
         let bodyContent = "";
-        if (p1) bodyContent += `<p style="margin-bottom: 1rem; line-height: 1.6;">${parseInteractiveContent(p1)}</p>`;
-        if (p2) bodyContent += `<p style="margin-bottom: 1rem; line-height: 1.6;">${parseInteractiveContent(p2)}</p>`;
+        if (p1) bodyContent += `<p style="margin-bottom: 1.5em; line-height: 1.7; text-align: justify;">${parseInteractiveContent(p1)}</p>`;
+        if (p2) bodyContent += `<p style="margin-bottom: 1.5em; line-height: 1.7; text-align: justify;">${parseInteractiveContent(p2)}</p>`;
 
         articleTarget.innerHTML = `
             <div class="town-article-wrapper" data-ga-label="town_article_block">
-                <h2 class="town-article-title" style="font-size: 1.5rem; font-weight: bold; margin-bottom: 5px;">${title}</h2>
-                ${subtitle}
+                <div class="category-tag">${tag}</div>
+                <h2 class="article-stacked-title">${title}</h2>
+                ${h1 ? `<h3 class="subtitle">${h1}</h3>` : ''}
+                
+                ${imgUrl ? `
+                    <div class="article-featured-image-wrap">
+                        <img src="${imgUrl}" alt="${altText}" onclick="fireLightbox('${imgUrl}', '${title.replace(/'/g, "\\'")}', 'ARTICLE FEATURE', '${altText.replace(/'/g, "\\'")}', '')">
+                    </div>
+                ` : ''}
+
                 <div class="town-article-body">
                     ${bodyContent}
                 </div>
