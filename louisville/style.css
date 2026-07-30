@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-07-27_05:25
+   Active Version: 2026-07-30_13:25
    File: style.css
    Description: Master Stylesheet - Header Barrier, Dynamic Widgets, & Compact Cards
    ========================================================================== */
@@ -182,7 +182,7 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	background: #ffffff !important;
 	box-shadow: 0 10px 40px rgba(0,0,0,0.6);
 	border-radius: 8px;
-	overflow: hidden;
+	overflow: hidden; /* Enforces strict internal card containment */
 	padding: 0;
 	font-family: 'Libre Baskerville', serif !important;
 	color: #1a1a1a !important;
@@ -237,6 +237,35 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	font-size: 1.15rem !important;
 	color: #1a1a1a !important;
 	background-color: #ffffff !important;
+}
+
+/* --- Section 4.1 In-Card Image & Media Formatting --- */
+.article-body-content img,
+.section4-left-article-box img,
+.article-hero-image img {
+	max-width: 100% !important;
+	height: auto !important;
+	display: block !important;
+	margin: 20px auto !important;
+	border-radius: 6px !important;
+	border: 2px solid #222222 !important;
+	box-shadow: 4px 4px 0px #000000 !important;
+	object-fit: cover !important;
+}
+
+.article-body-content figure {
+	margin: 24px 0 !important;
+	padding: 0 !important;
+	width: 100% !important;
+	max-width: 100% !important;
+}
+
+.article-body-content figcaption {
+	font-size: 0.95rem !important;
+	font-style: italic !important;
+	text-align: center !important;
+	color: #555555 !important;
+	margin-top: 8px !important;
 }
 
 .article-body-content p {
@@ -1034,7 +1063,31 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	text-align: center !important;
 }
 
-/* SECTION 7.2.3: CLAY COUNTY BUSINESS DIRECTORY BUTTON */
+/* SECTION 7.2.3: CLAY COUNTY BUSINESS DIRECTORY BANNER & BUTTON CONTAINER */
+.town-directory-container-s7 {
+	display: flex !important;
+	flex-direction: column !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 100% !important;
+	margin-top: 16px !important;
+}
+
+/* Directory Image Banner placed under header and above button */
+.town-directory-banner-s7 {
+	width: 100% !important;
+	max-width: 100% !important;
+	height: auto !important;
+	display: block !important;
+	margin: 0 0 20px 0 !important;
+	border: 2px solid #000000 !important;
+	box-shadow: 6px 6px 0px #000000 !important;
+	border-radius: 6px !important;
+	object-fit: contain !important;
+	cursor: pointer !important;
+}
+
+/* Directory Interactive Button */
 .town-directory-interactive-btn-s7 {
 	background-color: #000000 !important;
 	color: var(--louis-gold) !important;
@@ -1052,6 +1105,45 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 .town-directory-interactive-btn-s7:hover {
 	background-color: var(--louis-gold) !important;
 	color: #000000 !important;
+}
+
+/* ==========================================================================
+   SECTION 9: BOLD PRINT MATRIX & CUSTOM FOOTER PROSE
+   ========================================================================== */
+.section9-bold-print-wrapper,
+.site-section-9-container {
+	width: 100% !important;
+	padding: 50px clamp(20px, 4vw, 80px) !important;
+	background-color: #000000 !important;
+	border-top: 4px solid var(--louis-gold) !important;
+	color: #ffffff !important;
+	font-family: 'Oswald', 'Montserrat', sans-serif !important;
+	text-align: center !important;
+	box-sizing: border-box !important;
+}
+
+.section9-bold-print-wrapper h1,
+.section9-bold-print-wrapper h2,
+.section9-bold-print-wrapper h3,
+.section9-bold-print-wrapper h4,
+.section9-bold-print-wrapper p,
+.section9-bold-print-wrapper span,
+.section9-bold-print-wrapper a,
+.site-section-9-container * {
+	font-weight: 900 !important;
+	letter-spacing: 1.2px !important;
+	text-transform: uppercase !important;
+	color: #ffffff !important;
+	text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9) !important;
+}
+
+.section9-bold-print-wrapper a {
+	color: var(--louis-gold) !important;
+	text-decoration: underline !important;
+}
+
+.section9-bold-print-wrapper a:hover {
+	color: #ffffff !important;
 }
 
 /* ==========================================================================
