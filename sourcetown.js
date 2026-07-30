@@ -1,7 +1,7 @@
 /* ==========================================================================
    Active Version: 2026-07-30_15:30
    File: sourcetown.js / script.js
-   Description: SMLC Community Portal Network - SPA Master Engine
+   Description: SMLC Community Portal Network - SPA Title-First Universal Master Engine
    Features & Architecture Standards:
    - 100% Code Preservation: Zero code stripped or deleted
    - SPA-Ready Execution: Hash routing support (#/route) with dynamic re-initialization
@@ -9,6 +9,7 @@
    - Dynamic Auto-Hide Safeguard: Broken/empty image cards collapse gracefully (safeSetImageSource)
    - Realtime Firebase Listeners: /master_county_data/towns/{Town}/ & global menu fallback
    - Section 6 & 8 Advertising Engine: Full-Pool Fixed-Card Interior Slideshow with Offset Seed
+   - Non-Stop Partner Rotation: Runs continuously, pauses ONLY when mouse hovers or mobile touch holds over section
    ========================================================================== */
 
 /* === SECTION 1: Geographically Correct Town Alignment Matrix === */
@@ -535,9 +536,10 @@ async function loadPartnersStrips(cacheBuster) {
 
 /**
  * Renders fixed-position card slots where interior details (image, text, link) 
- * slide/cross-fade through the FULL partner dataset.
+ * continuously slide/cross-fade through the FULL partner dataset.
+ * Pauses ONLY when mouse hovers or mobile touch holds over the ENTIRE section.
  * 
- * @param {HTMLElement} containerElement - Grid container target
+ * @param {HTMLElement} containerElement - Grid container target (Section 6 or Section 8)
  * @param {Array} partnerPool - Full partner manifest array
  * @param {Number} offsetSeed - Starting shift index to offset Section 8 from Section 6
  * @param {String} sectionId - Identifier ('section6' or 'section8') for timer tracking
@@ -587,7 +589,19 @@ function renderFixedCardSlideshow(containerElement, partnerPool, offsetSeed = 0,
         `;
     }).join('');
 
-    // Attach interior content rotator to each fixed card
+    // --- Section-Wide Hover & Touch Event Listeners ---
+    let isSectionPaused = false;
+
+    // Desktop Mouse Hover Pause/Resume
+    containerElement.addEventListener('mouseenter', () => { isSectionPaused = true; });
+    containerElement.addEventListener('mouseleave', () => { isSectionPaused = false; });
+
+    // Mobile Touch Hold Pause/Resume
+    containerElement.addEventListener('touchstart', () => { isSectionPaused = true; }, { passive: true });
+    containerElement.addEventListener('touchend', () => { isSectionPaused = false; });
+    containerElement.addEventListener('touchcancel', () => { isSectionPaused = false; });
+
+    // Attach interior content rotators
     const cardNodes = containerElement.querySelectorAll('.fixed-slide-card');
 
     cardNodes.forEach((cardNode) => {
@@ -596,13 +610,10 @@ function renderFixedCardSlideshow(containerElement, partnerPool, offsetSeed = 0,
 
         if (slotRotationItems && slotRotationItems.length > 1) {
             let currentItemIdx = 0;
-            let isHovered = false;
-
-            cardNode.addEventListener('mouseenter', () => { isHovered = true; });
-            cardNode.addEventListener('mouseleave', () => { isHovered = false; });
 
             const timerInstance = setInterval(() => {
-                if (isHovered) return;
+                // Skip transition tick if mouse hover or touch hold is active on this section
+                if (isSectionPaused) return;
 
                 currentItemIdx = (currentItemIdx + 1) % slotRotationItems.length;
                 const nextItem = slotRotationItems[currentItemIdx];
