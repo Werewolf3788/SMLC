@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-07-29_23:15
+   Active Version: 2026-07-29_22:45
    File: style.css
    Description: Master Stylesheet - Header Barrier, Dynamic Widgets, & Compact Cards
    ========================================================================== */
@@ -27,9 +27,6 @@
 	--granite-dark: #1c1c1e;
 	--granite-mid: #2c2c2e;
 	--granite-black: #0a0a0a;
-
-	/* Footer Custom Accent Colors */
-	--footer-peach: #FFDAB9;
 }
 
 body[data-town="louisville"],
@@ -189,6 +186,60 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 }
 
 /* ==========================================================================
+   SECTION 4.1: INNER TYPOGRAPHY & DYNAMIC TOWN BADGE ACCENTS
+   ========================================================================== */
+
+/* 1. Category Badge (Uses Master Town Color) */
+.section4-left-article-box h1,
+.section4-left-article-box .category-tag {
+	display: inline-block !important;
+	background-color: var(--town-accent) !important; /* DYNAMIC TOWN COLOR */
+	color: #FFFFFF !important;
+	font-family: Arial, sans-serif !important;
+	font-size: 13px !important;
+	font-weight: 800 !important;
+	text-transform: uppercase !important;
+	letter-spacing: 1px !important;
+	padding: 6px 12px !important;
+	margin-top: 0 !important;
+	margin-bottom: 24px !important;
+	border: none !important;
+	border-radius: 0px !important;
+}
+
+/* 2. Main Article Title ("Harvesting the Sun") */
+.section4-left-article-box h2,
+.section4-left-article-box .article-stacked-title {
+	font-family: 'Times New Roman', Times, serif !important;
+	font-size: clamp(2.4rem, 4vw, 3.5rem) !important;
+	font-weight: 700 !important;
+	color: #222222 !important;
+	line-height: 1.1 !important;
+	margin-top: 0 !important;
+	margin-bottom: 20px !important;
+	text-align: left !important;
+	border: none !important;
+}
+
+/* 3. Italic Subtitle with Dynamic Vertical Accent Bar */
+.section4-left-article-box h3,
+.section4-left-article-box .article-stacked-deck,
+.section4-left-article-box .subtitle {
+	font-family: 'Times New Roman', Times, serif !important;
+	font-size: 1.25rem !important;
+	font-style: italic !important;
+	color: #333333 !important;
+	margin-top: 0 !important;
+	margin-bottom: 30px !important;
+	line-height: 1.5 !important;
+	text-align: left !important;
+	
+	/* The Accent Bar dynamically matches the town color */
+	border-left: 5px solid var(--town-accent) !important;
+	padding-left: 16px !important;
+}
+
+/* ==========================================================================
    SECTION 4.1: RETRO NEWSPAPER CONTAINER (RESTORED CARD BACKGROUND)
    ========================================================================== */
 .section4-left-article-box {
@@ -222,22 +273,6 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	overflow: visible !important;
 	position: static !important;
 	z-index: auto !important;
-}
-
-/* Section 4.1 Featured Image Frame */
-.section4-left-article-box .article-featured-image-wrap {
-	width: 100% !important;
-	border: 2px solid rgb(34, 34, 34) !important;
-	margin: 20px 0 24px 0 !important;
-	box-shadow: 4px 4px 0px rgba(0,0,0,0.8) !important;
-	overflow: hidden !important;
-}
-
-.section4-left-article-box .article-featured-image-wrap img {
-	width: 100% !important;
-	height: auto !important;
-	display: block !important;
-	cursor: pointer !important;
 }
 
 /* ==========================================================================
@@ -307,7 +342,6 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	font-weight: 700 !important;
 	color: #111111 !important;
 }
-
 /* SECTION 4.2: RIGHT SIDE WIDGET STACK */
 .section4-right-widgets-stack,
 .dv-custom-article-wrapper .sidebar {
@@ -480,7 +514,7 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 }
 
 /* ==========================================================================
-   SECTION 5: HISTORICAL TIMELINE - NEWSPAPER CARD SPECIFICATIONS (BOLD + ITALIC)
+   SECTION 5: HISTORICAL TIMELINE - NEWSPAPER CARD SPECIFICATIONS
    ========================================================================== */
 .historical-timeline-chassis-wrapper {
 	width: 100% !important;
@@ -562,7 +596,6 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	line-height: 1.3 !important;
 }
 
-/* SECTION 9: DESCRIPTION UPDATED TO BOLD + ITALIC */
 .history-card p {
 	font-family: 'Times New Roman', Times, serif !important;
 	font-size: 16px !important;
@@ -570,8 +603,6 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	color: #222222 !important;
 	margin: 0 0 22px 0 !important;
 	flex-grow: 1 !important;
-	font-style: italic !important;
-	font-weight: 700 !important; /* Added Bold */
 }
 
 .history-card .history-img-box {
@@ -812,7 +843,7 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	letter-spacing: 1px !important;
 }
 
-/* SECTION 7.2.2: DYNAMIC COMMUNITY CALENDAR BULLETIN FEED (BANNER IMAGE INTEGRATED) */
+/* SECTION 7.1.2: DYNAMIC COMMUNITY CALENDAR BULLETIN FEED */
 .news-clipping-wrapper {
 	background-color: #fffdf5;
 	box-shadow: 6px 6px 0px rgba(0,0,0,0.6); 
@@ -826,20 +857,12 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	padding: 28px;
 	border-radius: 6px;
 }
-
-/* Section 7.2.2 Header Banner Image Integration */
 .clipping-masthead {
 	text-align: center;
 	padding-bottom: 16px;
 	border-bottom: 4px double #222; 
 	margin-bottom: 22px; 
-	background-image: url('https://ourflora.com/wp-content/uploads/2026/02/smlc.png') !important;
-	background-repeat: no-repeat !important;
-	background-position: center bottom !important;
-	background-size: contain !important;
-	padding-bottom: 60px !important;
 }
-
 .black-tag {
 	background: #000;
 	color: #fff;
@@ -851,7 +874,6 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 	letter-spacing: 1px;
 	line-height: 1;
 }
-
 .clipping-tagline {
 	font-size: 13px;
 	text-transform: uppercase;
@@ -1023,147 +1045,10 @@ body[data-town="louisville"] .menu-links a[href*="./"] {
 }
 
 /* ==========================================================================
-   SECTION 10: FOOTER MATRIX (3-COLUMN STRUCTURED GRID)
+   FOOTER MATRIX
    ========================================================================== */
-.site-global-footer-matrix { 
-	width: 100% !important; 
-	background-color: #000000 !important; 
-	color: #ffffff !important; 
-	padding: 45px 20px 30px 20px !important; 
-	border-top: 4px solid var(--louis-gold) !important; 
-	text-align: center !important; 
-}
-
-.site-global-footer-matrix .footer-grid-container {
-	display: grid !important;
-	grid-template-columns: repeat(3, 1fr) !important;
-	gap: 24px !important;
-	max-width: 1200px !important;
-	margin: 0 auto !important;
-	align-items: start !important;
-}
-
-@media (max-width: 768px) {
-	.site-global-footer-matrix .footer-grid-container {
-		grid-template-columns: 1fr !important;
-		gap: 30px !important;
-	}
-}
-
-.footer-col-box {
-	display: flex !important;
-	flex-direction: column !important;
-	align-items: center !important;
-	justify-content: center !important;
-	text-align: center !important;
-}
-
-.footer-col-box h4 {
-	font-family: 'Oswald', sans-serif !important;
-	font-size: 18px !important;
-	font-weight: bold !important;
-	color: var(--louis-gold) !important;
-	text-transform: uppercase !important;
-	letter-spacing: 1px !important;
-	margin: 0 0 12px 0 !important;
-}
-
-/* SECTION 10.1.1: CALL US - PHONE NUMBERS SIDE BY SIDE (INLINE ON ONE ROW) */
-.footer-col-box.sec-10-1-1 #footer-phone-target {
-	display: flex !important;
-	flex-direction: row !important;
-	justify-content: center !important;
-	align-items: center !important;
-	gap: 16px !important;
-	width: 100% !important;
-	flex-wrap: wrap !important;
-}
-
-/* Phone 1: White */
-.footer-col-box.sec-10-1-1 #footer-phone-target div:nth-child(1) a {
-	color: #ffffff !important;
-	font-weight: bold !important;
-	font-size: 16px !important;
-}
-
-/* Phone 2: Yellow / Gold */
-.footer-col-box.sec-10-1-1 #footer-phone-target div:nth-child(2) a {
-	color: var(--louis-gold) !important;
-	font-weight: bold !important;
-	font-size: 16px !important;
-}
-
-/* SECTION 10.2.1: EMAIL US */
-.footer-col-box.sec-10-2-1 a#footer-email-target {
-	color: #ffffff !important;
-	font-weight: bold !important;
-	font-size: 16px !important;
-	text-decoration: underline !important;
-}
-
-/* SECTION 10.3.1: VISIT OUR OFFICE - PEACH COLOR ADDRESS */
-.footer-col-box.sec-10-3-1 #footer-address-target a {
-	color: var(--footer-peach) !important; /* #FFDAB9 Peach */
-	font-weight: bold !important;
-	font-size: 16px !important;
-	text-decoration: underline !important;
-}
-
-/* ==========================================================================
-   CALENDAR BULLETIN & LIGHTBOX EVENT ACTION BUTTONS
-   ========================================================================== */
-.calendar-sub-strip {
-	display: flex !important;
-	justify-content: center !important;
-	gap: 12px !important;
-	margin: 12px 0 18px 0 !important;
-	flex-wrap: wrap !important;
-}
-
-.cal-sub-btn {
-	font-family: Arial, sans-serif !important;
-	font-size: 12px !important;
-	font-weight: 800 !important;
-	text-transform: uppercase !important;
-	padding: 8px 14px !important;
-	border-radius: 4px !important;
-	text-decoration: none !important;
-	transition: all 0.2s ease !important;
-	border: 1px solid #000000 !important;
-}
-
-.cal-sub-btn.gcal-sub {
-	background-color: var(--louis-gold) !important;
-	color: #000000 !important;
-	box-shadow: 2px 2px 0px #000000 !important;
-}
-
-.cal-sub-btn.gcal-sub:hover {
-	background-color: #000000 !important;
-	color: var(--louis-gold) !important;
-}
-
-.cal-sub-btn.ical-sub {
-	background-color: #222222 !important;
-	color: #ffffff !important;
-	box-shadow: 2px 2px 0px #000000 !important;
-}
-
-.cal-sub-btn.ical-sub:hover {
-	background-color: var(--louis-red) !important;
-	color: #ffffff !important;
-}
-
-/* Lightbox Single Event Action Buttons */
-.single-event-actions-bar .event-action-btn {
-	font-family: Arial, sans-serif !important;
-	transition: transform 0.15s ease, opacity 0.2s ease !important;
-}
-
-.single-event-actions-bar .event-action-btn:hover {
-	opacity: 0.9 !important;
-	transform: translateY(-1px) !important;
-}
+.site-global-footer-matrix { width: 100% !important; background-color: #000000 !important; color: #ffffff !important; padding: 45px 0 25px 0 !important; border-top: 4px solid var(--louis-gold) !important; text-align: center !important; }
+.site-global-footer-matrix p, .site-global-footer-matrix span { color: #ffffff !important; font-size: 15px !important; }
 
 /* ==========================================================================
    LIGHTBOX MODAL ENGINE OVERLAY
