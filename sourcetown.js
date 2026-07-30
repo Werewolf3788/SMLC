@@ -1,11 +1,14 @@
 /* ==========================================================================
-   Active Version: 2026-07-30_14:45
+   Active Version: 2026-07-30_15:30
    File: sourcetown.js / script.js
-   Description: SMLC Community Portal Network - Title-First Universal Master Engine
-   Fixes:
-   - Dynamic Firebase Realtime Database tree resolver matching exact coordinate paths (/master_county_data/towns/{Town}/sections/)
-   - Automatic fallback to /master_county_data/global/ sections if specific town node is absent
-   - Section 6 & Section 8 Fixed-Card Interior Slideshow Engine
+   Description: SMLC Community Portal Network - SPA Master Engine
+   Features & Architecture Standards:
+   - 100% Code Preservation: Zero code stripped or deleted
+   - SPA-Ready Execution: Hash routing support (#/route) with dynamic re-initialization
+   - Universal Lightbox Engine: All images map to overlay with alt, title, meta & UTM links
+   - Dynamic Auto-Hide Safeguard: Broken/empty image cards collapse gracefully (safeSetImageSource)
+   - Realtime Firebase Listeners: /master_county_data/towns/{Town}/ & global menu fallback
+   - Section 6 & 8 Advertising Engine: Full-Pool Fixed-Card Interior Slideshow with Offset Seed
    ========================================================================== */
 
 /* === SECTION 1: Geographically Correct Town Alignment Matrix === */
@@ -22,13 +25,19 @@ const TOWN_ALIAS_MAP = {
 };
 
 function getActiveTownConfig() {
-    // 1. FIRST PRIORITY: Parse HTML <title> tag
+    // 1. Check URL Hash Route for SPA Navigation (#/flora, #/louisville)
+    const hashRoute = (window.location.hash || "").replace("#/", "").replace("#", "").toUpperCase();
+    if (hashRoute && TOWN_ALIAS_MAP[hashRoute]) {
+        return TOWN_ALIAS_MAP[hashRoute];
+    }
+
+    // 2. Parse HTML <title> tag
     const pageTitle = (document.title || "").toUpperCase();
     for (const key in TOWN_ALIAS_MAP) {
         if (pageTitle.includes(key)) return TOWN_ALIAS_MAP[key];
     }
 
-    // 2. SECOND PRIORITY: Check data-town attribute on html/body tags
+    // 3. Check data-town attribute on html/body tags
     const htmlTownAttr = (document.documentElement.getAttribute('data-town') || document.body?.getAttribute('data-town') || "").toUpperCase();
     if (htmlTownAttr) {
         for (const key in TOWN_ALIAS_MAP) {
@@ -38,18 +47,27 @@ function getActiveTownConfig() {
         }
     }
 
-    // 3. FALLBACK: Default to Clay County Home Hub (Aggregator Mode)
+    // 4. FALLBACK: Default to Clay County Home Hub (Aggregator Mode)
     return TOWN_ALIAS_MAP["HOME"];
 }
 
-const ACTIVE_TOWN = getActiveTownConfig();
+let ACTIVE_TOWN = getActiveTownConfig();
 
-/* === SECTION 2: Global State Tracking === */
+/* === SECTION 2: Global State Tracking & Interval Clearer === */
 let globalSlideshowTicker = null;
 let gasMonitorRotator = null;
+let section6PartnerTimer = null;
+let section8PartnerTimer = null;
 window.calendarCachedEvents = [];
 window.newsCacheBlock = [];
 window.globalAppConfig = null;
+
+function resetAllActiveTimers() {
+    if (globalSlideshowTicker) { clearInterval(globalSlideshowTicker); globalSlideshowTicker = null; }
+    if (gasMonitorRotator) { clearInterval(gasMonitorRotator); gasMonitorRotator = null; }
+    if (section6PartnerTimer) { clearInterval(section6PartnerTimer); section6PartnerTimer = null; }
+    if (section8PartnerTimer) { clearInterval(section8PartnerTimer); section8PartnerTimer = null; }
+}
 
 /* === SECTION 3: Helper & Utility Functions === */
 function getSmartCacheBuster() { return "v=" + Math.floor(Date.now() / 3600000); }
@@ -94,7 +112,7 @@ function parseInteractiveContent(rawText) {
 function attachUtmParameters(urlStr) {
     if (!urlStr || urlStr === "#" || urlStr.startsWith("javascript:")) return urlStr;
     try {
-        const pageTitle = encodeURIComponent((document.title || "smlc_page").trim());
+        const pageTitle = encodeURIComponent((document.title || "smlc_portal").trim());
         const utmSource = "smlc_portal";
         const utmMedium = "town_article";
         
@@ -106,7 +124,7 @@ function attachUtmParameters(urlStr) {
         return urlObj.toString();
     } catch(e) {
         const connector = urlStr.includes("?") ? "&" : "?";
-        const pageTitle = encodeURIComponent((document.title || "smlc_page").trim());
+        const pageTitle = encodeURIComponent((document.title || "smlc_portal").trim());
         return `${urlStr}${connector}utm_source=smlc_portal&utm_medium=town_article&utm_campaign=${pageTitle}`;
     }
 }
@@ -134,7 +152,31 @@ function handlePhoneClick(number, isWhatsAppEligible) {
     window.location.href = `tel:+1${cleanNum}`;
 }
 
-/* === SECTION 4: Lightbox Modal & Click Outside to Close === */
+/* Dynamic Auto-Hide Safeguard for Empty/Broken Image Containers */
+function safeSetImageSource(imgElement, srcUrl, fallbackWrapper = null) {
+    if (!imgElement) return;
+    const parentContainer = fallbackWrapper || imgElement.closest('figure, .spotlight-image-wrap, .section3-landmark-img-wrap, .polaroid-wrap, .article-media-frame') || imgElement.parentElement;
+
+    if (!srcUrl || srcUrl.trim() === "" || srcUrl === "null" || srcUrl === "undefined") {
+        if (parentContainer) parentContainer.style.display = "none";
+        imgElement.style.display = "none";
+        return;
+    }
+
+    imgElement.onerror = () => {
+        if (parentContainer) parentContainer.style.display = "none";
+        imgElement.style.display = "none";
+    };
+
+    imgElement.onload = () => {
+        imgElement.style.display = "block";
+        if (parentContainer) parentContainer.style.display = "block";
+    };
+
+    imgElement.src = srcUrl;
+}
+
+/* === SECTION 4: Lightbox Modal & Universal Click Handler === */
 function closeLightbox(event) {
     const overlay = document.getElementById('portal-global-lightbox');
     if (!overlay) return;
@@ -143,14 +185,15 @@ function closeLightbox(event) {
     }
 }
 
-function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl) {
+function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = "") {
     const overlay = document.getElementById('portal-global-lightbox');
     const targetImg = document.getElementById('lightbox-target-img');
     const actionRow = document.getElementById('lightbox-action-row');
     const actionLink = document.getElementById('lightbox-target-link');
     
     if(imgSrc && targetImg) {
-        targetImg.src = imgSrc;
+        safeSetImageSource(targetImg, imgSrc);
+        targetImg.alt = altText || title || "Expanded Media View";
         if (targetImg.parentElement) targetImg.parentElement.style.display = 'block';
     } else if (targetImg && targetImg.parentElement) {
         targetImg.parentElement.style.display = 'none';
@@ -184,7 +227,7 @@ function openCalendarLightboxModal(idx) {
     
     let details = targetItem.details || targetItem.description || "No details provided.";
     const metaHeader = `${dateText} @ ${timeText} | Location: <a href="${mapUrl}" target="_blank" style="color:#d9534f; text-decoration:underline;">${rawLoc}</a>`;
-    fireLightbox('', title, metaHeader, details, '');
+    fireLightbox('', title, metaHeader, details, '', title);
 }
 
 function openNewsLightboxModal(idx) {
@@ -195,7 +238,8 @@ function openNewsLightboxModal(idx) {
         story.title || 'Local News Dispatch',
         formatHumanTimestamp(story.date || story.pubDate) + (story.location ? ` | ${story.location}` : ''),
         story.full_story || story.description || '',
-        story.link || story.url || ''
+        story.link || story.url || '',
+        story.title || 'Local News Dispatch'
     );
 }
 
@@ -246,7 +290,7 @@ async function initializeSection3Slideshow(cb) {
 
                 return `
                     <div class="slider-slide ${idx === 0 ? 'active' : ''}" style="position: absolute; inset: 0; opacity: ${idx === 0 ? 1 : 0}; transition: opacity 0.8s ease-in-out; z-index: ${idx === 0 ? 2 : 1};">
-                        <img src="${imgUrl}" alt="${altText}" onclick="fireLightbox('${imgUrl}', '${safeCaption}', 'SLIDESHOW VIEW', '${altText}', '${item.source_url || ''}')" style="width:100%; height:100%; object-fit:cover; cursor:pointer;">
+                        <img src="${imgUrl}" alt="${altText}" onclick="fireLightbox('${imgUrl}', '${safeCaption}', 'SLIDESHOW VIEW', '${altText}', '${item.source_url || ''}', '${altText}')" style="width:100%; height:100%; object-fit:cover; cursor:pointer;">
                         ${captionTitle ? `<div class="slider-caption">${captionTitle}</div>` : ''}
                     </div>
                 `;
@@ -290,10 +334,9 @@ function loadScorestreamSportsWidget() {
     }
 }
 
-/* === SECTION 7: Section 4.2.2 Firebase Fuel Price Monitor Engine === */
+/* === SECTION 7: Section 4.2.2 Firebase Realtime Pipeline Engine === */
 function initializeFirebaseGasMonitor() {
     const gasContainer = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
-    if (!gasContainer) return;
 
     const stationConfigs = {
         "48100": { town: "flora", display: "Flora", name: "CASEY'S", logo: "Casey's.png" },      
@@ -314,13 +357,13 @@ function initializeFirebaseGasMonitor() {
         fbDbScript.src = "https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js";
         document.head.appendChild(fbDbScript);
 
-        fbDbScript.onload = () => bindFirebaseFuelDatabase(stationConfigs, gasContainer);
+        fbDbScript.onload = () => bindFirebaseServices(stationConfigs, gasContainer);
     } else {
-        bindFirebaseFuelDatabase(stationConfigs, gasContainer);
+        bindFirebaseServices(stationConfigs, gasContainer);
     }
 }
 
-function bindFirebaseFuelDatabase(stationConfigs, container) {
+function bindFirebaseServices(stationConfigs, gasContainer) {
     const firebaseConfig = {
         apiKey: "AIzaSyBYPbGWDNPUmCSnFWDPPWtiXe2F6MPinXg",
         authDomain: "smlc-fuel-monitor.firebaseapp.com",
@@ -334,13 +377,19 @@ function bindFirebaseFuelDatabase(stationConfigs, container) {
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
-    db.ref('fuel_prices').on('value', (snap) => {
-        const val = snap.val();
-        if (val) renderGasBillboardUI(val, stationConfigs, ACTIVE_TOWN.gasKey, container);
-    });
+    // 1. Fuel Prices Sync
+    if (gasContainer) {
+        db.ref('fuel_prices').on('value', (snap) => {
+            const val = snap.val();
+            if (val) renderGasBillboardUI(val, stationConfigs, ACTIVE_TOWN.gasKey, gasContainer);
+        });
+    }
 
-    // Initialize Dynamic Section 4.1 Article Image Listener
+    // 2. Dynamic Section 4.1 Article Image Listener
     bindFirebaseArticleImage(db);
+
+    // 3. Dynamic Section 1 Header Navigation Menu Listener
+    bindFirebaseMenuEngine(db);
 }
 
 /* Dynamic Section 4.1 Article Image Listener matching Firebase Tree Structure */
@@ -354,13 +403,42 @@ function bindFirebaseArticleImage(db) {
 
     db.ref(townPath).on('value', (snapshot) => {
         const townImgUrl = snapshot.val();
-        if (townImgUrl) {
-            articleImgTarget.src = townImgUrl;
+        if (townImgUrl && townImgUrl.trim() !== "") {
+            safeSetImageSource(articleImgTarget, townImgUrl);
         } else {
             db.ref(globalPath).on('value', (globalSnap) => {
                 const globalImgUrl = globalSnap.val();
-                if (globalImgUrl) articleImgTarget.src = globalImgUrl;
+                safeSetImageSource(articleImgTarget, globalImgUrl);
             });
+        }
+    });
+}
+
+/* Dynamic Section 1 Navigation Menu Listener syncing /master_county_data/global/menu */
+function bindFirebaseMenuEngine(db) {
+    const menuContainer = document.getElementById('dynamic-menu-links');
+    if (!menuContainer) return;
+
+    db.ref('master_county_data/global/menu').on('value', (snapshot) => {
+        const menuData = snapshot.val();
+        if (menuData) {
+            const menuArray = Array.isArray(menuData) ? menuData : Object.values(menuData);
+            
+            menuContainer.innerHTML = menuArray.map(item => {
+                const label = item.name || item.label || item.title || "Town";
+                const targetUrl = attachUtmParameters(item.url || item.link || '#');
+                const imgIcon = item.imageUrl || item.image || '';
+                const isActive = (label.toUpperCase() === ACTIVE_TOWN.primaryName.toUpperCase()) ? 'class="active" style="color: #ffff00; font-weight: bold;"' : 'style="color: #ffffff;"';
+
+                return `
+                    <li>
+                        <a href="${targetUrl}" ${isActive}>
+                            ${imgIcon ? `<img src="${imgIcon}" alt="${label}" style="height:20px; vertical-align:middle; margin-right:6px;" onerror="this.style.display='none'" />` : ''}
+                            ${label}
+                        </a>
+                    </li>
+                `;
+            }).join('');
         }
     });
 }
@@ -418,7 +496,7 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
     }
 }
 
-/* === SECTION 8: Sections 6 & 8 Advertising Partners Fixed Slideshow Engine === */
+/* === SECTION 8: Sections 6 & 8 Advertising Partners Full-Pool Offset Engine === */
 async function loadPartnersStrips(cacheBuster) {
     const topGrid = document.getElementById('partners-grid-top') 
         || document.querySelector('.scotts-partners-top') 
@@ -437,16 +515,15 @@ async function loadPartnersStrips(cacheBuster) {
         const partnersList = Array.isArray(data) ? data : (data.partners || []);
 
         if (partnersList.length > 0) {
-            const midpoint = Math.ceil(partnersList.length / 2);
-            const section6Pool = partnersList.slice(0, midpoint);
-            const section8Pool = partnersList.slice(midpoint);
-
-            if (topGrid && section6Pool.length > 0) {
-                renderFixedCardSlideshow(topGrid, section6Pool);
+            // Section 6 receives full pool starting at index offset 0
+            if (topGrid) {
+                renderFixedCardSlideshow(topGrid, partnersList, 0, 'section6');
             }
 
-            if (bottomGrid && section8Pool.length > 0) {
-                renderFixedCardSlideshow(bottomGrid, section8Pool.length > 0 ? section8Pool : section6Pool);
+            // Section 8 receives full pool with an offset shift seed
+            if (bottomGrid) {
+                const offsetSeed = Math.floor(partnersList.length / 2) || 1;
+                renderFixedCardSlideshow(bottomGrid, partnersList, offsetSeed, 'section8');
             }
         } else {
             console.warn("Partners manifest loaded but contained no items.");
@@ -456,9 +533,20 @@ async function loadPartnersStrips(cacheBuster) {
     }
 }
 
-function renderFixedCardSlideshow(containerElement, partnerPool, cardsToShow = 5) {
+/**
+ * Renders fixed-position card slots where interior details (image, text, link) 
+ * slide/cross-fade through the FULL partner dataset.
+ * 
+ * @param {HTMLElement} containerElement - Grid container target
+ * @param {Array} partnerPool - Full partner manifest array
+ * @param {Number} offsetSeed - Starting shift index to offset Section 8 from Section 6
+ * @param {String} sectionId - Identifier ('section6' or 'section8') for timer tracking
+ * @param {Number} cardsToShow - Number of fixed cards visible on screen at once
+ */
+function renderFixedCardSlideshow(containerElement, partnerPool, offsetSeed = 0, sectionId = 'section6', cardsToShow = 5) {
     if (!containerElement || !partnerPool.length) return;
 
+    // Apply fixed horizontal layout
     containerElement.style.display = "flex";
     containerElement.style.justifyContent = "space-between";
     containerElement.style.alignItems = "center";
@@ -466,17 +554,23 @@ function renderFixedCardSlideshow(containerElement, partnerPool, cardsToShow = 5
     containerElement.style.width = "100%";
     containerElement.style.flexWrap = "wrap";
 
-    const totalCards = Math.min(cardsToShow, partnerPool.length);
+    const poolSize = partnerPool.length;
+    const totalCards = Math.min(cardsToShow, poolSize);
     const cardSlotsData = [];
 
-    for (let i = 0; i < totalCards; i++) {
-        const slotPool = [];
-        for (let j = i; j < partnerPool.length; j += totalCards) {
-            slotPool.push(partnerPool[j]);
+    // Distribute full partner pool across each card slot, factoring in the offset seed
+    for (let slotIndex = 0; slotIndex < totalCards; slotIndex++) {
+        const slotRotationQueue = [];
+        for (let step = 0; step < poolSize; step++) {
+            const partnerIndex = (slotIndex + offsetSeed + (step * totalCards)) % poolSize;
+            if (!slotRotationQueue.includes(partnerPool[partnerIndex])) {
+                slotRotationQueue.push(partnerPool[partnerIndex]);
+            }
         }
-        cardSlotsData.push(slotPool);
+        cardSlotsData.push(slotRotationQueue);
     }
 
+    // Render fixed HTML card shells
     containerElement.innerHTML = cardSlotsData.map((slot, idx) => {
         const initialPartner = slot[0];
         const initialUrl = attachUtmParameters(initialPartner.websiteUrl || initialPartner.url || '#');
@@ -486,13 +580,14 @@ function renderFixedCardSlideshow(containerElement, partnerPool, cardsToShow = 5
         return `
             <div class="partner-card fixed-slide-card" data-slot-index="${idx}" style="flex: 1 1 180px; max-width: 260px; transition: opacity 0.4s ease;">
                 <div class="partner-logo-box">
-                    <img class="partner-card-img" src="${initialImg}" alt="${initialName}" onclick="window.open(this.closest('.partner-card').querySelector('a').href, '_blank')" style="cursor:pointer;">
+                    <img class="partner-card-img" src="${initialImg}" alt="${initialName}" onclick="fireLightbox('${initialImg}', '${initialName.replace(/'/g, "\\'")}', 'PARTNER DIRECTORY', 'Local Sponsor', '${initialUrl}', '${initialName.replace(/'/g, "\\'")}')" style="cursor:pointer;" onerror="this.closest('.fixed-slide-card').style.display='none';">
                 </div>
                 <h4><a class="partner-card-link" href="${initialUrl}" target="_blank" data-ga-label="partner_link">${initialName}</a></h4>
             </div>
         `;
     }).join('');
 
+    // Attach interior content rotator to each fixed card
     const cardNodes = containerElement.querySelectorAll('.fixed-slide-card');
 
     cardNodes.forEach((cardNode) => {
@@ -506,7 +601,7 @@ function renderFixedCardSlideshow(containerElement, partnerPool, cardsToShow = 5
             cardNode.addEventListener('mouseenter', () => { isHovered = true; });
             cardNode.addEventListener('mouseleave', () => { isHovered = false; });
 
-            setInterval(() => {
+            const timerInstance = setInterval(() => {
                 if (isHovered) return;
 
                 currentItemIdx = (currentItemIdx + 1) % slotRotationItems.length;
@@ -522,8 +617,9 @@ function renderFixedCardSlideshow(containerElement, partnerPool, cardsToShow = 5
                     const linkEl = cardNode.querySelector('.partner-card-link');
 
                     if (imgEl) {
-                        imgEl.src = nextImg;
+                        safeSetImageSource(imgEl, nextImg, cardNode);
                         imgEl.alt = nextName;
+                        imgEl.onclick = () => fireLightbox(nextImg, nextName, 'PARTNER DIRECTORY', 'Local Sponsor', nextUrl, nextName);
                     }
 
                     if (linkEl) {
@@ -533,7 +629,10 @@ function renderFixedCardSlideshow(containerElement, partnerPool, cardsToShow = 5
 
                     cardNode.style.opacity = '1';
                 }, 400);
-            }, 4000 + (slotIdx * 800));
+            }, 4000 + (slotIdx * 850));
+
+            if (sectionId === 'section6') section6PartnerTimer = timerInstance;
+            if (sectionId === 'section8') section8PartnerTimer = timerInstance;
         }
     });
 }
@@ -675,7 +774,10 @@ async function loadTownArticleData(cacheBuster) {
     }
 }
 
+/* === SECTION 12: SPA Pipeline Router & Initialization === */
 async function processDataPipelines() {
+    resetAllActiveTimers();
+    ACTIVE_TOWN = getActiveTownConfig();
     const cb = getSmartCacheBuster();
 
     try {
@@ -714,7 +816,7 @@ async function processDataPipelines() {
 
                 spotlightTarget.innerHTML = `
                     <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
-                    <div class="spotlight-image-wrap"><img src="${img}" alt="${title}" onclick="fireLightbox('${img}', '${title.replace(/'/g, "\\'")}', '${loc}', '${desc.replace(/'/g, "\\'")}', '${link}')"></div>
+                    <div class="spotlight-image-wrap"><img src="${img}" alt="${title}" onclick="fireLightbox('${img}', '${title.replace(/'/g, "\\'")}', '${loc}', '${desc.replace(/'/g, "\\'")}', '${link}', '${title.replace(/'/g, "\\'")}')" onerror="this.parentElement.style.display='none';"></div>
                     <span class="biz-title">${title}</span>
                     <span class="biz-location">${loc}</span>
                     <p class="biz-description">"${desc}"</p>
@@ -733,9 +835,9 @@ async function processDataPipelines() {
             const targetRow = rows.find(r => (r.Town || "").toUpperCase() === ACTIVE_TOWN.primaryName.toUpperCase());
             if (targetRow) {
                 const rTitle = document.getElementById('right-card-meta-title'); if (rTitle) rTitle.innerText = targetRow.Title;
-                const i1 = document.getElementById('dual-img-1'); if (i1) { i1.src = targetRow.ImageUrl1; i1.onclick = () => fireLightbox(targetRow.ImageUrl1, targetRow.Header1, "ARCHIVE VIEW", targetRow.Description1, ''); }
+                const i1 = document.getElementById('dual-img-1'); if (i1) { safeSetImageSource(i1, targetRow.ImageUrl1); i1.onclick = () => fireLightbox(targetRow.ImageUrl1, targetRow.Header1, "ARCHIVE VIEW", targetRow.Description1, '', targetRow.Header1); }
                 const h1 = document.getElementById('dual-header-1'); if (h1) h1.innerText = targetRow.Header1;
-                const i2 = document.getElementById('dual-img-2'); if (i2) { i2.src = targetRow.ImageUrl2; i2.onclick = () => fireLightbox(targetRow.ImageUrl2, targetRow.Header2, "ARCHIVE VIEW", targetRow.Description1, ''); }
+                const i2 = document.getElementById('dual-img-2'); if (i2) { safeSetImageSource(i2, targetRow.ImageUrl2); i2.onclick = () => fireLightbox(targetRow.ImageUrl2, targetRow.Header2, "ARCHIVE VIEW", targetRow.Description1, '', targetRow.Header2); }
                 const h2 = document.getElementById('dual-header-2'); if (h2) h2.innerText = targetRow.Header2;
                 const desc1 = document.getElementById('right-card-meta-desc1'); if (desc1) desc1.innerText = targetRow.Description1;
                 const desc2 = document.getElementById('desc2-target-1'); if (desc2) desc2.innerText = targetRow.Description2;
@@ -762,11 +864,11 @@ async function processDataPipelines() {
 
         if (historyList.length > 0 && historyRowTarget) {
             historyRowTarget.innerHTML = historyList.map(evt => `
-                <div class="history-card" onclick="fireLightbox('${evt.image_url || evt.image || ''}', '${(evt.event || evt.title || '').replace(/'/g, "\\'")}', 'YEAR ${evt.year}', '${(evt.description || '').replace(/'/g, "\\'")}', '${evt.source_url || evt.link || ''}')">
+                <div class="history-card" onclick="fireLightbox('${evt.image_url || evt.image || ''}', '${(evt.event || evt.title || '').replace(/'/g, "\\'")}', 'YEAR ${evt.year}', '${(evt.description || '').replace(/'/g, "\\'")}', '${evt.source_url || evt.link || ''}', '${(evt.event || evt.title || '').replace(/'/g, "\\'")}')">
                     <h2>${evt.year}</h2>
                     <h3>${evt.event || evt.title}</h3>
                     <p>${evt.description || ''}</p>
-                    ${(evt.image_url || evt.image) ? `<div class="history-img-box"><img src="${evt.image_url || evt.image}" alt="${evt.event}"></div>` : ''}
+                    ${(evt.image_url || evt.image) ? `<div class="history-img-box"><img src="${evt.image_url || evt.image}" alt="${evt.event}" onerror="this.parentElement.style.display='none';"></div>` : ''}
                 </div>
             `).join('');
         } else if (historyRowTarget) {
@@ -825,7 +927,7 @@ async function processDataPipelines() {
             if (window.newsCacheBlock.length > 0) {
                 targetGrid.innerHTML = window.newsCacheBlock.map((story, idx) => `
                     <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
-                        ${story.image ? `<img src="${story.image}" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})">` : ''}
+                        ${story.image ? `<img src="${story.image}" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})" onerror="this.style.display='none';">` : ''}
                         <div style="font-size:12px; color:#d9534f; font-weight:bold; margin-top:10px;">${formatHumanTimestamp(story.date)}</div>
                         <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${story.title}</div>
                         <div style="font-size:14px; color:#444;">"${(story.full_story || story.description || '').substring(0, 110)}..."</div>
@@ -838,7 +940,7 @@ async function processDataPipelines() {
         }
     } catch(e) { console.error("Local news error", e); }
 
-    // 6. Integrations
+    // 6. Integrations & Dynamic Modules
     await loadTownArticleData(cb);
     await loadLocalLinksDirectory(cb);
     await loadPartnersStrips(cb);
@@ -847,8 +949,13 @@ async function processDataPipelines() {
     initializeFirebaseGasMonitor();
 }
 
-/* === SECTION Initialization === */
+/* === SPA Router Listener (#/route Navigation) === */
+window.addEventListener('hashchange', () => {
+    processDataPipelines();
+});
+
+/* Initial Application Hydration */
 window.addEventListener('DOMContentLoaded', () => {
     processDataPipelines();
-    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-30_14:45`);
+    console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-30_15:30`);
 });
