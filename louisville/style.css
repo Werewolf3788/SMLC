@@ -1,7 +1,7 @@
 /* ==========================================================================
-   Active Version: 2026-07-30_16:45
+   Active Version: 2026-07-30_17:05
    File: style.css
-   Description: Master Stylesheet - Wallpapers, Glow Effects & Theme Custom Variables
+   Description: Master Stylesheet - Full-Bleed Section Wallpapers, High Contrast & Custom Themes
    ========================================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&family=Playfair+Display:wght@700;900&display=swap');
 
@@ -108,7 +108,7 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	height: auto !important; 
 	display: block !important; 
 	margin: 0 !important;
-	vertical-align: bottom !important; /* Prevents browser spacing gap under image */
+	vertical-align: bottom !important; /* Prevents 3px browser spacing gap under image */
 }
 
 .menu-bar { 
@@ -131,7 +131,7 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 /* ==========================================================================
    SECTION 2: HERO BANNER WALLPAPER (ROYAL CRIMSON & CARBON RADIAL GLOW)
    ========================================================================== */
-.main-container { width: var(--container-width); max-width: 100%; margin: 0 auto; padding: 36px clamp(20px, 3vw, 60px); }
+.main-container { width: 100%; max-width: 100vw; margin: 0 auto; padding: 36px clamp(20px, 3vw, 60px); }
 
 .town-hero-banner { 
 	width: 100%; 
@@ -163,7 +163,8 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
    SECTION 3: SPLIT LAYOUT WALLPAPER (METALLIC COPPER & SLATE GEOMETRIC GRID)
    ========================================================================== */
 .section3-split-layout { 
-	width: 100%; 
+	width: 100% !important; 
+	max-width: 100vw !important;
 	padding: 60px clamp(20px, 3.5vw, 80px); 
 	/* Section 3 Wallpaper Design: Deep Copper-Slate Gradient with Linear Cross-Grid Lines */
 	background-color: #141218 !important;
@@ -204,34 +205,37 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 .section3-landmark-desc { font-size: 18px !important; color: #dddddd !important; line-height: 1.6; margin: 0; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 18px; }
 
 /* ==========================================================================
-   SECTION 4: 2-BOX SPLIT LAYOUT WALLPAPER (DARK AMBER & CHARCOAL DOT MATRIX)
+   SECTION 4: FULL-BLEED WALLPAPER & 2-COLUMN GRID (NO BODY BACKGROUND GAP)
    ========================================================================== */
 .section4-two-box-wrapper,
 .dv-custom-article-wrapper {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: clamp(24px, 3.5vw, 40px);
-	width: 100%;
-	max-width: 1200px;
-	padding: 40px clamp(20px, 3.5vw, 60px);
-	margin: 50px auto;
-	align-items: start !important;
-	/* Section 4 Wallpaper Design: Charcoal Gradient with Polka-Dot Amber Tech Matrix */
-	background-color: #0d0e12 !important;
+	width: 100% !important;
+	max-width: 100vw !important;
+	margin: 0 !important;
+	padding: clamp(36px, 5vh, 72px) clamp(20px, 4vw, 80px) !important;
+	box-sizing: border-box !important;
+
+	/* Section 4 Custom Full-Bleed Crimson-Granite Wallpaper */
+	background-color: #1a0507 !important;
 	background-image: 
-		linear-gradient(180deg, rgba(20, 15, 10, 0.9) 0%, rgba(10, 10, 12, 0.95) 100%),
-		radial-gradient(rgba(255, 193, 14, 0.12) 1px, transparent 1px) !important;
-	background-size: cover, 24px 24px !important;
-	border-radius: 12px;
-	border: 1px solid rgba(255, 193, 14, 0.25);
-	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.9);
+		radial-gradient(circle at 50% 30%, rgba(235, 28, 36, 0.35) 0%, rgba(10, 2, 4, 0.95) 85%),
+		repeating-linear-gradient(45deg, rgba(255, 193, 14, 0.05) 0px, rgba(255, 193, 14, 0.05) 2px, transparent 2px, transparent 10px) !important;
+
+	border-top: 4px solid var(--louis-gold);
+	border-bottom: 4px solid var(--louis-gold);
+
+	display: grid !important;
+	grid-template-columns: 1.2fr 1fr !important;
+	gap: clamp(32px, 5vw, 100px) !important;
+	align-items: start !important;
 }
 
 @media (max-width: 1024px) {
 	.section4-two-box-wrapper,
 	.dv-custom-article-wrapper { 
-		grid-template-columns: 1fr; 
-		padding: 24px 20px; 
+		grid-template-columns: 1fr !important; 
+		gap: 36px !important;
+		padding: 24px 20px !important; 
 	}
 }
 
@@ -547,6 +551,7 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
    ========================================================================== */
 .historical-timeline-chassis-wrapper {
 	width: 100% !important;
+	max-width: 100vw !important;
 	padding: 60px clamp(20px, 3.5vw, 80px) !important;
 	/* Section 5 Wallpaper Design: Historic Deep Emerald to Obsidian Vertical Stripe Wallpaper */
 	background-color: #07140e !important;
@@ -768,16 +773,20 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 }
 
 /* ==========================================================================
-   SECTION 7: THREE COLUMN INTERFACE WALLPAPER (OBSIDIAN & WINE TAPESTRY)
+   SECTION 7: LOUISVILLE SECTION 7 FULL-BLEED WALLPAPER
    ========================================================================== */
 .smlc-three-column-portal-wrapper { 
-	width: 100%; 
+	width: 100% !important; 
+	max-width: 100vw !important;
 	padding: 60px clamp(20px, 4vw, 80px) !important; 
-	/* Section 7 Wallpaper Design: Obsidian Base with Wine Red Radial Glow and Micro Horizontal Ribs */
+	/* Section 7 Background Image Wallpaper */
 	background-color: #0f0a0c !important; 
 	background-image: 
-		radial-gradient(circle at 50% 50%, rgba(164, 79, 11, 0.25) 0%, rgba(15, 10, 12, 0.98) 80%),
-		repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 6px) !important;
+		linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.6) 100%),
+		url('./louisville section7 wallpaper.JPG') !important;
+	background-repeat: repeat !important;
+	background-size: auto !important;
+	background-position: center !important;
 	border-top: 4px solid var(--louis-gold);
 	border-bottom: 4px solid var(--louis-gold);
 }
@@ -1200,16 +1209,17 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 .section9-bold-print-wrapper,
 .section10-message-chassis {
 	width: 100% !important;
+	max-width: 100vw !important;
 	box-sizing: border-box !important;
-	margin: 40px auto !important;
-	padding: 20px;
+	margin: 0 auto !important;
+	padding: 40px clamp(20px, 4vw, 80px) !important;
 	/* Section 9 & 10 Wallpaper Design: Rich Burgundy & Obsidian Diamond Lattice */
 	background-color: #120306 !important;
 	background-image: 
 		linear-gradient(135deg, rgba(74, 3, 5, 0.8) 0%, rgba(10, 10, 10, 0.95) 100%),
 		repeating-linear-gradient(60deg, rgba(255, 193, 14, 0.03) 0px, rgba(255, 193, 14, 0.03) 1px, transparent 1px, transparent 14px) !important;
-	border-radius: 8px;
-	border: 1px solid var(--louis-gold);
+	border-top: 4px solid var(--louis-gold);
+	border-bottom: 4px solid var(--louis-gold);
 }
 
 .section10-proclamation-card-box {
