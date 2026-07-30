@@ -1,7 +1,7 @@
 /* ==========================================================================
-   Active Version: 2026-07-30_13:37
+   Active Version: 2026-07-30_14:00
    File: style.css
-   Description: Master Stylesheet - Header Barrier, Dynamic Widgets, & Compact Cards
+   Description: Master Stylesheet - Multi-Section Wallpapers, Granular Contrasts & Layout Fixes
    ========================================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&family=Playfair+Display:wght@700;900&display=swap');
 
@@ -113,10 +113,30 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 .menu-links a:hover, .menu-links a.active { color: #ffffff !important; border: 2px solid var(--louis-gold); background: rgba(0, 0, 0, 0.6) !important; border-radius: 8px; }
 
 /* ==========================================================================
-   SECTION 2: HERO BANNER
+   SECTION 2: HERO BANNER WALLPAPER (ROYAL CRIMSON & CARBON RADIAL GLOW)
    ========================================================================== */
 .main-container { width: var(--container-width); max-width: 100%; margin: 0 auto; padding: 36px clamp(20px, 3vw, 60px); }
-.town-hero-banner { width: 100%; padding: 60px 0; display: flex; align-items: center; justify-content: center; border-bottom: 4px solid var(--louis-gold); border-radius: 16px; text-align: center; margin-bottom: 36px; background: linear-gradient(135deg, var(--louis-red) 0%, rgba(20,20,20,0.92) 50%, #000000 100%) !important; position: relative; overflow: hidden; }
+
+.town-hero-banner { 
+	width: 100%; 
+	padding: 60px 0; 
+	display: flex; 
+	align-items: center; 
+	justify-content: center; 
+	border-bottom: 4px solid var(--louis-gold); 
+	border-radius: 16px; 
+	text-align: center; 
+	margin-bottom: 36px; 
+	/* Section 2 Wallpaper Design: Deep Radial Crimson Glow with Carbon Honeycomb Mesh Overlay */
+	background-color: #1a0203 !important;
+	background-image: 
+		radial-gradient(circle at 50% 30%, rgba(235, 28, 36, 0.45) 0%, rgba(0, 0, 0, 0.95) 75%),
+		repeating-linear-gradient(45deg, rgba(255, 193, 14, 0.05) 0px, rgba(255, 193, 14, 0.05) 2px, transparent 2px, transparent 10px) !important;
+	position: relative; 
+	overflow: hidden; 
+	box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+}
+
 .seat-badge { display: inline-block; padding: 8px 22px; background-color: var(--louis-gold); color: #000000; font-weight: 900; text-transform: uppercase; font-size: 14px; border-radius: 6px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
 .town-title { font-size: clamp(3rem, 5vw, 4.2rem); font-weight: 900; text-transform: none !important; margin: 0; letter-spacing: 1px; text-align: center; }
 .outlined-headline { color: #ffffff !important; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 3px 3px 6px rgba(0,0,0,0.9); }
@@ -124,9 +144,22 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 .river-marquee { margin-top: 20px; font-size: 14px; font-family: monospace; font-weight: 700; color: #ffffff; background-color: rgba(0, 0, 0, 0.75); padding: 8px 22px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.2); width: max-content; margin-left: auto; margin-right: auto; }
 
 /* ==========================================================================
-   SECTION 3: SPLIT LAYOUT
+   SECTION 3: SPLIT LAYOUT WALLPAPER (METALLIC COPPER & SLATE GEOMETRIC GRID)
    ========================================================================== */
-.section3-split-layout { width: 100%; padding: 60px clamp(20px, 3.5vw, 80px); background: transparent !important; }
+.section3-split-layout { 
+	width: 100%; 
+	padding: 60px clamp(20px, 3.5vw, 80px); 
+	/* Section 3 Wallpaper Design: Deep Copper-Slate Gradient with Linear Cross-Grid Lines */
+	background-color: #141218 !important;
+	background-image: 
+		linear-gradient(135deg, rgba(40, 18, 12, 0.85) 0%, rgba(15, 15, 20, 0.95) 100%),
+		linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+		linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px) !important;
+	background-size: cover, 40px 40px, 40px 40px !important;
+	border-top: 3px solid rgba(255, 193, 14, 0.3);
+	border-bottom: 3px solid rgba(255, 193, 14, 0.3);
+}
+
 .section3-container-grid { width: 100%; max-width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 36px; }
 .section3-row-1 { width: 100%; text-align: center !important; }
 .section3-main-title { font-size: clamp(2.4rem, 4vw, 3.2rem) !important; font-weight: bold; color: var(--louis-gold) !important; margin: 0 0 18px 0; text-shadow: 2px 2px 5px rgba(0,0,0,0.9); text-align: center !important; }
@@ -155,30 +188,43 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 .section3-landmark-desc { font-size: 18px !important; color: #dddddd !important; line-height: 1.6; margin: 0; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 18px; }
 
 /* ==========================================================================
-   SECTION 4: 2-BOX SPLIT LAYOUT (ARTICLE + RIGHT WIDGET STACK)
+   SECTION 4: 2-BOX SPLIT LAYOUT WALLPAPER (DARK AMBER & CHARCOAL DOT MATRIX)
    ========================================================================== */
 .section4-two-box-wrapper,
 .dv-custom-article-wrapper {
 	display: grid;
-	grid-template-columns: 2fr 1fr;
-	gap: clamp(24px, 3.5vw, 60px);
+	grid-template-columns: repeat(2, minmax(0, 1fr)); /* Equal 1:1 balance for compact cards */
+	gap: clamp(24px, 3.5vw, 40px);
 	width: 100%;
-	max-width: 100%;
-	padding: 0 clamp(20px, 3.5vw, 80px);
+	max-width: 1200px; /* Locks width so cards stay compact */
+	padding: 40px clamp(20px, 3.5vw, 60px);
 	margin: 50px auto;
-	align-items: stretch !important;
-	background-color: transparent !important;
+	align-items: start !important;
+	/* Section 4 Wallpaper Design: Charcoal Gradient with Polka-Dot Amber Tech Matrix */
+	background-color: #0d0e12 !important;
+	background-image: 
+		linear-gradient(180deg, rgba(20, 15, 10, 0.9) 0%, rgba(10, 10, 12, 0.95) 100%),
+		radial-gradient(rgba(255, 193, 14, 0.12) 1px, transparent 1px) !important;
+	background-size: cover, 24px 24px !important;
+	border-radius: 12px;
+	border: 1px solid rgba(255, 193, 14, 0.25);
+	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.9);
 }
+
 @media (max-width: 1024px) {
 	.section4-two-box-wrapper,
-	.dv-custom-article-wrapper { grid-template-columns: 1fr; padding: 0 20px; }
+	.dv-custom-article-wrapper { 
+		grid-template-columns: 1fr; 
+		padding: 24px 20px; 
+	}
 }
 
 /* ==========================================================================
-   SECTION 4.1: ARTICLE CONTAINER & COMPACT INLINE IMAGE FIX
+   SECTION 4.1: ARTICLE CONTAINER & PROPORTIONAL IMAGE FIX
    ========================================================================== */
 .section4-left-article-box {
 	width: 100% !important;
+	max-width: 100% !important;
 	background: #ffffff !important;
 	box-shadow: 0 10px 40px rgba(0,0,0,0.6);
 	border-radius: 8px;
@@ -189,21 +235,109 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
+	box-sizing: border-box !important;
 }
 
-/* Constrain images inside the article to fit cleanly without stretching the card height */
+/* Image containment inside the tighter card width */
 .article-body-content img,
 .section4-left-article-box img,
 .section4-left-article-box p img {
-	width: auto !important;
+	width: 100% !important;
 	max-width: 100% !important;
-	max-height: 280px !important; /* Locks height to keep card compact */
+	height: auto !important;
+	max-height: 320px !important;
 	object-fit: cover !important;
 	display: block !important;
-	margin: 20px auto !important;
+	margin: 16px auto !important;
 	border-radius: 6px !important;
 	border: 2px solid #222222 !important;
 	box-shadow: 4px 4px 0px #000000 !important;
+	box-sizing: border-box !important;
+}
+
+.article-centered-header,
+.section4-centered-article-header {
+	background: linear-gradient(180deg, #eb1c24 0%, #1a1a1a 100%) !important;
+	color: #ffffff !important;
+	padding: clamp(35px, 6vh, 60px) 24px !important;
+	text-align: center !important;
+	border-bottom: 8px solid var(--louis-gold) !important;
+}
+
+.category-tag {
+	font-family: 'Oswald', sans-serif !important;
+	background: var(--louis-gold) !important;
+	color: #000000 !important;
+	padding: 6px 18px !important;
+	display: inline-block !important;
+	letter-spacing: 2px !important;
+	font-size: 0.95rem !important;
+	font-weight: bold !important;
+	margin-bottom: 18px !important;
+	text-transform: uppercase !important;
+}
+
+.article-stacked-title {
+	font-family: 'Montserrat', sans-serif !important;
+	font-size: clamp(2.2rem, 4.5vw, 3.8rem) !important;
+	line-height: 1.1 !important;
+	margin: 0 auto 16px !important;
+	text-transform: uppercase !important;
+	color: #ffffff !important;
+	text-align: center !important;
+}
+
+.article-stacked-deck {
+	font-size: 1.25rem !important;
+	font-style: italic !important;
+	opacity: 0.95 !important;
+	color: #ffffff !important;
+	margin: 0 auto !important;
+	text-align: center !important;
+	max-width: 900px;
+}
+
+.article-body-content {
+	padding: 36px !important;
+	font-size: 1.15rem !important;
+	color: #1a1a1a !important;
+	background-color: #ffffff !important;
+	box-sizing: border-box !important;
+}
+
+.article-body-content figure {
+	margin: 24px 0 !important;
+	padding: 0 !important;
+	width: 100% !important;
+	max-width: 100% !important;
+}
+
+.article-body-content figcaption {
+	font-size: 0.95rem !important;
+	font-style: italic !important;
+	text-align: center !important;
+	color: #555555 !important;
+	margin-top: 8px !important;
+}
+
+.article-body-content p {
+	margin-bottom: 1.5em !important;
+	text-align: justify !important;
+	font-family: 'Libre Baskerville', serif !important;
+	color: #1a1a1a !important;
+	line-height: 1.8 !important;
+}
+
+.article-footer {
+	background: #f4f4f4 !important;
+	padding: 18px 36px !important;
+	border-top: 1px solid #ddd !important;
+	font-family: 'Oswald', sans-serif !important;
+	display: flex !important;
+	justify-content: space-between !important;
+	font-size: 0.9rem !important;
+	color: #555555 !important;
+	text-transform: uppercase !important;
 }
 
 /* SECTION 4.2: RIGHT SIDE WIDGET STACK */
@@ -394,13 +528,20 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 }
 
 /* ==========================================================================
-   SECTION 5: HISTORICAL TIMELINE - NEWSPAPER CARD SPECIFICATIONS
+   SECTION 5: HISTORICAL TIMELINE WALLPAPER (VINTAGE DEEP EMERALD STRIPES)
    ========================================================================== */
 .historical-timeline-chassis-wrapper {
 	width: 100% !important;
 	padding: 60px clamp(20px, 3.5vw, 80px) !important;
-	background: transparent !important;
+	/* Section 5 Wallpaper Design: Historic Deep Emerald to Obsidian Vertical Stripe Wallpaper */
+	background-color: #07140e !important;
+	background-image: 
+		linear-gradient(180deg, rgba(8, 30, 20, 0.9) 0%, rgba(5, 12, 8, 0.95) 100%),
+		repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 20px, transparent 20px, transparent 40px) !important;
 	box-sizing: border-box;
+	border-radius: 12px;
+	border-top: 4px solid var(--louis-gold);
+	border-bottom: 4px solid var(--louis-gold);
 }
 
 .timeline-full-width-container,
@@ -510,16 +651,22 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 }
 
 /* ==========================================================================
-   SECTION 6 & 8: PARTNERS STRIP (EDGE-TO-EDGE FULL SCREEN SPREAD)
+   SECTION 6 & 8: PARTNERS STRIP WALLPAPER (MIDNIGHT SAPPHIRE TECH SLATE)
    ========================================================================== */
 .widescreen-strip-container,
 .section8-town-images-strip {
 	width: 100% !important;
 	max-width: 100vw !important;
-	background-color: #001a40 !important;
+	/* Section 6 & 8 Wallpaper Design: Midnight Navy Blue with Radial Gold Accent Lines */
+	background-color: #02122b !important;
+	background-image: 
+		radial-gradient(ellipse at top, rgba(12, 113, 195, 0.35) 0%, rgba(2, 18, 43, 0.95) 70%),
+		repeating-linear-gradient(-45deg, rgba(255, 193, 14, 0.04) 0px, rgba(255, 193, 14, 0.04) 1px, transparent 1px, transparent 12px) !important;
 	padding: 36px clamp(20px, 4vw, 80px) !important;
 	box-sizing: border-box !important;
 	margin: 0 !important;
+	border-top: 3px solid var(--louis-gold);
+	border-bottom: 3px solid var(--louis-gold);
 }
 
 .showcase-widget.full-bleed-widget {
@@ -606,12 +753,18 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 }
 
 /* ==========================================================================
-   SECTION 7: THREE COLUMN INTERFACE & RETRO CARDS
+   SECTION 7: THREE COLUMN INTERFACE WALLPAPER (OBSIDIAN & WINE TAPESTRY)
    ========================================================================== */
 .smlc-three-column-portal-wrapper { 
 	width: 100%; 
 	padding: 60px clamp(20px, 4vw, 80px) !important; 
-	background-color: rgba(15, 15, 15, 0.95) !important; 
+	/* Section 7 Wallpaper Design: Obsidian Base with Wine Red Radial Glow and Micro Horizontal Ribs */
+	background-color: #0f0a0c !important; 
+	background-image: 
+		radial-gradient(circle at 50% 50%, rgba(164, 79, 11, 0.25) 0%, rgba(15, 10, 12, 0.98) 80%),
+		repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 6px) !important;
+	border-top: 4px solid var(--louis-gold);
+	border-bottom: 4px solid var(--louis-gold);
 }
 
 .portal-grid-layout-fixed { 
@@ -1027,13 +1180,21 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 }
 
 /* ==========================================================================
-   SECTION 9 & 10: BOLD PRINT MATRIX & PROCLAMATION CARD
+   SECTION 9 & 10: BOLD PRINT MATRIX & PROCLAMATION CARD WALLPAPER
    ========================================================================== */
 .section9-bold-print-wrapper,
 .section10-message-chassis {
 	width: 100% !important;
 	box-sizing: border-box !important;
 	margin: 40px auto !important;
+	padding: 20px;
+	/* Section 9 & 10 Wallpaper Design: Rich Burgundy & Obsidian Diamond Lattice */
+	background-color: #120306 !important;
+	background-image: 
+		linear-gradient(135deg, rgba(74, 3, 5, 0.8) 0%, rgba(10, 10, 10, 0.95) 100%),
+		repeating-linear-gradient(60deg, rgba(255, 193, 14, 0.03) 0px, rgba(255, 193, 14, 0.03) 1px, transparent 1px, transparent 14px) !important;
+	border-radius: 8px;
+	border: 1px solid var(--louis-gold);
 }
 
 .section10-proclamation-card-box {
