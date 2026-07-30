@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-07-30_13:25
+   Active Version: 2026-07-30_13:37
    File: style.css
    Description: Master Stylesheet - Header Barrier, Dynamic Widgets, & Compact Cards
    ========================================================================== */
@@ -175,20 +175,22 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 }
 
 /* ==========================================================================
-   SECTION 4.1: ARTICLE CONTAINER & NEWSPAPER STYLING
+   SECTION 4.1: ARTICLE CONTAINER & HARD IMAGE CONTAINMENT FIX
    ========================================================================== */
 .section4-left-article-box {
-	width: 100%;
+	width: 100% !important;
+	max-width: 100% !important;
 	background: #ffffff !important;
 	box-shadow: 0 10px 40px rgba(0,0,0,0.6);
 	border-radius: 8px;
-	overflow: hidden; /* Enforces strict internal card containment */
+	overflow: hidden !important; /* Forces all internal elements to stay inside card */
 	padding: 0;
 	font-family: 'Libre Baskerville', serif !important;
 	color: #1a1a1a !important;
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
+	box-sizing: border-box !important;
 }
 
 .section4-centered-article-header {
@@ -237,12 +239,15 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	font-size: 1.15rem !important;
 	color: #1a1a1a !important;
 	background-color: #ffffff !important;
+	box-sizing: border-box !important;
 }
 
-/* --- Section 4.1 In-Card Image & Media Formatting --- */
+/* Force ALL inline images in the article body to lock strictly within padding */
 .article-body-content img,
 .section4-left-article-box img,
+.section4-left-article-box p img,
 .article-hero-image img {
+	width: 100% !important;
 	max-width: 100% !important;
 	height: auto !important;
 	display: block !important;
@@ -251,6 +256,7 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	border: 2px solid #222222 !important;
 	box-shadow: 4px 4px 0px #000000 !important;
 	object-fit: cover !important;
+	box-sizing: border-box !important;
 }
 
 .article-body-content figure {
@@ -1070,7 +1076,7 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	align-items: center !important;
 	justify-content: center !important;
 	width: 100% !important;
-	margin-top: 16px !important;
+	margin-top: 10px !important;
 }
 
 /* Directory Image Banner placed under header and above button */
@@ -1079,11 +1085,12 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 	max-width: 100% !important;
 	height: auto !important;
 	display: block !important;
-	margin: 0 0 20px 0 !important;
+	margin: 0 0 18px 0 !important;
 	border: 2px solid #000000 !important;
 	box-shadow: 6px 6px 0px #000000 !important;
 	border-radius: 6px !important;
 	object-fit: contain !important;
+	background-color: #ffffff !important;
 	cursor: pointer !important;
 }
 
@@ -1108,42 +1115,51 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 }
 
 /* ==========================================================================
-   SECTION 9: BOLD PRINT MATRIX & CUSTOM FOOTER PROSE
+   SECTION 9 & 10: BOLD PRINT MATRIX & PROCLAMATION CARD
    ========================================================================== */
 .section9-bold-print-wrapper,
-.site-section-9-container {
+.section10-message-chassis {
 	width: 100% !important;
-	padding: 50px clamp(20px, 4vw, 80px) !important;
-	background-color: #000000 !important;
-	border-top: 4px solid var(--louis-gold) !important;
-	color: #ffffff !important;
-	font-family: 'Oswald', 'Montserrat', sans-serif !important;
-	text-align: center !important;
 	box-sizing: border-box !important;
+	margin: 40px auto !important;
 }
 
-.section9-bold-print-wrapper h1,
-.section9-bold-print-wrapper h2,
-.section9-bold-print-wrapper h3,
-.section9-bold-print-wrapper h4,
-.section9-bold-print-wrapper p,
-.section9-bold-print-wrapper span,
-.section9-bold-print-wrapper a,
-.site-section-9-container * {
-	font-weight: 900 !important;
-	letter-spacing: 1.2px !important;
+.section10-proclamation-card-box {
+	background: #fffdf5 !important;
+	border: 2px solid #222222 !important;
+	padding: 30px !important;
+	box-shadow: 6px 6px 0px #000000 !important;
+	border-radius: 6px !important;
+	color: #222222 !important;
+	text-align: center !important;
+}
+
+.proclamation-body-text {
+	font-family: 'Times New Roman', Times, serif !important;
+	font-size: 18px !important;
+	font-weight: 900 !important; /* Heavy Bold Print */
+	line-height: 1.7 !important;
+	margin-bottom: 18px !important;
+	color: #1a1a1a !important;
+}
+
+.proclamation-contact-text {
+	font-family: 'Oswald', sans-serif !important;
+	font-size: 16px !important;
+	font-weight: 700 !important; /* Bold Print */
 	text-transform: uppercase !important;
-	color: #ffffff !important;
-	text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9) !important;
+	letter-spacing: 1px !important;
+	color: #000000 !important;
 }
 
-.section9-bold-print-wrapper a {
-	color: var(--louis-gold) !important;
+.proclamation-contact-text a {
+	color: #0258A3 !important;
+	font-weight: 900 !important;
 	text-decoration: underline !important;
 }
 
-.section9-bold-print-wrapper a:hover {
-	color: #ffffff !important;
+.proclamation-contact-text a:hover {
+	color: #eb1c24 !important;
 }
 
 /* ==========================================================================
