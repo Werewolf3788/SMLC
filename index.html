@@ -1,133 +1,281 @@
-<!--
-  Version: 1.0.1
-  Timestamp: 2026-07-27 04:59:38 EDT
--->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🐺 Werewolf Project | Gaming & Hub Portal</title>
-    <!-- === SECTION: Styles & Libraries === -->
-    <script src="https://cdn.tailwindcss.com?v=202607270459"></script>
-    <style>
-        /* === SECTION: Core Styles === */
-        body { 
-            background-color: #1e1c1c; 
-            color: #f3f4f6; 
-            font-family: 'Inter', sans-serif; 
-        }
-        .accent-red { 
-            color: #dc2626; 
-        }
-        .card { 
-            background-color: #2a2828; 
-            border: 1px solid #3f3e3e; 
-            min-height: 100%;
-            height: auto;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-    </style>
+    <title>Support My Local Community | Clay County, IL</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/skventuresigns-design/media/main/favicon.png">
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="min-h-screen flex flex-col justify-between">
+<body class="home-bg">
+    <header class="header">
+        <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" class="header-logo" alt="SMLC Logo">
+        <nav class="nav-bar">
+            <button class="hamburger" id="hamburger">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="clay-city.html">Clay City</a></li>
+                <li><a href="https://www.ourflora.com" target="_blank">Flora</a></li>
+                <li><a href="louisville.html">Louisville</a></li>
+                <li><a href="sailor-springs.html">Sailor Springs</a></li>
+                <li><a href="xenia.html">Xenia</a></li>
+            </ul>
+        </nav>
+    </header>
 
-    <!-- === SECTION: Header & Navigation === -->
-    <nav class="border-b border-gray-700 bg-[#2a2828] p-4">
-        <div class="container mx-auto flex flex-wrap justify-between items-center">
-            <h1 class="text-xl font-bold tracking-tight">🐺 Werewolf <span class="accent-red">Project</span></h1>
-            <div id="main-menu" class="flex flex-wrap gap-4 text-sm font-medium mt-2 md:mt-0 items-center">
-                <!-- Dynamic Menu items injected via menu.json -->
-                <span class="text-gray-400 text-xs">Loading menu...</span>
+    <a href="https://clay-county-business-directory.supportmylocalcommunity.com" style="text-decoration: none;">
+        <div class="home-hero-cta">
+            <h1>Click to see Our Business Directory</h1>
+        </div>
+    </a>
+
+    <div class="smlc-fullwidth-wrapper">
+        <div class="smlc-track">
+            <div class="smlc-item smlc-fade-1"><img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/claycounty.png" alt="Clay County"></div>
+            <div class="smlc-item smlc-fade-2"><img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/skbanner.png" alt="SK Ventures"></div>
+            <div class="smlc-item smlc-fade-3"><img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-banner.png" alt="SMLC Logo"></div>
+        </div>
+    </div>
+
+    <div class="discover-clay-county-section">
+        <div class="index-heading-row">
+            <h2><strong><u>Discover Clay County Illinois</u></strong></h2>
+        </div>
+        <div class="index-grid-row">
+            <div class="index-col">
+                <div class="glossy-wrapper">
+                    <div class="glossy-box">
+                        <div class="clay-county-title"><h1 class="yellow-text">Clay County</h1></div>
+                        <p class="sub-headline yellow-text">Southeastern Illinois | Est. 1842</p>
+                        <div class="content-body">
+                            <p class="yellow-text">Nestled in southeastern Illinois, Clay County is a community rich in history and culture. With <strong>Louisville</strong> as its county seat, it boasts a population of 13,288. Known for its welcoming towns like <strong>Louisville, Flora, Xenia, Clay City, and Sailor Springs</strong>, Clay County offers a unique blend of small-town charm and economic potential.</p>
+                        </div>
+                        <div class="mission-text yellow-border">
+                            <p class="yellow-text"><strong>Our Mission:</strong> To highlight the county's significance and promote local business growth, ensuring a prosperous future for all residents.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="index-col">
+                <h2 class="courthouse-heading"><strong>Clay County Court House, Louisville, IL</strong></h2>
+                <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/clay-county-courthouse.png" alt="Clay County Courthouse" class="courthouse-img">
             </div>
         </div>
-    </nav>
+    </div>
 
-    <!-- === SECTION: Main Content === -->
-    <main class="container mx-auto p-8 flex-grow">
-        <section class="mb-16 text-center py-10">
-            <h2 class="text-5xl font-extrabold mb-4">Gaming & Hub Portal</h2>
-            <p class="text-xl text-gray-400 max-w-2xl mx-auto">
-                A dynamic, multi-user gaming progression hub, live tracker, and cross-platform dashboard built with vanilla Web Standards and hosted live on GitHub Pages.
-            </p>
-        </section>
+    <div class="orange-master-section">
+        <div class="news-heading-bar">
+            <h2 style="font-size: 32px !important;"><strong><u>Your Source For Local News</u></strong></h2>
+        </div>
+        
+        <div class="orange-grid-row" style="display: flex; flex-wrap: wrap; align-items: stretch; gap: 20px;">
+            <div class="orange-col" style="flex: 1; min-width: 300px;">
+                <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/clay-county-news.png" alt="Clay County News" class="news-img-styled" style="height: 100%; object-fit: cover;">
+            </div>
 
-        <section id="features" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="card p-6 rounded-xl shadow-lg">
-                <div>
-                    <h3 class="text-xl font-bold mb-3 text-red-500">🌟 Key Features</h3>
-                    <p class="text-sm text-gray-300">Real-time Game Trackers for theHunter, Sniper Elite, and FS25. Dynamic Profile System with auto-binding and cross-tab sync.</p>
+            <div class="orange-col" style="flex: 1; min-width: 300px;">
+                <div id="newsletter-form-container" class="clay-county-news-box event-clipping" style="height: 100%; box-sizing: border-box;">
+                    <div class="clipping-tag-black">Official Signup</div>
+                    <div class="news-box-header">
+                        <h3>Newsletter Signup</h3>
+                        <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #444; font-weight: bold;">GET LOCAL UPDATES DELIVERED TO YOUR INBOX</span>
+                    </div>
+
+                    <form id="newsletter-form">
+                        <input type="hidden" name="formType" value="newsletter">
+                        
+                        <div class='wf-row'>
+                            <label class='wf-label'>First Name</label>
+                            <input name='firstName' type='text' class='wf-field-input' required/>
+                        </div>
+                        <div class='wf-row'>
+                            <label class='wf-label'>Last Name</label>
+                            <input name='lastName' type='text' class='wf-field-input' required/>
+                        </div>
+                        <div class='wf-row'>
+                            <label class='wf-label'>Email</label>
+                            <input name='email' type='email' class='wf-field-input' required/>
+                        </div>
+
+                        <div style="display:none;">
+                            <input name="website_verify" type="text" value="">
+                        </div>
+
+                        <div class='wform-btn-wrap' style="text-align: right; margin-top: 20px;">
+                            <button type="submit" id="nl-submit-btn" class="clipping-btn" style="border:none; cursor:pointer; width:100%;">Subscribe</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="thank-you-clipping" class="clay-county-news-box spotlight-clipping" style="display: none; text-align: center;">
+                    <div class="clipping-tag-black">Success!</div>
+                    <div class="news-box-header"><h3>Thank You!</h3></div>
+                    <p class="biz-description" style="font-size: 1.2rem; font-weight: bold;">Thank You for Signing up for the Newsletter!</p>
+                    <p style="font-style: italic; margin-top: 10px;">Thank you for joining the Newsletter, we will be sending some good information soon !!</p>
                 </div>
             </div>
-            <div class="card p-6 rounded-xl shadow-lg">
-                <div>
-                    <h3 class="text-xl font-bold mb-3 text-red-500">⚙️ Automation</h3>
-                    <p class="text-sm text-gray-300">Automated GitHub Actions handling background updates for PSN token synchronization and live game backups.</p>
-                </div>
-            </div>
-            <div class="card p-6 rounded-xl shadow-lg">
-                <div>
-                    <h3 class="text-xl font-bold mb-3 text-red-500">🔗 Resources</h3>
-                    <p class="text-sm text-gray-300">
-                        <a href="https://github.com/Werewolf3788/Testpages/blob/main/json/menu.json" target="_blank" class="text-blue-400 hover:underline">View Menu JSON Source</a>
-                    </p>
-                </div>
-            </div>
-        </section>
-    </main>
+        </div>
+    </div>
 
-    <!-- === SECTION: Footer === -->
-    <footer class="border-t border-gray-800 bg-[#181616] py-4 text-center text-xs text-gray-500">
-        <p>v1.0.1 | 2026-07-27 04:59:38 EDT</p>
+    <div class="intricate-grid-container">
+        <div class="intricate-col">
+           <div class="clay-county-news-box">
+                <div class="clipping-tag-black">Community Bulletin</div>
+                    <div class="news-box-header">
+                        <h3>Local Events</h3>
+                        <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #444; font-weight: bold;">Clay County Community Calendar</span>
+                    </div>
+
+                    <div id="direct-event-list">
+                        <p style="text-align:center; font-style: italic; padding: 20px;">Loading the latest dispatches...</p>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd;">
+                        <a href="/bulletin/index.html" class="footer-master-link" style="color: #222; font-weight: bold; font-size: 12px; text-transform: uppercase; text-decoration: underline;">View Full Calendar & Details</a>
+                    </div>
+        </div>
+    </div>
+
+        <div class="intricate-col">
+            <div class="clay-county-news-box spotlight-clipping">
+                <div class="news-box-header">
+                    <h3>Business Spotlight</h3>
+                    <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #444; font-weight: bold;">Supporting Local Clay County News</span>
+                </div>
+                <div class="spotlight-image-wrap">
+                    <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/localbusiness.png" alt="Flora Family Diner">
+                </div>
+                <span style="font-size: 24px; font-weight: bold; display: block; text-align: center; margin-bottom: 5px;">Flora Family Diner</span>
+                <span style="font-size: 12px; text-transform: uppercase; color: #d9534f; font-weight: bold; display: block; text-align: center; margin-bottom: 15px; letter-spacing: 1px;">Flora, Illinois</span>
+                <p class="biz-description">Serving home-cooked favorites for over two decades, the Family Diner is a staple of our community.</p>
+                <a href="#" class="clipping-btn">Visit Website</a>
+            </div>
+
+            <div class="clay-county-news-box event-clipping">
+                <div class="clipping-tag-black">Community Bulletin</div>
+                <div class="news-box-header">
+                    <h3>What's Happening?</h3>
+                    <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #444; font-weight: bold;">Clay County Community Calendar</span>
+                </div>
+                <p class="biz-description" style="text-align: center; font-style: italic;">"Got a local fundraiser, school event, or church dinner coming up? Share your news with the community for free!"</p>
+                <a href="https://www.supportmylocalcommunity.com/submit-event/" class="clipping-btn">Submit Your Event</a>
+            </div>
+        </div>
+
+        <div class="intricate-col">
+            <div class="clay-county-news-box group-invitation-master">
+                <div class="spotlight-image-wrap fb-hero-image">
+                    <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-banner.png" alt="Support My Local Community">
+                </div>
+                <div class="news-box-header">
+                    <h3>Join the Community</h3>
+                    <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #444; font-weight: bold;">Official Support My Local Community Facebook Page</span>
+                </div>
+                <span style="font-size: 16px; font-weight: bold; display: block; text-align: center; margin-bottom: 15px; color: #222;">Support My Local Community</span>
+                <p class="biz-description" style="text-align: center;">Stay connected with neighbors. Discuss local news, share updates, and join the conversation.</p>
+                <a href="https://www.facebook.com/SupportMyLocalCommunity" target="_blank" class="clipping-btn">Enter the Conversation</a>
+            </div>
+
+            <div class="clay-county-news-box group-clipping">
+                <div class="group-header"><h3>Richards' News and Reviews</h3><span>Join the Group</span></div>
+                <p class="biz-description" style="text-align: center; font-style: italic;">"Get involved in the conversation! Richard's News and Reviews Facebook Group."</p>
+                <a href="https://www.facebook.com/groups/1069055660369865" target="_blank" class="clipping-btn">Visit Facebook Group</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="blue-news-frame">
+        <div class="news-content-90">
+            <div id="town-summaries"></div>
+        </div>
+    </div>
+    
+    <div class="thankful-section">
+        <div class="thankful-content">
+            <p>We are very Thankful and Blessed for our Customers who allow us to advertise their Business to the Community. We hope to be of Service, not only to the Large Corporations, but also to the Small Business’ in the area. A Large Corporation once started out as a small business, so our hope is to help those Small Business’ we serve reach the fullest potential they desire. You will never know what we are able to do for Your Business unless you ask. I hope to hear from you.</p>
+            <p class="contact-email">For questions or comments about this site please email <a href="mailto:info@supportmylocalcommunity.com">info@supportmylocalcommunity.com</a></p>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+         <p>All Content, Photographs, Writings, Letters and Documents © 2026 - Support My Local Community</p>
+         <p>All Rights Reserved - <a href="https://www.skventuresigns.com" target="_blank" class="footer-link">S&K Ventures</a></p>
     </footer>
 
-    <!-- === SECTION: Dynamic Menu & Smart Tabs Logic === -->
     <script>
-        /* === SECTION: Dynamic Fetch & Menu Injection === */
-        document.addEventListener('DOMContentLoaded', () => {
-            const menuContainer = document.getElementById('main-menu');
-            const menuJsonUrl = 'https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/menu.json?v=202607270459';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbyMQKX6USKUL8cxo4mSR9aXfiwHR4kqsElU4DH8rAi63W7KRuILDeayiEAv_uG_85qd0A/exec'; 
+        const form = document.getElementById('newsletter-form');
+        const submitBtn = document.getElementById('nl-submit-btn');
 
-            fetch(menuJsonUrl)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            submitBtn.innerHTML = "Joining...";
+            submitBtn.disabled = true;
+
+            fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+                .then(response => response.text())
+                .then(result => {
+                    if(result.trim() === "Success") {
+                        document.getElementById('newsletter-form-container').style.display = 'none';
+                        document.getElementById('thank-you-clipping').style.display = 'block';
+                    } else { alert("Error: " + result); submitBtn.disabled = false; }
                 })
-                .then(data => {
-                    menuContainer.innerHTML = ''; // Clear loading placeholder
-                    
-                    // Support array direct or object wrapped array (e.g., { "menu": [...] })
-                    const items = Array.isArray(data) ? data : (data.menu || data.items || []);
-
-                    items.forEach(item => {
-                        const link = document.createElement('a');
-                        link.href = item.url || item.link || '#';
-                        link.textContent = item.name || item.title || item.label || 'Link';
-                        link.className = "hover:text-red-500 transition px-2 py-1 text-gray-200";
-
-                        /* === SECTION: Smart Tabs & Duplicate Interception === */
-                        link.addEventListener('click', (e) => {
-                            const targetUrl = link.getAttribute('href');
-                            
-                            // Prevent duplicating tabs if link points to an external or target tab
-                            if (targetUrl.startsWith('http') || targetUrl.startsWith('//')) {
-                                e.preventDefault();
-                                const windowName = 'Tab_' + targetUrl.replace(/[^a-zA-Z0-9]/g, '_');
-                                window.open(targetUrl, windowName);
-                            }
-                        });
-
-                        menuContainer.appendChild(link);
-                    });
-                })
-                .catch(error => {
-                    console.error('Error fetching menu.json:', error);
-                    menuContainer.innerHTML = '<span class="text-red-400 text-xs">Failed to load menu</span>';
-                });
+                .catch(error => { alert("Connection Failed."); submitBtn.disabled = false; });
         });
+
+        // Hamburger Navigation
+        const hamburger = document.getElementById('hamburger');
+        const navLinks = document.getElementById('nav-links');
+        hamburger.addEventListener('click', () => { navLinks.classList.toggle('open'); });
+
+       // Bulletin       
+        const BULLETIN_DATA_URL = "https://script.google.com/macros/s/AKfycbyMQKX6USKUL8cxo4mSR9aXfiwHR4kqsElU4DH8rAi63W7KRuILDeayiEAv_uG_85qd0A/exec";
+
+        async function loadDirectEvents() {
+            const list = document.getElementById('direct-event-list');
+            try {
+                const response = await fetch(BULLETIN_DATA_URL);
+                const events = await response.json();
+
+                if (events && events.length > 0) {
+                    list.innerHTML = '';
+                    events.slice(-5).reverse().forEach(item => {
+                        const eventDateObj = new Date(item.date);
+                        const friendlyDate = isNaN(eventDateObj) ? item.date : eventDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        const gDate = isNaN(eventDateObj) ? "" : eventDateObj.toISOString().replace(/-|:|\.\d\d\d/g, "").split("T")[0];
+                        
+                        const gCalLink = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(item.name)}&dates=${gDate}/${gDate}&details=${encodeURIComponent(item.details || '')}&location=${encodeURIComponent(item.location)}&sf=true&output=xml`;
+                        const icsContent = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${item.name}\nLOCATION:${item.location}\nDTSTART:${gDate}\nDTEND:${gDate}\nEND:VEVENT\nEND:VCALENDAR`;
+                        const icsData = "data:text/calendar;charset=utf8," + encodeURIComponent(icsContent);
+
+                        const div = document.createElement('div');
+                        div.style.padding = "15px 0";
+                        div.style.borderBottom = "1px dashed #ccc";
+                        div.innerHTML = `
+                            <div style="color: #cc0000; font-weight: bold; font-size: 12px; text-transform: uppercase;">${friendlyDate}</div>
+                            <div style="font-size: 18px; font-weight: bold; margin: 5px 0; line-height: 1.2;">${item.name}</div>
+                            <div style="font-size: 13px; color:#444;">${item.location} | ${item.time}</div>
+                            <div style="margin-top: 8px;">
+                                <a href="${gCalLink}" target="_blank" style="color: #cc0000; font-weight: bold; font-size: 10px; text-transform: uppercase; text-decoration: none;">Google</a>
+                                <span style="color:#777; margin: 0 5px;">|</span>
+                                <a href="${icsData}" download="event.ics" style="color: #cc0000; font-weight: bold; font-size: 10px; text-transform: uppercase; text-decoration: none;">Apple/Outlook</a>
+                            </div>
+                        `;
+                        list.appendChild(div);
+                    });
+                } else {
+                    list.innerHTML = "<p style='text-align:center; padding: 20px;'>No events scheduled.</p>";
+                }
+            } catch (e) {
+                list.innerHTML = "<p style='text-align:center; padding: 20px;'>Connection error.</p>";
+            }
+        }
+        loadDirectEvents();
+
     </script>
+    <script src="https://www.supportmylocalcommunity.com/local-news/news-engine.js"></script>
 </body>
 </html>
