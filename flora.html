@@ -22,7 +22,7 @@
         --container-width: 96%;
         --flora-blue: #0258A3;
         --flora-black: #000000;
-        --flora-gold: #FE4E02;
+        --flora-orange: #FE4E02;
         
         --primary: #0258A3;
         --secondary: #000000;
@@ -46,7 +46,7 @@
     html[data-town="FLORA"] body { 
         --town-accent: var(--flora-blue); 
         --town-secondary: var(--flora-black); 
-        --town-detail: var(--flora-gold); 
+        --town-detail: var(--flora-orange); 
     }
 
     * { font-family: 'Times New Roman', Times, serif !important; box-sizing: border-box; }
@@ -109,7 +109,7 @@
         position: relative !important; 
         top: 0; 
         z-index: 100 !important; 
-        border-bottom: 4px solid var(--flora-gold); 
+        border-bottom: 4px solid var(--flora-orange); 
         margin-top: 0 !important;
         box-shadow: 0 4px 12px rgba(0,0,0,0.8);
     }
@@ -117,7 +117,7 @@
     .menu-inner { width: var(--container-width); margin: 0 auto; display: flex; justify-content: center; }
     .menu-links { display: flex; flex-wrap: wrap; list-style: none; gap: clamp(12px, 1.5vw, 24px); margin: 0; padding: 0; }
     .menu-links a { color: #ffffff !important; font-size: 16px; font-weight: 800; padding: 10px 18px; text-transform: uppercase; letter-spacing: 1px; }
-    .menu-links a:hover, .menu-links a.active { color: var(--flora-gold) !important; border: 2px solid var(--flora-gold); background: rgba(0, 0, 0, 0.6) !important; border-radius: 8px; }
+    .menu-links a:hover, .menu-links a.active { color: var(--flora-orange) !important; border: 2px solid var(--flora-orange); background: rgba(0, 0, 0, 0.6) !important; border-radius: 8px; }
 
     .main-container { width: var(--container-width); max-width: 100%; margin: 0 auto; padding: 36px clamp(20px, 3vw, 60px); }
 
@@ -127,7 +127,7 @@
         display: flex; 
         align-items: center; 
         justify-content: center; 
-        border-bottom: 4px solid var(--flora-gold); 
+        border-bottom: 4px solid var(--flora-orange); 
         border-radius: 16px; 
         text-align: center; 
         margin-bottom: 36px; 
@@ -140,10 +140,10 @@
         box-shadow: 0 8px 32px rgba(0,0,0,0.8);
     }
 
-    .seat-badge { display: inline-block; padding: 8px 22px; background-color: var(--flora-gold); color: #000000; font-weight: 900; text-transform: uppercase; font-size: 14px; border-radius: 6px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+    .seat-badge { display: inline-block; padding: 8px 22px; background-color: var(--flora-orange); color: #000000; font-weight: 900; text-transform: uppercase; font-size: 14px; border-radius: 6px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
     .town-title { font-size: clamp(2.8rem, 5vw, 4.5rem); font-weight: 900; text-transform: none !important; margin: 0; letter-spacing: 1px; text-align: center; }
     .outlined-headline { color: #ffffff !important; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 3px 3px 6px rgba(0,0,0,0.9); }
-    .town-established-meta { font-size: 15px; letter-spacing: 2px; font-weight: 700; color: var(--flora-gold); margin: 10px 0 0 0; text-align: center !important; }
+    .town-established-meta { font-size: 15px; letter-spacing: 2px; font-weight: 700; color: var(--flora-orange); margin: 10px 0 0 0; text-align: center !important; }
     .river-marquee { margin-top: 20px; font-size: 14px; font-family: monospace; font-weight: 700; color: #ffffff; background-color: rgba(0, 0, 0, 0.75); padding: 8px 22px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.2); width: max-content; margin-left: auto; margin-right: auto; }
 
     .section3-split-layout { 
@@ -161,7 +161,7 @@
 
     .section3-container-grid { width: 100%; max-width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 36px; }
     .section3-row-1 { width: 100%; text-align: center !important; }
-    .section3-main-title { font-size: clamp(2.2rem, 4vw, 3.4rem) !important; font-weight: bold; color: var(--flora-gold) !important; margin: 0 0 18px 0; text-shadow: 2px 2px 5px rgba(0,0,0,0.9); text-align: center !important; }
+    .section3-main-title { font-size: clamp(2.2rem, 4vw, 3.4rem) !important; font-weight: bold; color: var(--flora-orange) !important; margin: 0 0 18px 0; text-shadow: 2px 2px 5px rgba(0,0,0,0.9); text-align: center !important; }
     .section3-intro-text { font-size: clamp(1rem, 1.3vw, 1.25rem) !important; color: #ffffff !important; line-height: 1.6; margin: 0 auto; max-width: 1200px; text-shadow: 1px 1px 3px rgba(0,0,0,0.9); text-align: center !important; }
     .section3-row-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: clamp(24px, 3.5vw, 60px); align-items: start !important; }
     @media (max-width: 1024px) { .section3-row-2 { grid-template-columns: 1fr; gap: 36px; } }
@@ -174,13 +174,13 @@
     .slider-slide img { width: 100%; height: 100%; object-fit: cover; }
     .slider-caption { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.85); color: #ffffff; padding: 12px; font-size: 1.2rem; font-weight: bold; text-align: center; }
 
-    .section3-about-box { background: rgba(18, 18, 18, 0.9); border: 1px solid rgba(255, 255, 255, 0.2); border-left: 5px solid var(--flora-gold); padding: 24px; border-radius: 8px; }
-    .section3-about-tag { color: var(--flora-gold); font-size: 15px !important; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 12px; }
+    .section3-about-box { background: rgba(18, 18, 18, 0.9); border: 1px solid rgba(255, 255, 255, 0.2); border-left: 5px solid var(--flora-orange); padding: 24px; border-radius: 8px; }
+    .section3-about-tag { color: var(--flora-orange); font-size: 15px !important; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 12px; }
     .section3-about-text { font-size: 18px !important; color: #ffffff !important; line-height: 1.6; margin: 0; }
 
     .section3-right-col { display: flex !important; flex-direction: column !important; height: auto !important; }
-    .section3-landmark-card { background: rgba(18, 18, 18, 0.92); border: 1px solid rgba(255, 255, 255, 0.2); border-top: 5px solid var(--flora-gold); padding: 32px; border-radius: 8px; text-align: left; height: auto !important; }
-    .section3-landmark-title { font-size: clamp(1.4rem, 2.2vw, 2rem) !important; font-weight: bold; color: var(--flora-gold) !important; margin: 0 0 20px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 15px; }
+    .section3-landmark-card { background: rgba(18, 18, 18, 0.92); border: 1px solid rgba(255, 255, 255, 0.2); border-top: 5px solid var(--flora-orange); padding: 32px; border-radius: 8px; text-align: left; height: auto !important; }
+    .section3-landmark-title { font-size: clamp(1.4rem, 2.2vw, 2rem) !important; font-weight: bold; color: var(--flora-orange) !important; margin: 0 0 20px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 15px; }
     .section3-landmark-images { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 20px; }
     .section3-landmark-img-wrap img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; border: 2px solid #333; cursor: pointer; }
     .section3-landmark-caption { display: block; color: #ffffff; font-size: 15px !important; margin-top: 8px; font-weight: bold; text-align: center; }
@@ -246,12 +246,12 @@
         color: #ffffff !important;
         padding: clamp(28px, 4vh, 52px) 24px !important;
         text-align: center !important;
-        border-bottom: 8px solid var(--flora-gold) !important;
+        border-bottom: 8px solid var(--flora-orange) !important;
     }
 
     .category-tag {
         font-family: 'Oswald', sans-serif !important;
-        background: var(--flora-gold) !important;
+        background: var(--flora-orange) !important;
         color: #000000 !important;
         padding: 6px 18px !important;
         display: inline-block !important;
@@ -411,7 +411,7 @@
         transition: all 0.3s;
     }
     .spotlight-btn:hover, #spotlight-asset-link:hover {
-        background-color: var(--flora-gold) !important;
+        background-color: var(--flora-orange) !important;
         color: #000000 !important;
         border-color: #000000 !important;
     }
@@ -501,8 +501,8 @@
             repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 20px, transparent 20px, transparent 40px) !important;
         box-sizing: border-box;
         border-radius: 12px;
-        border-top: 4px solid var(--flora-gold);
-        border-bottom: 4px solid var(--flora-gold);
+        border-top: 4px solid var(--flora-orange);
+        border-bottom: 4px solid var(--flora-orange);
     }
 
     .timeline-inner-bounds { width: 100% !important; max-width: 100% !important; margin: 0 auto !important; }
@@ -512,7 +512,7 @@
         font-family: 'Playfair Display', Georgia, serif !important;
         font-size: clamp(2.2rem, 4vw, 3.5rem) !important;
         font-weight: 900 !important;
-        color: var(--flora-gold) !important;
+        color: var(--flora-orange) !important;
         display: block !important;
         margin-bottom: 12px !important;
         text-shadow: 2px 2px 8px #000000 !important;
@@ -609,8 +609,8 @@
         padding: 36px clamp(20px, 4vw, 80px) !important;
         box-sizing: border-box !important;
         margin: 0 !important;
-        border-top: 3px solid var(--flora-gold);
-        border-bottom: 3px solid var(--flora-gold);
+        border-top: 3px solid var(--flora-orange);
+        border-bottom: 3px solid var(--flora-orange);
     }
 
     .showcase-widget.full-bleed-widget { width: 100% !important; background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
@@ -686,8 +686,8 @@
         background-image: 
             radial-gradient(circle at 50% 50%, rgba(2, 88, 163, 0.25) 0%, rgba(10, 15, 24, 0.98) 80%),
             repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 6px) !important;
-        border-top: 4px solid var(--flora-gold);
-        border-bottom: 4px solid var(--flora-gold);
+        border-top: 4px solid var(--flora-orange);
+        border-bottom: 4px solid var(--flora-orange);
     }
 
     .portal-grid-layout-fixed { 
@@ -1010,8 +1010,8 @@
 
     .town-directory-interactive-btn-s7 {
         background-color: #000000 !important;
-        color: var(--flora-gold) !important;
-        border: 2px solid var(--flora-gold) !important;
+        color: var(--flora-orange) !important;
+        border: 2px solid var(--flora-orange) !important;
         border-radius: 31px !important;
         cursor: pointer;
         display: inline-block;
@@ -1024,7 +1024,7 @@
     }
 
     .town-directory-interactive-btn-s7:hover {
-        background-color: var(--flora-gold) !important;
+        background-color: var(--flora-orange) !important;
         color: #000000 !important;
     }
 
@@ -1039,7 +1039,7 @@
             linear-gradient(135deg, rgba(2, 88, 163, 0.8) 0%, rgba(10, 10, 10, 0.95) 100%),
             repeating-linear-gradient(60deg, rgba(255, 193, 14, 0.03) 0px, rgba(255, 193, 14, 0.03) 1px, transparent 1px, transparent 14px) !important;
         border-radius: 8px;
-        border: 1px solid var(--flora-gold);
+        border: 1px solid var(--flora-orange);
     }
 
     .section10-proclamation-card-box {
@@ -1076,7 +1076,7 @@
         text-decoration: underline !important;
     }
 
-    .site-global-footer-matrix { width: 100% !important; background-color: #000000 !important; color: #ffffff !important; padding: 45px 0 25px 0 !important; border-top: 4px solid var(--flora-gold) !important; text-align: center !important; }
+    .site-global-footer-matrix { width: 100% !important; background-color: #000000 !important; color: #ffffff !important; padding: 45px 0 25px 0 !important; border-top: 4px solid var(--flora-orange) !important; text-align: center !important; }
     .site-global-footer-matrix p, .site-global-footer-matrix span { color: #ffffff !important; font-size: 15px !important; }
 
     .lightbox-overlay-mask { 
@@ -1467,15 +1467,15 @@
 <footer id="global-footer-container" class="site-global-footer-matrix">
     <div style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:20px; max-width:1200px; margin:0 auto; padding-bottom:20px;">
         <div>
-            <span style="font-weight:bold; color:var(--flora-gold);">Contact Us:</span>
+            <span style="font-weight:bold; color:var(--flora-orange);">Contact Us:</span>
             <div id="footer-phone-target">618-662-8341</div>
         </div>
         <div>
-            <span style="font-weight:bold; color:var(--flora-gold);">Email:</span><br>
+            <span style="font-weight:bold; color:var(--flora-orange);">Email:</span><br>
             <a id="footer-email-target" href="mailto:Scott.Robinson@skventuresigns.com" style="color:#fff;" data-ga-label="footer_email">Scott.Robinson@skventuresigns.com</a>
         </div>
         <div>
-            <span style="font-weight:bold; color:var(--flora-gold);">Address:</span>
+            <span style="font-weight:bold; color:var(--flora-orange);">Address:</span>
             <div id="footer-address-target">Clay County, Illinois</div>
         </div>
     </div>
@@ -1487,7 +1487,7 @@
     </div>
 </footer>
 
-<button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top" style="position:fixed; bottom:20px; right:20px; padding:10px 15px; background:#222; color:#fff; border:1px solid var(--flora-gold); border-radius:4px; cursor:pointer;">↑</button>
+<button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top" style="position:fixed; bottom:20px; right:20px; padding:10px 15px; background:#222; color:#fff; border:1px solid var(--flora-orange); border-radius:4px; cursor:pointer;">↑</button>
 
 <!-- Embedded Master Engine Script -->
 <script type="text/javascript">
