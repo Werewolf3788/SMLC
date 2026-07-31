@@ -32,8 +32,8 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
 
-        gtag('config', 'G-L376P3NPY4'); /* Global Site-Wide Watermark */
-        gtag('config', 'G-H6Q756MVE8'); /* Project Specific Property */
+        gtag('config', 'G-L376P3NPY4');
+        gtag('config', 'G-H6Q756MVE8');
     </script>
 
     <style>
@@ -42,7 +42,6 @@
         :root {
             --container-width: 96%;
             
-            /* Town Specific Accents */
             --cc-purple: #4A154B;
             --cc-black: #000000;
             --cc-gold: #FFC10E;
@@ -58,7 +57,6 @@
             --retro-text: #1a1a1a;
             --retro-shadow: 6px 6px 0px #000000;
 
-            /* Granite Color Tokens */
             --granite-blue: #041b30;
             --granite-dark: #1c1c1e;
             --granite-mid: #2c2c2e;
@@ -158,7 +156,6 @@
             border-radius: 8px; 
         }
 
-        /* Navigation Icon Thumbnail Styling */
         .menu-links a img.menu-thumb-icon {
             height: 24px;
             width: 24px;
@@ -238,8 +235,7 @@
         .section3-landmark-caption { display: block; color: #ffffff; font-size: 15px !important; margin-top: 8px; font-weight: bold; text-align: center; }
         .section3-landmark-desc { font-size: 16px !important; color: #dddddd !important; line-height: 1.6; margin: 18px 0 0 0; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 16px; text-align: justify; }
 
-        .section4-two-box-wrapper,
-        .dv-custom-article-wrapper {
+        .section4-two-box-wrapper {
             display: grid;
             grid-template-columns: 1.2fr 1fr;
             gap: clamp(32px, 5vw, 100px) !important;
@@ -252,8 +248,7 @@
         }
 
         @media (max-width: 1024px) {
-            .section4-two-box-wrapper,
-            .dv-custom-article-wrapper { 
+            .section4-two-box-wrapper { 
                 grid-template-columns: 1fr; 
                 gap: 36px !important;
                 padding: 24px 20px !important; 
@@ -277,8 +272,7 @@
         }
 
         .article-body-content img,
-        .section4-left-article-box img,
-        .section4-left-article-box p img {
+        .section4-left-article-box img {
             width: 100% !important;
             max-width: 100% !important;
             height: auto !important;
@@ -290,9 +284,9 @@
             border: 2px solid #222222 !important;
             box-shadow: 4px 4px 0px #000000 !important;
             box-sizing: border-box !important;
+            cursor: pointer;
         }
 
-        .article-centered-header,
         .section4-centered-article-header {
             background: linear-gradient(180deg, var(--primary) 0%, #1a1a1a 100%) !important;
             color: #ffffff !important;
@@ -377,16 +371,14 @@
             text-transform: uppercase !important;
         }
 
-        .section4-right-widgets-stack,
-        .dv-custom-article-wrapper .sidebar {
+        .section4-right-widgets-stack {
             display: flex !important;
             flex-direction: column !important;
             gap: 30px !important;
             justify-content: flex-start !important;
         }
 
-        .clay-county-news-box.spotlight-clipping,
-        .business-spotlight-showcase-card {
+        .clay-county-news-box.spotlight-clipping {
             width: 100% !important;
             padding: 28px !important;
             border: 2px solid #222 !important;
@@ -408,7 +400,7 @@
             margin: -28px -28px 20px -28px;
             border-bottom: 2px solid #000;
         }
-        .spotlight-image-wrap, .showcase-media-canvas {
+        .spotlight-image-wrap {
             width: 100%;
             height: auto;
             border: 2px solid #222;
@@ -416,12 +408,13 @@
             overflow: hidden;
             background-color: #eee;
         }
-        .spotlight-image-wrap img, .showcase-media-canvas img {
+        .spotlight-image-wrap img {
             width: 100%;
             display: block;
+            cursor: pointer;
             filter: grayscale(10%) contrast(110%);
         }
-        .biz-title, #spotlight-asset-name {
+        .biz-title {
             font-family: "Times New Roman", Times, serif !important;
             font-size: 24px !important;
             font-weight: bold;
@@ -430,7 +423,7 @@
             display: block;
             margin-bottom: 6px;
         }
-        .biz-location, #spotlight-asset-loc {
+        .biz-location {
             font-size: 13px !important;
             text-transform: uppercase;
             letter-spacing: 2px;
@@ -440,7 +433,7 @@
             text-align: center;
             margin-bottom: 16px;
         }
-        .biz-description, #spotlight-asset-desc {
+        .biz-description {
             font-size: 16px !important;
             line-height: 1.6;
             color: #333333 !important;
@@ -448,7 +441,7 @@
             margin-bottom: 22px;
             text-align: justify;
         }
-        .spotlight-btn, #spotlight-asset-link {
+        .spotlight-btn {
             display: block;
             text-align: center;
             background-color: #222;
@@ -462,7 +455,7 @@
             border: 2px solid #222;
             transition: all 0.3s;
         }
-        .spotlight-btn:hover, #spotlight-asset-link:hover {
+        .spotlight-btn:hover {
             background-color: var(--cc-gold) !important;
             color: #000000 !important;
             border-color: #000000 !important;
@@ -887,12 +880,14 @@
             padding: 28px;
             border-radius: 6px;
         }
+
         .clipping-masthead {
             text-align: center;
             padding-bottom: 16px;
             border-bottom: 4px double #222; 
             margin-bottom: 22px; 
         }
+
         .black-tag {
             background: #000;
             color: #fff;
@@ -904,6 +899,7 @@
             letter-spacing: 1px;
             line-height: 1;
         }
+
         .clipping-tagline {
             font-size: 13px;
             text-transform: uppercase;
@@ -987,6 +983,7 @@
             width: 100% !important;
             display: block !important;
             filter: grayscale(20%) sepia(10%) !important;
+            cursor: pointer;
         }
 
         .invitation-header-main {
@@ -1182,7 +1179,6 @@
 </head>
 <body data-town="CLAY CITY">
 
-    <!-- DYNAMIC FLOATING COMMEMORATIVE HUD -->
     <div class="portal-floating-hud-track">
         <div id="hud-county-age-target" class="hud-floating-badge county-anniversary-badge" style="display: none;"></div>
         <div id="hud-holiday-title-target" class="hud-floating-badge holiday-celebration-badge" style="display: none;"></div>
@@ -1257,7 +1253,7 @@
                             </div>
                             <div class="section3-landmark-img-wrap">
                                 <img id="dual-img-2" src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Clay City Landmark 2" class="lightbox-triggerable-element">
-                                <span class="section3-landmark-caption" id="dual-header-2">River View</span>
+                                <span class="section3-landmark-caption" id="dual-header-2">Klins</span>
                             </div>
                         </div>
                         <p id="right-card-meta-desc1" class="section3-landmark-desc">Loading landmark historical details...</p>
@@ -1433,7 +1429,7 @@
                         <div class="notice-tag-red">Local Conversation</div>
 
                         <div class="polaroid-wrap">
-                            <img src="https://ourflora.com/wp-content/uploads/2023/08/Ourflora.png" alt="OurFlora Community">
+                            <img src="https://ourflora.com/wp-content/uploads/2023/08/Ourflora.png" alt="OurFlora Community" class="lightbox-triggerable-element">
                         </div>
 
                         <div class="invitation-header-main">
@@ -1547,14 +1543,14 @@
         <div style="border-top:1px solid #333; padding-top:15px;">
             <p id="footer-copy-target">&copy; 2026 Clay City Community Portal. All rights reserved.</p>
             <p style="margin-top: 8px; opacity: 0.8; font-size: 12px; color: #aaaaaa;">
-                <strong>System Build Version:</strong> v1.0.5 | <strong>Active Version:</strong> 2026-07-30_22:15
+                <strong>System Build Version:</strong> v1.1.2 | <strong>Active Version:</strong> 2026-07-31_13:40
             </p>
         </div>
     </footer>
 
     <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top" style="position:fixed; bottom:20px; right:20px; padding:10px 15px; background:#222; color:#fff; border:1px solid var(--cc-gold); border-radius:4px; cursor:pointer;">↑</button>
 
-    <!-- Embedded Master Engine Script -->
+    <!-- Master Application Engine -->
     <script type="text/javascript">
         const TOWN_ALIAS_MAP = {
             "HOME": { primaryName: "Clay County", dbTownKey: "Global", jsonKey: "all", gasKey: ["louisville", "flora", "clay-city", "xenia"], historyKey: "all", keywords: [], zipCodes: [], isHome: true, scorestreamId: "68601", seatBadge: "Clay County Seat", estMeta: "Est. 1824 | Zip Code 62824", riverMarquee: "COMMUNITY DIGITAL NETWORK MAP", themeAccent: "#0258A3" },
@@ -1639,7 +1635,9 @@
             if (section8PartnerTimer) { clearInterval(section8PartnerTimer); section8PartnerTimer = null; }
         }
 
-        function getSmartCacheBuster() { return "v=" + Math.floor(Date.now() / 3600000); }
+        function getSmartCacheBuster() { 
+            return "v=" + Math.floor(Date.now() / 3600000); 
+        }
 
         function cleanRawUrl(urlStr) {
             if (!urlStr) return "";
@@ -1685,6 +1683,70 @@
             const rawDetails = event.details || event.description || '';
             const { imageUrl: textImgUrl } = extractImageFromText(rawDetails);
             return textImgUrl ? normalizeImageUrl(textImgUrl) : null;
+        }
+
+        function escapeJsString(str) {
+            if (!str) return "";
+            return String(str)
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/"/g, '&quot;')
+                .replace(/\n/g, ' ')
+                .replace(/\r/g, '');
+        }
+
+        function extractText(val) {
+            if (!val) return "";
+            if (typeof val === 'string') return val;
+            if (typeof val === 'number') return String(val);
+            if (typeof val === 'object') {
+                const inner = val.content || val.text || val.title || val.header1 || val.header2 || val.paragraph1 || val.paragraph2 || val.description || val.value || val.p1 || val.p2 || "";
+                if (typeof inner === 'object') return extractText(inner);
+                if (typeof inner === 'string' || typeof inner === 'number') return String(inner);
+
+                for (const k in val) {
+                    if (typeof val[k] === 'string' && val[k].trim()) return val[k];
+                    if (typeof val[k] === 'object') {
+                        const res = extractText(val[k]);
+                        if (res) return res;
+                    }
+                }
+            }
+            return "";
+        }
+
+        function extractImageAndAlt(node) {
+            if (!node) return { url: null, alt: null };
+            
+            if (typeof node === 'string') {
+                return { url: normalizeImageUrl(node), alt: null };
+            }
+            
+            if (typeof node === 'object') {
+                let rawUrl = node.image1 || node.image2 || node.imageUrl || node.image_url || node.url || node.src || node.image || node.href || null;
+                
+                if (rawUrl && typeof rawUrl === 'object') {
+                    const nested = extractImageAndAlt(rawUrl);
+                    rawUrl = nested.url || rawUrl.image1 || rawUrl.url || rawUrl.src;
+                    if (typeof rawUrl === 'object') rawUrl = extractText(rawUrl);
+                }
+                
+                let rawAlt = node.alt || node.alt1 || node.alt2 || node.caption || node.description || node.title || node.header1 || null;
+                if (rawAlt && typeof rawAlt === 'object') {
+                    rawAlt = extractText(rawAlt);
+                }
+                
+                if (typeof rawAlt === 'string') {
+                    rawAlt = rawAlt.replace(/^#+\s*/g, '').replace(/\*\*/g, '').trim();
+                }
+
+                return {
+                    url: normalizeImageUrl(rawUrl),
+                    alt: rawAlt
+                };
+            }
+            
+            return { url: null, alt: null };
         }
 
         function safeFetchJson(url) {
@@ -1756,12 +1818,19 @@
 
         function parseInteractiveContent(rawText) {
             if (!rawText) return "";
-            let parsed = rawText;
+            let parsed = String(rawText);
+
+            const imgUrlRegex = /(https?:\/\/[^\s<>"']+\.(?:png|jpg|jpeg|gif|webp|svg)(?:\?[^\s<>"']*)?|https?:\/\/lh3\.googleusercontent\.com\/[^\s<>"']+|https?:\/\/drive\.google\.com\/[^\s<>"']+)/gi;
+            parsed = parsed.replace(imgUrlRegex, (match) => {
+                const normUrl = normalizeImageUrl(match);
+                if (!normUrl) return match;
+                const safeUrl = escapeJsString(normUrl);
+                return `<img src="${normUrl}" alt="Media Content" onclick="event.stopPropagation(); fireLightbox('${safeUrl}', 'Media Content', '', '', '${safeUrl}')" style="max-width:100%; height:auto; max-height:280px; display:block; margin:10px auto; border-radius:6px; border:2px solid #222; box-shadow:2px 2px 6px rgba(0,0,0,0.3); cursor:pointer;" onerror="this.style.display='none';" />`;
+            });
 
             parsed = parsed.replace(/(\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b)/g, (match) => {
                 const clean = match.replace(/[^\d]/g, '');
-                const isWhatsApp = clean.includes("6187084450");
-                return `<a href="javascript:void(0)" onclick="handlePhoneClick('${clean}', ${isWhatsApp})" style="color:var(--primary); font-weight:bold; text-decoration:underline;">${match}</a>`;
+                return `<a href="tel:${clean}" style="color:var(--primary); font-weight:bold; text-decoration:underline;">${match}</a>`;
             });
 
             parsed = parsed.replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, (match) => {
@@ -1799,14 +1868,12 @@
                 return;
             }
 
+            imgElement.style.display = "block";
+            if (parentContainer) parentContainer.style.display = "block";
+
             imgElement.onerror = () => {
                 if (parentContainer) parentContainer.style.display = "none";
                 imgElement.style.display = "none";
-            };
-
-            imgElement.onload = () => {
-                imgElement.style.display = "block";
-                if (parentContainer) parentContainer.style.display = "block";
             };
 
             imgElement.src = srcUrl;
@@ -1857,7 +1924,7 @@
                 item.image || '',
                 item.title || 'Historical Landmark',
                 `YEAR ${item.year}`,
-                item.description || '',
+                item.description || item.alt || '',
                 item.link || '',
                 item.alt || item.title || ''
             );
@@ -1875,7 +1942,7 @@
             
             const rawDetails = targetItem.details || targetItem.description || "No details provided.";
             const { cleanText } = extractImageFromText(rawDetails);
-            const finalEventImg = findEventImage(targetItem);
+            const finalEventImg = targetItem.imageUrl || targetItem.image || null;
             const metaHeader = `${dateText} @ ${timeText} | Location: ${rawLoc}`;
             
             const lightboxImageHtml = finalEventImg ? `<div style="margin-bottom:15px; text-align:center;"><img src="${finalEventImg}" alt="${title}" style="max-width:100%; max-height:60vh; border-radius:6px; object-fit:contain; box-shadow:0 2px 8px rgba(0,0,0,0.15);" /></div>` : '';
@@ -1951,7 +2018,6 @@
             }
         }
 
-        /* === DYNAMIC REAL-TIME FIREBASE MENU ENGINE (WITH THUMBNAIL ICONS) === */
         function bindFirebaseMenuEngine(db) {
             if (!db) return;
             const menuContainer = document.getElementById('dynamic-menu-links');
@@ -2008,12 +2074,13 @@
                 const sections = snapshot.val();
                 if (!sections) return;
 
+                /* SECTION 3.1.1 (Slideshow) */
                 if (sections.sec_3_1_1) {
                     const s311 = sections.sec_3_1_1;
                     const mainTitleEl = document.getElementById('sec3-main-title');
                     const introTextEl = document.getElementById('sec3-intro-text');
-                    if (mainTitleEl && (s311.title || s311.Header)) mainTitleEl.innerText = s311.title || s311.Header;
-                    if (introTextEl && (s311.subtitle || s311.description)) introTextEl.innerText = s311.subtitle || s311.description;
+                    if (mainTitleEl && (s311.title || s311.Header)) mainTitleEl.innerText = extractText(s311.title || s311.Header);
+                    if (introTextEl && (s311.subtitle || s311.description)) introTextEl.innerText = extractText(s311.subtitle || s311.description);
 
                     const viewport = document.getElementById('clay-city-slideshow') || document.querySelector('.slider-viewport');
                     const slideshowItemsRaw = s311.items || s311.slides || s311.grid;
@@ -2021,14 +2088,18 @@
                         const slideItems = Array.isArray(slideshowItemsRaw) ? slideshowItemsRaw : Object.values(slideshowItemsRaw);
                         if (slideItems.length > 0) {
                             viewport.innerHTML = slideItems.map((item, idx) => {
-                                const imgUrl = item.image1 || item.imageUrl || item.src || item.url || item.image || item.image_url;
-                                const captionTitle = item.caption || item.header1 || item.title || item.name || item.alt || 'Town View';
-                                const altText = (item.alt || item.image1_alt || captionTitle).replace(/'/g, "\\'");
-                                const safeCaption = captionTitle.replace(/'/g, "\\'");
+                                const { url: imgUrl, alt: altTextRaw } = extractImageAndAlt(item);
+                                const captionTitle = extractText(item.caption || item.header1 || item.title || item.name || 'Town View');
+                                const altText = altTextRaw || captionTitle;
+
+                                const safeImg = escapeJsString(imgUrl);
+                                const safeCaption = escapeJsString(captionTitle);
+                                const safeAlt = escapeJsString(altText);
+                                const safeSrc = escapeJsString(item.source_url || item.link || '');
 
                                 return `
                                     <div class="slider-slide ${idx === 0 ? 'active' : ''}" style="position: absolute; inset: 0; opacity: ${idx === 0 ? 1 : 0}; transition: opacity 0.8s ease-in-out; z-index: ${idx === 0 ? 2 : 1};">
-                                        <img src="${imgUrl}" alt="${altText}" onclick="fireLightbox('${imgUrl}', '${safeCaption}', 'SLIDESHOW VIEW', '${altText}', '${item.source_url || ''}', '${altText}')" style="width:100%; height:100%; object-fit:cover; cursor:pointer;">
+                                        <img src="${imgUrl}" alt="${safeAlt}" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'SLIDESHOW VIEW', '${safeAlt}', '${safeSrc}', '${safeAlt}')" style="width:100%; height:100%; object-fit:cover; cursor:pointer;">
                                         ${captionTitle ? `<div class="slider-caption">${captionTitle}</div>` : ''}
                                     </div>
                                 `;
@@ -2050,130 +2121,166 @@
                     }
                 }
 
+                /* SECTION 3.1.2 (About Box) */
                 if (sections.sec_3_1_2) {
                     const s312 = sections.sec_3_1_2;
                     const aboutTagEl = document.getElementById('sec3-about-tag');
                     const aboutTextEl = document.getElementById('desc2-target-1');
-                    if (aboutTagEl && (s312.title || s312.tag)) aboutTagEl.innerText = s312.title || s312.tag;
-                    
-                    if (aboutTextEl) {
-                        if (typeof s312 === 'string') {
-                            aboutTextEl.innerText = s312;
-                        } else if (typeof s312 === 'object') {
-                            const pText = s312.paragraph1 || s312.paragraph2 || s312.text || s312.description;
-                            if (pText) aboutTextEl.innerText = pText;
-                        }
+                    if (aboutTagEl) aboutTagEl.innerText = extractText(s312.title || s312.tag) || "About Clay City";
+                    if (aboutTextEl) aboutTextEl.innerText = extractText(s312);
+                }
+
+                /* SECTION 3.2 (Landmarks) */
+                const s321 = sections.sec_3_2_1 || {};
+                const s322 = sections.sec_3_2_2 || {};
+                const s323 = sections.sec_3_2_3 || {};
+                const s324 = sections.sec_3_2_4 || {};
+
+                const rTitle = document.getElementById('right-card-meta-title');
+                if (rTitle) {
+                    rTitle.innerText = extractText(s321.title || s321.Header || s322.title) || "Historic Clay City Landmark";
+                }
+
+                // Landmark Image 1
+                const i1 = document.getElementById('dual-img-1');
+                const h1 = document.getElementById('dual-header-1');
+                const { url: img1Url, alt: alt1TextRaw } = extractImageAndAlt(s322.image1 || s322);
+                const h1Text = extractText(s322.header1 || s322.caption1 || s322.caption || s322.title) || "Community Landmark";
+                const alt1Text = alt1TextRaw || s322.alt1 || h1Text;
+
+                if (i1 && img1Url) {
+                    safeSetImageSource(i1, img1Url, null, alt1Text);
+                    i1.onclick = () => fireLightbox(escapeJsString(img1Url), escapeJsString(h1Text), 'LANDMARK ARCHIVE', escapeJsString(alt1Text), escapeJsString(s322.source_url || s322.link || ''), escapeJsString(alt1Text));
+                }
+                if (h1) h1.innerText = h1Text;
+
+                // Landmark Image 2 ("Klins" / alt2)
+                const i2 = document.getElementById('dual-img-2');
+                const h2 = document.getElementById('dual-header-2');
+                const { url: img2Url, alt: alt2TextRaw } = extractImageAndAlt(s322.image2 || s323.image2 || s323.image1 || s323);
+                const h2Text = extractText(s322.header2 || s322.caption2 || s323.header2 || s323.header1 || s323.caption) || "Klins";
+                const alt2Text = alt2TextRaw || s322.alt2 || s323.alt2 || h2Text;
+
+                if (i2 && img2Url) {
+                    safeSetImageSource(i2, img2Url, null, alt2Text);
+                    i2.onclick = () => fireLightbox(escapeJsString(img2Url), escapeJsString(h2Text), 'LANDMARK ARCHIVE', escapeJsString(alt2Text), escapeJsString(s322.source_url2 || s323.source_url || s323.link || ''), escapeJsString(alt2Text));
+                }
+                if (h2) h2.innerText = h2Text;
+
+                // Landmark Description
+                const descTarget = document.getElementById('right-card-meta-desc1');
+                if (descTarget) {
+                    const parsedDesc = extractText(s324) || extractText(s322.description);
+                    if (parsedDesc) {
+                        descTarget.innerHTML = parsedDesc;
+                        descTarget.style.display = "block";
                     }
                 }
 
-                if (sections.sec_3_2_1) {
-                    const s321 = sections.sec_3_2_1;
-                    const rTitle = document.getElementById('right-card-meta-title');
-                    if (rTitle && (s321.title || s321.Header)) rTitle.innerText = s321.title || s321.Header;
-                }
-
-                if (sections.sec_3_2_2) {
-                    const s322 = sections.sec_3_2_2;
-                    const i1 = document.getElementById('dual-img-1');
-                    const h1 = document.getElementById('dual-header-1');
-                    const img1Url = s322.image1 || s322.imageUrl || s322.image;
-                    const alt1Text = s322.alt || s322.header1 || 'Landmark Image 1';
-                    
-                    if (i1 && img1Url) {
-                        safeSetImageSource(i1, img1Url, null, alt1Text);
-                        i1.onclick = () => fireLightbox(img1Url, s322.header1 || s322.caption || 'Landmark 1', 'ARCHIVE VIEW', '', '', alt1Text);
-                    }
-                    if (h1 && (s322.header1 || s322.caption)) h1.innerText = s322.header1 || s322.caption;
-                }
-
-                if (sections.sec_3_2_3) {
-                    const s323 = sections.sec_3_2_3;
-                    const i2 = document.getElementById('dual-img-2');
-                    const h2 = document.getElementById('dual-header-2');
-                    const img2Url = s323.image2 || s323.image1 || s323.imageUrl;
-                    const alt2Text = s323.alt || s323.header2 || s323.header1 || 'Landmark Image 2';
-
-                    if (i2 && img2Url) {
-                        safeSetImageSource(i2, img2Url, null, alt2Text);
-                        i2.onclick = () => fireLightbox(img2Url, s323.header2 || s323.header1 || s323.caption || 'Landmark 2', 'ARCHIVE VIEW', '', '', alt2Text);
-                    }
-                    if (h2 && (s323.header2 || s323.header1 || s323.caption)) h2.innerText = s323.header2 || s323.header1 || s323.caption;
-                }
-
-                if (sections.sec_3_2_4) {
-                    const s324 = sections.sec_3_2_4;
-                    const descTarget = document.getElementById('right-card-meta-desc1');
-                    if (descTarget) {
-                        let parsedDesc = "";
-                        if (typeof s324 === 'string') {
-                            parsedDesc = s324;
-                        } else if (typeof s324 === 'object') {
-                            const p1 = s324.paragraph1 || s324.description || s324.text || s324.content || "";
-                            const p2 = s324.paragraph2 || "";
-                            parsedDesc = [p1, p2].filter(p => p.trim() !== "").join("<br><br>");
-                        }
-                        if (parsedDesc) {
-                            descTarget.innerHTML = parsedDesc;
-                            descTarget.style.display = "block";
-                        }
+                /* SECTION 4.1 / 4.1.1 (Featured Article Column 1) */
+                let targetS41 = {};
+                if (sections.sec_4_1 && typeof sections.sec_4_1 === 'object') {
+                    targetS41 = { ...sections.sec_4_1 };
+                    if (sections.sec_4_1.sec_4_1_1 && typeof sections.sec_4_1.sec_4_1_1 === 'object') {
+                        targetS41 = { ...targetS41, ...sections.sec_4_1.sec_4_1_1 };
                     }
                 }
-
-                if (sections.sec_4_1) {
-                    const s41 = sections.sec_4_1;
-                    const catTagEl = document.getElementById('sec4-category-tag');
-                    const artTitleEl = document.getElementById('sec4-article-title');
-                    const artDeckEl = document.getElementById('sec4-article-deck');
-                    const artBodyEl = document.getElementById('sec4-article-body');
-                    const artImgEl = document.getElementById('sec-4-1-article-img');
-
-                    const categoryText = s41.header1?.header1 || s41.header1 || s41.category || s41.tag;
-                    const titleText = s41.title?.title || s41.title;
-                    const deckText = s41.header2?.header2 || s41.header2 || s41.subtitle || s41.deck;
-                    const imgUrl = s41.image1?.image1 || s41.imageUrl || s41.image;
-                    const imgAlt = s41.image1?.alt || titleText || 'Featured Article';
-
-                    if (catTagEl && categoryText) catTagEl.innerText = categoryText;
-                    if (artTitleEl && titleText) artTitleEl.innerText = titleText;
-                    if (artDeckEl && deckText) artDeckEl.innerText = deckText;
-
-                    if (artImgEl && imgUrl) {
-                        safeSetImageSource(artImgEl, imgUrl, null, imgAlt);
-                        artImgEl.onclick = () => fireLightbox(imgUrl, titleText || 'Featured Article', catTagEl?.innerText || '', '', '', imgAlt);
-                    }
-
-                    if (artBodyEl) {
-                        let paragraphsList = [];
-                        if (s41.paragraph1) {
-                            const p1 = s41.paragraph1?.paragraph1 || s41.paragraph1;
-                            if (typeof p1 === 'string') paragraphsList.push(p1);
-                        }
-                        if (s41.paragraphs && Array.isArray(s41.paragraphs)) {
-                            paragraphsList.push(...s41.paragraphs);
-                        } else if (s41.content && typeof s41.content === 'string') {
-                            paragraphsList.push(s41.content);
-                        }
-
-                        if (paragraphsList.length > 0) {
-                            artBodyEl.innerHTML = paragraphsList.map(p => `<p style="margin-bottom:1.5em; text-align:justify; line-height:1.8;">${parseInteractiveContent(p)}</p>`).join('');
-                        }
-                    }
+                if (sections.sec_4_1_1 && typeof sections.sec_4_1_1 === 'object') {
+                    targetS41 = { ...targetS41, ...sections.sec_4_1_1 };
                 }
 
+                let imgObj = targetS41.image1 || targetS41.image || targetS41.imageUrl || targetS41.image_url;
+                if (!imgObj && targetS41.sec_4_1_1) {
+                    imgObj = targetS41.sec_4_1_1.image1 || targetS41.sec_4_1_1.image;
+                }
+
+                const { url: imgUrl, alt: imgAltRaw } = extractImageAndAlt(imgObj);
+
+                const catTagEl = document.getElementById('sec4-category-tag');
+                const artTitleEl = document.getElementById('sec4-article-title');
+                const artDeckEl = document.getElementById('sec4-article-deck');
+                const artBodyEl = document.getElementById('sec4-article-body');
+
+                const categoryText = extractText(targetS41.header1) || extractText(targetS41.category) || extractText(targetS41.tag) || "Community & Commerce";
+                const titleText = extractText(targetS41.title) || "Clay City's Historic & Cultural Heritage";
+                const deckText = extractText(targetS41.header2) || extractText(targetS41.subtitle) || extractText(targetS41.deck) || "";
+                const finalAlt = imgAltRaw || titleText || "Clay City Community Feature";
+
+                if (catTagEl) catTagEl.innerText = categoryText;
+                if (artTitleEl) artTitleEl.innerText = titleText;
+                if (artDeckEl) artDeckEl.innerText = deckText;
+
+                if (artBodyEl) {
+                    let paragraphsList = [];
+                    const pushParagraph = (pNode) => {
+                        if (!pNode) return;
+                        const text = extractText(pNode);
+                        if (text && text.trim()) paragraphsList.push(text.trim());
+                    };
+
+                    pushParagraph(targetS41.paragraph1);
+                    pushParagraph(targetS41.paragraph2);
+
+                    if (targetS41.paragraphs) {
+                        const rawP = Array.isArray(targetS41.paragraphs) ? targetS41.paragraphs : Object.values(targetS41.paragraphs);
+                        rawP.forEach(p => pushParagraph(p));
+                    }
+
+                    let bodyHtml = '';
+                    const safeImg = escapeJsString(imgUrl);
+                    const safeTitle = escapeJsString(titleText);
+                    const safeCategory = escapeJsString(categoryText);
+                    const safeAlt = escapeJsString(finalAlt);
+                    const safeSource = escapeJsString(targetS41.source_url || targetS41.website?.url || targetS41.link || '');
+
+                    const figureHtml = imgUrl ? `
+                        <figure class="article-media-frame" style="margin:24px 0; padding:0; width:100%;">
+                            <img id="sec-4-1-article-img" 
+                                 src="${imgUrl}" 
+                                 alt="${safeAlt}" 
+                                 class="lightbox-triggerable-element" 
+                                 onclick="fireLightbox('${safeImg}', '${safeTitle}', '${safeCategory}', '${safeAlt}', '${safeSource}', '${safeAlt}')" 
+                                 style="width:100%; max-width:100%; height:auto; max-height:380px; object-fit:cover; display:block; margin:16px auto; border-radius:6px; border:2px solid #222; box-shadow:4px 4px 0px #000; cursor:pointer;"
+                                 onerror="this.parentElement.style.display='none';" />
+                            <figcaption id="sec4-img-caption" style="font-size:0.95rem; font-style:italic; text-align:center; color:#555; margin-top:8px;">${finalAlt}</figcaption>
+                        </figure>
+                    ` : '';
+
+                    if (paragraphsList.length > 0) {
+                        bodyHtml += `<p style="margin-bottom:1.5em; text-align:justify; line-height:1.8;">${parseInteractiveContent(paragraphsList[0])}</p>`;
+                        bodyHtml += figureHtml;
+                        for (let pIdx = 1; pIdx < paragraphsList.length; pIdx++) {
+                            bodyHtml += `<p style="margin-bottom:1.5em; text-align:justify; line-height:1.8;">${parseInteractiveContent(paragraphsList[pIdx])}</p>`;
+                        }
+                    } else {
+                        bodyHtml = figureHtml;
+                    }
+
+                    artBodyEl.innerHTML = bodyHtml;
+                }
+
+                /* SECTION 4.2 (Business Spotlight) */
                 if (sections.sec_4_2) {
                     const s42 = sections.sec_4_2;
                     const spotlightTarget = document.querySelector('.clay-county-news-box.spotlight-clipping');
                     if (spotlightTarget) {
-                        const nameText = s42.name?.content || s42.name || s42.title || "Local Merchant";
-                        const descText = s42.description?.content || s42.description || "Supporting local commerce across Clay County.";
-                        const imgUrl = s42.image1?.image1 || s42.image1 || s42.image_url;
-                        const altText = s42.image1?.alt || nameText || "Business Spotlight";
+                        const nameText = extractText(s42.name || s42.title) || "Local Merchant";
+                        const descText = extractText(s42.description) || "Supporting local commerce across Clay County.";
+                        const { url: imgUrl, alt: altTextRaw } = extractImageAndAlt(s42.image1 || s42);
+                        const altText = altTextRaw || nameText;
                         const websiteUrl = attachUtmParameters(s42.website?.url || s42.website_url || "#");
                         const locText = ACTIVE_TOWN.primaryName + ", IL";
 
+                        const safeImg = escapeJsString(imgUrl);
+                        const safeName = escapeJsString(nameText);
+                        const safeLoc = escapeJsString(locText);
+                        const safeDesc = escapeJsString(descText);
+                        const safeWeb = escapeJsString(websiteUrl);
+                        const safeAlt = escapeJsString(altText);
+
                         spotlightTarget.innerHTML = `
                             <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
-                            <div class="spotlight-image-wrap"><img src="${imgUrl}" alt="${altText}" onclick="fireLightbox('${imgUrl}', '${nameText.replace(/'/g, "\\'")}', '${locText}', '${descText.replace(/'/g, "\\'")}', '${websiteUrl}', '${altText.replace(/'/g, "\\'")}')" onerror="this.parentElement.style.display='none';"></div>
+                            <div class="spotlight-image-wrap"><img src="${imgUrl}" alt="${safeAlt}" onclick="fireLightbox('${safeImg}', '${safeName}', '${safeLoc}', '${safeDesc}', '${safeWeb}', '${safeAlt}')" onerror="this.parentElement.style.display='none';"></div>
                             <span class="biz-title">${nameText}</span>
                             <span class="biz-location">${locText}</span>
                             <p class="biz-description">"${descText}"</p>
@@ -2182,16 +2289,17 @@
                     }
                 }
 
+                /* SECTION 5 (Historical Timeline with 150 Char Limit) */
                 if (sections.sec_5) {
                     const historyRowTarget = document.getElementById('history-row-target');
                     const rawTimeline = Array.isArray(sections.sec_5) ? sections.sec_5 : Object.values(sections.sec_5);
                     
                     const validTimelineCards = rawTimeline.filter(item => item && (item.year || item.title)).map(item => {
-                        const yearVal = item.year?.content || item.year || "----";
-                        const titleVal = item.title?.content || item.title || item.event || "Historical Landmark";
-                        const descVal = item.description?.content || item.description || "";
-                        const imgVal = item.image1?.image1 || item.image_url || item.image;
-                        const altVal = item.image1?.alt || titleVal || "Historical Image";
+                        const yearVal = extractText(item.year) || "----";
+                        const titleVal = extractText(item.title || item.event) || "Historical Landmark";
+                        const descVal = extractText(item.description);
+                        const { url: imgVal, alt: altValRaw } = extractImageAndAlt(item.image1 || item);
+                        const altVal = altValRaw || titleVal;
                         const linkVal = item.source_url || item.link || "";
 
                         return { year: String(yearVal), title: titleVal, description: descVal, image: imgVal, alt: altVal, link: linkVal };
@@ -2209,15 +2317,17 @@
                         applyHighDensityScrollLimits(historyRowTarget, validTimelineCards.length, 520);
 
                         historyRowTarget.innerHTML = validTimelineCards.map((evt, idx) => {
-                            const truncatedDesc = evt.description.length > 110 ? evt.description.substring(0, 110) + "..." : evt.description;
+                            const desc = evt.description || "";
+                            const isLong = desc.length > 150;
+                            const displayDesc = isLong ? desc.substring(0, 140) + "..." : desc;
 
                             return `
                                 <div class="history-card" onclick="openHistoryLightboxModal(${idx})">
                                     <h2>${evt.year}</h2>
                                     <h3>${evt.title}</h3>
-                                    <p>${truncatedDesc}</p>
-                                    <span class="read-more-trigger">Read Details &rarr;</span>
-                                    ${evt.image ? `<div class="history-img-box"><img src="${evt.image}" alt="${evt.alt}" onerror="this.parentElement.style.display='none';"></div>` : ''}
+                                    <p>${parseInteractiveContent(displayDesc)}</p>
+                                    ${isLong ? `<span class="read-more-trigger">Read Details &rarr;</span>` : ''}
+                                    ${evt.image ? `<div class="history-img-box"><img src="${evt.image}" alt="${escapeJsString(evt.alt)}" onerror="this.parentElement.style.display='none';"></div>` : ''}
                                 </div>
                             `;
                         }).join('');
@@ -2242,7 +2352,7 @@
                 const rawCombined = [...townLinks, ...globalLinks];
                 const filteredLinks = rawCombined.filter(item => {
                     if (!item) return false;
-                    const title = item.title || item.name || item.label || "";
+                    const title = extractText(item.title || item.name || item.label);
                     const url = item.website || item.url || item.link || item.href || "";
                     if (!title || !url) return false;
 
@@ -2258,16 +2368,33 @@
                 if (filteredLinks.length > 0) {
                     applyHighDensityScrollLimits(linkTarget, filteredLinks.length, 360);
                     linkTarget.innerHTML = filteredLinks.map(link => {
-                        const name = link.title || link.name || link.label || "Local Resource";
+                        const name = extractText(link.title || link.name || link.label) || "Local Resource";
                         const targetRawUrl = link.website || link.url || link.link || link.href || "#";
                         const taggedUrl = attachUtmParameters(targetRawUrl);
                         const displayLoc = link.location || link.town || ACTIVE_TOWN.primaryName;
+                        const isImgUrl = /\.(jpg|png|jpeg|gif|webp|svg)(\?.*)?$/i.test(targetRawUrl) || targetRawUrl.includes('lh3.googleusercontent.com');
+
+                        if (isImgUrl) {
+                            const safeImg = escapeJsString(targetRawUrl);
+                            return `
+                                <div class="local-link-node" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #ddd; text-align: left;">
+                                    <a href="${taggedUrl}" target="_blank" class="local-link-title-anchor" data-ga-label="local_link" style="font-weight: bold; font-size: 16px; color: var(--link-bright-blue); text-decoration: underline;">
+                                        ${name}
+                                    </a>
+                                    <span style="font-size: 12px; color: #666; margin-left: 6px;">(${displayLoc})</span>
+                                    <div style="margin-top: 8px;">
+                                        <img src="${targetRawUrl}" alt="${escapeJsString(name)}" onclick="fireLightbox('${safeImg}', '${escapeJsString(name)}', '${escapeJsString(displayLoc)}', '', '${escapeJsString(taggedUrl)}')" style="max-width:100%; max-height:180px; border-radius:6px; border:2px solid #222; cursor:pointer;" onerror="this.style.display='none';" />
+                                    </div>
+                                </div>
+                            `;
+                        }
 
                         return `
                             <div class="local-link-node" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #ddd; text-align: left;">
-                                <span style="font-weight: bold; font-size: 15px; color: #1a1a1a;">${name}</span>
-                                <span style="font-size: 12px; color: #666; margin-left: 6px;">(${displayLoc})</span> &mdash; 
-                                <a href="${taggedUrl}" target="_blank" class="local-link-anchor-btn" data-ga-label="local_link" style="font-weight: bold; color: var(--link-bright-blue); text-decoration: underline;">Visit Site &rarr;</a>
+                                <a href="${taggedUrl}" target="_blank" class="local-link-title-anchor" data-ga-label="local_link" style="font-weight: bold; font-size: 16px; color: var(--link-bright-blue); text-decoration: underline;">
+                                    ${name}
+                                </a>
+                                <span style="font-size: 12px; color: #666; margin-left: 6px;">(${displayLoc})</span>
                             </div>
                         `;
                     }).join('');
@@ -2314,7 +2441,6 @@
             }
 
             const updatePortalUrl = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.gas_widget) 
-                || cleanRawUrl(window.globalAppConfig?.regional_endpoints?.update_gas_github_source) 
                 || "https://werewolf3788.github.io/SMLC/update-gas.html";
 
             let currentIdx = 0;
@@ -2384,11 +2510,22 @@
                 const partnersList = Array.isArray(data) ? data : (data.partners || []);
 
                 if (partnersList.length > 0) {
-                    const shuffledPoolSec6 = shuffleArray(partnersList);
-                    const shuffledPoolSec8 = shuffleArray(partnersList.reverse());
+                    const shuffledPoolSec6 = shuffleArray([...partnersList]);
+                    let shuffledPoolSec8 = shuffleArray([...partnersList]);
 
-                    if (topGrid) renderFixedCardSlideshow(topGrid, shuffledPoolSec6, 0, 'section6');
-                    if (bottomGrid) renderFixedCardSlideshow(bottomGrid, shuffledPoolSec8, 2, 'section8');
+                    if (partnersList.length > 1) {
+                        let attempts = 0;
+                        while (attempts < 5 && JSON.stringify(shuffledPoolSec6) === JSON.stringify(shuffledPoolSec8)) {
+                            shuffledPoolSec8 = shuffleArray([...partnersList]);
+                            attempts++;
+                        }
+                        if (JSON.stringify(shuffledPoolSec6) === JSON.stringify(shuffledPoolSec8)) {
+                            shuffledPoolSec8.push(shuffledPoolSec8.shift());
+                        }
+                    }
+
+                    if (topGrid) renderFixedCardSlideshow(topGrid, shuffledPoolSec6, 0, 'section6', 5);
+                    if (bottomGrid) renderFixedCardSlideshow(bottomGrid, shuffledPoolSec8, 3, 'section8', 5);
                 }
             } catch(e) { 
                 console.warn("Partners manifest warning handled:", e.message); 
@@ -2426,10 +2563,14 @@
                 const initialImg = initialPartner.image || initialPartner.logo || '';
                 const initialName = initialPartner.name || 'Local Partner';
 
+                const safeImg = escapeJsString(initialImg);
+                const safeName = escapeJsString(initialName);
+                const safeUrl = escapeJsString(initialUrl);
+
                 return `
                     <div class="partner-card fixed-slide-card" data-slot-index="${idx}" style="flex: 1 1 180px; max-width: 260px; transition: opacity 0.4s ease;">
                         <div class="partner-logo-box">
-                            <img class="partner-card-img" src="${initialImg}" alt="${initialName}" onclick="fireLightbox('${initialImg}', '${initialName.replace(/'/g, "\\'")}', 'PARTNER DIRECTORY', 'Local Sponsor', '${initialUrl}', '${initialName.replace(/'/g, "\\'")}')" style="cursor:pointer;" onerror="this.closest('.fixed-slide-card').style.display='none';">
+                            <img class="partner-card-img" src="${initialImg}" alt="${safeName}" onclick="fireLightbox('${safeImg}', '${safeName}', 'PARTNER DIRECTORY', 'Local Sponsor', '${safeUrl}', '${safeName}')" style="cursor:pointer;" onerror="this.closest('.fixed-slide-card').style.display='none';">
                         </div>
                         <h4><a class="partner-card-link" href="${initialUrl}" target="_blank" data-ga-label="partner_link">${initialName}</a></h4>
                     </div>
@@ -2460,6 +2601,10 @@
                         const nextImg = nextItem.image || nextItem.logo || '';
                         const nextName = nextItem.name || 'Local Partner';
 
+                        const safeImg = escapeJsString(nextImg);
+                        const safeName = escapeJsString(nextName);
+                        const safeUrl = escapeJsString(nextUrl);
+
                         cardNode.style.opacity = '0';
 
                         setTimeout(() => {
@@ -2468,7 +2613,7 @@
 
                             if (imgEl) {
                                 safeSetImageSource(imgEl, nextImg, cardNode, nextName);
-                                imgEl.onclick = () => fireLightbox(nextImg, nextName, 'PARTNER DIRECTORY', 'Local Sponsor', nextUrl, nextName);
+                                imgEl.onclick = () => fireLightbox(safeImg, safeName, 'PARTNER DIRECTORY', 'Local Sponsor', safeUrl, safeName);
                             }
 
                             if (linkEl) {
@@ -2526,14 +2671,18 @@
 
                 if (slidesList.length > 0) {
                     viewport.innerHTML = slidesList.map((item, idx) => {
-                        const imgUrl = item.imageurl || item.src || item.url || item.image || item.image1;
-                        const captionTitle = item.name || item.title || item.caption || item.header1 || item.alt || 'Town View';
-                        const altText = (item.alt || captionTitle).replace(/'/g, "\\'");
-                        const safeCaption = captionTitle.replace(/'/g, "\\'");
+                        const { url: imgUrl, alt: altTextRaw } = extractImageAndAlt(item);
+                        const captionTitle = extractText(item.name || item.title || item.caption || item.header1 || 'Town View');
+                        const altText = altTextRaw || captionTitle;
+
+                        const safeImg = escapeJsString(imgUrl);
+                        const safeCaption = escapeJsString(captionTitle);
+                        const safeAlt = escapeJsString(altText);
+                        const safeSrc = escapeJsString(item.source_url || '');
 
                         return `
                             <div class="slider-slide ${idx === 0 ? 'active' : ''}" style="position: absolute; inset: 0; opacity: ${idx === 0 ? 1 : 0}; transition: opacity 0.8s ease-in-out; z-index: ${idx === 0 ? 2 : 1};">
-                                <img src="${imgUrl}" alt="${altText}" onclick="fireLightbox('${imgUrl}', '${safeCaption}', 'SLIDESHOW VIEW', '${altText}', '${item.source_url || ''}', '${altText}')" style="width:100%; height:100%; object-fit:cover; cursor:pointer;">
+                                <img src="${imgUrl}" alt="${safeAlt}" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'SLIDESHOW VIEW', '${safeAlt}', '${safeSrc}', '${safeAlt}')" style="width:100%; height:100%; object-fit:cover; cursor:pointer;">
                                 ${captionTitle ? `<div class="slider-caption">${captionTitle}</div>` : ''}
                             </div>
                         `;
@@ -2571,10 +2720,8 @@
                     if (phoneTarget && Array.isArray(contact.phone)) {
                         phoneTarget.innerHTML = contact.phone.map(p => {
                             const cleanNum = (p.number || "").replace(/[^\d]/g, '');
-                            const isWhatsApp = (p.whatsapp_url || p.number.includes("618-708-4450")) ? true : false;
                             const displayLabel = p.label ? `<strong>${p.label}:</strong> ` : '';
-                            
-                            return `<div><a href="javascript:void(0)" onclick="handlePhoneClick('${cleanNum}', ${isWhatsApp})" style="color:#fff; text-decoration:none;">${displayLabel}${p.number}</a></div>`;
+                            return `<div><a href="tel:${cleanNum}" style="color:#fff; text-decoration:none;">${displayLabel}${p.number}</a></div>`;
                         }).join('');
                     }
 
@@ -2588,11 +2735,7 @@
                     const addressTarget = document.getElementById('footer-address-target');
                     if (addressTarget && contact.address) {
                         const addrText = contact.address.text || contact.address;
-                        const mapUrl = contact.address.directions_links?.google_maps_directions 
-                            || contact.address.view_links?.google_map 
-                            || buildOSMapUrl(addrText);
-                            
-                        addressTarget.innerHTML = `<a href="${mapUrl}" target="_blank" style="color:#fff; text-decoration:underline;">${addrText}</a>`;
+                        addressTarget.innerHTML = `<span style="color:#fff;">${addrText}</span>`;
                     }
 
                     const copyTarget = document.getElementById('footer-copy-target');
@@ -2681,15 +2824,21 @@
                         || (Array.isArray(spotlightData) ? spotlightData[0] : null);
 
                     if (activeSpotlight) {
-                        const img = activeSpotlight.image_url || activeSpotlight.src || activeSpotlight.imageurl || activeSpotlight.image;
-                        const title = activeSpotlight.title || activeSpotlight.name || "Local Merchant";
+                        const { url: img, alt: descAlt } = extractImageAndAlt(activeSpotlight);
+                        const title = extractText(activeSpotlight.title || activeSpotlight.name) || "Local Merchant";
                         const loc = activeSpotlight.location || ACTIVE_TOWN.primaryName + ", IL";
-                        const desc = activeSpotlight.description || activeSpotlight.alt || "Supporting local commerce across Clay County.";
+                        const desc = extractText(activeSpotlight.description) || descAlt || "Supporting local commerce across Clay County.";
                         const link = attachUtmParameters(activeSpotlight.website_url || activeSpotlight.url || activeSpotlight.link || "#");
+
+                        const safeImg = escapeJsString(img);
+                        const safeTitle = escapeJsString(title);
+                        const safeLoc = escapeJsString(loc);
+                        const safeDesc = escapeJsString(desc);
+                        const safeLink = escapeJsString(link);
 
                         spotlightTarget.innerHTML = `
                             <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
-                            <div class="spotlight-image-wrap"><img src="${img}" alt="${title}" onclick="fireLightbox('${img}', '${title.replace(/'/g, "\\'")}', '${loc}', '${desc.replace(/'/g, "\\'")}', '${link}', '${title.replace(/'/g, "\\'")}')" onerror="this.parentElement.style.display='none';"></div>
+                            <div class="spotlight-image-wrap"><img src="${img}" alt="${safeTitle}" onclick="fireLightbox('${safeImg}', '${safeTitle}', '${safeLoc}', '${safeDesc}', '${safeLink}', '${safeTitle}')" onerror="this.parentElement.style.display='none';"></div>
                             <span class="biz-title">${title}</span>
                             <span class="biz-location">${loc}</span>
                             <p class="biz-description">"${desc}"</p>
@@ -2721,21 +2870,32 @@
                             return numA - numB;
                         });
 
-                        window.historyCachedTimeline = historyList;
+                        window.historyCachedTimeline = historyList.map(item => {
+                            const { url: imgVal, alt: altValRaw } = extractImageAndAlt(item);
+                            return {
+                                year: String(extractText(item.year) || "----"),
+                                title: extractText(item.event || item.title) || "Historical Landmark",
+                                description: extractText(item.description),
+                                image: imgVal,
+                                alt: altValRaw || extractText(item.event || item.title) || "Historical Image",
+                                link: item.source_url || item.link || ""
+                            };
+                        });
 
-                        applyHighDensityScrollLimits(historyRowTarget, historyList.length, 520);
+                        applyHighDensityScrollLimits(historyRowTarget, window.historyCachedTimeline.length, 520);
 
-                        historyRowTarget.innerHTML = historyList.map((evt, idx) => {
+                        historyRowTarget.innerHTML = window.historyCachedTimeline.map((evt, idx) => {
                             const desc = evt.description || "";
-                            const truncatedDesc = desc.length > 110 ? desc.substring(0, 110) + "..." : desc;
+                            const isLong = desc.length > 150;
+                            const displayDesc = isLong ? desc.substring(0, 140) + "..." : desc;
 
                             return `
                                 <div class="history-card" onclick="openHistoryLightboxModal(${idx})">
                                     <h2>${evt.year}</h2>
-                                    <h3>${evt.event || evt.title}</h3>
-                                    <p>${truncatedDesc}</p>
-                                    <span class="read-more-trigger">Read Details &rarr;</span>
-                                    ${(evt.image_url || evt.image) ? `<div class="history-img-box"><img src="${evt.image_url || evt.image}" alt="${evt.event || evt.title}" onerror="this.parentElement.style.display='none';"></div>` : ''}
+                                    <h3>${evt.title}</h3>
+                                    <p>${parseInteractiveContent(displayDesc)}</p>
+                                    ${isLong ? `<span class="read-more-trigger">Read Details &rarr;</span>` : ''}
+                                    ${evt.image ? `<div class="history-img-box"><img src="${evt.image}" alt="${escapeJsString(evt.alt)}" onerror="this.parentElement.style.display='none';"></div>` : ''}
                                 </div>
                             `;
                         }).join('');
@@ -2775,7 +2935,7 @@
                                 const eventLoc = item.location || "Clay County, IL";
                                 const rawDetails = item.details || item.description || "";
                                 const { cleanText } = extractImageFromText(rawDetails);
-                                const finalEventImg = findEventImage(item);
+                                const finalEventImg = item.imageUrl || item.image || null;
 
                                 const parsedDetails = parseInteractiveContent(cleanText.substring(0, 110));
                                 const rawDate = item.date || item.displayDate || item.event_date || item.pubDate;
@@ -2783,7 +2943,7 @@
 
                                 const thumbnailHtml = finalEventImg ? `
                                     <div style="float: right; margin: 0 0 10px 12px;">
-                                        <img src="${finalEventImg}" alt="${(item.name || item.title || 'Event Image').replace(/'/g, "&apos;")}" onclick="openCalendarLightboxModal(${idx})" style="width:85px; height:85px; object-fit:cover; border-radius:6px; border:2px solid #222; cursor:pointer; display:block; transition:transform 0.2s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'" onerror="this.parentElement.style.display='none';" />
+                                        <img src="${finalEventImg}" alt="${escapeJsString(item.name || item.title || 'Event Image')}" onclick="openCalendarLightboxModal(${idx})" style="width:85px; height:85px; object-fit:cover; border-radius:6px; border:2px solid #222; cursor:pointer; display:block; transition:transform 0.2s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'" onerror="this.parentElement.style.display='none';" />
                                     </div>
                                 ` : '';
 
@@ -2822,15 +2982,21 @@
                         if (window.newsCacheBlock.length > 0) {
                             applyHighDensityScrollLimits(targetGrid, window.newsCacheBlock.length, 520);
 
-                            targetGrid.innerHTML = window.newsCacheBlock.map((story, idx) => `
-                                <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
-                                    ${story.image ? `<img src="${story.image}" alt="${story.title || 'News image'}" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})" onerror="this.style.display='none';">` : ''}
-                                    <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-top:10px;">${formatHumanTimestamp(story.date)}</div>
-                                    <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${story.title}</div>
-                                    <div style="font-size:14px; color:#444;">"${(story.full_story || story.description || '').substring(0, 110)}..."</div>
-                                    <div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: var(--primary); font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>
-                                </div>
-                            `).join('');
+                            targetGrid.innerHTML = window.newsCacheBlock.map((story, idx) => {
+                                const storyText = story.full_story || story.description || '';
+                                const isLong = storyText.length > 150;
+                                const displayStory = isLong ? storyText.substring(0, 140) + "..." : storyText;
+
+                                return `
+                                    <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
+                                        ${story.image ? `<img src="${story.image}" alt="${escapeJsString(story.title || 'News image')}" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})" onerror="this.style.display='none';">` : ''}
+                                        <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-top:10px;">${formatHumanTimestamp(story.date)}</div>
+                                        <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${story.title}</div>
+                                        <div style="font-size:14px; color:#444;">${parseInteractiveContent(displayStory)}</div>
+                                        ${isLong ? `<div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: var(--primary); font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>` : ''}
+                                    </div>
+                                `;
+                            }).join('');
                         }
                     }
                 }
@@ -2847,7 +3013,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             handleSPAHashNavigation();
-            console.log(`Master Engine running smoothly for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-30_22:15`);
+            console.log(`Master Engine running smoothly for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-31_13:40`);
         });
     </script>
 </body>
