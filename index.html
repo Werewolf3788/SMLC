@@ -1,6 +1,6 @@
 <!--
-  Version: 1.0.1
-  Timestamp: 2026-07-27 04:59:38 EDT
+  Version: 1.0.2
+  Timestamp: 2026-07-30 20:03:07 EDT
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🐺 Werewolf Project | Gaming & Hub Portal</title>
     <!-- === SECTION: Styles & Libraries === -->
-    <script src="https://cdn.tailwindcss.com?v=202607270459"></script>
+    <script src="https://cdn.tailwindcss.com?v=20260730200307"></script>
     <style>
         /* === SECTION: Core Styles === */
         body { 
@@ -28,6 +28,36 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+        }
+
+        /* Nav Tab Color Rules: Active tab #ffff00 (yellow), inactive #ffffff (white) */
+        .nav-link-active {
+            color: #ffff00 !important;
+            font-weight: 700;
+        }
+        .nav-link-inactive {
+            color: #ffffff !important;
+        }
+
+        /* === SECTION: Universal Lightbox Styling === */
+        #universal-lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background-color: rgba(0, 0, 0, 0.85);
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        #universal-lightbox.active {
+            display: flex;
+        }
+        #universal-lightbox img {
+            max-width: 90vw;
+            max-height: 85vh;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
     </style>
 </head>
@@ -77,17 +107,40 @@
         </section>
     </main>
 
+    <!-- === SECTION: Universal Lightbox Modal === -->
+    <div id="universal-lightbox" onclick="closeLightbox()">
+        <img id="lightbox-img" src="" alt="Enlarged View" />
+    </div>
+
     <!-- === SECTION: Footer === -->
     <footer class="border-t border-gray-800 bg-[#181616] py-4 text-center text-xs text-gray-500">
-        <p>v1.0.1 | 2026-07-27 04:59:38 EDT</p>
+        <p>v1.0.2 | 2026-07-30 20:03:07 EDT</p>
     </footer>
 
     <!-- === SECTION: Dynamic Menu & Smart Tabs Logic === -->
     <script>
+        /* === SECTION: Universal Lightbox Logic === */
+        function openLightbox(src) {
+            const lightbox = document.getElementById('universal-lightbox');
+            const lightboxImg = document.getElementById('lightbox-img');
+            lightboxImg.src = src;
+            lightbox.classList.add('active');
+        }
+
+        function closeLightbox() {
+            document.getElementById('universal-lightbox').classList.remove('active');
+        }
+
+        document.addEventListener('click', (e) => {
+            if (e.target.tagName === 'IMG' && e.target.id !== 'lightbox-img') {
+                openLightbox(e.target.src);
+            }
+        });
+
         /* === SECTION: Dynamic Fetch & Menu Injection === */
         document.addEventListener('DOMContentLoaded', () => {
             const menuContainer = document.getElementById('main-menu');
-            const menuJsonUrl = 'https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/menu.json?v=202607270459';
+            const menuJsonUrl = 'https://raw.githubusercontent.com/Werewolf3788/Testpages/main/json/menu.json?v=20260730200307';
 
             fetch(menuJsonUrl)
                 .then(response => {
@@ -101,22 +154,36 @@
                     
                     // Support array direct or object wrapped array (e.g., { "menu": [...] })
                     const items = Array.isArray(data) ? data : (data.menu || data.items || []);
+                    const currentPath = window.location.pathname.toLowerCase();
+                    const currentHash = window.location.hash.toLowerCase();
 
                     items.forEach(item => {
                         const link = document.createElement('a');
-                        link.href = item.url || item.link || '#';
+                        const targetUrl = item.url || item.link || '#';
+                        link.href = targetUrl;
                         link.textContent = item.name || item.title || item.label || 'Link';
-                        link.className = "hover:text-red-500 transition px-2 py-1 text-gray-200";
+                        
+                        /* === SECTION: Nav Contrast & Active State Management === */
+                        const isCurrentTab = (targetUrl !== '#' && (
+                            currentPath.endsWith(targetUrl.toLowerCase()) || 
+                            (currentHash && targetUrl.toLowerCase().includes(currentHash))
+                        ));
+
+                        if (isCurrentTab) {
+                            link.className = "nav-link-active transition px-2 py-1 hover:opacity-80";
+                        } else {
+                            link.className = "nav-link-inactive hover:text-red-500 transition px-2 py-1";
+                        }
 
                         /* === SECTION: Smart Tabs & Duplicate Interception === */
                         link.addEventListener('click', (e) => {
-                            const targetUrl = link.getAttribute('href');
+                            const clickUrl = link.getAttribute('href');
                             
                             // Prevent duplicating tabs if link points to an external or target tab
-                            if (targetUrl.startsWith('http') || targetUrl.startsWith('//')) {
+                            if (clickUrl.startsWith('http') || clickUrl.startsWith('//')) {
                                 e.preventDefault();
-                                const windowName = 'Tab_' + targetUrl.replace(/[^a-zA-Z0-9]/g, '_');
-                                window.open(targetUrl, windowName);
+                                const windowName = 'Tab_' + clickUrl.replace(/[^a-zA-Z0-9]/g, '_');
+                                window.open(clickUrl, windowName);
                             }
                         });
 
