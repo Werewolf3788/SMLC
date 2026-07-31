@@ -1,0 +1,2854 @@
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+
+<!-- Global Analytics Watermarks -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-L376P3NPY4"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-L376P3NPY4'); /* Global Site-Wide Watermark */
+    gtag('config', 'G-H6Q756MVE8'); /* Project Specific Property */
+</script>
+
+<!-- Embedded Master Stylesheet -->
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&family=Playfair+Display:wght@700;900&display=swap');
+
+    :root {
+        --container-width: 96%;
+        --flora-blue: #0258A3;
+        --flora-black: #000000;
+        --flora-gold: #FFC10E;
+        
+        --primary: #0258A3;
+        --secondary: #000000;
+        
+        --dynamic-bg: #121212;
+        --dynamic-text: #FFFFFF;
+        --link-bright-blue: #3182CE;
+
+        --retro-bg: #fffdf5;
+        --retro-text: #1a1a1a;
+        --retro-shadow: 6px 6px 0px #000000;
+
+        /* Granite Color Tokens */
+        --granite-blue: #041b30;
+        --granite-dark: #1c1c1e;
+        --granite-mid: #2c2c2e;
+        --granite-black: #0a0a0a;
+    }
+
+    body[data-town="flora"],
+    html[data-town="FLORA"] body { 
+        --town-accent: var(--flora-blue); 
+        --town-secondary: var(--flora-black); 
+        --town-detail: var(--flora-gold); 
+    }
+
+    * { font-family: 'Times New Roman', Times, serif !important; box-sizing: border-box; }
+
+    html, body {
+        width: 100%;
+        min-height: 100vh;
+        margin: 0; 
+        padding: 0;
+    }
+
+    body {
+        font-size: 16px;
+        background-color: #0a0a0a !important;
+        background-image: linear-gradient(180deg, 
+            var(--granite-blue) 0%, 
+            #082442 15%, 
+            var(--granite-mid) 38%, 
+            var(--granite-dark) 65%, 
+            var(--granite-black) 90%, 
+            #000000 100%) !important;
+        background-attachment: fixed !important;
+        background-repeat: no-repeat !important;
+        background-size: cover !important;
+        color: var(--dynamic-text);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--link-bright-blue) !important; text-decoration: none; }
+
+    .site-brand-header { 
+        width: 100% !important; 
+        margin: 0 !important; 
+        padding: 0 !important; 
+        background: linear-gradient(180deg, #0C71C3 0%, #0a5da1 100%); 
+        display: block !important; 
+        position: relative !important;
+        z-index: 10 !important;
+        overflow: hidden !important;
+    }
+
+    .site-brand-header a { 
+        width: 100% !important; 
+        display: block !important; 
+        margin: 0 !important; 
+    }
+
+    .site-brand-header img { 
+        width: 100% !important; 
+        height: auto !important; 
+        display: block !important; 
+        margin: 0 !important;
+        vertical-align: bottom !important;
+    }
+
+    .menu-bar { 
+        width: 100% !important; 
+        background: #0258A3 !important; 
+        padding: clamp(10px, 1.2vw, 18px) 0; 
+        position: relative !important; 
+        top: 0; 
+        z-index: 100 !important; 
+        border-bottom: 4px solid var(--flora-gold); 
+        margin-top: 0 !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.8);
+    }
+
+    .menu-inner { width: var(--container-width); margin: 0 auto; display: flex; justify-content: center; }
+    .menu-links { display: flex; flex-wrap: wrap; list-style: none; gap: clamp(12px, 1.5vw, 24px); margin: 0; padding: 0; }
+    .menu-links a { color: #ffffff !important; font-size: 16px; font-weight: 800; padding: 10px 18px; text-transform: uppercase; letter-spacing: 1px; }
+    .menu-links a:hover, .menu-links a.active { color: var(--flora-gold) !important; border: 2px solid var(--flora-gold); background: rgba(0, 0, 0, 0.6) !important; border-radius: 8px; }
+
+    .main-container { width: var(--container-width); max-width: 100%; margin: 0 auto; padding: 36px clamp(20px, 3vw, 60px); }
+
+    .town-hero-banner { 
+        width: 100%; 
+        padding: clamp(36px, 5vh, 72px) 0; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        border-bottom: 4px solid var(--flora-gold); 
+        border-radius: 16px; 
+        text-align: center; 
+        margin-bottom: 36px; 
+        background-color: #021a30 !important;
+        background-image: 
+            radial-gradient(circle at 50% 30%, rgba(2, 88, 163, 0.55) 0%, rgba(0, 0, 0, 0.95) 75%),
+            repeating-linear-gradient(45deg, rgba(255, 193, 14, 0.05) 0px, rgba(255, 193, 14, 0.05) 2px, transparent 2px, transparent 10px) !important;
+        position: relative; 
+        overflow: hidden; 
+        box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+    }
+
+    .seat-badge { display: inline-block; padding: 8px 22px; background-color: var(--flora-gold); color: #000000; font-weight: 900; text-transform: uppercase; font-size: 14px; border-radius: 6px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+    .town-title { font-size: clamp(2.8rem, 5vw, 4.5rem); font-weight: 900; text-transform: none !important; margin: 0; letter-spacing: 1px; text-align: center; }
+    .outlined-headline { color: #ffffff !important; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 3px 3px 6px rgba(0,0,0,0.9); }
+    .town-established-meta { font-size: 15px; letter-spacing: 2px; font-weight: 700; color: var(--flora-gold); margin: 10px 0 0 0; text-align: center !important; }
+    .river-marquee { margin-top: 20px; font-size: 14px; font-family: monospace; font-weight: 700; color: #ffffff; background-color: rgba(0, 0, 0, 0.75); padding: 8px 22px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.2); width: max-content; margin-left: auto; margin-right: auto; }
+
+    .section3-split-layout { 
+        width: 100%; 
+        padding: clamp(36px, 5vh, 72px) clamp(20px, 3.5vw, 80px); 
+        background-color: #12161f !important;
+        background-image: 
+            linear-gradient(135deg, rgba(12, 38, 66, 0.85) 0%, rgba(15, 15, 20, 0.95) 100%),
+            linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px) !important;
+        background-size: cover, 40px 40px, 40px 40px !important;
+        border-top: 3px solid rgba(255, 193, 14, 0.3);
+        border-bottom: 3px solid rgba(255, 193, 14, 0.3);
+    }
+
+    .section3-container-grid { width: 100%; max-width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 36px; }
+    .section3-row-1 { width: 100%; text-align: center !important; }
+    .section3-main-title { font-size: clamp(2.2rem, 4vw, 3.4rem) !important; font-weight: bold; color: var(--flora-gold) !important; margin: 0 0 18px 0; text-shadow: 2px 2px 5px rgba(0,0,0,0.9); text-align: center !important; }
+    .section3-intro-text { font-size: clamp(1rem, 1.3vw, 1.25rem) !important; color: #ffffff !important; line-height: 1.6; margin: 0 auto; max-width: 1200px; text-shadow: 1px 1px 3px rgba(0,0,0,0.9); text-align: center !important; }
+    .section3-row-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: clamp(24px, 3.5vw, 60px); align-items: start !important; }
+    @media (max-width: 1024px) { .section3-row-2 { grid-template-columns: 1fr; gap: 36px; } }
+
+    .section3-left-col { display: flex !important; flex-direction: column !important; gap: 24px; height: auto !important; }
+    .section3-slideshow-box { background: #111; border: 2px solid #333; border-radius: 8px; padding: 20px; width: 100%; }
+    .slider-viewport { width: 100%; height: 360px; position: relative; overflow: hidden; border: 2px solid #222; background: #000; }
+    .slider-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 0.8s ease-in-out; }
+    .slider-slide.active { opacity: 1; }
+    .slider-slide img { width: 100%; height: 100%; object-fit: cover; }
+    .slider-caption { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.85); color: #ffffff; padding: 12px; font-size: 1.2rem; font-weight: bold; text-align: center; }
+
+    .section3-about-box { background: rgba(18, 18, 18, 0.9); border: 1px solid rgba(255, 255, 255, 0.2); border-left: 5px solid var(--flora-gold); padding: 24px; border-radius: 8px; }
+    .section3-about-tag { color: var(--flora-gold); font-size: 15px !important; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 12px; }
+    .section3-about-text { font-size: 18px !important; color: #ffffff !important; line-height: 1.6; margin: 0; }
+
+    .section3-right-col { display: flex !important; flex-direction: column !important; height: auto !important; }
+    .section3-landmark-card { background: rgba(18, 18, 18, 0.92); border: 1px solid rgba(255, 255, 255, 0.2); border-top: 5px solid var(--flora-gold); padding: 32px; border-radius: 8px; text-align: left; height: auto !important; }
+    .section3-landmark-title { font-size: clamp(1.4rem, 2.2vw, 2rem) !important; font-weight: bold; color: var(--flora-gold) !important; margin: 0 0 20px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 15px; }
+    .section3-landmark-images { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 20px; }
+    .section3-landmark-img-wrap img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; border: 2px solid #333; cursor: pointer; }
+    .section3-landmark-caption { display: block; color: #ffffff; font-size: 15px !important; margin-top: 8px; font-weight: bold; text-align: center; }
+    .section3-landmark-desc { font-size: 18px !important; color: #dddddd !important; line-height: 1.6; margin: 0; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 18px; }
+
+    .section4-two-box-wrapper,
+    .dv-custom-article-wrapper {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: clamp(32px, 5vw, 100px) !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 40px clamp(20px, 4vw, 80px) !important;
+        margin: 40px auto;
+        align-items: start !important;
+        background-color: transparent !important;
+    }
+
+    @media (max-width: 1024px) {
+        .section4-two-box-wrapper,
+        .dv-custom-article-wrapper { 
+            grid-template-columns: 1fr; 
+            gap: 36px !important;
+            padding: 24px 20px !important; 
+        }
+    }
+
+    .section4-left-article-box {
+        width: 100% !important;
+        max-width: 100% !important;
+        background: #ffffff !important;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        border-radius: 8px;
+        overflow: hidden !important;
+        padding: 0;
+        font-family: 'Libre Baskerville', serif !important;
+        color: #1a1a1a !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-sizing: border-box !important;
+    }
+
+    .article-body-content img,
+    .section4-left-article-box img,
+    .section4-left-article-box p img {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: 380px !important;
+        object-fit: cover !important;
+        display: block !important;
+        margin: 16px auto !important;
+        border-radius: 6px !important;
+        border: 2px solid #222222 !important;
+        box-shadow: 4px 4px 0px #000000 !important;
+        box-sizing: border-box !important;
+    }
+
+    .article-centered-header,
+    .section4-centered-article-header {
+        background: linear-gradient(180deg, #0258A3 0%, #1a1a1a 100%) !important;
+        color: #ffffff !important;
+        padding: clamp(28px, 4vh, 52px) 24px !important;
+        text-align: center !important;
+        border-bottom: 8px solid var(--flora-gold) !important;
+    }
+
+    .category-tag {
+        font-family: 'Oswald', sans-serif !important;
+        background: var(--flora-gold) !important;
+        color: #000000 !important;
+        padding: 6px 18px !important;
+        display: inline-block !important;
+        letter-spacing: 2px !important;
+        font-size: 0.95rem !important;
+        font-weight: bold !important;
+        margin-bottom: 18px !important;
+        text-transform: uppercase !important;
+    }
+
+    .article-stacked-title {
+        font-family: 'Montserrat', sans-serif !important;
+        font-size: clamp(2rem, 4vw, 3.5rem) !important;
+        line-height: 1.1 !important;
+        margin: 0 auto 16px !important;
+        text-transform: uppercase !important;
+        color: #ffffff !important;
+        text-align: center !important;
+    }
+
+    .article-stacked-deck {
+        font-size: 1.25rem !important;
+        font-style: italic !important;
+        opacity: 0.95 !important;
+        color: #ffffff !important;
+        margin: 0 auto !important;
+        text-align: center !important;
+        max-width: 900px;
+    }
+
+    .article-body-content {
+        padding: clamp(20px, 3vw, 40px) !important;
+        font-size: 1.15rem !important;
+        color: #1a1a1a !important;
+        background-color: #ffffff !important;
+        box-sizing: border-box !important;
+    }
+
+    .article-body-content figure {
+        margin: 24px 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .article-body-content figcaption {
+        font-size: 0.95rem !important;
+        font-style: italic !important;
+        text-align: center !important;
+        color: #555555 !important;
+        margin-top: 8px !important;
+    }
+
+    .article-body-content p {
+        margin-bottom: 1.5em !important;
+        text-align: justify !important;
+        font-family: 'Libre Baskerville', serif !important;
+        color: #1a1a1a !important;
+        line-height: 1.8 !important;
+    }
+
+    .article-footer {
+        background: #f4f4f4 !important;
+        padding: 18px 36px !important;
+        border-top: 1px solid #ddd !important;
+        font-family: 'Oswald', sans-serif !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        font-size: 0.9rem !important;
+        color: #555555 !important;
+        text-transform: uppercase !important;
+    }
+
+    .section4-right-widgets-stack,
+    .dv-custom-article-wrapper .sidebar {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 30px !important;
+        justify-content: flex-start !important;
+    }
+
+    .clay-county-news-box.spotlight-clipping,
+    .business-spotlight-showcase-card {
+        width: 100% !important;
+        padding: 28px !important;
+        border: 2px solid #222 !important;
+        background-color: #fffdf5 !important;
+        box-shadow: 6px 6px 0px #000000 !important;
+        font-family: Arial, sans-serif !important;
+        position: relative !important;
+        border-radius: 6px;
+    }
+    .sidebar-widget-title {
+        background-color: #0258A3 !important;
+        color: #ffffff !important;
+        font-family: 'Oswald', sans-serif !important;
+        font-size: 20px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase;
+        text-align: center;
+        padding: 10px 14px;
+        margin: -28px -28px 20px -28px;
+        border-bottom: 2px solid #000;
+    }
+    .spotlight-image-wrap, .showcase-media-canvas {
+        width: 100%;
+        height: auto;
+        border: 2px solid #222;
+        margin-bottom: 18px;
+        overflow: hidden;
+        background-color: #eee;
+    }
+    .spotlight-image-wrap img, .showcase-media-canvas img {
+        width: 100%;
+        display: block;
+        filter: grayscale(10%) contrast(110%);
+    }
+    .biz-title, #spotlight-asset-name {
+        font-family: "Times New Roman", Times, serif !important;
+        font-size: 24px !important;
+        font-weight: bold;
+        color: #1a1a1a !important;
+        text-align: center;
+        display: block;
+        margin-bottom: 6px;
+    }
+    .biz-location, #spotlight-asset-loc {
+        font-size: 13px !important;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #0258A3 !important;
+        font-weight: bold;
+        display: block;
+        text-align: center;
+        margin-bottom: 16px;
+    }
+    .biz-description, #spotlight-asset-desc {
+        font-size: 16px !important;
+        line-height: 1.6;
+        color: #333333 !important;
+        padding: 0 6px;
+        margin-bottom: 22px;
+        text-align: justify;
+    }
+    .spotlight-btn, #spotlight-asset-link {
+        display: block;
+        text-align: center;
+        background-color: #222;
+        color: #fff !important;
+        padding: 14px;
+        text-transform: uppercase;
+        font-weight: bold;
+        letter-spacing: 1px;
+        text-decoration: none !important;
+        font-size: 15px;
+        border: 2px solid #222;
+        transition: all 0.3s;
+    }
+    .spotlight-btn:hover, #spotlight-asset-link:hover {
+        background-color: var(--flora-gold) !important;
+        color: #000000 !important;
+        border-color: #000000 !important;
+    }
+
+    .fuel-monitor-billboard-card {
+        background-color: #fffdf5 !important;
+        border: 2px solid #000000 !important;
+        box-shadow: 6px 6px 0px #000000 !important;
+        border-radius: 6px !important;
+        padding: 24px !important;
+        color: #222222 !important;
+    }
+    .fuel-station-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        border-bottom: 2px solid #000;
+        padding-bottom: 12px;
+        margin-bottom: 18px;
+    }
+    .station-logo-frame {
+        width: 50px;
+        height: 50px;
+        border: 2px solid #000;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    .station-logo-frame img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .station-meta-title {
+        font-family: 'Oswald', sans-serif !important;
+        font-size: 18px;
+        font-weight: bold;
+        color: #000;
+        letter-spacing: 1px;
+    }
+    .fuel-pricing-grid { 
+        display: grid !important; 
+        grid-template-columns: 1fr 1fr !important; 
+        gap: 16px !important; 
+    }
+    .fuel-pricing-grid .price-box { 
+        padding: 16px 10px; 
+        background: #000000 !important; 
+        border: 2px solid #000000 !important; 
+        border-radius: 6px; 
+        text-align: center; 
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.9) !important; 
+    }
+    .price-type-label { 
+        display: block; 
+        font-size: 13px !important; 
+        color: #aaaaaa !important; 
+        font-weight: bold; 
+        margin-bottom: 4px; 
+        text-transform: uppercase; 
+    }
+    .price-value-regular { 
+        color: #39ff14 !important;
+        font-size: 28px !important; 
+        font-weight: 900 !important; 
+        text-shadow: 0 0 10px rgba(57, 255, 20, 0.7);
+    }
+    .price-value-diesel { 
+        color: #eb1c24 !important;
+        font-size: 28px !important; 
+        font-weight: 900 !important; 
+        text-shadow: 0 0 10px rgba(235, 28, 36, 0.7);
+    }
+    .sync-timestamp-label {
+        font-size: 12px;
+        color: #555;
+        text-align: center;
+        margin-top: 12px;
+        font-style: italic;
+    }
+
+    .historical-timeline-chassis-wrapper {
+        width: 100% !important;
+        padding: clamp(36px, 5vh, 72px) clamp(20px, 3.5vw, 80px) !important;
+        background-color: #021a30 !important;
+        background-image: 
+            linear-gradient(180deg, rgba(8, 30, 60, 0.9) 0%, rgba(5, 12, 24, 0.95) 100%),
+            repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 20px, transparent 20px, transparent 40px) !important;
+        box-sizing: border-box;
+        border-radius: 12px;
+        border-top: 4px solid var(--flora-gold);
+        border-bottom: 4px solid var(--flora-gold);
+    }
+
+    .timeline-inner-bounds { width: 100% !important; max-width: 100% !important; margin: 0 auto !important; }
+    .timeline-row-1-header { text-align: center !important; margin-bottom: 40px !important; }
+
+    .main-timeline-center-title-node {
+        font-family: 'Playfair Display', Georgia, serif !important;
+        font-size: clamp(2.2rem, 4vw, 3.5rem) !important;
+        font-weight: 900 !important;
+        color: var(--flora-gold) !important;
+        display: block !important;
+        margin-bottom: 12px !important;
+        text-shadow: 2px 2px 8px #000000 !important;
+    }
+
+    .main-timeline-sub-caption-node {
+        font-family: 'Times New Roman', Times, serif !important;
+        font-size: clamp(1rem, 1.3vw, 1.25rem) !important;
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+        text-shadow: 1px 1px 4px #000000 !important;
+    }
+
+    .timeline-row-2-cards {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
+        gap: clamp(20px, 2.5vw, 40px) !important;
+        width: 100% !important;
+        align-items: stretch !important;
+    }
+
+    .history-card {
+        background-color: #fffdf5 !important;
+        border: 2px solid #000000 !important;
+        box-shadow: 6px 6px 0px #000000 !important;
+        border-radius: 6px !important;
+        padding: 26px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+        height: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+        cursor: pointer;
+    }
+
+    .history-card h2 {
+        font-family: 'Times New Roman', Times, serif !important;
+        font-size: 32px !important;
+        font-weight: 900 !important;
+        color: #0258A3 !important;
+        margin: 0 0 12px 0 !important;
+        padding-bottom: 8px !important;
+        border-bottom: 2px solid #222222 !important;
+        line-height: 1.1 !important;
+    }
+
+    .history-card h3 {
+        font-family: 'Playfair Display', Georgia, serif !important;
+        font-size: 20px !important;
+        font-weight: 700 !important;
+        color: #000000 !important;
+        margin: 0 0 16px 0 !important;
+        line-height: 1.3 !important;
+    }
+
+    .history-card p {
+        font-family: 'Times New Roman', Times, serif !important;
+        font-size: 16px !important;
+        line-height: 1.6 !important;
+        color: #222222 !important;
+        margin: 0 0 22px 0 !important;
+        flex-grow: 1 !important;
+    }
+
+    .history-card .history-img-box {
+        width: 100% !important;
+        height: 200px !important;
+        margin-top: auto !important;
+        overflow: hidden !important;
+        border: 2px solid #000000 !important;
+        border-radius: 4px !important;
+        background-color: #eeeeee !important;
+    }
+
+    .history-card .history-img-box img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        display: block !important;
+        filter: grayscale(10%) contrast(105%);
+    }
+
+    .widescreen-strip-container,
+    .section8-town-images-strip {
+        width: 100% !important;
+        max-width: 100vw !important;
+        background-color: #02122b !important;
+        background-image: 
+            radial-gradient(ellipse at top, rgba(12, 113, 195, 0.35) 0%, rgba(2, 18, 43, 0.95) 70%),
+            repeating-linear-gradient(-45deg, rgba(255, 193, 14, 0.04) 0px, rgba(255, 193, 14, 0.04) 1px, transparent 1px, transparent 12px) !important;
+        padding: 36px clamp(20px, 4vw, 80px) !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+        border-top: 3px solid var(--flora-gold);
+        border-bottom: 3px solid var(--flora-gold);
+    }
+
+    .showcase-widget.full-bleed-widget { width: 100% !important; background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+
+    .partners-horizontal-strip {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: clamp(16px, 2.5vw, 40px) !important;
+        overflow-x: auto !important;
+        width: 100% !important;
+        padding-bottom: 10px !important;
+    }
+
+    .partner-card {
+        flex: 1 1 200px !important;
+        max-width: 280px !important;
+        background: #ffffff !important;
+        border: 2px solid #000000 !important;
+        border-radius: 6px !important;
+        padding: 16px !important;
+        box-shadow: 4px 4px 0px #000000 !important;
+        text-align: center !important;
+        color: #000000 !important;
+        height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        transition: transform 0.2s ease !important;
+    }
+
+    .partner-card:hover { transform: translateY(-3px) !important; }
+
+    .partner-logo-box {
+        width: 100% !important;
+        height: 110px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        overflow: hidden !important;
+        background-color: #f9f9f9 !important;
+        border: 1px solid #ddd !important;
+        border-radius: 4px !important;
+        padding: 8px !important;
+    }
+
+    .partner-logo-box img, .partner-card img {
+        max-width: 100% !important;
+        max-height: 100% !important;
+        width: auto !important;
+        height: auto !important;
+        object-fit: contain !important;
+        display: block !important;
+        cursor: pointer !important;
+    }
+
+    .partner-card h4 {
+        font-family: 'Times New Roman', Times, serif !important;
+        font-size: 15px !important;
+        font-weight: bold !important;
+        margin: 10px 0 0 0 !important;
+        color: #000000 !important;
+        line-height: 1.2 !important;
+    }
+
+    .partner-card h4 a { color: #000000 !important; text-decoration: none !important; }
+    .partner-card h4 a:hover { color: #0258A3 !important; text-decoration: underline !important; }
+
+    .smlc-three-column-portal-wrapper { 
+        width: 100%; 
+        padding: clamp(36px, 5vh, 72px) clamp(20px, 4vw, 80px) !important; 
+        background-color: #0a0f18 !important; 
+        background-image: 
+            radial-gradient(circle at 50% 50%, rgba(2, 88, 163, 0.25) 0%, rgba(10, 15, 24, 0.98) 80%),
+            repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 6px) !important;
+        border-top: 4px solid var(--flora-gold);
+        border-bottom: 4px solid var(--flora-gold);
+    }
+
+    .portal-grid-layout-fixed { 
+        display: grid; 
+        grid-template-columns: repeat(3, 1fr) !important; 
+        gap: clamp(24px, 3.5vw, 60px) !important; 
+        width: 100%; 
+        align-items: start !important; 
+    }
+    @media (max-width: 1024px) { .portal-grid-layout-fixed { grid-template-columns: 1fr !important; gap: 36px !important; } }
+
+    .portal-column-cell-box { display: flex !important; flex-direction: column !important; gap: 36px !important; justify-content: flex-start !important; height: auto !important; }
+    .card-module-wrapper { display: flex !important; flex-direction: column !important; height: auto !important; }
+
+    .et_pb_module_heading {
+        background-color: #0258A3 !important;
+        color: #ffffff !important;
+        font-family: "Playfair Display", Georgia, "Times New Roman", serif !important;
+        font-size: 24px !important;
+        font-weight: bold !important;
+        text-align: center !important;
+        margin: 0 0 16px 0 !important;
+        padding: 12px 18px !important;
+        border: 2px solid #000000 !important;
+        box-shadow: 4px 4px 0px #000000 !important;
+        border-radius: 4px !important;
+        display: block !important;
+    }
+
+    .clay-county-news-box.event-clipping {
+        box-sizing: border-box !important;
+        width: 100% !important;
+        max-width: 480px !important;
+        margin: 20px auto !important;
+        padding: 25px !important;
+        border: 2px solid #222 !important;
+        background-color: #fffdf5 !important;
+        box-shadow: 6px 6px 0px #222 !important;
+        font-family: "Times New Roman", Times, serif !important;
+        position: relative !important;
+        align-self: center !important;
+    }
+
+    .clipping-tag {
+        position: absolute !important;
+        top: -12px !important;
+        left: 15px !important;
+        background: #222 !important;
+        color: #fff !important;
+        font-size: 10px !important;
+        padding: 3px 10px !important;
+        text-transform: uppercase !important;
+        font-weight: bold !important;
+        letter-spacing: 1px !important;
+        z-index: 10 !important;
+    }
+
+    .event-clipping-header {
+        text-align: center !important;
+        border-top: 4px double #222 !important;
+        border-bottom: 2px solid #222 !important;
+        padding: 15px 0 !important;
+        margin-bottom: 20px !important;
+        margin-top: 5px !important;
+    }
+
+    .event-clipping-header h3 {
+        font-family: "Times New Roman", Times, serif !important;
+        font-weight: 900 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        margin: 0 !important;
+        color: #0258A3 !important;
+        font-size: 26px !important;
+        line-height: 1.1 !important;
+    }
+
+    .event-clipping-text {
+        font-size: 16px !important;
+        line-height: 1.5 !important;
+        color: #222 !important;
+        text-align: center !important;
+        margin-bottom: 20px !important;
+        font-style: italic !important;
+    }
+
+    .event-clipping-btn {
+        display: block !important;
+        text-align: center !important;
+        background-color: #222 !important;
+        color: #fff !important;
+        padding: 14px !important;
+        text-transform: uppercase !important;
+        font-weight: bold !important;
+        letter-spacing: 2px !important;
+        text-decoration: none !important;
+        font-size: 14px !important;
+        border: 1px solid #222 !important;
+        transition: all 0.3s !important;
+    }
+
+    .event-clipping-btn:hover {
+        background-color: #0258A3 !important;
+        border-color: #0258A3 !important;
+        color: #fff !important;
+    }
+
+    .clipping-footer {
+        display: block !important;
+        text-align: center !important;
+        font-size: 10px !important;
+        color: #666 !important;
+        margin-top: 15px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+    }
+
+    .news-clipping-wrapper {
+        background-color: #fffdf5;
+        box-shadow: 6px 6px 0px rgba(0,0,0,0.6); 
+        border: 2px solid #222;
+        font-family: 'Times New Roman', Times, serif;
+        color: #222;
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+        overflow: hidden;
+        padding: 28px;
+        border-radius: 6px;
+    }
+    .clipping-masthead {
+        text-align: center;
+        padding-bottom: 16px;
+        border-bottom: 4px double #222; 
+        margin-bottom: 22px; 
+    }
+    .black-tag {
+        background: #000;
+        color: #fff;
+        text-transform: uppercase;
+        font-size: 22px;
+        font-weight: bold;
+        padding: 6px 18px;
+        display: inline-block;
+        letter-spacing: 1px;
+        line-height: 1;
+    }
+    .clipping-tagline {
+        font-size: 13px;
+        text-transform: uppercase;
+        font-weight: bold;
+        margin: 12px 0 0 0;
+        letter-spacing: 1px;
+        color: #444;
+    }
+
+    #bulletin-scroller-target {
+        max-height: 560px !important;
+        overflow-y: auto !important;
+        padding-right: 8px !important;
+    }
+
+    .divi-event-item {
+        border-bottom: 1px dashed #777;
+        padding: 18px 0;
+        text-align: left;
+    }
+
+    .newspaper-feed-chassis {
+        background-color: #fffdf5 !important; 
+        border: 3px double #222222 !important; 
+        box-shadow: 6px 6px 0px #222222 !important; 
+        padding: 28px !important;
+        border-radius: 6px;
+        color: #222222 !important;
+    }
+
+    .news-dynamic-masonry {
+        max-height: 560px !important;
+        overflow-y: auto !important;
+        padding-right: 8px !important;
+        text-align: left !important;
+    }
+
+    .clay-county-news-box.group-invitation-master {
+        box-sizing: border-box !important;
+        width: 100% !important;
+        max-width: 400px !important;
+        margin: 20px auto !important;
+        padding: 25px !important;
+        border: 3px double #222 !important;
+        background-color: #fffdf5 !important;
+        box-shadow: 6px 6px 0px #222 !important;
+        font-family: Arial, sans-serif !important;
+        position: relative !important;
+        text-align: center !important;
+        align-self: center !important;
+    }
+
+    .notice-tag-red {
+        background: #0258A3 !important;
+        color: #fff !important;
+        font-size: 11px !important;
+        padding: 4px 15px !important;
+        text-transform: uppercase !important;
+        font-weight: bold !important;
+        display: inline-block !important;
+        position: absolute !important;
+        top: -15px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        border: 1px solid #222 !important;
+        box-shadow: 2px 2px 0px #222 !important;
+        z-index: 10 !important;
+        white-space: nowrap !important;
+    }
+
+    .polaroid-wrap {
+        background: #fff !important;
+        padding: 10px 10px 25px 10px !important;
+        border: 1px solid #ccc !important;
+        box-shadow: 3px 3px 8px rgba(0,0,0,0.2) !important;
+        transform: rotate(-3deg) !important;
+        margin-bottom: 20px !important;
+    }
+
+    .polaroid-wrap img {
+        width: 100% !important;
+        display: block !important;
+        filter: grayscale(20%) sepia(10%) !important;
+    }
+
+    .invitation-header-main {
+        border-top: 4px double #222 !important;
+        border-bottom: 1px solid #222 !important;
+        padding: 12px 0 !important;
+        margin-bottom: 15px !important;
+    }
+
+    .invitation-header-main h3 {
+        font-family: "Times New Roman", Times, serif !important;
+        font-weight: 900 !important;
+        text-transform: uppercase !important;
+        font-size: 20px !important;
+        margin: 0 0 5px 0 !important;
+        color: #222 !important;
+        line-height: 1.1 !important;
+    }
+
+    .sub-header-text {
+        font-size: 11px !important;
+        color: #444 !important;
+        font-weight: bold !important;
+        display: block !important;
+        letter-spacing: 0.5px !important;
+        text-transform: none !important;
+    }
+
+    .invitation-body-text {
+        font-family: "Times New Roman", Times, serif !important;
+        font-size: 15px !important;
+        line-height: 1.4 !important;
+        color: #333 !important;
+        font-style: italic !important;
+        margin-bottom: 20px !important;
+        padding: 0 10px !important;
+    }
+
+    .fb-action-btn {
+        display: block !important;
+        background-color: #222 !important;
+        color: #fff !important;
+        padding: 12px !important;
+        text-transform: uppercase !important;
+        font-weight: bold !important;
+        letter-spacing: 1px !important;
+        text-decoration: none !important;
+        font-size: 13px !important;
+        border: 2px solid #222 !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .fb-action-btn:hover {
+        background-color: #fffdf5 !important;
+        color: #222 !important;
+    }
+
+    .community-voice-footer {
+        display: block !important;
+        margin-top: 15px !important;
+        font-size: 9px !important;
+        color: #777 !important;
+        text-transform: lowercase !important;
+        letter-spacing: 1px !important;
+        text-align: center !important;
+    }
+
+    .town-directory-container-s7 {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        margin-top: 10px !important;
+    }
+
+    .town-directory-banner-s7 {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        display: block !important;
+        margin: 0 0 18px 0 !important;
+        border: 2px solid #000000 !important;
+        box-shadow: 6px 6px 0px #000000 !important;
+        border-radius: 6px !important;
+        object-fit: contain !important;
+        background-color: #ffffff !important;
+        cursor: pointer !important;
+    }
+
+    .town-directory-interactive-btn-s7 {
+        background-color: #000000 !important;
+        color: var(--flora-gold) !important;
+        border: 2px solid var(--flora-gold) !important;
+        border-radius: 31px !important;
+        cursor: pointer;
+        display: inline-block;
+        font-size: 17px;
+        font-weight: 800;
+        padding: 14px 28px;
+        text-align: center;
+        text-decoration: none !important;
+        transition: all 0.3s ease;
+    }
+
+    .town-directory-interactive-btn-s7:hover {
+        background-color: var(--flora-gold) !important;
+        color: #000000 !important;
+    }
+
+    .section9-bold-print-wrapper,
+    .section10-message-chassis {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        margin: 40px auto !important;
+        padding: 20px;
+        background-color: #031222 !important;
+        background-image: 
+            linear-gradient(135deg, rgba(2, 88, 163, 0.8) 0%, rgba(10, 10, 10, 0.95) 100%),
+            repeating-linear-gradient(60deg, rgba(255, 193, 14, 0.03) 0px, rgba(255, 193, 14, 0.03) 1px, transparent 1px, transparent 14px) !important;
+        border-radius: 8px;
+        border: 1px solid var(--flora-gold);
+    }
+
+    .section10-proclamation-card-box {
+        background: #fffdf5 !important;
+        border: 2px solid #222222 !important;
+        padding: 30px !important;
+        box-shadow: 6px 6px 0px #000000 !important;
+        border-radius: 6px !important;
+        color: #222222 !important;
+        text-align: center !important;
+    }
+
+    .proclamation-body-text {
+        font-family: 'Times New Roman', Times, serif !important;
+        font-size: 18px !important;
+        font-weight: 900 !important;
+        line-height: 1.7 !important;
+        margin-bottom: 18px !important;
+        color: #1a1a1a !important;
+    }
+
+    .proclamation-contact-text {
+        font-family: 'Oswald', sans-serif !important;
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        color: #000000 !important;
+    }
+
+    .proclamation-contact-text a {
+        color: #0258A3 !important;
+        font-weight: 900 !important;
+        text-decoration: underline !important;
+    }
+
+    .site-global-footer-matrix { width: 100% !important; background-color: #000000 !important; color: #ffffff !important; padding: 45px 0 25px 0 !important; border-top: 4px solid var(--flora-gold) !important; text-align: center !important; }
+    .site-global-footer-matrix p, .site-global-footer-matrix span { color: #ffffff !important; font-size: 15px !important; }
+
+    .lightbox-overlay-mask { 
+        position: fixed !important; 
+        top: 0 !important; 
+        left: 0 !important; 
+        width: 100% !important; 
+        height: 100% !important; 
+        background-color: rgba(0, 0, 0, 0.88) !important; 
+        backdrop-filter: blur(8px) !important; 
+        z-index: 10000 !important; 
+        display: none; 
+        align-items: center !important; 
+        justify-content: center !important; 
+        padding: 24px !important; 
+        cursor: pointer !important;
+    }
+
+    .lightbox-modal-window { 
+        background: #fffdf5 !important; 
+        border: 2px solid #222 !important; 
+        box-shadow: 12px 12px 0px #000 !important; 
+        max-width: 56rem !important; 
+        width: 100% !important; 
+        border-radius: 6px !important; 
+        display: flex !important; 
+        flex-direction: column !important; 
+        max-height: 90vh !important; 
+        overflow: hidden !important; 
+        color: #1a1a1a !important; 
+        cursor: default !important;
+    }
+</style>
+
+<!-- DYNAMIC FLOATING COMMEMORATIVE HUD -->
+<div class="portal-floating-hud-track">
+    <div id="hud-county-age-target" class="hud-floating-badge county-anniversary-badge" style="display: none;"></div>
+    <div id="hud-holiday-title-target" class="hud-floating-badge holiday-celebration-badge" style="display: none;"></div>
+</div>
+
+<!-- SECTION 1: HEADER BILLBOARD & STICKY MENU BAR -->
+<div id="global-header-container" class="site-brand-header">
+    <a href="#/home" class="header-billboard-link" data-ga-label="HeaderBillboardLink">
+        <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="SMLC Community Digital Network Map" class="header-billboard-img" />
+    </a>
+</div>
+
+<header class="menu-bar">
+    <div class="menu-inner">
+        <nav>
+            <ul id="dynamic-menu-links" class="menu-links">
+                <li><a href="#/home" data-ga-label="NavHomeButton">Home</a></li>
+                <li><a href="#/clay-city" data-ga-label="NavClayCityButton">Clay City</a></li>
+                <li><a href="#/flora" class="active" data-ga-label="NavFloraButton">Flora</a></li>
+                <li><a href="#/louisville" data-ga-label="NavLouisvilleButton">Louisville</a></li>
+                <li><a href="#/sailor-springs" data-ga-label="NavSailorSpringsButton">Sailor Springs</a></li>
+                <li><a href="#/xenia" data-ga-label="NavXeniaButton">Xenia</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<!-- SECTION 2: TOWN HERO BANNER -->
+<div class="main-container" style="padding-bottom: 0;">
+    <section class="town-hero-banner static-hero-colors">
+        <div class="banner-content">
+            <span class="seat-badge" id="hero-seat-badge">Clay County Hub</span>
+            <h1 class="town-title outlined-headline" id="hero-town-title">Flora, Illinois</h1>
+            <p class="town-established-meta" id="hero-town-meta">Est. 1854 | Zip Code 62839</p>
+            <div class="river-marquee" id="hero-river-marquee">HOME OF THE FLORA WOLVES &bull; COMMERCE CENTER</div>
+        </div>
+    </section>
+</div>
+
+<!-- SECTION 3: RESTRUCTURED SPLIT LAYOUT -->
+<section class="section3-split-layout">
+    <div class="section3-container-grid">
+        <div class="section3-row-1">
+            <h2 class="section3-main-title">Discover Flora's Vibrant Community</h2>
+            <p class="section3-intro-text">Explore Flora's local businesses, rich history, and civic events. From historic railroad heritage to modern industry, Flora stands as the bustling commercial heart of Clay County.</p>
+        </div>
+
+        <div class="section3-row-2">
+            <div class="section3-left-col">
+                <div id="flora-town-slideshow-matrix" class="section3-slideshow-box">
+                    <div id="flora-slideshow" class="slider-viewport">
+                        <div class="slider-slide active">
+                            <img src="https://ourflora.com/wp-content/uploads/2023/08/Ourflora.png" alt="Flora Community View">
+                            <div class="slider-caption">Flora Square</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section3-about-box">
+                    <span class="section3-about-tag">About Flora</span>
+                    <p class="section3-about-text" id="desc2-target-1">Flora, IL was incorporated in 1854 as a vital railroad town on the B&O Railroad line. Today, it serves as the largest city and principal commercial center of Clay County, home to industrial manufacturing, thriving small businesses, and energetic community traditions.</p>
+                </div>
+            </div>
+
+            <div class="section3-right-col">
+                <div class="section3-landmark-card">
+                    <h3 class="section3-landmark-title" id="right-card-meta-title">Historic B&O Railroad Depot</h3>
+                    <div class="section3-landmark-images">
+                        <div class="section3-landmark-img-wrap">
+                            <img id="dual-img-1" src="https://ourflora.com/wp-content/uploads/2023/08/Ourflora.png" alt="Flora Depot Landmark" class="lightbox-triggerable-element">
+                            <span class="section3-landmark-caption" id="dual-header-1">Historic Train Station</span>
+                        </div>
+                        <div class="section3-landmark-img-wrap">
+                            <img id="dual-img-2" src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Charley Brown Park" class="lightbox-triggerable-element">
+                            <span class="section3-landmark-caption" id="dual-header-2">Charley Brown Park</span>
+                        </div>
+                    </div>
+                    <p class="section3-landmark-desc" id="right-card-meta-desc1">The Baltimore & Ohio Railroad Depot in Flora remains a celebrated architectural landmark in Clay County, symbolizing the town's historical importance in Midwestern commerce and travel.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 4: 2-COLUMN LAYOUT -->
+<div class="section4-two-box-wrapper">
+    <div class="section4-left-article-box">
+        <header class="section4-centered-article-header">
+            <div class="category-tag">Community & Commerce</div>
+            <h1 class="article-stacked-title">Flora's Industrial & Cultural Heritage</h1>
+            <p class="article-stacked-deck">Connecting transportation, manufacturing, and local agriculture in the commercial hub of Clay County.</p>
+        </header>
+
+        <article class="article-body-content">
+            <p>
+                Flora, Illinois, has long served as a vital crossroads for Clay County and Southern Illinois. Founded alongside the expansion of the railways, Flora developed rapidly into an economic powerhouse for manufacturing, energy, and retail commerce.
+            </p>
+
+            <!-- DYNAMIC ARTICLE FEATURED IMAGE -->
+            <figure class="article-media-frame">
+                <img id="sec-4-1-article-img" 
+                     src="https://ourflora.com/wp-content/uploads/2023/08/Ourflora.png" 
+                     alt="Flora Community Feature" 
+                     class="lightbox-triggerable-element" 
+                     onclick="fireLightbox(this.src, 'Flora Community Feature', 'Community & Commerce', 'Historic and modern view of Flora, Illinois.', '')" />
+                <figcaption>Downtown Flora & Community Grounds — Flora, IL</figcaption>
+            </figure>
+
+            <p>
+                From annual community celebrations to local school athletics supporting the Flora Wolves, the town embodies a spirit of collaboration. Local business owners and civic leaders work side-by-side to ensure that Flora remains a welcoming environment for families, entrepreneurs, and visitors.
+            </p>
+            <p>
+                With well-maintained parks like Charley Brown Park and active civic programs, Flora continues to build on its rich history while paving the way for economic growth and community unity across Clay County.
+            </p>
+        </article>
+
+        <div class="article-footer">
+            <span>Flora Dispatches | Jan 2026</span>
+            <span>Issue No. 12 | Page 4</span>
+        </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR: BUSINESS SPOTLIGHT & FUEL MONITOR -->
+    <aside class="section4-right-widgets-stack">
+        <div class="clay-county-news-box spotlight-clipping">
+            <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
+            <div class="spotlight-image-wrap">
+                <img id="spotlight-asset-img" src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Business Spotlight">
+            </div>
+            <span class="biz-title" id="spotlight-asset-name">Local Merchant</span>
+            <span class="biz-location" id="spotlight-asset-loc">Flora, IL</span>
+            <p class="biz-description" id="spotlight-asset-desc">Supporting local commerce across Clay County.</p>
+            <a href="#" id="spotlight-asset-link" target="_blank" class="spotlight-btn" data-ga-label="spotlight_btn">Visit Business &rarr;</a>
+        </div>
+
+        <div id="fuel-monitor-target-box" class="fuel-monitor-billboard-card">
+            <div class="sidebar-widget-title">FLORA FUEL INDEX MONITOR</div>
+            <div class="fuel-station-header">
+                <div class="station-logo-frame">
+                    <img src="https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/Casey's.png" alt="Gas Station">
+                </div>
+                <div class="station-meta-title">CASEY'S</div>
+            </div>
+            <div class="fuel-pricing-grid">
+                <div class="price-box">
+                    <span class="price-type-label">REGULAR</span>
+                    <span class="price-value-regular">$3.29</span>
+                </div>
+                <div class="price-box">
+                    <span class="price-type-label">DIESEL</span>
+                    <span class="price-value-diesel">$3.89</span>
+                </div>
+            </div>
+            <div class="sync-timestamp-label">Syncing Real-Time Prices...</div>
+        </div>
+    </aside>
+</div>
+
+<!-- SECTION 5: HISTORICAL TIMELINE -->
+<div class="main-container">
+    <section class="historical-timeline-chassis-wrapper">
+        <div class="timeline-inner-bounds">
+            <div class="timeline-row-1-header">
+                <span class="main-timeline-center-title-node">Historical Timeline</span>
+                <p class="main-timeline-sub-caption-node">Journey through the key historical milestones that have shaped Flora, IL, into the hub of Clay County.</p>
+            </div>
+            <div id="history-row-target" class="timeline-row-2-cards">
+                <div class="feed-loading-placeholder">Parsing landmark records ledger database tracking layers...</div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- SECTION 6: ADVERTISING PARTNERS STRIP PANEL -->
+<div class="widescreen-strip-container">
+    <section class="showcase-widget full-bleed-widget">
+        <div class="partners-horizontal-strip" id="partners-grid-top"></div>
+    </section>
+</div>
+
+<!-- SECTION 7: THREE-COLUMN OPERATIONAL DATA INTERFACE -->
+<section class="smlc-three-column-portal-wrapper" id="adaptive-time-portal-chassis">
+    <div class="portal-grid-layout-fixed">
+        
+        <!-- COLUMN 7.1 -->
+        <div class="portal-column-cell-box left-cell-stack">
+            <div class="clay-county-news-box event-clipping">
+                <div class="clipping-tag">Community Bulletin</div>
+                <div class="event-clipping-header">
+                    <h3>What's Happening?</h3>
+                    <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #222; font-weight: bold;">Clay County Community Calendar</span>
+                </div>
+                <p class="event-clipping-text">
+                    "Got a local fundraiser, school event, or church dinner coming up? Share your news with the community for free!"
+                </p>
+                <a href="https://www.supportmylocalcommunity.com/submit-event" target="_blank" class="event-clipping-btn" data-ga-label="submit_event_btn">Submit Your Event</a>
+                <div class="clipping-footer">Clay City • Flora • Louisville • Sailor Springs • Xenia</div>
+            </div>
+
+            <div class="card-module-wrapper">
+                <h2 class="et_pb_module_heading">Upcoming Events in Flora</h2>
+                <div class="news-clipping-wrapper">
+                    <div class="clipping-masthead">
+                        <span class="black-tag">Community Bulletin</span>
+                        <p class="clipping-tagline" id="month-tagline">Upcoming Events</p> 
+                    </div>
+                    
+                    <div id="bulletin-scroller-target">
+                        <div style="text-align:center; padding: 20px; font-style:italic;">Loading community calendar...</div>
+                    </div>
+                    
+                    <div class="clipping-footer">
+                        View Full Community Calendar &amp; Details<br>
+                        Support My Local Community
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMN 7.2 -->
+        <div class="portal-column-cell-box center-cell-stack">
+            <div class="card-module-wrapper">
+                <h2 class="et_pb_module_heading">Flora News</h2>
+                <div class="newspaper-feed-chassis">
+                    <div class="clipping-masthead">
+                        <span class="black-tag">SMLC Newsroom</span>
+                        <p class="clipping-tagline">Flora Local Dispatches</p>
+                    </div>
+                    <div id="news-matrix-target" class="news-dynamic-masonry">
+                        <div class="feed-loading-placeholder">Reconstructing localized newsroom dispatches...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 7.2.3: BUSINESS DIRECTORY MODULE WITH IMAGE -->
+            <div class="card-module-wrapper">
+                <h2 class="et_pb_module_heading">Business Directory</h2>
+                <div class="town-directory-container-s7">
+                    <img src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png?v=20260730_1630" 
+                         alt="Support My Local Community Logo" 
+                         class="town-directory-banner-s7 lightbox-triggerable-element" />
+                    <a href="https://clay-county-business-directory.supportmylocalcommunity.com/" target="_blank" class="town-directory-interactive-btn-s7" style="width: 100%;" data-ga-label="section7_directory_btn">
+                        Clay County Business Directory
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMN 7.3 -->
+        <div class="portal-column-cell-box right-cell-stack">
+            <div class="card-module-wrapper">
+                <h2 class="et_pb_module_heading">SMLC Facebook</h2>
+                <div class="clay-county-news-box group-invitation-master">
+                    <div class="notice-tag-red">Local Conversation</div>
+
+                    <div class="polaroid-wrap">
+                        <img src="https://ourflora.com/wp-content/uploads/2023/08/Ourflora.png" alt="OurFlora Community">
+                    </div>
+
+                    <div class="invitation-header-main">
+                        <h3>Join the Community</h3>
+                        <span class="sub-header-text">Official OurFlora Facebook page</span>
+                    </div>
+
+                    <p class="invitation-body-text">
+                        "Stay connected with your neighbors. Discuss local news, share community updates, and join neighbors in the OurFlora conversation."
+                    </p>
+
+                    <a href="https://www.facebook.com/OurFloraIL" target="_blank" class="fb-action-btn" data-ga-label="facebook_group_btn">
+                        Enter the Conversation
+                    </a>
+                  
+                    <span class="community-voice-footer">
+                        Community Voice • Clay County, IL
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-module-wrapper">
+                <h2 class="et_pb_module_heading">town local links</h2>
+                <div class="clay-county-news-box group-invitation-master">
+                    <div class="notice-tag-red">Town Directory</div>
+
+                    <div class="invitation-header-main" style="margin-top:15px;">
+                        <h3>Local Links &amp; Resources</h3>
+                        <span class="sub-header-text">Official Flora &amp; Clay County Portals</span>
+                    </div>
+
+                    <div class="scrollable-directory-stream">
+                        <div id="local-links-target-container" class="local-links-stream">
+                            <div style="font-style:italic; font-size:12px; color:#666;">Loading directory links...</div>
+                        </div>
+                    </div>
+
+                    <span class="community-voice-footer">
+                        Verified Resources • Clay County, IL
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</section>
+
+<!-- SECTION 8: FULL WIDTH TOWN IMAGES STRIP -->
+<div class="widescreen-strip-container section8-town-images-strip">
+    <section class="showcase-widget full-bleed-widget">
+        <div class="partners-horizontal-strip" id="partners-grid-bottom">
+            <div class="feed-loading-placeholder" style="color: #fff; text-align: center; width: 100%;">Syncing regional timeline showcase arrays...</div>
+        </div>
+    </section>
+</div>
+
+<!-- SECTION 9 & 10: PROCLAMATION BLOCK (BOLD PRINT MATRIX) -->
+<div class="main-container section9-bold-print-wrapper section10-message-chassis">
+    <section class="section10-proclamation-card-box">
+        <p class="proclamation-body-text">
+            We are very Thankful and Blessed for our Customers who allow us to advertise their Business to the Community. We hope to be of Service, not only to the Large Corporations, but also to the Small Business’ in the area. A Large Corporation once started out as a small business, so our hope is to help those Small Business’ we serve reach the fullest potential they desire. You will never know what we are able to do for Your Business unless you ask. I hope to hear from you.
+        </p>
+        <p class="proclamation-contact-text">
+            For questions or comments about this site please email <a href="mailto:Scott.Robinson@skventuresigns.com" data-ga-label="proclamation_email">Scott.Robinson@skventuresigns.com</a>
+        </p>
+    </section>
+</div>
+
+<!-- LIGHTBOX OVERLAY -->
+<div id="portal-global-lightbox" class="lightbox-overlay-mask" onclick="closeLightbox(event)">
+    <div class="lightbox-modal-window">
+        <div class="lightbox-header-bar" style="padding:15px; border-bottom:2px solid #222; display:flex; justify-content:space-between; align-items:center;">
+            <span id="lightbox-label" style="font-weight:bold; font-size:18px;">SMLC Dispatches</span>
+            <button onclick="document.getElementById('portal-global-lightbox').style.display='none'" class="lightbox-close-btn" style="font-size:24px; cursor:pointer; background:none; border:none;">&times;</button>
+        </div>
+        
+        <div style="padding:20px; overflow-y:auto;">
+            <h3 id="lightbox-target-title" style="font-size:24px; margin-top:0;">Title</h3>
+            <div id="lightbox-target-date" style="font-size: 13px; color: #cc0000; font-weight: bold; margin-bottom: 12px;">Wire Sync Info</div>
+            <p id="lightbox-target-story" style="font-size:16px; line-height:1.6;">Story Body</p>
+            <div id="lightbox-img-wrapper" style="margin-top:15px;">
+                <img id="lightbox-target-img" src="" alt="Expanded Asset Content" style="width:100%; border-radius:4px;">
+            </div>
+        </div>
+        
+        <div class="lightbox-footer-bar" style="padding:15px; border-top:1px solid #ddd; text-align:center; font-size:12px; color:#666;">
+            <span>SUPPORT MY LOCAL COMMUNITY NETWORK &copy; 2026</span>
+            <div id="lightbox-action-row" style="display:none; margin-top:8px;">
+                <a id="lightbox-target-link" href="#" target="_blank" style="color: #0258A3; font-weight: bold;" data-ga-label="lightbox_open_source">Open Source &rarr;</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- GLOBAL FOOTER -->
+<footer id="global-footer-container" class="site-global-footer-matrix">
+    <div style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:20px; max-width:1200px; margin:0 auto; padding-bottom:20px;">
+        <div>
+            <span style="font-weight:bold; color:var(--flora-gold);">Contact Us:</span>
+            <div id="footer-phone-target">618-662-8341</div>
+        </div>
+        <div>
+            <span style="font-weight:bold; color:var(--flora-gold);">Email:</span><br>
+            <a id="footer-email-target" href="mailto:Scott.Robinson@skventuresigns.com" style="color:#fff;" data-ga-label="footer_email">Scott.Robinson@skventuresigns.com</a>
+        </div>
+        <div>
+            <span style="font-weight:bold; color:var(--flora-gold);">Address:</span>
+            <div id="footer-address-target">Clay County, Illinois</div>
+        </div>
+    </div>
+    <div style="border-top:1px solid #333; padding-top:15px;">
+        <p id="footer-copy-target">&copy; 2026 Flora Community Portal. All rights reserved.</p>
+        <p style="margin-top: 8px; opacity: 0.8; font-size: 12px; color: #aaaaaa;">
+            <strong>System Build Version:</strong> v1.0.0 | <strong>Active Version:</strong> 2026-07-30_20:47
+        </p>
+    </div>
+</footer>
+
+<button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top" style="position:fixed; bottom:20px; right:20px; padding:10px 15px; background:#222; color:#fff; border:1px solid var(--flora-gold); border-radius:4px; cursor:pointer;">↑</button>
+
+<!-- Embedded Master Engine Script -->
+<script type="text/javascript">
+    const TOWN_ALIAS_MAP = {
+        "HOME": { primaryName: "Clay County", file: "index.html", dbTownKey: "Global", jsonKey: "all", gasKey: ["louisville", "flora", "clay-city", "xenia"], historyKey: "all", keywords: [], zipCodes: [], isHome: true, scorestreamId: "68601", seatBadge: "Clay County Hub", established: "Est. 1824 | Clay County, IL", marquee: "CLAY COUNTY DIGITAL NETWORK COMMUNITY PORTAL", accentColor: "#0258A3" },
+        "CLAY COUNTY": { primaryName: "Clay County", file: "index.html", dbTownKey: "Global", jsonKey: "all", gasKey: ["louisville", "flora", "clay-city", "xenia"], historyKey: "all", keywords: [], zipCodes: [], isHome: true, scorestreamId: "68601", seatBadge: "Clay County Hub", established: "Est. 1824 | Clay County, IL", marquee: "CLAY COUNTY DIGITAL NETWORK COMMUNITY PORTAL", accentColor: "#0258A3" },
+        "LOUISVILLE": { primaryName: "Louisville", file: "louisville.html", dbTownKey: "Louisville", jsonKey: "louisville", gasKey: ["louisville"], historyKey: "louisville", keywords: ["LOUISVILLE", "NORTH CLAY", "NC", "HOOSIER"], zipCodes: ["62858"], scorestreamId: "68601", seatBadge: "Clay County Seat", established: "Est. 1836 | Zip Code 62858", marquee: "ON THE LITTLE WABASH RIVER", accentColor: "#EB1C24" },
+        "FLORA": { primaryName: "Flora", file: "flora.html", dbTownKey: "Flora", jsonKey: "flora", gasKey: ["flora"], historyKey: "flora", keywords: ["FLORA", "FLO", "WOLVES"], zipCodes: ["62839"], scorestreamId: "68602", seatBadge: "Clay County Hub", established: "Est. 1854 | Zip Code 62839", marquee: "HOME OF THE FLORA WOLVES • COMMERCE CENTER", accentColor: "#0258A3" },
+        "CLAY CITY": { primaryName: "Clay City", file: "clay-city.html", dbTownKey: "Clay City", jsonKey: "clay_city", gasKey: ["clay-city"], historyKey: "clay_city", keywords: ["CLAY CITY", "CC"], zipCodes: ["62824"], scorestreamId: "64422", seatBadge: "Clay County Gateway", established: "Est. 1853 | Zip Code 62824", marquee: "CLAY CITY COMMUNITY & ATHLETICS", accentColor: "#107c41" },
+        "XENIA": { primaryName: "Xenia", file: "xenia.html", dbTownKey: "Xenia", jsonKey: "clay_county_teams", gasKey: ["xenia"], historyKey: "xenia", keywords: ["XENIA"], zipCodes: ["62899"], scorestreamId: "68988", seatBadge: "Clay County Community", established: "Est. 1834 | Zip Code 62899", marquee: "HISTORIC XENIA VILLAGE & TRAILS", accentColor: "#8e24aa" },
+        "IOLA": { primaryName: "Iola", file: "louisville.html", dbTownKey: "Iola", jsonKey: "iola", gasKey: ["louisville"], historyKey: "iola", keywords: ["IOLA"], zipCodes: ["62849"], scorestreamId: "68601", seatBadge: "Clay County Village", established: "Est. 1866 | Zip Code 62849", marquee: "VILLAGE OF IOLA COMMUNITY", accentColor: "#d81b60" },
+        "SAILOR SPRINGS": { primaryName: "Sailor Springs", file: "sailor-springs.html", dbTownKey: "Sailor Springs", jsonKey: "sailor_springs", gasKey: ["louisville", "clay-city"], historyKey: "sailor_springs", keywords: ["SAILOR SPRINGS"], zipCodes: ["62879"], scorestreamId: "68988", seatBadge: "Historic Mineral Springs", established: "Est. 1876 | Zip Code 62879", marquee: "HISTORIC SAILOR SPRINGS PARK", accentColor: "#00838f" },
+        "INGRAHAM": { primaryName: "Ingraham", file: "louisville.html", dbTownKey: "Ingraham", jsonKey: "louisville", gasKey: ["louisville", "clay-city"], historyKey: "ingraham", keywords: ["INGRAHAM"], zipCodes: ["62434"], scorestreamId: "68601", seatBadge: "Clay County Settlement", established: "Zip Code 62434", marquee: "INGRAHAM RURAL COMMUNITY", accentColor: "#f57c00" }
+    };
+
+    function getActiveTownConfig() {
+        // 1. Hash Navigation Priority (#/clay-city, #/flora, #/louisville)
+        const hashRoute = (window.location.hash || "").replace("#/", "").replace("#", "").replace(/-/g, " ").toUpperCase();
+        if (hashRoute && TOWN_ALIAS_MAP[hashRoute]) return TOWN_ALIAS_MAP[hashRoute];
+
+        // 2. Document Title Priority
+        const pageTitle = (document.title || "").toUpperCase();
+        for (const key in TOWN_ALIAS_MAP) {
+            if (pageTitle.includes(key)) return TOWN_ALIAS_MAP[key];
+        }
+
+        // 3. Body/HTML Attribute Priority
+        const htmlTownAttr = (document.documentElement.getAttribute('data-town') || document.body?.getAttribute('data-town') || "").toUpperCase();
+        if (htmlTownAttr) {
+            for (const key in TOWN_ALIAS_MAP) {
+                if (key === htmlTownAttr || TOWN_ALIAS_MAP[key].primaryName.toUpperCase() === htmlTownAttr) {
+                    return TOWN_ALIAS_MAP[key];
+                }
+            }
+        }
+
+        // 4. Default to Flora for this page
+        return TOWN_ALIAS_MAP["FLORA"];
+    }
+
+    let ACTIVE_TOWN = getActiveTownConfig();
+
+    function hydrateTownHeroUI() {
+        const town = ACTIVE_TOWN;
+        document.body.setAttribute("data-town", town.primaryName.toLowerCase());
+        
+        const seatBadge = document.getElementById('hero-seat-badge'); if (seatBadge) seatBadge.innerText = town.seatBadge;
+        const townTitle = document.getElementById('hero-town-title'); if (townTitle) townTitle.innerText = `${town.primaryName}, Illinois`;
+        const townMeta = document.getElementById('hero-town-meta'); if (townMeta) townMeta.innerText = town.established;
+        const riverMarquee = document.getElementById('hero-river-marquee'); if (riverMarquee) riverMarquee.innerText = town.marquee;
+
+        document.documentElement.style.setProperty('--primary', town.accentColor);
+        document.documentElement.style.setProperty('--town-accent', town.accentColor);
+    }
+
+    const DEFAULT_APP_CONFIG = {
+        regional_endpoints: {
+            Business_Spotlight: "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/spotlight.json",
+            Section_3: "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/section3.json",
+            slideshow: "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/town-images.json",
+            town_artical: "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/artical.json",
+            local_links: "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/local_links.json",
+            partners_json_manifest: "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/partners.json",
+            footer_json: "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/footer.json",
+            apps_script_bulletin_url: "https://script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec",
+            smlc_local_news_json: "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/local-news/news_data.json",
+            gas_widget: "https://werewolf3788.github.io/SMLC/update-gas.html"
+        },
+        town_history_tree: {
+            louisville: "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/louisville.json",
+            flora: "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/flora.json",
+            clay_city: "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/clay-city.json",
+            xenia: "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/xenia.json",
+            sailor_springs: "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/sailor-springs.json",
+            iola: "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/iola.json",
+            ingraham: "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/ingraham.json"
+        }
+    };
+
+    let globalSlideshowTicker = null;
+    let gasMonitorRotator = null;
+    let section6PartnerTimer = null;
+    let section8PartnerTimer = null;
+    window.calendarCachedEvents = [];
+    window.newsCacheBlock = [];
+    window.globalAppConfig = null;
+
+    function resetAllActiveTimers() {
+        if (globalSlideshowTicker) { clearInterval(globalSlideshowTicker); globalSlideshowTicker = null; }
+        if (gasMonitorRotator) { clearInterval(gasMonitorRotator); gasMonitorRotator = null; }
+        if (section6PartnerTimer) { clearInterval(section6PartnerTimer); section6PartnerTimer = null; }
+        if (section8PartnerTimer) { clearInterval(section8PartnerTimer); section8PartnerTimer = null; }
+    }
+
+    function getSmartCacheBuster() { return "v=" + Math.floor(Date.now() / 3600000); }
+
+    function cleanRawUrl(urlStr) {
+        if (!urlStr) return "";
+        return urlStr.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/").replace("/edit/", "/");
+    }
+
+    function normalizeImageUrl(rawUrl) {
+        if (!rawUrl || typeof rawUrl !== 'string') return null;
+        let url = rawUrl.trim();
+        if (!url || url === 'null' || url === 'undefined') return null;
+
+        if (url.includes('drive.google.com')) {
+            const fileIdMatch = url.match(/\/file\/d\/([^\/]+)/) || url.match(/[?&]id=([^&]+)/);
+            if (fileIdMatch && fileIdMatch[1]) {
+                return `https://lh3.googleusercontent.com/d/${fileIdMatch[1]}`;
+            }
+        }
+        return url;
+    }
+
+    function findEventImage(event) {
+        if (!event || typeof event !== 'object') return null;
+
+        const possibleKeys = [
+            'imageUrl', 'imageurl', 'image_url', 'image', 'img', 'imgUrl', 
+            'photo', 'picture', 'flyer', 'media', 'attachment', 'Image URL'
+        ];
+
+        for (const key of possibleKeys) {
+            if (event[key]) {
+                const norm = normalizeImageUrl(event[key]);
+                if (norm) return norm;
+            }
+        }
+
+        for (const key in event) {
+            if (key.toLowerCase().includes('image') || key.toLowerCase().includes('photo') || key.toLowerCase().includes('img')) {
+                const norm = normalizeImageUrl(event[key]);
+                if (norm) return norm;
+            }
+        }
+
+        const rawDetails = event.details || event.description || '';
+        const { imageUrl: textImgUrl } = extractImageFromText(rawDetails);
+        return textImgUrl ? normalizeImageUrl(textImgUrl) : null;
+    }
+
+    async function safeFetchJson(url) {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        const text = await res.text();
+        const sanitizedText = text
+            .replace(/\/\*[\s\S]*?\*\/|([^:]|^)\/\/.*/g, '$1')
+            .replace(/,(\s*[\}\]])/g, '$1')
+            .trim();
+        return JSON.parse(sanitizedText);
+    }
+
+    function matchesActiveTown(text, location) {
+        if (ACTIVE_TOWN.isHome) return true;
+        const combinedStr = ((text || "") + " " + (location || "")).toUpperCase();
+        return ACTIVE_TOWN.keywords.some(kw => combinedStr.includes(kw)) || ACTIVE_TOWN.zipCodes.some(zip => combinedStr.includes(zip));
+    }
+
+    function formatHumanTimestamp(rawString) {
+        if (!rawString || rawString === "undefined" || rawString === "null") return "Date TBA";
+        try {
+            const dateObj = new Date(rawString);
+            if (isNaN(dateObj.getTime())) return rawString;
+            return dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        } catch(e) { return rawString; }
+    }
+
+    function applyHighDensityScrollLimits(containerElement, itemCount, maxHeightPx = 480) {
+        if (!containerElement) return;
+        if (itemCount > 5) {
+            containerElement.style.maxHeight = `${maxHeightPx}px`;
+            containerElement.style.overflowY = "auto";
+            containerElement.style.paddingRight = "6px";
+        } else {
+            containerElement.style.maxHeight = "none";
+            containerElement.style.overflowY = "visible";
+            containerElement.style.paddingRight = "0px";
+        }
+    }
+
+    function extractImageFromText(rawText) {
+        if (!rawText) return { imageUrl: null, cleanText: "" };
+
+        let imageUrl = null;
+        let cleanText = rawText;
+
+        const imgTagMatch = cleanText.match(/<img[^>]+src=["']([^"']+)["']/i);
+        if (imgTagMatch && imgTagMatch[1]) {
+            imageUrl = imgTagMatch[1];
+            cleanText = cleanText.replace(/<img[^>]*>/gi, '');
+        } else {
+            const directUrlMatch = cleanText.match(/(https?:\/\/[^\s<>"']+\.(?:png|jpg|jpeg|gif|webp|svg)(?:\?[^\s<>"']*)?)/i) ||
+                                   cleanText.match(/(https?:\/\/drive\.google\.com\/[^\s<>"']+)/i) ||
+                                   cleanText.match(/(https?:\/\/lh3\.googleusercontent\.com\/[^\s<>"']+)/i);
+            if (directUrlMatch && directUrlMatch[1]) {
+                imageUrl = directUrlMatch[1];
+                cleanText = cleanText.replace(directUrlMatch[1], '');
+            }
+        }
+
+        return { imageUrl: imageUrl ? imageUrl.trim() : null, cleanText: cleanText.trim() };
+    }
+
+    function parseInteractiveContent(rawText) {
+        if (!rawText) return "";
+        let parsed = rawText;
+
+        parsed = parsed.replace(/(\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b)/g, (match) => {
+            const clean = match.replace(/[^\d]/g, '');
+            const isWhatsApp = clean.includes("6187084450");
+            return `<a href="javascript:void(0)" onclick="handlePhoneClick('${clean}', ${isWhatsApp})" style="color:#0258A3; font-weight:bold; text-decoration:underline;">${match}</a>`;
+        });
+
+        parsed = parsed.replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, (match) => {
+            return `<a href="mailto:${match}" style="color:#0258A3; font-weight:bold; text-decoration:underline;">${match}</a>`;
+        });
+
+        return parsed;
+    }
+
+    function attachUtmParameters(urlStr) {
+        if (!urlStr || urlStr === "#" || urlStr.startsWith("javascript:")) return urlStr;
+        try {
+            const pageTitle = encodeURIComponent((document.title || "smlc_portal").trim());
+            const urlObj = new URL(urlStr, window.location.origin);
+            urlObj.searchParams.set("utm_source", "smlc_portal");
+            urlObj.searchParams.set("utm_medium", "town_article");
+            urlObj.searchParams.set("utm_campaign", pageTitle);
+            return urlObj.toString();
+        } catch(e) {
+            const connector = urlStr.includes("?") ? "&" : "?";
+            const pageTitle = encodeURIComponent((document.title || "smlc_portal").trim());
+            return `${urlStr}${connector}utm_source=smlc_portal&utm_medium=town_article&utm_campaign=${pageTitle}`;
+        }
+    }
+
+    function isIOSDevice() {
+        return /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    }
+
+    function buildOSMapUrl(addressText) {
+        if (!addressText) return "#";
+        const encoded = encodeURIComponent(addressText);
+        if (isIOSDevice()) return `maps://maps.apple.com/?daddr=${encoded}`;
+        return `https://www.google.com/maps/dir/?api=1&destination=${encoded}`;
+    }
+
+    function handlePhoneClick(number, isWhatsAppEligible) {
+        const cleanNum = number.replace(/[^\d]/g, '');
+        if (isWhatsAppEligible) {
+            fireLightbox(
+                '',
+                'Contact Option',
+                'PHONE & WHATSAPP',
+                `<p style="text-align:center;">Choose your preferred connection method:</p>
+                <div style="display:flex; gap:12px; justify-content:center; margin-top:15px; flex-wrap:wrap;">
+                    <a href="https://wa.me/1${cleanNum}" target="_blank" style="background:#25D366; color:#fff !important; padding:10px 18px; border-radius:4px; font-weight:bold; text-decoration:none;">Open WhatsApp Chat</a>
+                    <a href="tel:+1${cleanNum}" style="background:#0258A3; color:#fff !important; padding:10px 18px; border-radius:4px; font-weight:bold; text-decoration:none;">Place Direct Call</a>
+                </div>`,
+                ''
+            );
+            return;
+        }
+        window.location.href = `tel:+1${cleanNum}`;
+    }
+
+    function safeSetImageSource(imgElement, srcUrl, fallbackWrapper = null) {
+        if (!imgElement) return;
+        const parentContainer = fallbackWrapper || imgElement.closest('figure, .spotlight-image-wrap, .section3-landmark-img-wrap, .polaroid-wrap, .article-media-frame') || imgElement.parentElement;
+
+        if (!srcUrl || srcUrl.trim() === "" || srcUrl === "null" || srcUrl === "undefined") {
+            if (parentContainer) parentContainer.style.display = "none";
+            imgElement.style.display = "none";
+            return;
+        }
+
+        imgElement.onerror = () => {
+            if (parentContainer) parentContainer.style.display = "none";
+            imgElement.style.display = "none";
+        };
+
+        imgElement.onload = () => {
+            imgElement.style.display = "block";
+            if (parentContainer) parentContainer.style.display = "block";
+        };
+
+        imgElement.src = srcUrl;
+    }
+
+    function generateGoogleCalendarUrl(event) {
+        const title = encodeURIComponent(event.name || event.title || "Community Event");
+        const rawDetails = event.details || event.description || "Community Event in Clay County, IL";
+        const { cleanText } = extractImageFromText(rawDetails);
+        const details = encodeURIComponent(cleanText);
+        const location = encodeURIComponent(event.location || "Clay County, IL");
+        
+        let startIso = "";
+        let endIso = "";
+
+        try {
+            const rawDate = event.date || event.displayDate || event.event_date || Date.now();
+            const startDate = new Date(rawDate);
+            if (!isNaN(startDate.getTime())) {
+                startIso = startDate.toISOString().replace(/-|:|\.\d\d\d/g, "");
+                const endDate = new Date(startDate.getTime() + (2 * 60 * 60 * 1000));
+                endIso = endDate.toISOString().replace(/-|:|\.\d\d\d/g, "");
+            }
+        } catch(e) {}
+
+        const datesParam = (startIso && endIso) ? `&dates=${startIso}/${endIso}` : '';
+        return `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}${datesParam}`;
+    }
+
+    function downloadIcsCalendarFile(idx) {
+        const event = window.calendarCachedEvents[idx];
+        if (!event) return;
+
+        const title = event.name || event.title || "Community Event";
+        const rawDetails = event.details || event.description || "";
+        const { cleanText } = extractImageFromText(rawDetails);
+        const details = cleanText.replace(/\n/g, "\\n");
+        const location = event.location || "Clay County, IL";
+        
+        let startIso = new Date().toISOString().replace(/-|:|\.\d\d\d/g, "");
+        let endIso = new Date(Date.now() + 7200000).toISOString().replace(/-|:|\.\d\d\d/g, "");
+
+        try {
+            const rawDate = event.date || event.displayDate || event.event_date;
+            const d = new Date(rawDate);
+            if (!isNaN(d.getTime())) {
+                startIso = d.toISOString().replace(/-|:|\.\d\d\d/g, "");
+                endIso = new Date(d.getTime() + 7200000).toISOString().replace(/-|:|\.\d\d\d/g, "");
+            }
+        } catch(e) {}
+
+        const icsData = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//SMLC Community Portal//EN\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\nBEGIN:VEVENT\nSUMMARY:${title}\nDESCRIPTION:${details}\nLOCATION:${location}\nDTSTART:${startIso}\nDTEND:${endIso}\nSTATUS:CONFIRMED\nEND:VEVENT\nEND:VCALENDAR`;
+
+        const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.setAttribute('download', `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function closeLightbox(event) {
+        const overlay = document.getElementById('portal-global-lightbox');
+        if (!overlay) return;
+        if (!event || event.target === overlay || event.target.classList.contains('lightbox-close-btn') || event.target.tagName === 'BUTTON') {
+            overlay.style.display = 'none';
+        }
+    }
+
+    function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = "") {
+        const overlay = document.getElementById('portal-global-lightbox');
+        const targetImg = document.getElementById('lightbox-target-img');
+        const actionRow = document.getElementById('lightbox-action-row');
+        const actionLink = document.getElementById('lightbox-target-link');
+        
+        if(imgSrc && targetImg) {
+            safeSetImageSource(targetImg, imgSrc);
+            targetImg.alt = altText || title || "Expanded Media View";
+            if (targetImg.parentElement) targetImg.parentElement.style.display = 'block';
+        } else if (targetImg && targetImg.parentElement) {
+            targetImg.parentElement.style.display = 'none';
+        }
+        
+        const dateEl = document.getElementById('lightbox-target-date'); if (dateEl) dateEl.innerHTML = dateText || '';
+        const titleEl = document.getElementById('lightbox-target-title'); if (titleEl) titleEl.innerText = title || '';
+        const storyEl = document.getElementById('lightbox-target-story'); if (storyEl) storyEl.innerHTML = parseInteractiveContent(bodyText) || '';
+        
+        if (targetUrl && actionLink && actionRow) {
+            actionLink.href = attachUtmParameters(targetUrl);
+            actionRow.style.display = 'block';
+        } else if (actionRow) {
+            actionRow.style.display = 'none';
+        }
+        if (overlay) {
+            overlay.style.display = 'flex';
+            overlay.onclick = closeLightbox;
+        }
+    }
+
+    function openCalendarLightboxModal(idx) {
+        const targetItem = window.calendarCachedEvents[idx];
+        if(!targetItem) return;
+
+        const title = targetItem.name || targetItem.title || "Community Event";
+        const rawDate = targetItem.date || targetItem.displayDate || targetItem.event_date || targetItem.pubDate;
+        const dateText = formatHumanTimestamp(rawDate);
+        const timeText = targetItem.time || targetItem.displayTime || "Time TBA";
+        const rawLoc = targetItem.location || ACTIVE_TOWN.primaryName + ", IL";
+        const mapUrl = buildOSMapUrl(rawLoc);
+        
+        const rawDetails = targetItem.details || targetItem.description || "No details provided.";
+        const { cleanText } = extractImageFromText(rawDetails);
+        
+        const finalEventImg = findEventImage(targetItem);
+        const metaHeader = `${dateText} @ ${timeText} | Location: <a href="${mapUrl}" target="_blank" style="color:#d9534f; text-decoration:underline;">${rawLoc}</a>`;
+        
+        const googleCalUrl = generateGoogleCalendarUrl(targetItem);
+        const calActionHtml = `
+            <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd; display: flex; gap: 10px; flex-wrap: wrap;">
+                <a href="${googleCalUrl}" target="_blank" style="background:#1a73e8; color:#ffffff !important; padding:6px 12px; border-radius:4px; text-decoration:none; font-size:13px; font-weight:bold;">+ Add to Google Calendar</a>
+                <button onclick="downloadIcsCalendarFile(${idx})" style="background:#1e7e34; color:#ffffff !important; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:13px; font-weight:bold;">+ Download iCal / Outlook (.ics)</button>
+            </div>
+        `;
+
+        const lightboxImageHtml = finalEventImg ? `<div style="margin-bottom:15px; text-align:center;"><img src="${finalEventImg}" alt="${title}" style="max-width:100%; max-height:70vh; border-radius:6px; object-fit:contain; box-shadow:0 2px 8px rgba(0,0,0,0.15);" /></div>` : '';
+
+        fireLightbox(finalEventImg, title, metaHeader, lightboxImageHtml + cleanText + calActionHtml, '', title);
+    }
+
+    function openNewsLightboxModal(idx) {
+        const story = window.newsCacheBlock[idx];
+        if (!story) return;
+        fireLightbox(
+            story.image || '',
+            story.title || 'Local News Dispatch',
+            formatHumanTimestamp(story.date || story.pubDate) + (story.location ? ` | ${story.location}` : ''),
+            story.full_story || story.description || '',
+            story.link || story.url || '',
+            story.title || 'Local News Dispatch'
+        );
+    }
+
+    async function initializeSection3Slideshow(cb) {
+        const viewport = document.getElementById('flora-slideshow') || document.getElementById('louisville-slideshow') || document.querySelector('.slider-viewport');
+        if (!viewport) return;
+
+        try {
+            const slideshowEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.slideshow) || "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/town-images.json";
+            const res = await fetch(slideshowEndpoint + '?' + cb);
+            const data = await res.json();
+            
+            let slidesList = [];
+
+            if (data.network_towns) {
+                if (ACTIVE_TOWN.isHome) {
+                    Object.keys(data.network_towns).forEach(townKey => {
+                        const townObj = data.network_towns[townKey];
+                        if (townObj && townObj.categories) {
+                            townObj.categories.forEach(cat => {
+                                if (Array.isArray(cat.images)) slidesList.push(...cat.images);
+                            });
+                        }
+                    });
+                } else {
+                    const matchedTownKey = Object.keys(data.network_towns).find(
+                        key => key.toLowerCase() === ACTIVE_TOWN.primaryName.toLowerCase()
+                    );
+
+                    if (matchedTownKey && data.network_towns[matchedTownKey].categories) {
+                        data.network_towns[matchedTownKey].categories.forEach(cat => {
+                            if (Array.isArray(cat.images)) slidesList.push(...cat.images);
+                        });
+                    }
+                }
+            } else {
+                const townKey = ACTIVE_TOWN.jsonKey || "flora";
+                slidesList = data[townKey] || data.images || (Array.isArray(data) ? data : []);
+            }
+
+            if (slidesList.length > 0) {
+                viewport.innerHTML = slidesList.map((item, idx) => {
+                    const imgUrl = item.imageurl || item.src || item.url || item.image;
+                    const captionTitle = item.name || item.title || item.alt || 'Town View';
+                    const altText = (item.alt || captionTitle).replace(/'/g, "\\'");
+                    const safeCaption = (captionTitle).replace(/'/g, "\\'");
+
+                    return `
+                        <div class="slider-slide ${idx === 0 ? 'active' : ''}" style="position: absolute; inset: 0; opacity: ${idx === 0 ? 1 : 0}; transition: opacity 0.8s ease-in-out; z-index: ${idx === 0 ? 2 : 1};">
+                            <img src="${imgUrl}" alt="${altText}" onclick="fireLightbox('${imgUrl}', '${safeCaption}', 'SLIDESHOW VIEW', '${altText}', '${item.source_url || ''}', '${altText}')" style="width:100%; height:100%; object-fit:cover; cursor:pointer;">
+                            ${captionTitle ? `<div class="slider-caption">${captionTitle}</div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+            }
+        } catch(e) {
+            console.error("Slideshow JSON fetch error, keeping existing HTML slides:", e);
+        }
+
+        const slides = viewport.querySelectorAll('.slider-slide');
+        if (slides.length <= 1) return;
+
+        let currentSlideIdx = 0;
+        if (globalSlideshowTicker) clearInterval(globalSlideshowTicker);
+
+        globalSlideshowTicker = setInterval(() => {
+            slides[currentSlideIdx].style.opacity = "0";
+            slides[currentSlideIdx].style.zIndex = "1";
+            currentSlideIdx = (currentSlideIdx + 1) % slides.length;
+            slides[currentSlideIdx].style.opacity = "1";
+            slides[currentSlideIdx].style.zIndex = "2";
+        }, 4000);
+    }
+
+    function loadScorestreamSportsWidget() {
+        const container = document.querySelector('.scorestream-widget-container');
+        if (!container) return;
+
+        container.setAttribute('data-user-widget-id', ACTIVE_TOWN.scorestreamId);
+        const parent = container.parentElement;
+        if (parent) {
+            const oldScript = parent.querySelector('script[src*="scorestream.com"]');
+            if (oldScript) oldScript.remove();
+
+            const newScript = document.createElement('script');
+            newScript.type = 'text/javascript';
+            newScript.async = true;
+            newScript.src = "https://scorestream.com/apiJsCdn/widgets/embed.js";
+            parent.appendChild(newScript);
+        }
+    }
+
+    function initializeFirebaseGasMonitor() {
+        const gasContainer = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
+
+        const stationConfigs = {
+            "48100": { town: "flora", display: "Flora", name: "CASEY'S", logo: "Casey's.png" },      
+            "48101": { town: "flora", display: "Flora", name: "HUCK'S", logo: "Hucks.png" },      
+            "128128": { town: "flora", display: "Flora", name: "MACH 1", logo: "Mach 1.png" },    
+            "120226": { town: "flora", display: "Flora", name: "FAST STOP", logo: "Fast stop.png" },  
+            "48026": { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" }, 
+            "171711": { town: "clay-city", display: "Clay City", name: "CASEY'S", logo: "Casey's.png" },
+            "181818": { town: "xenia", display: "Xenia", name: "KNAPP'S", logo: "Knapps.png" }  
+        };
+
+        if (typeof firebase === 'undefined') {
+            const fbAppScript = document.createElement('script');
+            fbAppScript.src = "https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js";
+            document.head.appendChild(fbAppScript);
+
+            const fbDbScript = document.createElement('script');
+            fbDbScript.src = "https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js";
+            document.head.appendChild(fbDbScript);
+
+            fbDbScript.onload = () => bindFirebaseServices(stationConfigs, gasContainer);
+        } else {
+            bindFirebaseServices(stationConfigs, gasContainer);
+        }
+    }
+
+    function bindFirebaseServices(stationConfigs, gasContainer) {
+        const firebaseConfig = {
+            apiKey: "AIzaSyBYPbGWDNPUmCSnFWDPPWtiXe2F6MPinXg",
+            authDomain: "smlc-fuel-monitor.firebaseapp.com",
+            databaseURL: "https://smlc-fuel-monitor-default-rtdb.firebaseio.com",
+            projectId: "smlc-fuel-monitor",
+            storageBucket: "smlc-fuel-monitor.firebasestorage.app",
+            messagingSenderId: "22397440085",
+            appId: "1:22397440085:web:c88e71688ed58896bc4dc"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        
+        if (gasContainer) {
+            db.ref('fuel_prices').on('value', (snap) => {
+                const val = snap.val();
+                if (val) renderGasBillboardUI(val, stationConfigs, ACTIVE_TOWN.gasKey, gasContainer);
+            });
+        }
+
+        bindFirebaseSection3And4Engine(db);
+        bindFirebaseMenuEngine(db);
+        bindFirebaseLocalLinksEngine(db);
+    }
+
+    /* REAL-TIME FIREBASE BINDINGS FOR SECTIONS 3 & 4.1 */
+    function bindFirebaseSection3And4Engine(db) {
+        const townName = ACTIVE_TOWN.dbTownKey || "Flora";
+        const baseTownPath = `master_county_data/towns/${townName}/sections`;
+
+        // 1. sec_3_1_1 (Main Title & Intro Text)
+        db.ref(`${baseTownPath}/sec_3_1_1`).on('value', (snap) => {
+            const val = snap.val();
+            if (val) {
+                const titleEl = document.querySelector('.section3-main-title');
+                const introEl = document.querySelector('.section3-intro-text');
+                if (typeof val === 'string' && titleEl) {
+                    titleEl.innerText = val;
+                } else if (typeof val === 'object') {
+                    if (titleEl && (val.title || val.main_title || val.name)) titleEl.innerText = val.title || val.main_title || val.name;
+                    if (introEl && (val.intro || val.text || val.description)) introEl.innerText = val.intro || val.text || val.description;
+                }
+            }
+        });
+
+        // 2. sec_3_1_2 (About Flora Tag & Body Text)
+        db.ref(`${baseTownPath}/sec_3_1_2`).on('value', (snap) => {
+            const val = snap.val();
+            if (val) {
+                const tagEl = document.querySelector('.section3-about-tag');
+                const textEl = document.getElementById('desc2-target-1');
+                if (typeof val === 'string' && textEl) {
+                    textEl.innerText = val;
+                } else if (typeof val === 'object') {
+                    if (tagEl && (val.tag || val.title || val.label)) tagEl.innerText = val.tag || val.title || val.label;
+                    if (textEl && (val.text || val.content || val.description || val.about)) textEl.innerText = val.text || val.content || val.description || val.about;
+                }
+            }
+        });
+
+        // 3. sec_3_2_1 (Landmark Title)
+        db.ref(`${baseTownPath}/sec_3_2_1`).on('value', (snap) => {
+            const val = snap.val();
+            const rTitle = document.getElementById('right-card-meta-title');
+            if (val && rTitle) {
+                rTitle.innerText = typeof val === 'string' ? val : (val.title || val.name || val.text || "");
+            }
+        });
+
+        // 4. sec_3_2_2 (Landmark Image 1 & Caption 1)
+        db.ref(`${baseTownPath}/sec_3_2_2`).on('value', (snap) => {
+            const val = snap.val();
+            const img1 = document.getElementById('dual-img-1');
+            const hdr1 = document.getElementById('dual-header-1');
+            if (val) {
+                if (typeof val === 'string' && img1) {
+                    safeSetImageSource(img1, val);
+                } else if (typeof val === 'object') {
+                    const src = val.image || val.image_url || val.src || val.url;
+                    if (img1 && src) safeSetImageSource(img1, src);
+                    if (hdr1 && (val.header || val.caption || val.title)) hdr1.innerText = val.header || val.caption || val.title;
+                }
+            }
+        });
+
+        // 5. sec_3_2_3 (Landmark Image 2 & Caption 2)
+        db.ref(`${baseTownPath}/sec_3_2_3`).on('value', (snap) => {
+            const val = snap.val();
+            const img2 = document.getElementById('dual-img-2');
+            const hdr2 = document.getElementById('dual-header-2');
+            if (val) {
+                if (typeof val === 'string' && img2) {
+                    safeSetImageSource(img2, val);
+                } else if (typeof val === 'object') {
+                    const src = val.image || val.image_url || val.src || val.url;
+                    if (img2 && src) safeSetImageSource(img2, src);
+                    if (hdr2 && (val.header || val.caption || val.title)) hdr2.innerText = val.header || val.caption || val.title;
+                }
+            }
+        });
+
+        // 6. sec_3_2_4 (Landmark Description)
+        db.ref(`${baseTownPath}/sec_3_2_4`).on('value', (snap) => {
+            const val = snap.val();
+            const desc1 = document.getElementById('right-card-meta-desc1');
+            if (val && desc1) {
+                if (typeof val === 'string') {
+                    desc1.innerText = val;
+                } else if (typeof val === 'object') {
+                    if (val.paragraph1) {
+                        const pKeys = Object.keys(val)
+                            .filter(k => k.toLowerCase().includes('paragraph') || k.toLowerCase().startsWith('p'))
+                            .sort();
+                        desc1.innerText = pKeys.map(k => val[k]).join('\n\n');
+                    } else {
+                        desc1.innerText = val.desc || val.description || val.text || val.content || "";
+                    }
+                }
+            }
+        });
+    }
+
+    function bindFirebaseLocalLinksEngine(db) {
+        const linkTarget = document.getElementById('local-links-target-container');
+        if (!linkTarget) return;
+
+        const townName = ACTIVE_TOWN.dbTownKey || "Flora";
+        const townPath = `master_county_data/towns/${townName}/sections/sec_7_3_2`;
+        const globalPath = `master_county_data/global/sections/sec_7_3_2`;
+
+        let townLinks = [];
+        let globalLinks = [];
+
+        const renderCombinedLinks = () => {
+            const rawCombined = [...townLinks, ...globalLinks];
+            const filteredLinks = rawCombined.filter(item => {
+                if (!item) return false;
+                const title = item.title || item.name || item.label || "";
+                const url = item.website || item.url || item.link || item.href || "";
+                if (!title || !url) return false;
+
+                const urlLower = url.toLowerCase();
+                const titleLower = title.toLowerCase();
+
+                if (urlLower.startsWith('mailto:') || urlLower.includes('@') || titleLower.includes('@')) return false;
+                if (urlLower.startsWith('#') || urlLower.includes('.html') || titleLower.includes('menu') || titleLower === 'home') return false;
+
+                return true;
+            });
+
+            if (filteredLinks.length > 0) {
+                applyHighDensityScrollLimits(linkTarget, filteredLinks.length, 360);
+                linkTarget.innerHTML = filteredLinks.map(link => {
+                    const name = link.title || link.name || link.label || "Local Resource";
+                    const targetRawUrl = link.website || link.url || link.link || link.href || "#";
+                    const taggedUrl = attachUtmParameters(targetRawUrl);
+                    const displayLoc = link.location || link.town || ACTIVE_TOWN.primaryName;
+
+                    return `
+                        <div class="local-link-node" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #ddd; text-align: left;">
+                            <span style="font-weight: bold; font-size: 15px; color: #1a1a1a;">${name}</span>
+                            <span style="font-size: 12px; color: #666; margin-left: 6px;">(${displayLoc})</span> &mdash; 
+                            <a href="${taggedUrl}" target="_blank" class="local-link-anchor-btn" data-ga-label="local_link" style="font-weight: bold; color: var(--link-bright-blue); text-decoration: underline;">Visit Site &rarr;</a>
+                        </div>
+                    `;
+                }).join('');
+            }
+        };
+
+        db.ref(townPath).on('value', (snapshot) => {
+            const val = snapshot.val();
+            if (val) {
+                const linksData = val.links || val;
+                townLinks = Array.isArray(linksData) ? linksData : Object.values(linksData);
+            } else {
+                townLinks = [];
+            }
+            renderCombinedLinks();
+        });
+
+        db.ref(globalPath).on('value', (snapshot) => {
+            const val = snapshot.val();
+            if (val) {
+                const linksData = val.links || val;
+                globalLinks = Array.isArray(linksData) ? linksData : Object.values(linksData);
+            } else {
+                globalLinks = [];
+            }
+            renderCombinedLinks();
+        });
+    }
+
+    function bindFirebaseMenuEngine(db) {
+        const menuContainer = document.getElementById('dynamic-menu-links');
+        if (!menuContainer) return;
+
+        db.ref('master_county_data/global/menu').on('value', (snapshot) => {
+            const menuData = snapshot.val();
+            if (menuData) {
+                const menuArray = Array.isArray(menuData) ? menuData : Object.values(menuData);
+                
+                menuContainer.innerHTML = menuArray.map(item => {
+                    const label = item.name || item.label || item.title || "Town";
+                    const targetUrl = attachUtmParameters(item.url || item.link || '#');
+                    const imgIcon = item.imageUrl || item.image || '';
+                    const isActive = (label.toUpperCase() === ACTIVE_TOWN.primaryName.toUpperCase()) ? 'class="active" style="color: #ffff00; font-weight: bold;"' : 'style="color: #ffffff;"';
+
+                    return `
+                        <li>
+                            <a href="${targetUrl}" ${isActive}>
+                                ${imgIcon ? `<img src="${imgIcon}" alt="${label}" style="height:20px; vertical-align:middle; margin-right:6px;" onerror="this.style.display='none'" />` : ''}
+                                ${label}
+                            </a>
+                        </li>
+                    `;
+                }).join('');
+            }
+        });
+    }
+
+    function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
+        const gasTownsArray = Array.isArray(activeGasTowns) ? activeGasTowns : [activeGasTowns];
+        const stationIds = Object.keys(stationConfigs).filter(id => gasTownsArray.includes(stationConfigs[id].town));
+        if (stationIds.length === 0) return;
+
+        if (gasMonitorRotator) {
+            clearInterval(gasMonitorRotator);
+            gasMonitorRotator = null;
+        }
+
+        const updatePortalUrl = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.gas_widget) 
+            || cleanRawUrl(window.globalAppConfig?.regional_endpoints?.update_gas_github_source) 
+            || "https://werewolf3788.github.io/SMLC/update-gas.html";
+
+        let currentIdx = 0;
+
+        const renderCurrentStation = () => {
+            const id = stationIds[currentIdx];
+            const config = stationConfigs[id];
+            const info = data[id] || {};
+            
+            const regPrice = info.reg || info.regular || info.price || "---";
+            let dslPrice = info.dsl || info.diesel || "---";
+            if (dslPrice === "0" || !dslPrice) dslPrice = "---";
+
+            const updateDate = info.date || info.updated || "PENDING";
+            const safeLogo = encodeURIComponent(config.logo);
+
+            container.style.cursor = "pointer";
+            container.onclick = () => window.open(attachUtmParameters(updatePortalUrl), '_blank');
+
+            container.innerHTML = `
+                <div class="sidebar-widget-title">${config.display.toUpperCase()} FUEL INDEX MONITOR</div>
+                <div class="fuel-station-header">
+                    <div class="station-logo-frame"><img src="https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/${safeLogo}" alt="${config.name}"></div>
+                    <div class="station-meta-title">${config.name} (${config.display})</div>
+                </div>
+                <div class="fuel-pricing-grid">
+                    <div class="price-box"><span class="price-type-label">REGULAR</span><span class="price-value-regular">${regPrice}</span></div>
+                    <div class="price-box"><span class="price-type-label">DIESEL</span><span class="price-value-diesel">${dslPrice}</span></div>
+                </div>
+                <div class="sync-timestamp-label">Updated: ${updateDate} &bull; Click to Update</div>
+            `;
+            currentIdx = (currentIdx + 1) % stationIds.length;
+        };
+
+        renderCurrentStation();
+
+        if (stationIds.length > 1) {
+            gasMonitorRotator = setInterval(renderCurrentStation, 5000);
+        }
+    }
+
+    async function loadPartnersStrips(cacheBuster) {
+        const topGrid = document.getElementById('partners-grid-top') 
+            || document.querySelector('.scotts-partners-top') 
+            || document.querySelectorAll('.partner-card-container')[0];
+            
+        const bottomGrid = document.getElementById('partners-grid-bottom') 
+            || document.querySelector('.scotts-partners-bottom') 
+            || document.querySelectorAll('.partner-card-container')[1];
+
+        try {
+            const partnersEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.partners_json_manifest) 
+                || "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/partners.json";
+                
+            const res = await fetch(partnersEndpoint + '?' + cacheBuster);
+            const data = await res.json();
+            const partnersList = Array.isArray(data) ? data : (data.partners || []);
+
+            if (partnersList.length > 0) {
+                if (topGrid) renderFixedCardSlideshow(topGrid, partnersList, 0, 'section6');
+
+                if (bottomGrid) {
+                    const offsetSeed = Math.floor(partnersList.length / 2) || 1;
+                    renderFixedCardSlideshow(bottomGrid, partnersList, offsetSeed, 'section8');
+                }
+            } else {
+                console.warn("Partners manifest loaded but contained no items.");
+            }
+        } catch(e) { 
+            console.error("Partners manifest error:", e); 
+        }
+    }
+
+    function renderFixedCardSlideshow(containerElement, partnerPool, offsetSeed = 0, sectionId = 'section6', cardsToShow = 5) {
+        if (!containerElement || !partnerPool.length) return;
+
+        containerElement.style.display = "flex";
+        containerElement.style.justifyContent = "space-between";
+        containerElement.style.alignItems = "center";
+        containerElement.style.gap = "20px";
+        containerElement.style.width = "100%";
+        containerElement.style.flexWrap = "wrap";
+
+        const poolSize = partnerPool.length;
+        const totalCards = Math.min(cardsToShow, poolSize);
+        const cardSlotsData = [];
+
+        for (let slotIndex = 0; slotIndex < totalCards; slotIndex++) {
+            const slotRotationQueue = [];
+            for (let step = 0; step < poolSize; step++) {
+                const partnerIndex = (slotIndex + offsetSeed + (step * totalCards)) % poolSize;
+                if (!slotRotationQueue.includes(partnerPool[partnerIndex])) {
+                    slotRotationQueue.push(partnerPool[partnerIndex]);
+                }
+            }
+            cardSlotsData.push(slotRotationQueue);
+        }
+
+        containerElement.innerHTML = cardSlotsData.map((slot, idx) => {
+            const initialPartner = slot[0];
+            const initialUrl = attachUtmParameters(initialPartner.websiteUrl || initialPartner.url || '#');
+            const initialImg = initialPartner.image || initialPartner.logo || '';
+            const initialName = initialPartner.name || 'Local Partner';
+
+            return `
+                <div class="partner-card fixed-slide-card" data-slot-index="${idx}" style="flex: 1 1 180px; max-width: 260px; transition: opacity 0.4s ease;">
+                    <div class="partner-logo-box">
+                        <img class="partner-card-img" src="${initialImg}" alt="${initialName}" onclick="fireLightbox('${initialImg}', '${initialName.replace(/'/g, "\\'")}', 'PARTNER DIRECTORY', 'Local Sponsor', '${initialUrl}', '${initialName.replace(/'/g, "\\'")}')" style="cursor:pointer;" onerror="this.closest('.fixed-slide-card').style.display='none';">
+                    </div>
+                    <h4><a class="partner-card-link" href="${initialUrl}" target="_blank" data-ga-label="partner_link">${initialName}</a></h4>
+                </div>
+            `;
+        }).join('');
+
+        let isSectionPaused = false;
+        containerElement.addEventListener('mouseenter', () => { isSectionPaused = true; });
+        containerElement.addEventListener('mouseleave', () => { isSectionPaused = false; });
+        containerElement.addEventListener('touchstart', () => { isSectionPaused = true; }, { passive: true });
+        containerElement.addEventListener('touchend', () => { isSectionPaused = false; });
+        containerElement.addEventListener('touchcancel', () => { isSectionPaused = false; });
+
+        const cardNodes = containerElement.querySelectorAll('.fixed-slide-card');
+
+        cardNodes.forEach((cardNode) => {
+            const slotIdx = parseInt(cardNode.getAttribute('data-slot-index'), 10);
+            const slotRotationItems = cardSlotsData[slotIdx];
+
+            if (slotRotationItems && slotRotationItems.length > 1) {
+                let currentItemIdx = 0;
+
+                const timerInstance = setInterval(() => {
+                    if (isSectionPaused) return;
+
+                    currentItemIdx = (currentItemIdx + 1) % slotRotationItems.length;
+                    const nextItem = slotRotationItems[currentItemIdx];
+                    const nextUrl = attachUtmParameters(nextItem.websiteUrl || nextItem.url || '#');
+                    const nextImg = nextItem.image || nextItem.logo || '';
+                    const nextName = nextItem.name || 'Local Partner';
+
+                    cardNode.style.opacity = '0';
+
+                    setTimeout(() => {
+                        const imgEl = cardNode.querySelector('.partner-card-img');
+                        const linkEl = cardNode.querySelector('.partner-card-link');
+
+                        if (imgEl) {
+                            safeSetImageSource(imgEl, nextImg, cardNode);
+                            imgEl.alt = nextName;
+                            imgEl.onclick = () => fireLightbox(nextImg, nextName, 'PARTNER DIRECTORY', 'Local Sponsor', nextUrl, nextName);
+                        }
+
+                        if (linkEl) {
+                            linkEl.href = nextUrl;
+                            linkEl.innerText = nextName;
+                        }
+
+                        cardNode.style.opacity = '1';
+                    }, 400);
+                }, 4000 + (slotIdx * 850));
+
+                if (sectionId === 'section6') section6PartnerTimer = timerInstance;
+                if (sectionId === 'section8') section8PartnerTimer = timerInstance;
+            }
+        });
+    }
+
+    async function loadFooterDataPipeline(cacheBuster) {
+        try {
+            const footerEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.footer_json) || 'https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/footer.json';
+            const res = await fetch(footerEndpoint + '?' + cacheBuster);
+            const data = await res.json();
+            const contact = data?.footer_data?.contact_info;
+
+            if (contact) {
+                const phoneTarget = document.getElementById('footer-phone-target');
+                if (phoneTarget && Array.isArray(contact.phone)) {
+                    phoneTarget.innerHTML = contact.phone.map(p => {
+                        const cleanNum = (p.number || "").replace(/[^\d]/g, '');
+                        const isWhatsApp = (p.whatsapp_url || p.number.includes("618-708-4450")) ? true : false;
+                        const displayLabel = p.label ? `<strong>${p.label}:</strong> ` : '';
+                        
+                        return `<div><a href="javascript:void(0)" onclick="handlePhoneClick('${cleanNum}', ${isWhatsApp})" style="color:#fff; text-decoration:none;">${displayLabel}${p.number}</a></div>`;
+                    }).join('');
+                }
+
+                const emailTarget = document.getElementById('footer-email-target');
+                if (emailTarget && contact.email) {
+                    const mailAddr = contact.email.address || contact.email;
+                    emailTarget.href = `mailto:${mailAddr}`;
+                    emailTarget.innerText = mailAddr;
+                }
+
+                const addressTarget = document.getElementById('footer-address-target');
+                if (addressTarget && contact.address) {
+                    const addrText = contact.address.text || contact.address;
+                    const mapUrl = contact.address.directions_links?.google_maps_directions 
+                        || contact.address.view_links?.google_map 
+                        || buildOSMapUrl(addrText);
+                        
+                    addressTarget.innerHTML = `<a href="${mapUrl}" target="_blank" style="color:#fff; text-decoration:underline;">${addrText}</a>`;
+                }
+
+                const copyTarget = document.getElementById('footer-copy-target');
+                if (copyTarget && data.footer_data.copyright) {
+                    copyTarget.innerHTML = data.footer_data.copyright;
+                }
+            }
+        } catch(e) { console.error("Footer JSON error:", e); }
+    }
+
+    async function loadLocalLinksDirectory(cacheBuster) {
+        const linkTarget = document.getElementById('local-links-target-container');
+        if (!linkTarget) return;
+
+        try {
+            const linksEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.local_links) 
+                || "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/local_links.json";
+
+            const res = await fetch(linksEndpoint + '?' + cacheBuster);
+            if (!res.ok) throw new Error(`HTTP ${res.status} when fetching local_links.json`);
+
+            const data = await res.json();
+            const rawList = Array.isArray(data) ? data : (data.links || data.local_links || []);
+
+            if (rawList.length > 0) {
+                const filteredLinks = rawList.filter(link => {
+                    const displayName = link.name || link.title || link.label || "";
+                    const displayLoc = link.location || link.town || link.city || link.category || "";
+                    const isGlobal = (displayLoc.toUpperCase() === "GLOBAL" || displayLoc.toUpperCase() === "ALL" || displayLoc.toUpperCase() === "CLAY COUNTY");
+                    
+                    return matchesActiveTown(displayName, displayLoc) || isGlobal;
+                });
+
+                applyHighDensityScrollLimits(linkTarget, filteredLinks.length, 360);
+
+                if (filteredLinks.length > 0) {
+                    linkTarget.innerHTML = filteredLinks.map(link => {
+                        const name = link.name || link.title || link.label || "Local Resource";
+                        const targetRawUrl = link.url || link.link || link.href || "#";
+                        const taggedUrl = attachUtmParameters(targetRawUrl);
+                        const displayLoc = link.location || link.town || "County Wide";
+
+                        return `
+                            <div class="local-link-node" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #ddd; text-align: left;">
+                                <span style="font-weight: bold; font-size: 15px; color: #1a1a1a;">${name}</span>
+                                <span style="font-size: 12px; color: #666; margin-left: 6px;">(${displayLoc})</span> &mdash; 
+                                <a href="${taggedUrl}" target="_blank" class="local-link-anchor-btn" data-ga-label="local_link" style="font-weight: bold; color: var(--link-bright-blue); text-decoration: underline;">Visit Site &rarr;</a>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    linkTarget.innerHTML = `<div style="font-style:italic; font-size:14px; color:#666; padding:10px 0;">No institutional links listed for ${ACTIVE_TOWN.primaryName}.</div>`;
+                }
+            } else {
+                linkTarget.innerHTML = `<div style="font-style:italic; font-size:14px; color:#666; padding:10px 0;">Directory currently empty.</div>`;
+            }
+        } catch(e) {
+            console.error("Local links directory fetch error:", e);
+            linkTarget.innerHTML = `<div style="font-size:13px; color:#cc0000; font-weight:bold; padding:10px 0;">Directory segment temporarily offline.</div>`;
+        }
+    }
+
+    async function loadTownArticleData(cacheBuster) {
+        const articleTarget = document.getElementById('town-article-target') || document.querySelector('.town-article-container');
+        if (!articleTarget) return;
+
+        try {
+            const articleEndpoint = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.town_artical) 
+                || "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/artical.json";
+                
+            const res = await fetch(articleEndpoint + '?' + cacheBuster);
+            const data = await res.json();
+
+            if (data) {
+                const title = data.title || "Town Article";
+                const subtitle = data.subtitle ? `<h3 class="town-article-subtitle" style="font-size: 1.1rem; color: #555; margin-bottom: 15px;">${data.subtitle}</h3>` : "";
+                
+                let paragraphsHtml = "";
+                if (Array.isArray(data.content)) {
+                    paragraphsHtml = data.content.map(paragraph => `<p style="margin-bottom: 1rem; line-height: 1.6;">${parseInteractiveContent(paragraph)}</p>`).join('');
+                } else if (typeof data.content === 'string') {
+                    paragraphsHtml = `<p style="margin-bottom: 1rem; line-height: 1.6; white-space: pre-line;">${parseInteractiveContent(data.content)}</p>`;
+                }
+
+                let sourceLinkHtml = "";
+                if (data.source_url) {
+                    const taggedUrl = attachUtmParameters(data.source_url);
+                    sourceLinkHtml = `<div style="margin-top: 15px;"><a href="${taggedUrl}" target="_blank" data-ga-label="town_article_source" style="color: #0258A3; font-weight: bold; text-decoration: underline;">Read Full Source &rarr;</a></div>`;
+                }
+
+                articleTarget.innerHTML = `
+                    <div class="town-article-wrapper" data-ga-label="town_article_block">
+                        <h2 class="town-article-title" style="font-size: 1.5rem; font-weight: bold; margin-bottom: 5px;">${title}</h2>
+                        ${subtitle}
+                        <div class="town-article-body">
+                            ${paragraphsHtml}
+                        </div>
+                        ${sourceLinkHtml}
+                    </div>
+                `;
+            }
+        } catch(e) {
+            console.error("Town Article JSON error:", e);
+        }
+    }
+
+    function updateNavigationActiveState() {
+        const currentHash = (window.location.hash || "#/flora").toLowerCase();
+        document.querySelectorAll('#dynamic-menu-links a, .menu-links a').forEach(link => {
+            const href = (link.getAttribute("href") || "").toLowerCase();
+            if (href === currentHash || (currentHash === "#/flora" && href.includes("flora"))) {
+                link.classList.add("active");
+                link.style.color = "#ffff00";
+                link.style.fontWeight = "bold";
+            } else {
+                link.classList.remove("active");
+                link.style.color = "#ffffff";
+                link.style.fontWeight = "normal";
+            }
+        });
+    }
+
+    async function handleSPAHashNavigation() {
+        resetAllActiveTimers();
+        ACTIVE_TOWN = getActiveTownConfig();
+        hydrateTownHeroUI();
+        document.title = `${ACTIVE_TOWN.primaryName}, IL - SMLC Digital Town Square Portal`;
+        updateNavigationActiveState();
+
+        const targetHtmlFile = ACTIVE_TOWN.file;
+
+        if (targetHtmlFile && !window.location.pathname.endsWith(targetHtmlFile)) {
+            try {
+                const cb = getSmartCacheBuster();
+                const fetchUrl = `./${targetHtmlFile}?${cb}`;
+                const response = await fetch(fetchUrl);
+
+                if (response.ok) {
+                    const htmlText = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlText, "text/html");
+
+                    const newContent = doc.querySelector('.main-container') || doc.body;
+                    const currentContainer = document.querySelector('.main-container') || document.body;
+
+                    if (newContent && currentContainer && currentContainer !== document.body) {
+                        currentContainer.innerHTML = newContent.innerHTML;
+                    }
+                }
+            } catch (e) {
+                console.warn(`SPA HTML Fetch for ${targetHtmlFile} failed; using inline page state:`, e);
+            }
+        }
+
+        await processDataPipelines();
+    }
+
+    async function processDataPipelines() {
+        const cb = getSmartCacheBuster();
+
+        try {
+            const configUrl = 'https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/config.json?' + cb;
+            window.globalAppConfig = await safeFetchJson(configUrl);
+        } catch(e) { 
+            console.warn("Config fetch fault handled - applying default endpoints:", e.message); 
+        }
+
+        if (!window.globalAppConfig || typeof window.globalAppConfig !== 'object') {
+            window.globalAppConfig = DEFAULT_APP_CONFIG;
+        }
+
+        const endpoints = window.globalAppConfig?.regional_endpoints || DEFAULT_APP_CONFIG.regional_endpoints;
+
+        // 1. Business Spotlight Loader
+        try {
+            const spotlightEndpoint = cleanRawUrl(endpoints.Business_Spotlight) || DEFAULT_APP_CONFIG.regional_endpoints.Business_Spotlight;
+            const spotlightData = await safeFetchJson(spotlightEndpoint + '?' + cb);
+            const spotlightTarget = document.querySelector('.clay-county-news-box.spotlight-clipping');
+            
+            if (spotlightData && spotlightTarget) {
+                const townKey = ACTIVE_TOWN.jsonKey || "flora";
+                const spotlights = spotlightData.business_spotlights || {};
+                const townsMap = spotlights.cities_towns_villages || {};
+                const townshipsMap = spotlights.civil_townships || {};
+
+                const activeSpotlight = townsMap[townKey] 
+                    || townshipsMap[townKey] 
+                    || townshipsMap[`${townKey}_township`]
+                    || spotlightData[townKey]
+                    || (Array.isArray(spotlightData) ? spotlightData[0] : null);
+
+                if (activeSpotlight) {
+                    const img = activeSpotlight.image_url || activeSpotlight.src || activeSpotlight.imageurl || activeSpotlight.image;
+                    const title = activeSpotlight.title || activeSpotlight.name || "Local Merchant";
+                    const loc = activeSpotlight.location || ACTIVE_TOWN.primaryName + ", IL";
+                    const desc = activeSpotlight.description || activeSpotlight.alt || "Supporting local commerce across Clay County.";
+                    const link = attachUtmParameters(activeSpotlight.website_url || activeSpotlight.url || activeSpotlight.link || "#");
+
+                    spotlightTarget.innerHTML = `
+                        <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
+                        <div class="spotlight-image-wrap"><img src="${img}" alt="${title}" onclick="fireLightbox('${img}', '${title.replace(/'/g, "\\'")}', '${loc}', '${desc.replace(/'/g, "\\'")}', '${link}', '${title.replace(/'/g, "\\'")}')" onerror="this.parentElement.style.display='none';"></div>
+                        <span class="biz-title">${title}</span>
+                        <span class="biz-location">${loc}</span>
+                        <p class="biz-description">"${desc}"</p>
+                        <a href="${link}" target="_blank" class="spotlight-btn" data-ga-label="business_spotlight">Visit Business &rarr;</a>
+                    `;
+                }
+            }
+        } catch(e) { console.error("Spotlight error", e); }
+
+        // 2. Section 3 Landmark Data
+        try {
+            const section3Endpoint = cleanRawUrl(endpoints.Section_3) || "https://raw.githubusercontent.com/Werewolf3788/SMLC/main/json/section3.json";
+            const res = await fetch(section3Endpoint + '?' + cb);
+            const rows = await res.json();
+            if (Array.isArray(rows)) {
+                const targetRow = rows.find(r => (r.Town || "").toUpperCase() === ACTIVE_TOWN.primaryName.toUpperCase());
+                if (targetRow) {
+                    const rTitle = document.getElementById('right-card-meta-title'); if (rTitle) rTitle.innerText = targetRow.Title;
+                    const i1 = document.getElementById('dual-img-1'); if (i1) { safeSetImageSource(i1, targetRow.ImageUrl1); i1.onclick = () => fireLightbox(targetRow.ImageUrl1, targetRow.Header1, "ARCHIVE VIEW", targetRow.Description1, '', targetRow.Header1); }
+                    const h1 = document.getElementById('dual-header-1'); if (h1) h1.innerText = targetRow.Header1;
+                    const i2 = document.getElementById('dual-img-2'); if (i2) { safeSetImageSource(i2, targetRow.ImageUrl2); i2.onclick = () => fireLightbox(targetRow.ImageUrl2, targetRow.Header2, "ARCHIVE VIEW", targetRow.Description1, '', targetRow.Header2); }
+                    const h2 = document.getElementById('dual-header-2'); if (h2) h2.innerText = targetRow.Header2;
+                    const desc1 = document.getElementById('right-card-meta-desc1'); if (desc1) desc1.innerText = targetRow.Description1;
+                    const desc2 = document.getElementById('desc2-target-1'); if (desc2) desc2.innerText = targetRow.Description2;
+                }
+            }
+        } catch(e) { console.error("Section 3 error", e); }
+
+        await initializeSection3Slideshow(cb);
+
+        // 3. Historical Timeline Engine
+        const historyRowTarget = document.getElementById('history-row-target');
+        try {
+            const historyTree = window.globalAppConfig?.town_history_tree || {};
+            const activeHistoryKey = ACTIVE_TOWN.historyKey || "flora";
+            
+            let historyEndpoint = historyTree[activeHistoryKey] 
+                || `https://raw.githubusercontent.com/skventuresigns-design/smlc/main/townhistory/${activeHistoryKey.replace(/_/g, '-')}.json`;
+                
+            const res = await fetch(cleanRawUrl(historyEndpoint) + '?' + cb);
+            if (!res.ok) throw new Error(`HTTP ${res.status} when fetching history for ${activeHistoryKey}`);
+
+            const payload = await res.json();
+            const historyList = Array.isArray(payload) ? payload : (payload.history || payload.timeline || []);
+
+            if (historyList.length > 0 && historyRowTarget) {
+                applyHighDensityScrollLimits(historyRowTarget, historyList.length, 520);
+
+                historyRowTarget.innerHTML = historyList.map(evt => `
+                    <div class="history-card" onclick="fireLightbox('${evt.image_url || evt.image || ''}', '${(evt.event || evt.title || '').replace(/'/g, "\\'")}', 'YEAR ${evt.year}', '${(evt.description || '').replace(/'/g, "\\'")}', '${evt.source_url || evt.link || ''}', '${(evt.event || evt.title || '').replace(/'/g, "\\'")}')">
+                        <h2>${evt.year}</h2>
+                        <h3>${evt.event || evt.title}</h3>
+                        <p>${evt.description || ''}</p>
+                        ${(evt.image_url || evt.image) ? `<div class="history-img-box"><img src="${evt.image_url || evt.image}" alt="${evt.event}" onerror="this.parentElement.style.display='none';"></div>` : ''}
+                    </div>
+                `).join('');
+            } else if (historyRowTarget) {
+                historyRowTarget.innerHTML = `<div style="color:#ffffff; font-style:italic; text-align:center; width:100%; padding: 20px;">No historical milestones recorded yet for ${ACTIVE_TOWN.primaryName}.</div>`;
+            }
+        } catch(e) { 
+            console.error("Timeline data fetch/parse error:", e);
+            if (historyRowTarget) {
+                historyRowTarget.innerHTML = `<div style="color:#ffffff; font-style:italic; text-align:center; width:100%; padding: 20px;">Historical records archive temporarily updating.</div>`;
+            }
+        }
+
+        // 4. Universal Calendar Bulletin Engine
+        try {
+            const bulletinEndpoint = endpoints.apps_script_bulletin_url || "https://script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec";
+            const res = await fetch(bulletinEndpoint + '?feed=true&' + cb);
+            const elements = await res.json();
+            const scroller = document.getElementById('bulletin-scroller-target');
+
+            if (Array.isArray(elements) && elements.length > 0) {
+                window.calendarCachedEvents = elements;
+                
+                if (scroller && window.calendarCachedEvents.length > 0) {
+                    applyHighDensityScrollLimits(scroller, window.calendarCachedEvents.length, 500);
+
+                    const webcalFeedUrl = "https://script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec?feed=ics";
+                    const googleSubUrl = `https://www.google.com/calendar/render?cid=webcal://${encodeURIComponent(webcalFeedUrl.replace(/^https?:\/\//, ''))}`;
+
+                    const subscriptionHeaderHtml = `
+                        <div style="background:#f8f9fa; border:1px solid #e2e8f0; padding:10px; border-radius:6px; margin-bottom:15px; text-align:center;">
+                            <span style="font-size:12px; font-weight:bold; color:#333; display:block; margin-bottom:6px;">SUBSCRIBE TO FULL COUNTY CALENDAR</span>
+                            <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
+                                <a href="${googleSubUrl}" target="_blank" style="font-size:11px; font-weight:bold; color:#ffffff !important; background:#1a73e8; padding:6px 12px; border-radius:4px; text-decoration:none; display:inline-block;">Subscribe in Google Calendar</a>
+                                <a href="webcal://${webcalFeedUrl.replace(/^https?:\/\//, '')}" style="font-size:11px; font-weight:bold; color:#ffffff !important; background:#1e7e34; padding:6px 12px; border-radius:4px; text-decoration:none; display:inline-block;">Subscribe in Apple / iCal</a>
+                            </div>
+                        </div>
+                    `;
+
+                    const eventsHtml = window.calendarCachedEvents.map((item, idx) => {
+                        const eventLoc = item.location || "Clay County, IL";
+                        const mapUrl = buildOSMapUrl(eventLoc);
+                        
+                        const rawDetails = item.details || item.description || "";
+                        const { cleanText } = extractImageFromText(rawDetails);
+                        const finalEventImg = findEventImage(item);
+
+                        const parsedDetails = parseInteractiveContent(cleanText.substring(0, 110));
+                        const rawDate = item.date || item.displayDate || item.event_date || item.pubDate;
+                        const dateText = formatHumanTimestamp(rawDate);
+                        const googleCalUrl = generateGoogleCalendarUrl(item);
+
+                        const thumbnailHtml = finalEventImg ? `
+                            <div style="float: right; margin: 0 0 10px 12px;">
+                                <img src="${finalEventImg}" alt="${(item.name || item.title || 'Event Image').replace(/'/g, "&apos;")}" onclick="openCalendarLightboxModal(${idx})" style="width:90px; height:90px; object-fit:cover; border-radius:6px; border:2px solid #222; cursor:pointer; display:block; transition:transform 0.2s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'" onerror="this.parentElement.style.display='none';" />
+                            </div>
+                        ` : '';
+
+                        return `
+                            <div class="divi-event-item" style="margin-bottom:15px; padding-bottom:10px; border-bottom:1px dashed #ccc; overflow:hidden;">
+                                ${thumbnailHtml}
+                                <div class="divi-event-date" style="font-size:12px; color:#0258A3; font-weight:bold;">${dateText} &bull; ${item.time || item.displayTime || 'TBA'}</div>
+                                <div class="divi-event-title" style="font-size:16px; font-weight:bold;">${item.name || item.title}</div>
+                                <div class="event-info-text" style="font-size:13px; color:#333;">
+                                    <strong>Where:</strong> <a href="${mapUrl}" target="_blank" style="color:#0258A3; text-decoration:underline;">${eventLoc}</a>
+                                </div>
+                                <div style="font-size:13px; color:#555; margin-top:4px;">${parsedDetails}...</div>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; flex-wrap:wrap; gap:6px; clear:both;">
+                                    <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:#0258A3; font-weight:bold; cursor:pointer; font-size:13px;">Read Details &rarr;</div>
+                                    <div style="display:flex; gap:6px;">
+                                        <a href="${googleCalUrl}" target="_blank" title="Add to Google Calendar" style="font-size:11px; background:#e8f0fe; color:#1a73e8; padding:3px 6px; border-radius:3px; text-decoration:none; font-weight:bold;">+ Google Cal</a>
+                                        <a href="javascript:void(0)" onclick="downloadIcsCalendarFile(${idx})" title="Download iCal Event" style="font-size:11px; background:#e6f4ea; color:#137333; padding:3px 6px; border-radius:3px; text-decoration:none; font-weight:bold;">+ iCal</a>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    scroller.innerHTML = subscriptionHeaderHtml + eventsHtml;
+                } else if (scroller) {
+                    scroller.innerHTML = `<div style="text-align:center; padding: 20px; font-style:italic;">No upcoming events currently scheduled in Clay County.</div>`;
+                }
+            }
+        } catch(err) { console.error("Calendar Wire fault", err); }
+
+        // 5. Local News Matrix Pipeline
+        try {
+            const newsEndpoint = cleanRawUrl(endpoints.smlc_local_news_json) || "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/local-news/news_data.json";
+            const res = await fetch(newsEndpoint + '?' + cb);
+            const newsArray = await res.json();
+            const targetGrid = document.getElementById('news-matrix-target');
+            
+            if (Array.isArray(newsArray) && targetGrid) {
+                window.newsCacheBlock = newsArray.filter(item => matchesActiveTown(item.title + " " + item.full_story, item.location));
+                
+                if (window.newsCacheBlock.length > 0) {
+                    applyHighDensityScrollLimits(targetGrid, window.newsCacheBlock.length, 520);
+
+                    targetGrid.innerHTML = window.newsCacheBlock.map((story, idx) => `
+                        <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
+                            ${story.image ? `<img src="${story.image}" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})" onerror="this.style.display='none';">` : ''}
+                            <div style="font-size:12px; color:#0258A3; font-weight:bold; margin-top:10px;">${formatHumanTimestamp(story.date)}</div>
+                            <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${story.title}</div>
+                            <div style="font-size:14px; color:#444;">"${(story.full_story || story.description || '').substring(0, 110)}..."</div>
+                            <div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: #0258A3; font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>
+                        </div>
+                    `).join('');
+                } else {
+                    targetGrid.innerHTML = `<div style="text-align:center; padding: 20px; font-style:italic;">No recent dispatches found for ${ACTIVE_TOWN.primaryName}.</div>`;
+                }
+            }
+        } catch(e) { console.error("Local news error", e); }
+
+        // 6. Integrations & Dynamic Modules
+        await loadTownArticleData(cb);
+        await loadLocalLinksDirectory(cb);
+        await loadPartnersStrips(cb);
+        await loadFooterDataPipeline(cb);
+        loadScorestreamSportsWidget();
+        initializeFirebaseGasMonitor();
+    }
+
+    window.addEventListener('hashchange', () => {
+        handleSPAHashNavigation();
+    });
+
+    /* Initial Application Hydration */
+    window.addEventListener('DOMContentLoaded', () => {
+        handleSPAHashNavigation();
+        console.log(`Master Engine initialized for ${ACTIVE_TOWN.primaryName}. Build: 2026-07-30_20:47`);
+    });
+</script>
