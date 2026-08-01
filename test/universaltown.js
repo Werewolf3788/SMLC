@@ -370,7 +370,7 @@ function openCalendarLightboxModal(idx) {
     const finalEventImg = targetItem.imageUrl || targetItem.image || extractedImg || null;
     const metaHeader = `${dateText} @ ${timeText} | Location: ${rawLoc}`;
     
-    const lightboxImageHtml = finalEventImg ? `<div style="margin-bottom:15px; text-align:center;"><img src="${finalEventImg}" alt="${escapeJsString(title)}" style="max-width:100%; max-height:60vh; border-radius:6px; object-fit:contain; box-shadow:0 2px 8px rgba(0,0,0,0.15);" /></div>` : '';
+    const lightboxImageHtml = finalEventImg ? `<div style="margin-bottom:15px; text-align:center;"><img src="${finalEventImg}" alt="" style="max-width:100%; max-height:60vh; border-radius:6px; object-fit:contain; box-shadow:0 2px 8px rgba(0,0,0,0.15);" /></div>` : '';
 
     fireLightbox(finalEventImg, title, metaHeader, lightboxImageHtml + cleanText, '', title);
 }
@@ -445,7 +445,7 @@ function bindFirebaseServices(stationConfigs, gasContainer) {
     }
 }
 
-/* CASCADING PARTNERS ENGINE (NO ALT TEXT LEAKS ON UI CARDS) */
+/* CASCADING PARTNERS ENGINE (TOWN LOCAL -> GLOBAL FALLBACK) */
 function bindFirebasePartnersEngine(db) {
     if (!db) return;
     const townName = ACTIVE_TOWN.dbTownKey || "Clay City";
@@ -1164,6 +1164,10 @@ function renderFixedCardSlideshow(containerElement, partnerPool, sectionId = 'se
     }
 }
 
+async function processDataPipelines() {
+    initializeFirebaseGasMonitor();
+}
+
 function hydrateTownHeroUI() {
     const badgeEl = document.getElementById('hero-seat-badge');
     const titleEl = document.getElementById('hero-town-title');
@@ -1204,7 +1208,8 @@ async function handleSPAHashNavigation() {
     
     hydrateTownHeroUI();
     updateNavigationActiveState();
-    initializeFirebaseGasMonitor();
+    
+    await processDataPipelines();
 }
 
 window.addEventListener('hashchange', () => {
@@ -1213,5 +1218,5 @@ window.addEventListener('hashchange', () => {
 
 window.addEventListener('DOMContentLoaded', () => {
     handleSPAHashNavigation();
-    console.log(`Master Engine running smoothly for ${ACTIVE_TOWN.primaryName}. Build: 2026-08-01_CleanPipeline`);
+    console.log(`Master Engine running smoothly for ${ACTIVE_TOWN.primaryName}. Build: 2026-08-01_PipelineRestored`);
 });
