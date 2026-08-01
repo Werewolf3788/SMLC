@@ -1043,7 +1043,7 @@ function renderFixedCardSlideshow(containerElement, partnerPool, sectionId = 'se
         const slotIdx = parseInt(cardNode.getAttribute('data-slot-index'), 10);
         const slotRotationItems = cardSlotsData[slotIdx];
 
-        if (slotRotationItems && slotRotationItems.length > 1) {
+        if (slotRotationItems && slotRotationItems.length > 5) {
             let currentItemIdx = 0;
 
             const timerInstance = setInterval(() => {
