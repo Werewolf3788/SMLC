@@ -228,7 +228,7 @@ function safeSetImageSource(imgElement, srcUrl, fallbackWrapper = null) {
     if (!imgElement) return;
     const parentContainer = fallbackWrapper || imgElement.closest('figure, .spotlight-image-wrap, .section3-landmark-img-wrap, .polaroid-wrap, .article-media-frame') || imgElement.parentElement;
 
-    /* Leave ALT blank on main screen to prevent text leaks */
+    // ALT text stays blank on main UI
     imgElement.alt = "";
 
     if (!srcUrl || srcUrl.trim() === "" || srcUrl === "null" || srcUrl === "undefined") {
@@ -305,7 +305,7 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = ""
     
     if (imgSrc && targetImg) {
         safeSetImageSource(targetImg, imgSrc, null);
-        targetImg.alt = altText || title || ""; /* ALT text populated only inside Lightbox */
+        targetImg.alt = altText || title || ""; // ALT assigned exclusively inside Lightbox
         if (targetImg.parentElement) targetImg.parentElement.style.display = 'block';
     } else if (targetImg && targetImg.parentElement) {
         targetImg.parentElement.style.display = 'none';
@@ -425,7 +425,7 @@ function bindFirebaseServices(stationConfigs, gasContainer) {
         bindFirebaseSection3And4Engine(db);
         bindFirebaseMenuEngine(db);
         bindFirebasePartnersEngine(db);
-        bindFirestoreNewsAndEvents();
+        bindFirestoreNewsAndEvents(); // Restored execution call
     } catch(e) {
         console.warn("Firebase initialization warning:", e.message);
     }
@@ -480,7 +480,7 @@ function bindFirebasePartnersEngine(db) {
     });
 }
 
-/* FIRESTORE DIRECT LISTENERS (NEWS & UNFILTERED EVENTS) */
+/* FIRESTORE LIVE LISTENERS (NEWS & UNFILTERED EVENTS) */
 async function bindFirestoreNewsAndEvents() {
     if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function') {
         console.warn("Firestore SDK waiting to initialize...");
@@ -1227,5 +1227,5 @@ window.addEventListener('hashchange', () => {
 
 window.addEventListener('DOMContentLoaded', () => {
     handleSPAHashNavigation();
-    console.log(`Universal Engine running smoothly for ${ACTIVE_TOWN.primaryName}. Build: 2026-08-01_100PercentFirebase`);
+    console.log(`Universal Engine running smoothly for ${ACTIVE_TOWN.primaryName}. Build: 2026-08-01_FirebaseListenerFixed`);
 });
