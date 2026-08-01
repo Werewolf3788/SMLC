@@ -1,3 +1,7 @@
+/* ==========================================================================
+   SMLC UNIVERSAL TOWN ENGINE - 100% FIREBASE PURE
+   ========================================================================== */
+
 const TOWN_ALIAS_MAP = {
     "HOME": { primaryName: "Clay County", dbTownKey: "Global", jsonKey: "all", gasKey: ["louisville", "flora", "clay-city", "xenia"], historyKey: "all", keywords: [], zipCodes: [], isHome: true, scorestreamId: "68601", seatBadge: "Clay County Seat", estMeta: "Est. 1824 | Zip Code 62824", riverMarquee: "COMMUNITY DIGITAL NETWORK MAP", themeAccent: "#0258A3" },
     "CLAY COUNTY": { primaryName: "Clay County", dbTownKey: "Global", jsonKey: "all", gasKey: ["louisville", "flora", "clay-city", "xenia"], historyKey: "all", keywords: [], zipCodes: [], isHome: true, scorestreamId: "68601", seatBadge: "Clay County Seat", estMeta: "Est. 1824 | Zip Code 62824", riverMarquee: "COMMUNITY DIGITAL NETWORK MAP", themeAccent: "#0258A3" },
@@ -35,12 +39,6 @@ function getActiveTownConfig() {
 
 let ACTIVE_TOWN = getActiveTownConfig();
 
-const DEFAULT_APP_CONFIG = {
-    regional_endpoints: {
-        gas_widget: "https://werewolf3788.github.io/SMLC/update-gas.html"
-    }
-};
-
 let globalSlideshowTicker = null;
 let gasMonitorRotator = null;
 let section6PartnerTimers = [];
@@ -56,7 +54,6 @@ let activeFbRefPartnersGlobal = null;
 window.calendarCachedEvents = [];
 window.historyCachedTimeline = [];
 window.newsCacheBlock = [];
-window.globalAppConfig = null;
 
 function resetAllActiveTimers() {
     if (globalSlideshowTicker) { clearInterval(globalSlideshowTicker); globalSlideshowTicker = null; }
@@ -66,11 +63,6 @@ function resetAllActiveTimers() {
     section6PartnerTimers = [];
     section8PartnerTimers.forEach(t => clearInterval(t));
     section8PartnerTimers = [];
-}
-
-function cleanRawUrl(urlStr) {
-    if (!urlStr) return "";
-    return urlStr.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/").replace("/edit/", "/");
 }
 
 function normalizeImageUrl(rawUrl) {
@@ -242,7 +234,7 @@ function safeSetImageSource(imgElement, srcUrl, fallbackWrapper = null) {
     if (!imgElement) return;
     const parentContainer = fallbackWrapper || imgElement.closest('figure, .spotlight-image-wrap, .section3-landmark-img-wrap, .polaroid-wrap, .article-media-frame') || imgElement.parentElement;
 
-    // Leave ALT blank on main UI to prevent text frame leaks
+    // ALT stays completely empty on main UI screen
     imgElement.alt = "";
 
     if (!srcUrl || srcUrl.trim() === "" || srcUrl === "null" || srcUrl === "undefined") {
@@ -319,7 +311,7 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = ""
     
     if (imgSrc && targetImg) {
         safeSetImageSource(targetImg, imgSrc, null);
-        targetImg.alt = altText || title || ""; // ALT only assigned inside Lightbox
+        targetImg.alt = altText || title || ""; // ALT text assigned strictly inside Lightbox
         if (targetImg.parentElement) targetImg.parentElement.style.display = 'block';
     } else if (targetImg && targetImg.parentElement) {
         targetImg.parentElement.style.display = 'none';
@@ -445,7 +437,7 @@ function bindFirebaseServices(stationConfigs, gasContainer) {
     }
 }
 
-/* CASCADING PARTNERS ENGINE (TOWN LOCAL -> GLOBAL FALLBACK) */
+/* CASCADING PARTNERS ENGINE (SECTIONS 6 & 8) */
 function bindFirebasePartnersEngine(db) {
     if (!db) return;
     const townName = ACTIVE_TOWN.dbTownKey || "Clay City";
@@ -494,6 +486,7 @@ function bindFirebasePartnersEngine(db) {
     });
 }
 
+/* FIRESTORE NEWS & EVENTS DIRECT LISTENERS */
 async function bindFirestoreNewsAndEvents() {
     if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function') {
         console.warn("Firestore SDK not loaded on window.");
@@ -501,94 +494,104 @@ async function bindFirestoreNewsAndEvents() {
     }
     const db = firebase.firestore();
 
-    /* 1. LOAD LOCAL NEWS FROM FIRESTORE */
+    /* 1. LOCAL NEWS (Firestore collection: local_news) */
     try {
-        const newsSnapshot = await db.collection('local_news').get();
-        const newsList = [];
-        newsSnapshot.forEach(doc => {
-            const item = doc.data();
-            if (matchesActiveTown(item.title + " " + (item.full_story || item.description || ''), item.location)) {
-                newsList.push(item);
+        db.collection('local_news').onSnapshot(newsSnapshot => {
+            const newsList = [];
+            newsSnapshot.forEach(doc => {
+                const item = doc.data();
+                if (matchesActiveTown(item.title + " " + (item.full_story || item.description || ''), item.location)) {
+                    newsList.push(item);
+                }
+            });
+
+            window.newsCacheBlock = newsList;
+            const targetGrid = document.getElementById('news-matrix-target');
+            if (targetGrid) {
+                if (newsList.length > 0) {
+                    applyHighDensityScrollLimits(targetGrid, newsList.length, 520);
+                    targetGrid.innerHTML = newsList.map((story, idx) => {
+                        const storyText = story.full_story || story.description || '';
+                        const isLong = storyText.length > 150;
+                        const displayStory = isLong ? storyText.substring(0, 140) + "..." : storyText;
+
+                        return `
+                            <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
+                                ${story.image ? `<img src="${story.image}" alt="" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})" onerror="this.style.display='none';">` : ''}
+                                <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-top:10px;">${formatHumanTimestamp(story.date)}</div>
+                                <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${story.title}</div>
+                                <div style="font-size:14px; color:#444;">${parseInteractiveContent(displayStory)}</div>
+                                ${isLong ? `<div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: var(--primary); font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>` : ''}
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    targetGrid.innerHTML = `<div style="padding:15px; color:#666;">No news dispatches for ${ACTIVE_TOWN.primaryName}.</div>`;
+                }
             }
         });
+    } catch(e) { console.warn("Firestore News listener error:", e.message); }
 
-        window.newsCacheBlock = newsList;
-        const targetGrid = document.getElementById('news-matrix-target');
-        if (targetGrid && newsList.length > 0) {
-            applyHighDensityScrollLimits(targetGrid, newsList.length, 520);
-            targetGrid.innerHTML = newsList.map((story, idx) => {
-                const storyText = story.full_story || story.description || '';
-                const isLong = storyText.length > 150;
-                const displayStory = isLong ? storyText.substring(0, 140) + "..." : storyText;
-
-                return `
-                    <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
-                        ${story.image ? `<img src="${story.image}" alt="" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})" onerror="this.style.display='none';">` : ''}
-                        <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-top:10px;">${formatHumanTimestamp(story.date)}</div>
-                        <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${story.title}</div>
-                        <div style="font-size:14px; color:#444;">${parseInteractiveContent(displayStory)}</div>
-                        ${isLong ? `<div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: var(--primary); font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>` : ''}
-                    </div>
-                `;
-            }).join('');
-        }
-    } catch(e) { console.warn("Firestore News load warning:", e.message); }
-
-    /* 2. LOAD EVENTS CALENDAR FROM FIRESTORE */
+    /* 2. CALENDAR EVENTS (Firestore collection: smlc_events) */
     try {
-        const eventsSnapshot = await db.collection('smlc_events').get();
-        const eventsList = [];
-        eventsSnapshot.forEach(doc => {
-            const item = doc.data();
-            if (matchesActiveTown(item.name + " " + item.title + " " + (item.details || item.description || ''), item.location)) {
-                eventsList.push(item);
+        db.collection('smlc_events').onSnapshot(eventsSnapshot => {
+            const eventsList = [];
+            eventsSnapshot.forEach(doc => {
+                const item = doc.data();
+                if (matchesActiveTown((item.name || item.title || "") + " " + (item.details || item.description || ''), item.location)) {
+                    eventsList.push(item);
+                }
+            });
+
+            window.calendarCachedEvents = eventsList;
+            const scroller = document.getElementById('bulletin-scroller-target');
+            if (scroller) {
+                if (eventsList.length > 0) {
+                    applyHighDensityScrollLimits(scroller, eventsList.length, 500);
+
+                    const eventsHtml = eventsList.map((item, idx) => {
+                        const eventLoc = item.location || "Clay County, IL";
+                        const rawDetails = item.details || item.description || "";
+                        
+                        const { imageUrl: extractedImg, cleanText } = extractImageFromText(rawDetails);
+                        const finalEventImg = item.imageUrl || item.image || extractedImg || null;
+
+                        const parsedDetails = parseInteractiveContent(cleanText.substring(0, 110));
+                        const rawDate = item.date || item.displayDate || item.event_date || item.pubDate;
+                        const dateText = formatHumanTimestamp(rawDate);
+
+                        const thumbnailHtml = finalEventImg ? `
+                            <div style="float: right; margin: 0 0 10px 12px;">
+                                <img src="${finalEventImg}" alt="" onclick="openCalendarLightboxModal(${idx})" style="width:85px; height:85px; object-fit:cover; border-radius:6px; border:2px solid #222; cursor:pointer; display:block; transition:transform 0.2s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'" onerror="this.parentElement.style.display='none';" />
+                            </div>
+                        ` : '';
+
+                        return `
+                            <div class="divi-event-item" style="margin-bottom:15px; padding-bottom:10px; border-bottom:1px dashed #ccc; overflow:hidden;">
+                                ${thumbnailHtml}
+                                <div class="divi-event-date" style="font-size:12px; color:var(--primary); font-weight:bold;">${dateText} &bull; ${item.time || item.displayTime || 'TBA'}</div>
+                                <div class="divi-event-title" style="font-size:16px; font-weight:bold;">${item.name || item.title}</div>
+                                <div class="event-info-text" style="font-size:13px; color:#333;">
+                                    <strong>Where:</strong> ${eventLoc}
+                                </div>
+                                <div style="font-size:13px; color:#555; margin-top:4px;">${parsedDetails}...</div>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; flex-wrap:wrap; gap:6px; clear:both;">
+                                    <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:var(--primary); font-weight:bold; cursor:pointer; font-size:13px;">Read Details &rarr;</div>
+                                    <button onclick="downloadSingleEventIcs(${idx})" style="background:#28a745; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+                                        📅 Add to Calendar (.ics)
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    scroller.innerHTML = eventsHtml;
+                } else {
+                    scroller.innerHTML = `<div style="padding:15px; color:#666;">No upcoming events listed for ${ACTIVE_TOWN.primaryName}.</div>`;
+                }
             }
         });
-
-        window.calendarCachedEvents = eventsList;
-        const scroller = document.getElementById('bulletin-scroller-target');
-        if (scroller && eventsList.length > 0) {
-            applyHighDensityScrollLimits(scroller, eventsList.length, 500);
-
-            const eventsHtml = eventsList.map((item, idx) => {
-                const eventLoc = item.location || "Clay County, IL";
-                const rawDetails = item.details || item.description || "";
-                
-                const { imageUrl: extractedImg, cleanText } = extractImageFromText(rawDetails);
-                const finalEventImg = item.imageUrl || item.image || extractedImg || null;
-
-                const parsedDetails = parseInteractiveContent(cleanText.substring(0, 110));
-                const rawDate = item.date || item.displayDate || item.event_date || item.pubDate;
-                const dateText = formatHumanTimestamp(rawDate);
-
-                const thumbnailHtml = finalEventImg ? `
-                    <div style="float: right; margin: 0 0 10px 12px;">
-                        <img src="${finalEventImg}" alt="" onclick="openCalendarLightboxModal(${idx})" style="width:85px; height:85px; object-fit:cover; border-radius:6px; border:2px solid #222; cursor:pointer; display:block; transition:transform 0.2s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'" onerror="this.parentElement.style.display='none';" />
-                    </div>
-                ` : '';
-
-                return `
-                    <div class="divi-event-item" style="margin-bottom:15px; padding-bottom:10px; border-bottom:1px dashed #ccc; overflow:hidden;">
-                        ${thumbnailHtml}
-                        <div class="divi-event-date" style="font-size:12px; color:var(--primary); font-weight:bold;">${dateText} &bull; ${item.time || item.displayTime || 'TBA'}</div>
-                        <div class="divi-event-title" style="font-size:16px; font-weight:bold;">${item.name || item.title}</div>
-                        <div class="event-info-text" style="font-size:13px; color:#333;">
-                            <strong>Where:</strong> ${eventLoc}
-                        </div>
-                        <div style="font-size:13px; color:#555; margin-top:4px;">${parsedDetails}...</div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; flex-wrap:wrap; gap:6px; clear:both;">
-                            <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:var(--primary); font-weight:bold; cursor:pointer; font-size:13px;">Read Details &rarr;</div>
-                            <button onclick="downloadSingleEventIcs(${idx})" style="background:#28a745; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
-                                📅 Add to Calendar (.ics)
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            scroller.innerHTML = eventsHtml;
-        }
-    } catch(e) { console.warn("Firestore Events load warning:", e.message); }
+    } catch(e) { console.warn("Firestore Events listener error:", e.message); }
 }
 
 function bindFirebaseMenuEngine(db) {
@@ -644,8 +647,7 @@ function bindFirebaseSection3And4Engine(db) {
     activeFbRef34 = db.ref(townPath);
 
     activeFbRef34.on('value', (snapshot) => {
-        const sections = snapshot.val();
-        if (!sections) return;
+        const sections = snapshot.val() || {};
 
         /* SECTION 3.1.1 (Slideshow) */
         if (sections.sec_3_1_1) {
@@ -831,7 +833,7 @@ function bindFirebaseSection3And4Engine(db) {
             artBodyEl.innerHTML = bodyHtml;
         }
 
-        /* SECTION 4.2 (Business Spotlight with Global Fallback) */
+        /* SECTION 4.2 (Business Spotlight: Town Local -> Global RTDB Fallback) */
         const spotlightTarget = document.querySelector('.clay-county-news-box.spotlight-clipping');
         if (spotlightTarget) {
             const renderSpotlight = (s42) => {
@@ -869,7 +871,7 @@ function bindFirebaseSection3And4Engine(db) {
             }
         }
 
-        /* SECTION 5 (Historical Timeline directly from Firebase sec_5) */
+        /* SECTION 5 (Historical Timeline directly from Realtime DB sec_5) */
         if (sections.sec_5) {
             const historyRowTarget = document.getElementById('history-row-target');
             const rawTimeline = Array.isArray(sections.sec_5) ? sections.sec_5 : Object.values(sections.sec_5);
@@ -1020,8 +1022,7 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
         gasMonitorRotator = null;
     }
 
-    const updatePortalUrl = cleanRawUrl(window.globalAppConfig?.regional_endpoints?.gas_widget) 
-        || "https://werewolf3788.github.io/SMLC/update-gas.html";
+    const updatePortalUrl = "https://werewolf3788.github.io/SMLC/update-gas.html";
 
     let currentIdx = 0;
 
@@ -1164,10 +1165,6 @@ function renderFixedCardSlideshow(containerElement, partnerPool, sectionId = 'se
     }
 }
 
-async function processDataPipelines() {
-    initializeFirebaseGasMonitor();
-}
-
 function hydrateTownHeroUI() {
     const badgeEl = document.getElementById('hero-seat-badge');
     const titleEl = document.getElementById('hero-town-title');
@@ -1200,6 +1197,10 @@ function updateNavigationActiveState() {
     });
 }
 
+async function processDataPipelines() {
+    initializeFirebaseGasMonitor();
+}
+
 async function handleSPAHashNavigation() {
     resetAllActiveTimers();
     ACTIVE_TOWN = getActiveTownConfig();
@@ -1218,5 +1219,5 @@ window.addEventListener('hashchange', () => {
 
 window.addEventListener('DOMContentLoaded', () => {
     handleSPAHashNavigation();
-    console.log(`Master Engine running smoothly for ${ACTIVE_TOWN.primaryName}. Build: 2026-08-01_PipelineRestored`);
+    console.log(`Master Engine running smoothly for ${ACTIVE_TOWN.primaryName}. Build: 2026-08-01_100PercentFirebase`);
 });
