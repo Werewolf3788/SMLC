@@ -61,8 +61,8 @@ const DEFAULT_APP_CONFIG = {
 
 let globalSlideshowTicker = null;
 let gasMonitorRotator = null;
-let section6PartnerTimer = null;
-let section8PartnerTimer = null;
+let section6PartnerTimers = [];
+let section8PartnerTimers = [];
 
 let activeFbRef34 = null;
 let activeFbRefLinksTown = null;
@@ -77,8 +77,11 @@ window.globalAppConfig = null;
 function resetAllActiveTimers() {
     if (globalSlideshowTicker) { clearInterval(globalSlideshowTicker); globalSlideshowTicker = null; }
     if (gasMonitorRotator) { clearInterval(gasMonitorRotator); gasMonitorRotator = null; }
-    if (section6PartnerTimer) { clearInterval(section6PartnerTimer); section6PartnerTimer = null; }
-    if (section8PartnerTimer) { clearInterval(section8PartnerTimer); section8PartnerTimer = null; }
+    
+    section6PartnerTimers.forEach(t => clearInterval(t));
+    section6PartnerTimers = [];
+    section8PartnerTimers.forEach(t => clearInterval(t));
+    section8PartnerTimers = [];
 }
 
 function getSmartCacheBuster() { 
@@ -609,7 +612,7 @@ function bindFirebaseSection3And4Engine(db) {
 
         if (i2 && img2Url) {
             safeSetImageSource(i2, img2Url, null, alt2Text);
-            i2.onclick = () => fireLightbox(escapeJsString(img2Url), escapeJsString(h2Text), 'LANDMARK ARCHIVE', escapeJsString(alt2Text), escapeJsString(s322.source_url2 || s323.source_url || s323.link || ''), escapeJsString(alt2Text));
+            i2.onclick = () => fireLightbox(escapeJsString(img2Url), escapeJsString(h2Text), 'LANDMARK ARCHIVE', escapeJsString(alt2Text), escapeJsString(s322.source_url2 || s323.source_url || s333.link || ''), escapeJsString(alt2Text));
         }
         if (h2) h2.innerText = h2Text;
 
@@ -957,29 +960,34 @@ async function loadPartnersStrips(cacheBuster) {
 
         if (partnersList.length > 0) {
             const shuffledPoolSec6 = shuffleArray([...partnersList]);
-            let shuffledPoolSec8 = shuffleArray([...partnersList]);
 
-            if (partnersList.length > 1) {
-                let attempts = 0;
-                while (attempts < 5 && JSON.stringify(shuffledPoolSec6) === JSON.stringify(shuffledPoolSec8)) {
-                    shuffledPoolSec8 = shuffleArray([...partnersList]);
-                    attempts++;
-                }
-                if (JSON.stringify(shuffledPoolSec6) === JSON.stringify(shuffledPoolSec8)) {
-                    shuffledPoolSec8.push(shuffledPoolSec8.shift());
-                }
+            // Section 8 offset permutation pattern: [2, 4, 3, 5, 1]
+            const patternIndices = [1, 3, 2, 4, 0]; 
+            const shuffledPoolSec8 = [];
+            
+            for (let i = 0; i < Math.max(5, partnersList.length); i++) {
+                const targetIdx = patternIndices[i % patternIndices.length];
+                shuffledPoolSec8.push(shuffledPoolSec6[targetIdx % shuffledPoolSec6.length]);
             }
 
-            if (topGrid) renderFixedCardSlideshow(topGrid, shuffledPoolSec6, 0, 'section6', 5);
-            if (bottomGrid) renderFixedCardSlideshow(bottomGrid, shuffledPoolSec8, 3, 'section8', 5);
+            if (topGrid) renderFixedCardSlideshow(topGrid, shuffledPoolSec6, 'section6', 5);
+            if (bottomGrid) renderFixedCardSlideshow(bottomGrid, shuffledPoolSec8, 'section8', 5);
         }
     } catch(e) { 
         console.warn("Partners manifest warning handled:", e.message); 
     }
 }
 
-function renderFixedCardSlideshow(containerElement, partnerPool, offsetSeed = 0, sectionId = 'section6', cardsToShow = 5) {
+function renderFixedCardSlideshow(containerElement, partnerPool, sectionId = 'section6', cardsToShow = 5) {
     if (!containerElement || !partnerPool.length) return;
+
+    if (sectionId === 'section6') {
+        section6PartnerTimers.forEach(t => clearInterval(t));
+        section6PartnerTimers = [];
+    } else if (sectionId === 'section8') {
+        section8PartnerTimers.forEach(t => clearInterval(t));
+        section8PartnerTimers = [];
+    }
 
     containerElement.style.display = "flex";
     containerElement.style.justifyContent = "space-between";
@@ -995,7 +1003,7 @@ function renderFixedCardSlideshow(containerElement, partnerPool, offsetSeed = 0,
     for (let slotIndex = 0; slotIndex < totalCards; slotIndex++) {
         const slotRotationQueue = [];
         for (let step = 0; step < poolSize; step++) {
-            const partnerIndex = (slotIndex + offsetSeed + (step * totalCards)) % poolSize;
+            const partnerIndex = (slotIndex + (step * totalCards)) % poolSize;
             if (!slotRotationQueue.includes(partnerPool[partnerIndex])) {
                 slotRotationQueue.push(partnerPool[partnerIndex]);
             }
@@ -1071,8 +1079,8 @@ function renderFixedCardSlideshow(containerElement, partnerPool, offsetSeed = 0,
                 }, 400);
             }, 4000 + (slotIdx * 850));
 
-            if (sectionId === 'section6') section6PartnerTimer = timerInstance;
-            if (sectionId === 'section8') section8PartnerTimer = timerInstance;
+            if (sectionId === 'section6') section6PartnerTimers.push(timerInstance);
+            if (sectionId === 'section8') section8PartnerTimers.push(timerInstance);
         }
     });
 }
@@ -1181,7 +1189,8 @@ async function loadFooterDataPipeline(cacheBuster) {
             const addressTarget = document.getElementById('footer-address-target');
             if (addressTarget && contact.address) {
                 const addrText = contact.address.text || contact.address;
-                addressTarget.innerHTML = `<span style="color:#fff;">${addrText}</span>`;
+                const mapQuery = encodeURIComponent(addrText);
+                addressTarget.innerHTML = `<a href="https://www.google.com/maps/search/?api=1&query=${mapQuery}" target="_blank" style="color:#fff; text-decoration:underline;">${addrText}</a>`;
             }
 
             const copyTarget = document.getElementById('footer-copy-target');
