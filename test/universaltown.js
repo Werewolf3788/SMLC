@@ -52,7 +52,6 @@ let activeFbRefLinksGlobal = null;
 let activeFbRefMenu = null;
 let activeFbRefPartnersTown = null;
 let activeFbRefPartnersGlobal = null;
-let activeFbRefGlobalSpotlight = null;
 
 window.calendarCachedEvents = [];
 window.historyCachedTimeline = [];
@@ -67,10 +66,6 @@ function resetAllActiveTimers() {
     section6PartnerTimers = [];
     section8PartnerTimers.forEach(t => clearInterval(t));
     section8PartnerTimers = [];
-}
-
-function getSmartCacheBuster() { 
-    return "v=" + Math.floor(Date.now() / 3600000); 
 }
 
 function cleanRawUrl(urlStr) {
@@ -130,7 +125,7 @@ function extractImageAndAlt(node) {
     }
     
     if (typeof node === 'object') {
-        let rawUrl = node.image1 || node.image2 || node.imageUrl || node.image_url || node.url || node.src || node.image || node.href || null;
+        let rawUrl = node.image1 || node.image2 || node.imageUrl || node.image_url || node.url || node.src || node.image || node.logo || node.href || null;
         
         if (rawUrl && typeof rawUrl === 'object') {
             const nested = extractImageAndAlt(rawUrl);
@@ -141,10 +136,6 @@ function extractImageAndAlt(node) {
         let rawAlt = node.alt || node.alt1 || node.alt2 || node.caption || node.description || node.title || node.header1 || null;
         if (rawAlt && typeof rawAlt === 'object') {
             rawAlt = extractText(rawAlt);
-        }
-        
-        if (typeof rawAlt === 'string') {
-            rawAlt = rawAlt.replace(/^#+\s*/g, '').replace(/\*\*/g, '').trim();
         }
 
         return {
@@ -216,7 +207,7 @@ function parseInteractiveContent(rawText) {
         const normUrl = normalizeImageUrl(match);
         if (!normUrl) return match;
         const safeUrl = escapeJsString(normUrl);
-        return `<img src="${normUrl}" alt="Media Content" onclick="event.stopPropagation(); fireLightbox('${safeUrl}', 'Media Content', '', '', '${safeUrl}')" style="max-width:100%; height:auto; max-height:280px; display:block; margin:10px auto; border-radius:6px; border:2px solid #222; box-shadow:2px 2px 6px rgba(0,0,0,0.3); cursor:pointer;" onerror="this.style.display='none';" />`;
+        return `<img src="${normUrl}" alt="" onclick="event.stopPropagation(); fireLightbox('${safeUrl}', 'Media Content', '', '', '${safeUrl}')" style="max-width:100%; height:auto; max-height:280px; display:block; margin:10px auto; border-radius:6px; border:2px solid #222; box-shadow:2px 2px 6px rgba(0,0,0,0.3); cursor:pointer;" onerror="this.style.display='none';" />`;
     });
 
     parsed = parsed.replace(/(\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b)/g, (match) => {
@@ -247,11 +238,12 @@ function attachUtmParameters(urlStr) {
     }
 }
 
-function safeSetImageSource(imgElement, srcUrl, fallbackWrapper = null, altText = "") {
+function safeSetImageSource(imgElement, srcUrl, fallbackWrapper = null) {
     if (!imgElement) return;
     const parentContainer = fallbackWrapper || imgElement.closest('figure, .spotlight-image-wrap, .section3-landmark-img-wrap, .polaroid-wrap, .article-media-frame') || imgElement.parentElement;
 
-    if (altText) imgElement.alt = altText;
+    // Leave ALT blank on main UI to prevent text frame leaks
+    imgElement.alt = "";
 
     if (!srcUrl || srcUrl.trim() === "" || srcUrl === "null" || srcUrl === "undefined") {
         if (parentContainer) parentContainer.style.display = "none";
@@ -326,7 +318,8 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = ""
     const actionLink = document.getElementById('lightbox-target-link');
     
     if (imgSrc && targetImg) {
-        safeSetImageSource(targetImg, imgSrc, null, altText || title);
+        safeSetImageSource(targetImg, imgSrc, null);
+        targetImg.alt = altText || title || ""; // ALT only assigned inside Lightbox
         if (targetImg.parentElement) targetImg.parentElement.style.display = 'block';
     } else if (targetImg && targetImg.parentElement) {
         targetImg.parentElement.style.display = 'none';
@@ -377,7 +370,7 @@ function openCalendarLightboxModal(idx) {
     const finalEventImg = targetItem.imageUrl || targetItem.image || extractedImg || null;
     const metaHeader = `${dateText} @ ${timeText} | Location: ${rawLoc}`;
     
-    const lightboxImageHtml = finalEventImg ? `<div style="margin-bottom:15px; text-align:center;"><img src="${finalEventImg}" alt="${title}" style="max-width:100%; max-height:60vh; border-radius:6px; object-fit:contain; box-shadow:0 2px 8px rgba(0,0,0,0.15);" /></div>` : '';
+    const lightboxImageHtml = finalEventImg ? `<div style="margin-bottom:15px; text-align:center;"><img src="${finalEventImg}" alt="${escapeJsString(title)}" style="max-width:100%; max-height:60vh; border-radius:6px; object-fit:contain; box-shadow:0 2px 8px rgba(0,0,0,0.15);" /></div>` : '';
 
     fireLightbox(finalEventImg, title, metaHeader, lightboxImageHtml + cleanText, '', title);
 }
@@ -452,7 +445,7 @@ function bindFirebaseServices(stationConfigs, gasContainer) {
     }
 }
 
-/* UNIVERSAL CASCADING PARTNERS ENGINE (TOWN LOCAL -> GLOBAL FALLBACK) */
+/* CASCADING PARTNERS ENGINE (NO ALT TEXT LEAKS ON UI CARDS) */
 function bindFirebasePartnersEngine(db) {
     if (!db) return;
     const townName = ACTIVE_TOWN.dbTownKey || "Clay City";
@@ -463,7 +456,6 @@ function bindFirebasePartnersEngine(db) {
     let globalPartners = [];
 
     const updatePartnersUI = () => {
-        // Merge town-specific partners with global partners
         const combinedList = [...townPartners, ...globalPartners];
         const topGrid = document.getElementById('partners-grid-top') || document.querySelector('.scotts-partners-top') || document.querySelectorAll('.partner-card-container')[0];
         const bottomGrid = document.getElementById('partners-grid-bottom') || document.querySelector('.scotts-partners-bottom') || document.querySelectorAll('.partner-card-container')[1];
@@ -503,7 +495,10 @@ function bindFirebasePartnersEngine(db) {
 }
 
 async function bindFirestoreNewsAndEvents() {
-    if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function') return;
+    if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function') {
+        console.warn("Firestore SDK not loaded on window.");
+        return;
+    }
     const db = firebase.firestore();
 
     /* 1. LOAD LOCAL NEWS FROM FIRESTORE */
@@ -528,7 +523,7 @@ async function bindFirestoreNewsAndEvents() {
 
                 return `
                     <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
-                        ${story.image ? `<img src="${story.image}" alt="${escapeJsString(story.title || 'News image')}" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})" onerror="this.style.display='none';">` : ''}
+                        ${story.image ? `<img src="${story.image}" alt="" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})" onerror="this.style.display='none';">` : ''}
                         <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-top:10px;">${formatHumanTimestamp(story.date)}</div>
                         <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${story.title}</div>
                         <div style="font-size:14px; color:#444;">${parseInteractiveContent(displayStory)}</div>
@@ -539,7 +534,7 @@ async function bindFirestoreNewsAndEvents() {
         }
     } catch(e) { console.warn("Firestore News load warning:", e.message); }
 
-    /* 2. LOAD EVENTS CALENDAR FROM FIRESTORE WITH DESCRIPTION IMAGE EXTRACTION & SINGLE EVENT iCAL */
+    /* 2. LOAD EVENTS CALENDAR FROM FIRESTORE */
     try {
         const eventsSnapshot = await db.collection('smlc_events').get();
         const eventsList = [];
@@ -559,7 +554,6 @@ async function bindFirestoreNewsAndEvents() {
                 const eventLoc = item.location || "Clay County, IL";
                 const rawDetails = item.details || item.description || "";
                 
-                // Extract image from description if imageUrl isn't explicitly set
                 const { imageUrl: extractedImg, cleanText } = extractImageFromText(rawDetails);
                 const finalEventImg = item.imageUrl || item.image || extractedImg || null;
 
@@ -569,7 +563,7 @@ async function bindFirestoreNewsAndEvents() {
 
                 const thumbnailHtml = finalEventImg ? `
                     <div style="float: right; margin: 0 0 10px 12px;">
-                        <img src="${finalEventImg}" alt="${escapeJsString(item.name || item.title || 'Event Image')}" onclick="openCalendarLightboxModal(${idx})" style="width:85px; height:85px; object-fit:cover; border-radius:6px; border:2px solid #222; cursor:pointer; display:block; transition:transform 0.2s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'" onerror="this.parentElement.style.display='none';" />
+                        <img src="${finalEventImg}" alt="" onclick="openCalendarLightboxModal(${idx})" style="width:85px; height:85px; object-fit:cover; border-radius:6px; border:2px solid #222; cursor:pointer; display:block; transition:transform 0.2s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'" onerror="this.parentElement.style.display='none';" />
                     </div>
                 ` : '';
 
@@ -627,7 +621,7 @@ function bindFirebaseMenuEngine(db) {
             const itemNameUpper = name.toUpperCase();
             const isActive = (activeTownName === itemNameUpper || (ACTIVE_TOWN.isHome && itemNameUpper === "HOME") || (window.location.hash || "").toUpperCase().includes(itemNameUpper.replace(/\s+/g, '-'))) ? 'class="active"' : '';
 
-            const imgTag = normImageUrl ? `<img src="${normImageUrl}" alt="${name}" class="menu-thumb-icon" onerror="this.style.display='none';" />` : '';
+            const imgTag = normImageUrl ? `<img src="${normImageUrl}" alt="" class="menu-thumb-icon" onerror="this.style.display='none';" />` : '';
 
             return `
                 <li>
@@ -678,7 +672,7 @@ function bindFirebaseSection3And4Engine(db) {
 
                         return `
                             <div class="slider-slide ${idx === 0 ? 'active' : ''}" style="position: absolute; inset: 0; opacity: ${idx === 0 ? 1 : 0}; transition: opacity 0.8s ease-in-out; z-index: ${idx === 0 ? 2 : 1};">
-                                <img src="${imgUrl}" alt="${safeAlt}" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'SLIDESHOW VIEW', '${safeAlt}', '${safeSrc}', '${safeAlt}')" style="width:100%; height:100%; object-fit:cover; cursor:pointer;">
+                                <img src="${imgUrl}" alt="" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'SLIDESHOW VIEW', '${safeAlt}', '${safeSrc}', '${safeAlt}')" style="width:100%; height:100%; object-fit:cover; cursor:pointer;">
                                 ${captionTitle ? `<div class="slider-caption">${captionTitle}</div>` : ''}
                             </div>
                         `;
@@ -728,7 +722,7 @@ function bindFirebaseSection3And4Engine(db) {
         const alt1Text = alt1TextRaw || s322.alt1 || h1Text;
 
         if (i1 && img1Url) {
-            safeSetImageSource(i1, img1Url, null, alt1Text);
+            safeSetImageSource(i1, img1Url, null);
             i1.onclick = () => fireLightbox(escapeJsString(img1Url), escapeJsString(h1Text), 'LANDMARK ARCHIVE', escapeJsString(alt1Text), escapeJsString(s322.source_url || s322.link || ''), escapeJsString(alt1Text));
         }
         if (h1) h1.innerText = h1Text;
@@ -741,7 +735,7 @@ function bindFirebaseSection3And4Engine(db) {
         const alt2Text = alt2TextRaw || s322.alt2 || s323.alt2 || h2Text;
 
         if (i2 && img2Url) {
-            safeSetImageSource(i2, img2Url, null, alt2Text);
+            safeSetImageSource(i2, img2Url, null);
             i2.onclick = () => fireLightbox(escapeJsString(img2Url), escapeJsString(h2Text), 'LANDMARK ARCHIVE', escapeJsString(alt2Text), escapeJsString(s322.source_url2 || s323.source_url || s323.link || ''), escapeJsString(alt2Text));
         }
         if (h2) h2.innerText = h2Text;
@@ -816,12 +810,11 @@ function bindFirebaseSection3And4Engine(db) {
                 <figure class="article-media-frame" style="margin:24px 0; padding:0; width:100%;">
                     <img id="sec-4-1-article-img" 
                          src="${imgUrl}" 
-                         alt="${safeAlt}" 
+                         alt="" 
                          class="lightbox-triggerable-element" 
                          onclick="fireLightbox('${safeImg}', '${safeTitle}', '${safeCategory}', '${safeAlt}', '${safeSource}', '${safeAlt}')" 
                          style="width:100%; max-width:100%; height:auto; max-height:380px; object-fit:cover; display:block; margin:16px auto; border-radius:6px; border:2px solid #222; box-shadow:4px 4px 0px #000; cursor:pointer;"
                          onerror="this.parentElement.style.display='none';" />
-                    <figcaption id="sec4-img-caption" style="font-size:0.95rem; font-style:italic; text-align:center; color:#555; margin-top:8px;">${finalAlt}</figcaption>
                 </figure>
             ` : '';
 
@@ -859,7 +852,7 @@ function bindFirebaseSection3And4Engine(db) {
 
                 spotlightTarget.innerHTML = `
                     <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
-                    <div class="spotlight-image-wrap"><img src="${imgUrl}" alt="${safeAlt}" onclick="fireLightbox('${safeImg}', '${safeName}', '${safeLoc}', '${safeDesc}', '${safeWeb}', '${safeAlt}')" onerror="this.parentElement.style.display='none';"></div>
+                    <div class="spotlight-image-wrap"><img src="${imgUrl}" alt="" onclick="fireLightbox('${safeImg}', '${safeName}', '${safeLoc}', '${safeDesc}', '${safeWeb}', '${safeAlt}')" onerror="this.parentElement.style.display='none';"></div>
                     <span class="biz-title">${nameText}</span>
                     <span class="biz-location">${locText}</span>
                     <p class="biz-description">"${descText}"</p>
@@ -870,7 +863,6 @@ function bindFirebaseSection3And4Engine(db) {
             if (sections.sec_4_2) {
                 renderSpotlight(sections.sec_4_2);
             } else {
-                // Fallback to Global Spotlight if local town node is missing
                 db.ref('master_county_data/global/sections/sec_4_2').once('value', (snap) => {
                     if (snap.val()) renderSpotlight(snap.val());
                 });
@@ -915,7 +907,7 @@ function bindFirebaseSection3And4Engine(db) {
                             <h3>${evt.title}</h3>
                             <p>${parseInteractiveContent(displayDesc)}</p>
                             ${isLong ? `<span class="read-more-trigger">Read Details &rarr;</span>` : ''}
-                            ${evt.image ? `<div class="history-img-box"><img src="${evt.image}" alt="${escapeJsString(evt.alt)}" onerror="this.parentElement.style.display='none';"></div>` : ''}
+                            ${evt.image ? `<div class="history-img-box"><img src="${evt.image}" alt="" onerror="this.parentElement.style.display='none';"></div>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -971,7 +963,7 @@ function bindFirebaseLocalLinksEngine(db) {
                             </a>
                             <span style="font-size: 12px; color: #666; margin-left: 6px;">(${displayLoc})</span>
                             <div style="margin-top: 8px;">
-                                <img src="${targetRawUrl}" alt="${escapeJsString(name)}" onclick="fireLightbox('${safeImg}', '${escapeJsString(name)}', '${escapeJsString(displayLoc)}', '', '${escapeJsString(taggedUrl)}')" style="max-width:100%; max-height:180px; border-radius:6px; border:2px solid #222; cursor:pointer;" onerror="this.style.display='none';" />
+                                <img src="${targetRawUrl}" alt="" onclick="fireLightbox('${safeImg}', '${escapeJsString(name)}', '${escapeJsString(displayLoc)}', '', '${escapeJsString(taggedUrl)}')" style="max-width:100%; max-height:180px; border-radius:6px; border:2px solid #222; cursor:pointer;" onerror="this.style.display='none';" />
                             </div>
                         </div>
                     `;
@@ -1051,7 +1043,7 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
         container.innerHTML = `
             <div class="sidebar-widget-title">${config.display.toUpperCase()} FUEL INDEX MONITOR</div>
             <div class="fuel-station-header">
-                <div class="station-logo-frame"><img src="https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/${safeLogo}" alt="${config.name}"></div>
+                <div class="station-logo-frame"><img src="https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/${safeLogo}" alt=""></div>
                 <div class="station-meta-title">${config.name} (${config.display})</div>
             </div>
             <div class="fuel-pricing-grid">
@@ -1103,7 +1095,7 @@ function renderFixedCardSlideshow(containerElement, partnerPool, sectionId = 'se
     containerElement.innerHTML = Array.from({ length: totalCards }).map((_, idx) => {
         const initialPartner = partnerPool[idx % poolSize];
         const initialUrl = attachUtmParameters(initialPartner.websiteUrl || initialPartner.url || '#');
-        const initialImg = initialPartner.image || initialPartner.logo || '';
+        const { url: initialImg } = extractImageAndAlt(initialPartner);
         const initialName = initialPartner.name || 'Local Partner';
 
         const safeImg = escapeJsString(initialImg);
@@ -1113,7 +1105,7 @@ function renderFixedCardSlideshow(containerElement, partnerPool, sectionId = 'se
         return `
             <div class="partner-card fixed-slide-card" data-slot-index="${idx}" style="flex: 1 1 180px; max-width: 260px; transition: opacity 0.4s ease;">
                 <div class="partner-logo-box">
-                    <img class="partner-card-img" src="${initialImg}" alt="${safeName}" onclick="fireLightbox('${safeImg}', '${safeName}', 'PARTNER DIRECTORY', 'Local Sponsor', '${safeUrl}', '${safeName}')" style="cursor:pointer;" onerror="this.closest('.fixed-slide-card').style.display='none';">
+                    <img class="partner-card-img" src="${initialImg}" alt="" onclick="fireLightbox('${safeImg}', '${safeName}', 'PARTNER DIRECTORY', 'Local Sponsor', '${safeUrl}', '${safeName}')" style="cursor:pointer;" onerror="this.closest('.fixed-slide-card').style.display='none';">
                 </div>
                 <h4><a class="partner-card-link" href="${initialUrl}" target="_blank" data-ga-label="partner_link">${initialName}</a></h4>
             </div>
@@ -1139,7 +1131,7 @@ function renderFixedCardSlideshow(containerElement, partnerPool, sectionId = 'se
                 const nextItem = partnerPool[currentPartnerIndex];
                 
                 const nextUrl = attachUtmParameters(nextItem.websiteUrl || nextItem.url || '#');
-                const nextImg = nextItem.image || nextItem.logo || '';
+                const { url: nextImg } = extractImageAndAlt(nextItem);
                 const nextName = nextItem.name || 'Local Partner';
 
                 const safeImg = escapeJsString(nextImg);
@@ -1153,7 +1145,7 @@ function renderFixedCardSlideshow(containerElement, partnerPool, sectionId = 'se
                     const linkEl = cardNode.querySelector('.partner-card-link');
 
                     if (imgEl) {
-                        safeSetImageSource(imgEl, nextImg, cardNode, nextName);
+                        safeSetImageSource(imgEl, nextImg, cardNode);
                         imgEl.onclick = () => fireLightbox(safeImg, safeName, 'PARTNER DIRECTORY', 'Local Sponsor', safeUrl, safeName);
                     }
 
@@ -1221,5 +1213,5 @@ window.addEventListener('hashchange', () => {
 
 window.addEventListener('DOMContentLoaded', () => {
     handleSPAHashNavigation();
-    console.log(`Universal Watch Engine running smoothly for ${ACTIVE_TOWN.primaryName}. Build: 2026-08-01_UniversalWatch`);
+    console.log(`Master Engine running smoothly for ${ACTIVE_TOWN.primaryName}. Build: 2026-08-01_CleanPipeline`);
 });
