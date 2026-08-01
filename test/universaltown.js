@@ -1,5 +1,5 @@
 /* ==========================================================================
-   SMLC UNIVERSAL TOWN ENGINE - 100% FIREBASE PURE
+   SMLC UNIVERSAL TOWN ENGINE - 100% PURE FIREBASE ARCHITECTURE
    ========================================================================== */
 
 const TOWN_ALIAS_MAP = {
@@ -139,12 +139,6 @@ function extractImageAndAlt(node) {
     return { url: null, alt: null };
 }
 
-function matchesActiveTown(text, location) {
-    if (ACTIVE_TOWN.isHome) return true;
-    const combinedStr = ((text || "") + " " + (location || "")).toUpperCase();
-    return ACTIVE_TOWN.keywords.some(kw => combinedStr.includes(kw)) || ACTIVE_TOWN.zipCodes.some(zip => combinedStr.includes(zip));
-}
-
 function formatHumanTimestamp(rawString) {
     if (!rawString || rawString === "undefined" || rawString === "null") return "Date TBA";
     try {
@@ -234,7 +228,7 @@ function safeSetImageSource(imgElement, srcUrl, fallbackWrapper = null) {
     if (!imgElement) return;
     const parentContainer = fallbackWrapper || imgElement.closest('figure, .spotlight-image-wrap, .section3-landmark-img-wrap, .polaroid-wrap, .article-media-frame') || imgElement.parentElement;
 
-    // ALT stays completely empty on main UI screen
+    /* Leave ALT blank on main screen to prevent text leaks */
     imgElement.alt = "";
 
     if (!srcUrl || srcUrl.trim() === "" || srcUrl === "null" || srcUrl === "undefined") {
@@ -311,7 +305,7 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = ""
     
     if (imgSrc && targetImg) {
         safeSetImageSource(targetImg, imgSrc, null);
-        targetImg.alt = altText || title || ""; // ALT text assigned strictly inside Lightbox
+        targetImg.alt = altText || title || ""; /* ALT text populated only inside Lightbox */
         if (targetImg.parentElement) targetImg.parentElement.style.display = 'block';
     } else if (targetImg && targetImg.parentElement) {
         targetImg.parentElement.style.display = 'none';
@@ -486,21 +480,30 @@ function bindFirebasePartnersEngine(db) {
     });
 }
 
-/* FIRESTORE NEWS & EVENTS DIRECT LISTENERS */
+/* FIRESTORE DIRECT LISTENERS (NEWS & UNFILTERED EVENTS) */
 async function bindFirestoreNewsAndEvents() {
     if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function') {
-        console.warn("Firestore SDK not loaded on window.");
+        console.warn("Firestore SDK waiting to initialize...");
+        setTimeout(bindFirestoreNewsAndEvents, 500);
         return;
     }
     const db = firebase.firestore();
 
-    /* 1. LOCAL NEWS (Firestore collection: local_news) */
+    /* 1. LOCAL NEWS (Collection: local_news -> Filters on location and tags array) */
     try {
         db.collection('local_news').onSnapshot(newsSnapshot => {
             const newsList = [];
             newsSnapshot.forEach(doc => {
                 const item = doc.data();
-                if (matchesActiveTown(item.title + " " + (item.full_story || item.description || ''), item.location)) {
+                
+                const locStr = (item.location || "").toUpperCase();
+                const tagsArr = Array.isArray(item.tags) ? item.tags.map(t => String(t).toUpperCase()) : [];
+                const fullSearch = (JSON.stringify(item)).toUpperCase();
+
+                const isCountyWide = locStr.includes("CLAY COUNTY") || tagsArr.includes("CLAY COUNTY") || ACTIVE_TOWN.isHome;
+                const matchesTown = ACTIVE_TOWN.keywords.some(kw => locStr.includes(kw) || tagsArr.some(t => t.includes(kw)) || fullSearch.includes(kw));
+
+                if (isCountyWide || matchesTown) {
                     newsList.push(item);
                 }
             });
@@ -511,14 +514,14 @@ async function bindFirestoreNewsAndEvents() {
                 if (newsList.length > 0) {
                     applyHighDensityScrollLimits(targetGrid, newsList.length, 520);
                     targetGrid.innerHTML = newsList.map((story, idx) => {
-                        const storyText = story.full_story || story.description || '';
+                        const storyText = story.full_story || story.description || story.summary || '';
                         const isLong = storyText.length > 150;
                         const displayStory = isLong ? storyText.substring(0, 140) + "..." : storyText;
 
                         return `
                             <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
                                 ${story.image ? `<img src="${story.image}" alt="" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})" onerror="this.style.display='none';">` : ''}
-                                <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-top:10px;">${formatHumanTimestamp(story.date)}</div>
+                                <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-top:10px;">${formatHumanTimestamp(story.date || story.pubDate)}</div>
                                 <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${story.title}</div>
                                 <div style="font-size:14px; color:#444;">${parseInteractiveContent(displayStory)}</div>
                                 ${isLong ? `<div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: var(--primary); font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>` : ''}
@@ -526,21 +529,18 @@ async function bindFirestoreNewsAndEvents() {
                         `;
                     }).join('');
                 } else {
-                    targetGrid.innerHTML = `<div style="padding:15px; color:#666;">No news dispatches for ${ACTIVE_TOWN.primaryName}.</div>`;
+                    targetGrid.innerHTML = `<div style="padding:15px; color:#666;">No news dispatches currently listed for ${ACTIVE_TOWN.primaryName}.</div>`;
                 }
             }
         });
     } catch(e) { console.warn("Firestore News listener error:", e.message); }
 
-    /* 2. CALENDAR EVENTS (Firestore collection: smlc_events) */
+    /* 2. CALENDAR EVENTS (Collection: smlc_events -> UNFILTERED FULL COUNTY LIST) */
     try {
         db.collection('smlc_events').onSnapshot(eventsSnapshot => {
             const eventsList = [];
             eventsSnapshot.forEach(doc => {
-                const item = doc.data();
-                if (matchesActiveTown((item.name || item.title || "") + " " + (item.details || item.description || ''), item.location)) {
-                    eventsList.push(item);
-                }
+                eventsList.push(doc.data());
             });
 
             window.calendarCachedEvents = eventsList;
@@ -550,7 +550,7 @@ async function bindFirestoreNewsAndEvents() {
                     applyHighDensityScrollLimits(scroller, eventsList.length, 500);
 
                     const eventsHtml = eventsList.map((item, idx) => {
-                        const eventLoc = item.location || "Clay County, IL";
+                        const eventLoc = item.location || ACTIVE_TOWN.primaryName + ", IL";
                         const rawDetails = item.details || item.description || "";
                         
                         const { imageUrl: extractedImg, cleanText } = extractImageFromText(rawDetails);
@@ -587,7 +587,7 @@ async function bindFirestoreNewsAndEvents() {
 
                     scroller.innerHTML = eventsHtml;
                 } else {
-                    scroller.innerHTML = `<div style="padding:15px; color:#666;">No upcoming events listed for ${ACTIVE_TOWN.primaryName}.</div>`;
+                    scroller.innerHTML = `<div style="padding:15px; color:#666;">No upcoming events listed.</div>`;
                 }
             }
         });
@@ -833,9 +833,15 @@ function bindFirebaseSection3And4Engine(db) {
             artBodyEl.innerHTML = bodyHtml;
         }
 
-        /* SECTION 4.2 (Business Spotlight: Town Local -> Global RTDB Fallback) */
+        /* SECTION 4.2 (BUSINESS SPOTLIGHT: MATCHED HEIGHT & FALLBACK TO GLOBAL RTDB NODE) */
         const spotlightTarget = document.querySelector('.clay-county-news-box.spotlight-clipping');
         if (spotlightTarget) {
+            spotlightTarget.style.display = "flex";
+            spotlightTarget.style.flexDirection = "column";
+            spotlightTarget.style.justifyContent = "space-between";
+            spotlightTarget.style.minHeight = "480px";
+            spotlightTarget.style.height = "100%";
+
             const renderSpotlight = (s42) => {
                 if (!s42) return;
                 const nameText = extractText(s42.name || s42.title) || "Local Merchant";
@@ -853,12 +859,14 @@ function bindFirebaseSection3And4Engine(db) {
                 const safeAlt = escapeJsString(altText);
 
                 spotlightTarget.innerHTML = `
-                    <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
-                    <div class="spotlight-image-wrap"><img src="${imgUrl}" alt="" onclick="fireLightbox('${safeImg}', '${safeName}', '${safeLoc}', '${safeDesc}', '${safeWeb}', '${safeAlt}')" onerror="this.parentElement.style.display='none';"></div>
-                    <span class="biz-title">${nameText}</span>
-                    <span class="biz-location">${locText}</span>
-                    <p class="biz-description">"${descText}"</p>
-                    <a href="${websiteUrl}" target="_blank" class="spotlight-btn" data-ga-label="business_spotlight">Visit Business &rarr;</a>
+                    <div>
+                        <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
+                        <div class="spotlight-image-wrap" style="margin-top:12px;"><img src="${imgUrl}" alt="" onclick="fireLightbox('${safeImg}', '${safeName}', '${safeLoc}', '${safeDesc}', '${safeWeb}', '${safeAlt}')" style="width:100%; max-height:220px; object-fit:cover; border-radius:6px; cursor:pointer;" onerror="this.parentElement.style.display='none';"></div>
+                        <span class="biz-title" style="display:block; font-weight:bold; font-size:18px; margin-top:10px;">${nameText}</span>
+                        <span class="biz-location" style="display:block; font-size:12px; color:#666;">${locText}</span>
+                        <p class="biz-description" style="margin-top:8px; line-height:1.5;">"${descText}"</p>
+                    </div>
+                    <a href="${websiteUrl}" target="_blank" class="spotlight-btn" data-ga-label="business_spotlight" style="margin-top:15px; display:inline-block; text-align:center;">Visit Business &rarr;</a>
                 `;
             };
 
@@ -871,7 +879,7 @@ function bindFirebaseSection3And4Engine(db) {
             }
         }
 
-        /* SECTION 5 (Historical Timeline directly from Realtime DB sec_5) */
+        /* SECTION 5 (Historical Timeline from Realtime DB sec_5) */
         if (sections.sec_5) {
             const historyRowTarget = document.getElementById('history-row-target');
             const rawTimeline = Array.isArray(sections.sec_5) ? sections.sec_5 : Object.values(sections.sec_5);
@@ -1165,6 +1173,10 @@ function renderFixedCardSlideshow(containerElement, partnerPool, sectionId = 'se
     }
 }
 
+async function processDataPipelines() {
+    initializeFirebaseGasMonitor();
+}
+
 function hydrateTownHeroUI() {
     const badgeEl = document.getElementById('hero-seat-badge');
     const titleEl = document.getElementById('hero-town-title');
@@ -1197,10 +1209,6 @@ function updateNavigationActiveState() {
     });
 }
 
-async function processDataPipelines() {
-    initializeFirebaseGasMonitor();
-}
-
 async function handleSPAHashNavigation() {
     resetAllActiveTimers();
     ACTIVE_TOWN = getActiveTownConfig();
@@ -1219,5 +1227,5 @@ window.addEventListener('hashchange', () => {
 
 window.addEventListener('DOMContentLoaded', () => {
     handleSPAHashNavigation();
-    console.log(`Master Engine running smoothly for ${ACTIVE_TOWN.primaryName}. Build: 2026-08-01_100PercentFirebase`);
+    console.log(`Universal Engine running smoothly for ${ACTIVE_TOWN.primaryName}. Build: 2026-08-01_100PercentFirebase`);
 });
