@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<!-- Line 2: Town identifier attribute set to LOUISVILLE -->
+<html lang="en-US" data-town="LOUISVILLE">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Louisville, IL - SMLC Digital Town Square Portal</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./cc.css" />
+
+    <script>
+        window.addEventListener('error', function(e) {
+            if (e.message && (e.message.includes('Script error') || e.message.includes('ResizeObserver'))) {
+                e.preventDefault();
+                return true;
+            }
+        }, true);
+    </script>
+
+    <script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-L376P3NPY4" onerror="console.warn('GTM Script blocked or unavailable')"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-L376P3NPY4');
+        gtag('config', 'G-H6Q756MVE8');
+    </script>
+</head>
+<body data-town="LOUISVILLE">
+
+    <div class="portal-floating-hud-track">
+        <div id="hud-county-age-target" class="hud-floating-badge county-anniversary-badge" style="display: none;"></div>
+        <div id="hud-holiday-title-target" class="hud-floating-badge holiday-celebration-badge" style="display: none;"></div>
+    </div>
+
+    <div id="global-header-container" class="site-brand-header">
+        <a href="#/home" class="header-billboard-link" data-ga-label="HeaderBillboardLink">
+            <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="SMLC Community Digital Network Map" class="header-billboard-img" />
+        </a>
+    </div>
+
+    <header class="menu-bar">
+        <div class="menu-inner">
+            <nav>
+                <ul id="dynamic-menu-links" class="menu-links">
+                    <li><a href="#/home" data-ga-label="NavHomeButton"><span>Home</span></a></li>
+                    <li><a href="#/clay-city" data-ga-label="NavClayCityButton"><span>Clay City</span></a></li>
+                    <li><a href="#/flora" data-ga-label="NavFloraButton"><span>Flora</span></a></li>
+                    <li><a href="#/louisville" class="active" data-ga-label="NavLouisvilleButton"><span>Louisville</span></a></li>
+                    <li><a href="#/sailor-springs" data-ga-label="NavSailorSpringsButton"><span>Sailor Springs</span></a></li>
+                    <li><a href="#/xenia" data-ga-label="NavXeniaButton"><span>Xenia</span></a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="main-container" style="padding-bottom: 0;">
+        <section class="town-hero-banner static-hero-colors">
+            <div class="banner-content">
+                <span class="seat-badge" id="hero-seat-badge">Clay County Seat</span>
+                <h1 class="town-title outlined-headline" id="hero-town-title">Louisville, Illinois</h1>
+                <p class="town-established-meta" id="hero-established-meta">Est. 1837 | Zip Code 62858</p>
+                <div class="river-marquee" id="hero-river-marquee">HOME OF THE NORTH CLAY CARDINALS</div>
+            </div>
+        </section>
+    </div>
+
+    <section class="section3-split-layout">
+        <div class="section3-container-grid">
+            <div class="section3-row-1">
+                <h2 class="section3-main-title" id="sec3-main-title">Discover Louisville's Historic Center</h2>
+                <p class="section3-intro-text" id="sec3-intro-text">Explore Louisville's county seat governance, local schools, and rich community tradition.</p>
+            </div>
+
+            <div class="section3-row-2">
+                <div class="section3-left-col">
+                    <div id="louisville-town-slideshow-matrix" class="section3-slideshow-box">
+                        <div id="louisville-slideshow" class="slider-viewport">
+                            <div class="slider-slide active">
+                                <img src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Louisville Community View">
+                                <div class="slider-caption">Clay County Courthouse Square</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section3-about-box">
+                        <span class="section3-about-tag" id="sec3-about-tag">About Louisville</span>
+                        <p class="section3-about-text" id="desc2-target-1">Louisville, IL was established in 1837 as the official County Seat of Clay County. Situated along the Little Wabash River, it holds a central role in county governance, education, and civic history.</p>
+                    </div>
+                </div>
+
+                <div class="section3-right-col">
+                    <div class="section3-landmark-card">
+                        <h3 class="section3-landmark-title" id="right-card-meta-title">Historic Courthouse &amp; Grounds</h3>
+                        <div class="section3-landmark-images">
+                            <div class="section3-landmark-img-wrap">
+                                <img id="dual-img-1" src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Louisville Landmark 1" class="lightbox-triggerable-element">
+                                <span class="section3-landmark-caption" id="dual-header-1">Courthouse</span>
+                            </div>
+                            <div class="section3-landmark-img-wrap">
+                                <img id="dual-img-2" src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Louisville Landmark 2" class="lightbox-triggerable-element">
+                                <span class="section3-landmark-caption" id="dual-header-2">Veterans Memorial</span>
+                            </div>
+                        </div>
+                        <p id="right-card-meta-desc1" class="section3-landmark-desc">Loading landmark historical details...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section4-two-box-wrapper">
+        <div class="section4-left-article-box">
+            <header class="section4-centered-article-header">
+                <div class="category-tag" id="sec4-category-tag">Civic &amp; Government</div>
+                <h1 class="article-stacked-title" id="sec4-article-title">Louisville's Seat of Governance</h1>
+                <p class="article-stacked-deck" id="sec4-article-deck">Guiding judicial, municipal, and educational leadership across Clay County.</p>
+            </header>
+
+            <article class="article-body-content" id="sec4-article-body">
+                <p>
+                    Louisville, Illinois, serving proudly as the Clay County seat, balances its essential civic administration duties with warm small-town living.
+                </p>
+
+                <figure class="article-media-frame">
+                    <img id="sec-4-1-article-img" 
+                         src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" 
+                         alt="Louisville Courthouse Square" 
+                         class="lightbox-triggerable-element" />
+                    <figcaption id="sec4-img-caption">Clay County Courthouse — Louisville, IL</figcaption>
+                </figure>
+
+                <p>
+                    Home to North Clay athletics, community fairs, and civic organizations, Louisville remains a vital operational anchor for area residents.
+                </p>
+            </article>
+
+            <div class="article-footer">
+                <span>Louisville Dispatches | Jan 2026</span>
+                <span>Issue No. 1 | Page 1</span>
+            </div>
+        </div>
+
+        <aside class="section4-right-widgets-stack">
+            <div class="clay-county-news-box spotlight-clipping">
+                <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
+                <div class="spotlight-image-wrap">
+                    <img id="spotlight-asset-img" src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Business Spotlight">
+                </div>
+                <span class="biz-title" id="spotlight-asset-name">Local Merchant</span>
+                <span class="biz-location" id="spotlight-asset-loc">Louisville, IL</span>
+                <p class="biz-description" id="spotlight-asset-desc">Supporting local commerce across Clay County.</p>
+                <a href="#" id="spotlight-asset-link" target="_blank" class="spotlight-btn" data-ga-label="spotlight_btn">Visit Business &rarr;</a>
+            </div>
+
+            <div id="fuel-monitor-target-box" class="fuel-monitor-billboard-card">
+                <div class="sidebar-widget-title">LOUISVILLE FUEL INDEX MONITOR</div>
+                <div class="fuel-station-header">
+                    <div class="station-logo-frame">
+                        <img src="https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/Casey's.png" alt="Gas Station">
+                    </div>
+                    <div class="station-meta-title">CASEY'S</div>
+                </div>
+                <div class="fuel-pricing-grid">
+                    <div class="price-box">
+                        <span class="price-type-label">REGULAR</span>
+                        <span class="price-value-regular">$3.29</span>
+                    </div>
+                    <div class="price-box">
+                        <span class="price-type-label">DIESEL</span>
+                        <span class="price-value-diesel">$3.89</span>
+                    </div>
+                </div>
+                <div class="sync-timestamp-label">Syncing Real-Time Prices...</div>
+            </div>
+        </aside>
+    </div>
+
+    <div class="main-container">
+        <section class="historical-timeline-chassis-wrapper">
+            <div class="timeline-inner-bounds">
+                <div class="timeline-row-1-header">
+                    <span class="main-timeline-center-title-node">Historical Timeline</span>
+                    <p class="main-timeline-sub-caption-node">Journey through key historical milestones that have shaped Louisville, IL.</p>
+                </div>
+                <div id="history-row-target" class="timeline-row-2-cards">
+                    <div class="feed-loading-placeholder">Parsing landmark records ledger database tracking layers...</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="widescreen-strip-container">
+        <section class="showcase-widget full-bleed-widget">
+            <div class="partners-horizontal-strip" id="partners-grid-top"></div>
+        </section>
+    </div>
+
+    <section class="smlc-three-column-portal-wrapper" id="adaptive-time-portal-chassis">
+        <div class="portal-grid-layout-fixed">
+            <div class="portal-column-cell-box left-cell-stack">
+                <div class="clay-county-news-box event-clipping">
+                    <div class="clipping-tag">Community Bulletin</div>
+                    <div class="event-clipping-header">
+                        <h3>What's Happening?</h3>
+                        <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #222; font-weight: bold;">Clay County Community Calendar</span>
+                    </div>
+                    <p class="event-clipping-text">
+                        "Got a local fundraiser, school event, or church dinner coming up? Share your news with the community for free!"
+                    </p>
+                    <a href="https://www.supportmylocalcommunity.com/submit-event" target="_blank" class="event-clipping-btn" data-ga-label="submit_event_btn">Submit Your Event</a>
+                    <div class="clipping-footer">Clay City • Flora • Louisville • Sailor Springs • Xenia</div>
+                </div>
+
+                <div class="card-module-wrapper">
+                    <h2 class="et_pb_module_heading">Upcoming Events in Louisville</h2>
+                    <div class="news-clipping-wrapper">
+                        <div class="clipping-masthead">
+                            <span class="black-tag">Community Bulletin</span>
+                            <p class="clipping-tagline" id="month-tagline">Upcoming Events</p> 
+                        </div>
+                        <div id="bulletin-scroller-target">
+                            <div style="text-align:center; padding: 20px; font-style:italic;">Loading community calendar...</div>
+                        </div>
+                        <div class="clipping-footer">
+                            View Full Community Calendar &amp; Details<br>
+                            Support My Local Community
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="portal-column-cell-box center-cell-stack">
+                <div class="card-module-wrapper">
+                    <h2 class="et_pb_module_heading">Louisville News</h2>
+                    <div class="newspaper-feed-chassis">
+                        <div class="clipping-masthead">
+                            <span class="black-tag">SMLC Newsroom</span>
+                            <p class="clipping-tagline">Louisville Local Dispatches</p>
+                        </div>
+                        <div id="news-matrix-target" class="news-dynamic-masonry">
+                            <div class="feed-loading-placeholder">Reconstructing localized newsroom dispatches...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-module-wrapper">
+                    <h2 class="et_pb_module_heading">Business Directory</h2>
+                    <div class="town-directory-container-s7">
+                        <img src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png?v=20260730_1630" 
+                             alt="Support My Local Community Logo" 
+                             class="town-directory-banner-s7 lightbox-triggerable-element" />
+                        <a href="https://clay-county-business-directory.supportmylocalcommunity.com/" target="_blank" class="town-directory-interactive-btn-s7" style="width: 100%;" data-ga-label="section7_directory_btn">
+                            Clay County Business Directory
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="portal-column-cell-box right-cell-stack">
+                <div class="card-module-wrapper">
+                    <h2 class="et_pb_module_heading">SMLC Facebook</h2>
+                    <div class="clay-county-news-box group-invitation-master">
+                        <div class="notice-tag-red">Local Conversation</div>
+                        <div class="polaroid-wrap">
+                            <img src="https://ourflora.com/wp-content/uploads/2023/08/Ourflora.png" alt="OurFlora Community" class="lightbox-triggerable-element">
+                        </div>
+                        <div class="invitation-header-main">
+                            <h3>Join the Community</h3>
+                            <span class="sub-header-text">Official SMLC Facebook Page</span>
+                        </div>
+                        <p class="invitation-body-text">
+                            "Stay connected with your neighbors. Discuss local news, share community updates, and join neighbors in the Clay County conversation."
+                        </p>
+                        <a href="https://www.facebook.com/OurFloraIL" target="_blank" class="fb-action-btn" data-ga-label="facebook_group_btn">
+                            Enter the Conversation
+                        </a>
+                        <span class="community-voice-footer">
+                            Community Voice • Clay County, IL
+                        </span>
+                    </div>
+                </div>
+
+                <div class="card-module-wrapper">
+                    <h2 class="et_pb_module_heading">town local links</h2>
+                    <div class="clay-county-news-box group-invitation-master">
+                        <div class="notice-tag-red">Town Directory</div>
+                        <div class="invitation-header-main" style="margin-top:15px;">
+                            <h3>Local Links &amp; Resources</h3>
+                            <span class="sub-header-text">Official Louisville &amp; Clay County Portals</span>
+                        </div>
+                        <div class="scrollable-directory-stream">
+                            <div id="local-links-target-container" class="local-links-stream">
+                                <div style="font-style:italic; font-size:12px; color:#666;">Loading directory links...</div>
+                            </div>
+                        </div>
+                        <span class="community-voice-footer">
+                            Verified Resources • Clay County, IL
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="widescreen-strip-container section8-town-images-strip">
+        <section class="showcase-widget full-bleed-widget">
+            <div class="partners-horizontal-strip" id="partners-grid-bottom">
+                <div class="feed-loading-placeholder" style="color: #fff; text-align: center; width: 100%;">Syncing regional timeline showcase arrays...</div>
+            </div>
+        </section>
+    </div>
+
+    <div class="main-container section9-bold-print-wrapper section10-message-chassis">
+        <section class="section10-proclamation-card-box">
+            <p class="proclamation-body-text">
+                We are very Thankful and Blessed for our Customers who allow us to advertise their Business to the Community. We hope to be of Service, not only to the Large Corporations, but also to the Small Business’ in the area. A Large Corporation once started out as a small business, so our hope is to help those Small Business’ we serve reach the fullest potential they desire. You will never know what we are able to do for Your Business unless you ask. I hope to hear from you.
+            </p>
+            <p class="proclamation-contact-text">
+                For questions or comments about this site please email <a href="mailto:Scott.Robinson@skventuresigns.com" data-ga-label="proclamation_email">Scott.Robinson@skventuresigns.com</a>
+            </p>
+        </section>
+    </div>
+
+    <div id="portal-global-lightbox" class="lightbox-overlay-mask" onclick="closeLightbox(event)">
+        <div class="lightbox-modal-window">
+            <div class="lightbox-header-bar" style="padding:15px; border-bottom:2px solid #222; display:flex; justify-content:space-between; align-items:center;">
+                <span id="lightbox-label" style="font-weight:bold; font-size:18px;">SMLC Dispatches</span>
+                <button onclick="document.getElementById('portal-global-lightbox').style.display='none'" class="lightbox-close-btn" style="font-size:24px; cursor:pointer; background:none; border:none;">&times;</button>
+            </div>
+            
+            <div style="padding:20px; overflow-y:auto;">
+                <h3 id="lightbox-target-title" style="font-size:24px; margin-top:0;">Title</h3>
+                <div id="lightbox-target-date" style="font-size: 13px; color: #cc0000; font-weight: bold; margin-bottom: 12px;">Wire Sync Info</div>
+                <p id="lightbox-target-story" style="font-size:16px; line-height:1.6;">Story Body</p>
+                <div id="lightbox-img-wrapper" style="margin-top:15px; text-align:center;">
+                    <img id="lightbox-target-img" src="" alt="Expanded Asset Content" style="max-width:100%; max-height:65vh; border-radius:4px; object-fit:contain;">
+                </div>
+            </div>
+            
+            <div class="lightbox-footer-bar" style="padding:15px; border-top:1px solid #ddd; text-align:center; font-size:12px; color:#666;">
+                <span>SUPPORT MY LOCAL COMMUNITY NETWORK &copy; 2026</span>
+                <div id="lightbox-action-row" style="display:none; margin-top:8px;">
+                    <a id="lightbox-target-link" href="#" target="_blank" style="color: #0258A3; font-weight: bold;" data-ga-label="lightbox_open_source">Open Source &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer id="global-footer-container" class="site-global-footer-matrix">
+        <div style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:20px; max-width:1200px; margin:0 auto; padding-bottom:20px;">
+            <div>
+                <span style="font-weight:bold; color:var(--cc-gold);">Contact Us:</span>
+                <div id="footer-phone-target">618-662-8341</div>
+            </div>
+            <div>
+                <span style="font-weight:bold; color:var(--cc-gold);">Email:</span><br>
+                <a id="footer-email-target" href="mailto:Scott.Robinson@skventuresigns.com" style="color:#fff;" data-ga-label="footer_email">Scott.Robinson@skventuresigns.com</a>
+            </div>
+            <div>
+                <span style="font-weight:bold; color:var(--cc-gold);">Address:</span>
+                <div id="footer-address-target">Clay County, Illinois</div>
+            </div>
+        </div>
+        <div style="border-top:1px solid #333; padding-top:15px;">
+            <p id="footer-copy-target">&copy; 2026 Louisville Community Portal. All rights reserved.</p>
+            <p style="margin-top: 8px; opacity: 0.8; font-size: 12px; color: #aaaaaa;">
+                <strong>System Build Version:</strong> v1.1.2 | <strong>Active Version:</strong> 2026-07-31_13:40
+            </p>
+        </div>
+    </footer>
+
+    <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top" style="position:fixed; bottom:20px; right:20px; padding:10px 15px; background:#222; color:#fff; border:1px solid var(--cc-gold); border-radius:4px; cursor:pointer;">↑</button>
+
+    <script src="./universaltown.js"></script>
+</body>
+</html>
