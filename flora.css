@@ -104,8 +104,21 @@ a { color: var(--link-bright-blue) !important; text-decoration: none; }
 
 .menu-inner { width: var(--container-width); margin: 0 auto; display: flex; justify-content: center; }
 .menu-links { display: flex; flex-wrap: wrap; list-style: none; gap: clamp(12px, 1.5vw, 24px); margin: 0; padding: 0; }
-.menu-links a { color: #ffffff !important; font-size: 16px; font-weight: 800; padding: 10px 18px; text-transform: uppercase; letter-spacing: 1px; }
+.menu-links a { color: #ffffff !important; font-size: 16px; font-weight: 800; padding: 10px 18px; text-transform: uppercase; letter-spacing: 1px; display: inline-flex; align-items: center; }
 .menu-links a:hover, .menu-links a.active { color: var(--flora-orange) !important; border: 2px solid var(--flora-orange); background: rgba(0, 0, 0, 0.6) !important; border-radius: 8px; }
+
+/* Fixed Menu Thumbnail Icon Sizing (Keeps as small inline icons) */
+.menu-links a img,
+.menu-links img {
+    height: 20px !important;
+    width: auto !important;
+    max-width: 24px !important;
+    max-height: 20px !important;
+    object-fit: contain !important;
+    vertical-align: middle !important;
+    margin-right: 6px !important;
+    display: inline-block !important;
+}
 
 .main-container { width: var(--container-width); max-width: 100%; margin: 0 auto; padding: 36px clamp(20px, 3vw, 60px); }
 
