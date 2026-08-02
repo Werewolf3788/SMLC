@@ -162,6 +162,7 @@ a {
     padding: 2px;
     border: 1px solid rgba(255, 255, 255, 0.3);
     margin: 0 !important;
+    cursor: pointer;
 }
 
 .main-container { 
@@ -339,7 +340,8 @@ a {
 .slider-slide img { 
     width: 100%; 
     height: 100%; 
-    object-fit: cover; 
+    object-fit: contain; 
+    background-color: #0a0a0a;
 }
 
 .slider-caption { 
@@ -443,7 +445,7 @@ a {
     flex-grow: 1;
 }
 
-/* Section 4: Equal-Height Grid Setup */
+/* Section 4: Article & Spotlight Image Aspect Adjustments */
 .section4-two-box-wrapper {
     display: grid;
     grid-template-columns: 1.2fr 1fr;
@@ -452,7 +454,7 @@ a {
     max-width: 100% !important;
     padding: 40px clamp(20px, 4vw, 80px) !important;
     margin: 40px auto;
-    align-items: stretch !important; /* Forces Spotlight & Sidebar to match Article height */
+    align-items: stretch !important;
     background-color: transparent !important;
 }
 
@@ -482,13 +484,15 @@ a {
     height: 100% !important;
 }
 
+/* FIX: Flexible, Uncropped Article Image Display */
 .article-body-content img,
 .section4-left-article-box img {
     width: 100% !important;
     max-width: 100% !important;
     height: auto !important;
-    max-height: 380px !important;
-    object-fit: cover !important;
+    max-height: 420px !important;
+    object-fit: contain !important; /* Preserves entire panoramic image without cutting off tops/bottoms */
+    background-color: #111111 !important; /* Dark frame for letterboxed wide shots */
     display: block !important;
     margin: 16px auto !important;
     border-radius: 6px !important;
@@ -583,7 +587,7 @@ a {
     text-transform: uppercase !important;
 }
 
-/* Sidebar Flexible Height Container */
+/* Sidebar Container */
 .section4-right-widgets-stack {
     display: flex !important;
     flex-direction: column !important;
@@ -592,7 +596,7 @@ a {
     height: 100% !important;
 }
 
-/* Spotlight Card Matching Article Height & Flexible Non-Stretched Image */
+/* FIX: Spotlight Image View Scale */
 .clay-county-news-box.spotlight-clipping {
     width: 100% !important;
     padding: 28px !important;
@@ -623,23 +627,24 @@ a {
 
 .spotlight-image-wrap {
     width: 100%;
-    height: auto;
-    max-height: 220px;
+    height: 220px;
     border: 2px solid #222;
     margin-bottom: 18px;
     overflow: hidden;
-    background-color: #eee;
+    background-color: #1a1a1a; /* Background frame for wide images */
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .spotlight-image-wrap img {
     width: 100%;
     height: 100%;
-    max-height: 220px;
-    object-fit: cover !important; /* Preserves aspect ratio cleanly without stretching */
+    object-fit: contain !important; /* Shows complete storefront banner without zoom clipping */
     display: block;
     cursor: pointer;
-    filter: grayscale(10%) contrast(110%);
+    filter: grayscale(0%) contrast(105%);
 }
 
 .biz-title {
@@ -670,7 +675,7 @@ a {
     padding: 0 6px;
     margin-bottom: 22px;
     text-align: justify;
-    flex-grow: 1; /* Absorbs remaining height naturally */
+    flex-grow: 1;
 }
 
 .spotlight-btn {
@@ -782,6 +787,7 @@ a {
     font-style: italic;
 }
 
+/* SECTION 5: Historical Timeline Fix */
 .historical-timeline-chassis-wrapper {
     width: 100% !important;
     padding: clamp(36px, 5vh, 72px) clamp(20px, 3.5vw, 80px) !important;
@@ -895,6 +901,7 @@ a {
     text-decoration: underline;
 }
 
+/* FIX: Section 5 Flexible Non-Stretched Image Box */
 .history-card .history-img-box {
     width: 100% !important;
     height: 180px !important;
@@ -902,15 +909,20 @@ a {
     overflow: hidden !important;
     border: 2px solid #000000 !important;
     border-radius: 4px !important;
-    background-color: #eeeeee !important;
+    background-color: #1a1a1a !important; /* Neutral frame background */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .history-card .history-img-box img {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important; /* Prevents text banners & old scans from zooming in into giant unreadable letters */
     display: block !important;
-    filter: grayscale(10%) contrast(105%);
+    margin: 0 auto !important;
 }
 
 .widescreen-strip-container,
