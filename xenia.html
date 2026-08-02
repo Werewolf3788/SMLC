@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Line 2: Town identifier attribute set to XENIA -->
 <html lang="en-US" data-town="XENIA">
 <head>
     <meta charset="UTF-8" />
@@ -6,15 +7,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Xenia, IL - SMLC Digital Town Square Portal</title>
 
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./cc.css" />
 
-    <!-- Stylesheet -->
-    <link rel="stylesheet" href="xenia.css" />
-
-    <!-- Global Script Error Safeguard -->
     <script>
         window.addEventListener('error', function(e) {
             if (e.message && (e.message.includes('Script error') || e.message.includes('ResizeObserver'))) {
@@ -24,11 +21,9 @@
         }, true);
     </script>
 
-    <!-- Firebase SDK Dependencies -->
     <script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
-    <!-- Global Analytics Watermarks -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L376P3NPY4" onerror="console.warn('GTM Script blocked or unavailable')"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -39,14 +34,13 @@
         gtag('config', 'G-H6Q756MVE8');
     </script>
 </head>
-<body data-town="CLAY CITY">
+<body data-town="XENIA">
 
     <div class="portal-floating-hud-track">
         <div id="hud-county-age-target" class="hud-floating-badge county-anniversary-badge" style="display: none;"></div>
         <div id="hud-holiday-title-target" class="hud-floating-badge holiday-celebration-badge" style="display: none;"></div>
     </div>
 
-    <!-- SECTION 1: HEADER BILLBOARD & STICKY MENU BAR -->
     <div id="global-header-container" class="site-brand-header">
         <a href="#/home" class="header-billboard-link" data-ga-label="HeaderBillboardLink">
             <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="SMLC Community Digital Network Map" class="header-billboard-img" />
@@ -58,64 +52,62 @@
             <nav>
                 <ul id="dynamic-menu-links" class="menu-links">
                     <li><a href="#/home" data-ga-label="NavHomeButton"><span>Home</span></a></li>
-                    <li><a href="#/clay-city" class="active" data-ga-label="NavClayCityButton"><span>Clay City</span></a></li>
+                    <li><a href="#/clay-city" data-ga-label="NavClayCityButton"><span>Clay City</span></a></li>
                     <li><a href="#/flora" data-ga-label="NavFloraButton"><span>Flora</span></a></li>
                     <li><a href="#/louisville" data-ga-label="NavLouisvilleButton"><span>Louisville</span></a></li>
                     <li><a href="#/sailor-springs" data-ga-label="NavSailorSpringsButton"><span>Sailor Springs</span></a></li>
-                    <li><a href="#/xenia" data-ga-label="NavXeniaButton"><span>Xenia</span></a></li>
+                    <li><a href="#/xenia" class="active" data-ga-label="NavXeniaButton"><span>Xenia</span></a></li>
                 </ul>
             </nav>
         </div>
     </header>
 
-    <!-- SECTION 2: TOWN HERO BANNER -->
     <div class="main-container" style="padding-bottom: 0;">
         <section class="town-hero-banner static-hero-colors">
             <div class="banner-content">
-                <span class="seat-badge" id="hero-seat-badge">Clay County Hub</span>
-                <h1 class="town-title outlined-headline" id="hero-town-title">Clay City, Illinois</h1>
-                <p class="town-established-meta" id="hero-established-meta">Est. 1868 | Zip Code 62824</p>
-                <div class="river-marquee" id="hero-river-marquee">HOME OF THE CLAY CITY BULLDOGS &amp; CUBIES</div>
+                <span class="seat-badge" id="hero-seat-badge">Clay County Gateway</span>
+                <h1 class="town-title outlined-headline" id="hero-town-title">Xenia, Illinois</h1>
+                <p class="town-established-meta" id="hero-established-meta">Est. 1834 | Zip Code 62899</p>
+                <div class="river-marquee" id="hero-river-marquee">HISTORIC PRIDE &amp; RURAL HERITAGE</div>
             </div>
         </section>
     </div>
 
-    <!-- SECTION 3: SPLIT LAYOUT -->
     <section class="section3-split-layout">
         <div class="section3-container-grid">
             <div class="section3-row-1">
-                <h2 class="section3-main-title" id="sec3-main-title">Discover Clay City's Vibrant Community</h2>
-                <p class="section3-intro-text" id="sec3-intro-text">Explore Clay City's local businesses, rich agricultural heritage, and civic events along the Little Wabash River.</p>
+                <h2 class="section3-main-title" id="sec3-main-title">Discover Xenia's Vibrant Community</h2>
+                <p class="section3-intro-text" id="sec3-intro-text">Explore Xenia's rich historical legacy, local agriculture, and close-knit neighborhood spirit.</p>
             </div>
 
             <div class="section3-row-2">
                 <div class="section3-left-col">
-                    <div id="clay-city-town-slideshow-matrix" class="section3-slideshow-box">
-                        <div id="clay-city-slideshow" class="slider-viewport">
+                    <div id="xenia-town-slideshow-matrix" class="section3-slideshow-box">
+                        <div id="xenia-slideshow" class="slider-viewport">
                             <div class="slider-slide active">
-                                <img src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Clay City Community View">
-                                <div class="slider-caption">Clay City Square</div>
+                                <img src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Xenia Community View">
+                                <div class="slider-caption">Xenia Village Square</div>
                             </div>
                         </div>
                     </div>
 
                     <div class="section3-about-box">
-                        <span class="section3-about-tag" id="sec3-about-tag">About Clay City</span>
-                        <p class="section3-about-text" id="desc2-target-1">Clay City, IL was established in 1868 along the Little Wabash River. Known for its strong community traditions, rich agricultural roots, and energetic civic spirit, it stands as a cherished community in Clay County.</p>
+                        <span class="section3-about-tag" id="sec3-about-tag">About Xenia</span>
+                        <p class="section3-about-text" id="desc2-target-1">Xenia, IL was established in 1834 along early western pioneer paths. Renowned for its rural charm and resilient community character, it remains a proud township in Western Clay County.</p>
                     </div>
                 </div>
 
                 <div class="section3-right-col">
                     <div class="section3-landmark-card">
-                        <h3 class="section3-landmark-title" id="right-card-meta-title">Historic Clay City Landmark</h3>
+                        <h3 class="section3-landmark-title" id="right-card-meta-title">Historic Xenia Landmarks</h3>
                         <div class="section3-landmark-images">
                             <div class="section3-landmark-img-wrap">
-                                <img id="dual-img-1" src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Clay City Landmark 1" class="lightbox-triggerable-element">
-                                <span class="section3-landmark-caption" id="dual-header-1">Community Landmark</span>
+                                <img id="dual-img-1" src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Xenia Landmark 1" class="lightbox-triggerable-element">
+                                <span class="section3-landmark-caption" id="dual-header-1">Village Park</span>
                             </div>
                             <div class="section3-landmark-img-wrap">
-                                <img id="dual-img-2" src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Clay City Landmark 2" class="lightbox-triggerable-element">
-                                <span class="section3-landmark-caption" id="dual-header-2">Klins</span>
+                                <img id="dual-img-2" src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Xenia Landmark 2" class="lightbox-triggerable-element">
+                                <span class="section3-landmark-caption" id="dual-header-2">Historic District</span>
                             </div>
                         </div>
                         <p id="right-card-meta-desc1" class="section3-landmark-desc">Loading landmark historical details...</p>
@@ -125,40 +117,38 @@
         </div>
     </section>
 
-    <!-- SECTION 4: 2-COLUMN LAYOUT -->
     <div class="section4-two-box-wrapper">
         <div class="section4-left-article-box">
             <header class="section4-centered-article-header">
-                <div class="category-tag" id="sec4-category-tag">Community &amp; Commerce</div>
-                <h1 class="article-stacked-title" id="sec4-article-title">Clay City's Historic &amp; Cultural Heritage</h1>
-                <p class="article-stacked-deck" id="sec4-article-deck">Connecting transportation, agriculture, and local spirit in Clay County.</p>
+                <div class="category-tag" id="sec4-category-tag">Heritage &amp; Farming</div>
+                <h1 class="article-stacked-title" id="sec4-article-title">Xenia's Early Settlement &amp; Roots</h1>
+                <p class="article-stacked-deck" id="sec4-article-deck">Preserving generations of agriculture and community togetherness in Clay County.</p>
             </header>
 
             <article class="article-body-content" id="sec4-article-body">
                 <p>
-                    Clay City, Illinois, nestled near the Little Wabash River, has long been a vibrant agricultural and residential pillar of Clay County.
+                    Xenia, Illinois, established in the early 19th century, holds a rich place in the settlement story of Southern Illinois.
                 </p>
 
                 <figure class="article-media-frame">
                     <img id="sec-4-1-article-img" 
                          src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" 
-                         alt="Clay City Community Feature" 
+                         alt="Xenia Rural Feature" 
                          class="lightbox-triggerable-element" />
-                    <figcaption id="sec4-img-caption">Downtown Clay City — Clay City, IL</figcaption>
+                    <figcaption id="sec4-img-caption">Main Street Xenia — Xenia, IL</figcaption>
                 </figure>
 
                 <p>
-                    From annual community celebrations to local athletics, Clay City embodies Midwestern pride and tight-knit neighbors working together.
+                    From annual local gatherings to family farming operations, Xenia represents the enduring heartland value of helping your neighbors.
                 </p>
             </article>
 
             <div class="article-footer">
-                <span>Clay City Dispatches | Jan 2026</span>
+                <span>Xenia Dispatches | Jan 2026</span>
                 <span>Issue No. 1 | Page 1</span>
             </div>
         </div>
 
-        <!-- RIGHT SIDEBAR: BUSINESS SPOTLIGHT & FUEL MONITOR -->
         <aside class="section4-right-widgets-stack">
             <div class="clay-county-news-box spotlight-clipping">
                 <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
@@ -166,18 +156,18 @@
                     <img id="spotlight-asset-img" src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Business Spotlight">
                 </div>
                 <span class="biz-title" id="spotlight-asset-name">Local Merchant</span>
-                <span class="biz-location" id="spotlight-asset-loc">Clay City, IL</span>
+                <span class="biz-location" id="spotlight-asset-loc">Xenia, IL</span>
                 <p class="biz-description" id="spotlight-asset-desc">Supporting local commerce across Clay County.</p>
                 <a href="#" id="spotlight-asset-link" target="_blank" class="spotlight-btn" data-ga-label="spotlight_btn">Visit Business &rarr;</a>
             </div>
 
             <div id="fuel-monitor-target-box" class="fuel-monitor-billboard-card">
-                <div class="sidebar-widget-title">CLAY CITY FUEL INDEX MONITOR</div>
+                <div class="sidebar-widget-title">XENIA FUEL INDEX MONITOR</div>
                 <div class="fuel-station-header">
                     <div class="station-logo-frame">
                         <img src="https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/Casey's.png" alt="Gas Station">
                     </div>
-                    <div class="station-meta-title">CASEY'S</div>
+                    <div class="station-meta-title">LOCAL FUEL</div>
                 </div>
                 <div class="fuel-pricing-grid">
                     <div class="price-box">
@@ -194,13 +184,12 @@
         </aside>
     </div>
 
-    <!-- SECTION 5: HISTORICAL TIMELINE -->
     <div class="main-container">
         <section class="historical-timeline-chassis-wrapper">
             <div class="timeline-inner-bounds">
                 <div class="timeline-row-1-header">
                     <span class="main-timeline-center-title-node">Historical Timeline</span>
-                    <p class="main-timeline-sub-caption-node">Journey through the key historical milestones that have shaped Clay City, IL.</p>
+                    <p class="main-timeline-sub-caption-node">Journey through key historical milestones that have shaped Xenia, IL.</p>
                 </div>
                 <div id="history-row-target" class="timeline-row-2-cards">
                     <div class="feed-loading-placeholder">Parsing landmark records ledger database tracking layers...</div>
@@ -209,18 +198,14 @@
         </section>
     </div>
 
-    <!-- SECTION 6: ADVERTISING PARTNERS STRIP PANEL -->
     <div class="widescreen-strip-container">
         <section class="showcase-widget full-bleed-widget">
             <div class="partners-horizontal-strip" id="partners-grid-top"></div>
         </section>
     </div>
 
-    <!-- SECTION 7: THREE-COLUMN OPERATIONAL DATA INTERFACE -->
     <section class="smlc-three-column-portal-wrapper" id="adaptive-time-portal-chassis">
         <div class="portal-grid-layout-fixed">
-            
-            <!-- COLUMN 7.1 -->
             <div class="portal-column-cell-box left-cell-stack">
                 <div class="clay-county-news-box event-clipping">
                     <div class="clipping-tag">Community Bulletin</div>
@@ -236,17 +221,15 @@
                 </div>
 
                 <div class="card-module-wrapper">
-                    <h2 class="et_pb_module_heading">Upcoming Events in Clay City</h2>
+                    <h2 class="et_pb_module_heading">Upcoming Events in Xenia</h2>
                     <div class="news-clipping-wrapper">
                         <div class="clipping-masthead">
                             <span class="black-tag">Community Bulletin</span>
                             <p class="clipping-tagline" id="month-tagline">Upcoming Events</p> 
                         </div>
-                        
                         <div id="bulletin-scroller-target">
                             <div style="text-align:center; padding: 20px; font-style:italic;">Loading community calendar...</div>
                         </div>
-                        
                         <div class="clipping-footer">
                             View Full Community Calendar &amp; Details<br>
                             Support My Local Community
@@ -255,14 +238,13 @@
                 </div>
             </div>
 
-            <!-- COLUMN 7.2 -->
             <div class="portal-column-cell-box center-cell-stack">
                 <div class="card-module-wrapper">
-                    <h2 class="et_pb_module_heading">Clay City News</h2>
+                    <h2 class="et_pb_module_heading">Xenia News</h2>
                     <div class="newspaper-feed-chassis">
                         <div class="clipping-masthead">
                             <span class="black-tag">SMLC Newsroom</span>
-                            <p class="clipping-tagline">Clay City Local Dispatches</p>
+                            <p class="clipping-tagline">Xenia Local Dispatches</p>
                         </div>
                         <div id="news-matrix-target" class="news-dynamic-masonry">
                             <div class="feed-loading-placeholder">Reconstructing localized newsroom dispatches...</div>
@@ -283,30 +265,24 @@
                 </div>
             </div>
 
-            <!-- COLUMN 7.3 -->
             <div class="portal-column-cell-box right-cell-stack">
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">SMLC Facebook</h2>
                     <div class="clay-county-news-box group-invitation-master">
                         <div class="notice-tag-red">Local Conversation</div>
-
                         <div class="polaroid-wrap">
                             <img src="https://ourflora.com/wp-content/uploads/2023/08/Ourflora.png" alt="OurFlora Community" class="lightbox-triggerable-element">
                         </div>
-
                         <div class="invitation-header-main">
                             <h3>Join the Community</h3>
                             <span class="sub-header-text">Official SMLC Facebook Page</span>
                         </div>
-
                         <p class="invitation-body-text">
                             "Stay connected with your neighbors. Discuss local news, share community updates, and join neighbors in the Clay County conversation."
                         </p>
-
                         <a href="https://www.facebook.com/OurFloraIL" target="_blank" class="fb-action-btn" data-ga-label="facebook_group_btn">
                             Enter the Conversation
                         </a>
-                      
                         <span class="community-voice-footer">
                             Community Voice • Clay County, IL
                         </span>
@@ -317,29 +293,24 @@
                     <h2 class="et_pb_module_heading">town local links</h2>
                     <div class="clay-county-news-box group-invitation-master">
                         <div class="notice-tag-red">Town Directory</div>
-
                         <div class="invitation-header-main" style="margin-top:15px;">
                             <h3>Local Links &amp; Resources</h3>
-                            <span class="sub-header-text">Official Clay City &amp; Clay County Portals</span>
+                            <span class="sub-header-text">Official Xenia &amp; Clay County Portals</span>
                         </div>
-
                         <div class="scrollable-directory-stream">
                             <div id="local-links-target-container" class="local-links-stream">
                                 <div style="font-style:italic; font-size:12px; color:#666;">Loading directory links...</div>
                             </div>
                         </div>
-
                         <span class="community-voice-footer">
                             Verified Resources • Clay County, IL
                         </span>
                     </div>
                 </div>
             </div>
-            
         </div>
     </section>
 
-    <!-- SECTION 8: FULL WIDTH TOWN IMAGES STRIP -->
     <div class="widescreen-strip-container section8-town-images-strip">
         <section class="showcase-widget full-bleed-widget">
             <div class="partners-horizontal-strip" id="partners-grid-bottom">
@@ -348,7 +319,6 @@
         </section>
     </div>
 
-    <!-- SECTION 9 & 10: PROCLAMATION BLOCK -->
     <div class="main-container section9-bold-print-wrapper section10-message-chassis">
         <section class="section10-proclamation-card-box">
             <p class="proclamation-body-text">
@@ -360,7 +330,6 @@
         </section>
     </div>
 
-    <!-- LIGHTBOX OVERLAY -->
     <div id="portal-global-lightbox" class="lightbox-overlay-mask" onclick="closeLightbox(event)">
         <div class="lightbox-modal-window">
             <div class="lightbox-header-bar" style="padding:15px; border-bottom:2px solid #222; display:flex; justify-content:space-between; align-items:center;">
@@ -386,7 +355,6 @@
         </div>
     </div>
 
-    <!-- GLOBAL FOOTER -->
     <footer id="global-footer-container" class="site-global-footer-matrix">
         <div style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:20px; max-width:1200px; margin:0 auto; padding-bottom:20px;">
             <div>
@@ -403,7 +371,7 @@
             </div>
         </div>
         <div style="border-top:1px solid #333; padding-top:15px;">
-            <p id="footer-copy-target">&copy; 2026 Clay City Community Portal. All rights reserved.</p>
+            <p id="footer-copy-target">&copy; 2026 Xenia Community Portal. All rights reserved.</p>
             <p style="margin-top: 8px; opacity: 0.8; font-size: 12px; color: #aaaaaa;">
                 <strong>System Build Version:</strong> v1.1.2 | <strong>Active Version:</strong> 2026-07-31_13:40
             </p>
@@ -412,7 +380,6 @@
 
     <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top" style="position:fixed; bottom:20px; right:20px; padding:10px 15px; background:#222; color:#fff; border:1px solid var(--cc-gold); border-radius:4px; cursor:pointer;">↑</button>
 
-    <!-- Master Application Engine -->
     <script src="./universaltown.js"></script>
 </body>
 </html>
