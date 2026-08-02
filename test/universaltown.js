@@ -1,5 +1,6 @@
 /* ==========================================================================
-   SMLC UNIVERSAL TOWN ENGINE - 100% PURE FIREBASE ARCHITECTURE
+   SMLC Digital Town Square Portal - Master Universal Script
+   Backend Engine: Firebase Realtime Database Sync
    ========================================================================== */
 
 const TOWN_ALIAS_MAP = {
@@ -39,17 +40,20 @@ function getActiveTownConfig() {
 
 let ACTIVE_TOWN = getActiveTownConfig();
 
+/* FIREBASE DATABASE REST & REALTIME ENDPOINTS */
+const FIREBASE_BASE_URL = "https://smlc-fuel-monitor-default-rtdb.firebaseio.com";
+
 let globalSlideshowTicker = null;
 let gasMonitorRotator = null;
-let section6PartnerTimers = [];
-let section8PartnerTimers = [];
+let section6PartnerTimer = null;
+let section8PartnerTimer = null;
 
 let activeFbRef34 = null;
 let activeFbRefLinksTown = null;
 let activeFbRefLinksGlobal = null;
 let activeFbRefMenu = null;
-let activeFbRefPartnersTown = null;
-let activeFbRefPartnersGlobal = null;
+let activeFbRefFooter = null;
+let activeFbRefPartners = null;
 
 window.calendarCachedEvents = [];
 window.historyCachedTimeline = [];
@@ -58,11 +62,8 @@ window.newsCacheBlock = [];
 function resetAllActiveTimers() {
     if (globalSlideshowTicker) { clearInterval(globalSlideshowTicker); globalSlideshowTicker = null; }
     if (gasMonitorRotator) { clearInterval(gasMonitorRotator); gasMonitorRotator = null; }
-    
-    section6PartnerTimers.forEach(t => clearInterval(t));
-    section6PartnerTimers = [];
-    section8PartnerTimers.forEach(t => clearInterval(t));
-    section8PartnerTimers = [];
+    if (section6PartnerTimer) { clearInterval(section6PartnerTimer); section6PartnerTimer = null; }
+    if (section8PartnerTimer) { clearInterval(section8PartnerTimer); section8PartnerTimer = null; }
 }
 
 function normalizeImageUrl(rawUrl) {
@@ -117,7 +118,7 @@ function extractImageAndAlt(node) {
     }
     
     if (typeof node === 'object') {
-        let rawUrl = node.image1 || node.image2 || node.imageUrl || node.image_url || node.url || node.src || node.image || node.logo || node.href || null;
+        let rawUrl = node.image1 || node.image2 || node.imageUrl || node.image_url || node.url || node.src || node.image || node.href || null;
         
         if (rawUrl && typeof rawUrl === 'object') {
             const nested = extractImageAndAlt(rawUrl);
@@ -129,6 +130,10 @@ function extractImageAndAlt(node) {
         if (rawAlt && typeof rawAlt === 'object') {
             rawAlt = extractText(rawAlt);
         }
+        
+        if (typeof rawAlt === 'string') {
+            rawAlt = rawAlt.replace(/^#+\s*/g, '').replace(/\*\*/g, '').trim();
+        }
 
         return {
             url: normalizeImageUrl(rawUrl),
@@ -137,51 +142,6 @@ function extractImageAndAlt(node) {
     }
     
     return { url: null, alt: null };
-}
-
-function formatHumanTimestamp(rawString) {
-    if (!rawString || rawString === "undefined" || rawString === "null") return "Date TBA";
-    try {
-        const dateObj = new Date(rawString);
-        if (isNaN(dateObj.getTime())) return rawString;
-        return dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    } catch(e) { return rawString; }
-}
-
-function applyHighDensityScrollLimits(containerElement, itemCount, maxHeightPx = 480) {
-    if (!containerElement) return;
-    if (itemCount > 5) {
-        containerElement.style.maxHeight = `${maxHeightPx}px`;
-        containerElement.style.overflowY = "auto";
-        containerElement.style.paddingRight = "6px";
-    } else {
-        containerElement.style.maxHeight = "none";
-        containerElement.style.overflowY = "visible";
-        containerElement.style.paddingRight = "0px";
-    }
-}
-
-function extractImageFromText(rawText) {
-    if (!rawText) return { imageUrl: null, cleanText: "" };
-
-    let imageUrl = null;
-    let cleanText = String(rawText);
-
-    const imgTagMatch = cleanText.match(/<img[^>]+src=["']([^"']+)["']/i);
-    if (imgTagMatch && imgTagMatch[1]) {
-        imageUrl = imgTagMatch[1];
-        cleanText = cleanText.replace(/<img[^>]*>/gi, '');
-    } else {
-        const directUrlMatch = cleanText.match(/(https?:\/\/[^\s<>"']+\.(?:png|jpg|jpeg|gif|webp|svg)(?:\?[^\s<>"']*)?)/i) ||
-                               cleanText.match(/(https?:\/\/drive\.google\.com\/[^\s<>"']+)/i) ||
-                               cleanText.match(/(https?:\/\/lh3\.googleusercontent\.com\/[^\s<>"']+)/i);
-        if (directUrlMatch && directUrlMatch[1]) {
-            imageUrl = directUrlMatch[1];
-            cleanText = cleanText.replace(directUrlMatch[1], '');
-        }
-    }
-
-    return { imageUrl: imageUrl ? imageUrl.trim() : null, cleanText: cleanText.trim() };
 }
 
 function parseInteractiveContent(rawText) {
@@ -193,7 +153,7 @@ function parseInteractiveContent(rawText) {
         const normUrl = normalizeImageUrl(match);
         if (!normUrl) return match;
         const safeUrl = escapeJsString(normUrl);
-        return `<img src="${normUrl}" alt="" onclick="event.stopPropagation(); fireLightbox('${safeUrl}', 'Media Content', '', '', '${safeUrl}')" style="max-width:100%; height:auto; max-height:280px; display:block; margin:10px auto; border-radius:6px; border:2px solid #222; box-shadow:2px 2px 6px rgba(0,0,0,0.3); cursor:pointer;" onerror="this.style.display='none';" />`;
+        return `<img src="${normUrl}" alt="Media Content" onclick="event.stopPropagation(); fireLightbox('${safeUrl}', 'Media Content', '', '', '${safeUrl}')" style="max-width:100%; height:auto; max-height:280px; display:block; margin:10px auto; border-radius:6px; border:2px solid #222; box-shadow:2px 2px 6px rgba(0,0,0,0.3); cursor:pointer;" onerror="this.style.display='none';" />`;
     });
 
     parsed = parsed.replace(/(\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b)/g, (match) => {
@@ -224,12 +184,11 @@ function attachUtmParameters(urlStr) {
     }
 }
 
-function safeSetImageSource(imgElement, srcUrl, fallbackWrapper = null) {
+function safeSetImageSource(imgElement, srcUrl, fallbackWrapper = null, altText = "") {
     if (!imgElement) return;
     const parentContainer = fallbackWrapper || imgElement.closest('figure, .spotlight-image-wrap, .section3-landmark-img-wrap, .polaroid-wrap, .article-media-frame') || imgElement.parentElement;
 
-    // ALT text stays blank on main UI
-    imgElement.alt = "";
+    if (altText) imgElement.alt = altText;
 
     if (!srcUrl || srcUrl.trim() === "" || srcUrl === "null" || srcUrl === "undefined") {
         if (parentContainer) parentContainer.style.display = "none";
@@ -248,47 +207,6 @@ function safeSetImageSource(imgElement, srcUrl, fallbackWrapper = null) {
     imgElement.src = srcUrl;
 }
 
-/* SINGLE EVENT iCAL DOWNLOAD (.ICS GENERATOR) */
-function downloadSingleEventIcs(idx) {
-    const item = window.calendarCachedEvents[idx];
-    if (!item) return;
-
-    const title = item.name || item.title || "Community Event";
-    const rawDetails = item.details || item.description || "";
-    const { cleanText } = extractImageFromText(rawDetails);
-    const location = item.location || ACTIVE_TOWN.primaryName + ", IL";
-
-    let startDateStr = item.date || item.event_date || item.pubDate || new Date().toISOString();
-    let startDate = new Date(startDateStr);
-    if (isNaN(startDate.getTime())) startDate = new Date();
-
-    const formatIcsDate = (date) => date.toISOString().replace(/-|:|\.\d+/g, '');
-
-    const csContent = [
-        "BEGIN:VCALENDAR",
-        "VERSION:2.0",
-        "PRODID:-//SMLC Town Square//Single Event Calendar//EN",
-        "BEGIN:VEVENT",
-        `UID:smlc-${Date.now()}-${idx}@smlc.local`,
-        `DTSTAMP:${formatIcsDate(new Date())}`,
-        `DTSTART:${formatIcsDate(startDate)}`,
-        `DTEND:${formatIcsDate(new Date(startDate.getTime() + (2 * 60 * 60 * 1000)))}`,
-        `SUMMARY:${title.replace(/\n/g, ' ')}`,
-        `DESCRIPTION:${cleanText.replace(/\n/g, ' ')}`,
-        `LOCATION:${location.replace(/\n/g, ' ')}`,
-        "END:VEVENT",
-        "END:VCALENDAR"
-    ].join("\r\n");
-
-    const blob = new Blob([csContent], { type: "text/calendar;charset=utf-8" });
-    const link = document.createElement("a");
-    link.href = window.URL.createObjectURL(blob);
-    link.setAttribute("download", `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
 function closeLightbox(event) {
     const overlay = document.getElementById('portal-global-lightbox');
     if (!overlay) return;
@@ -304,8 +222,7 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = ""
     const actionLink = document.getElementById('lightbox-target-link');
     
     if (imgSrc && targetImg) {
-        safeSetImageSource(targetImg, imgSrc, null);
-        targetImg.alt = altText || title || ""; // ALT assigned exclusively inside Lightbox
+        safeSetImageSource(targetImg, imgSrc, null, altText || title);
         if (targetImg.parentElement) targetImg.parentElement.style.display = 'block';
     } else if (targetImg && targetImg.parentElement) {
         targetImg.parentElement.style.display = 'none';
@@ -327,59 +244,11 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = ""
     }
 }
 
-function openHistoryLightboxModal(idx) {
-    const item = window.historyCachedTimeline[idx];
-    if (!item) return;
-
-    fireLightbox(
-        item.image || '',
-        item.title || 'Historical Landmark',
-        `YEAR ${item.year}`,
-        item.description || item.alt || '',
-        item.link || '',
-        item.alt || item.title || ''
-    );
-}
-
-function openCalendarLightboxModal(idx) {
-    const targetItem = window.calendarCachedEvents[idx];
-    if (!targetItem) return;
-
-    const title = targetItem.name || targetItem.title || "Community Event";
-    const rawDate = targetItem.date || targetItem.displayDate || targetItem.event_date || targetItem.pubDate;
-    const dateText = formatHumanTimestamp(rawDate);
-    const timeText = targetItem.time || targetItem.displayTime || "Time TBA";
-    const rawLoc = targetItem.location || ACTIVE_TOWN.primaryName + ", IL";
-    
-    const rawDetails = targetItem.details || targetItem.description || "No details provided.";
-    const { imageUrl: extractedImg, cleanText } = extractImageFromText(rawDetails);
-    const finalEventImg = targetItem.imageUrl || targetItem.image || extractedImg || null;
-    const metaHeader = `${dateText} @ ${timeText} | Location: ${rawLoc}`;
-    
-    const lightboxImageHtml = finalEventImg ? `<div style="margin-bottom:15px; text-align:center;"><img src="${finalEventImg}" alt="" style="max-width:100%; max-height:60vh; border-radius:6px; object-fit:contain; box-shadow:0 2px 8px rgba(0,0,0,0.15);" /></div>` : '';
-
-    fireLightbox(finalEventImg, title, metaHeader, lightboxImageHtml + cleanText, '', title);
-}
-
-function openNewsLightboxModal(idx) {
-    const story = window.newsCacheBlock[idx];
-    if (!story) return;
-    fireLightbox(
-        story.image || '',
-        story.title || 'Local News Dispatch',
-        formatHumanTimestamp(story.date || story.pubDate) + (story.location ? ` | ${story.location}` : ''),
-        story.full_story || story.description || '',
-        story.link || story.url || '',
-        story.title || 'Local News Dispatch'
-    );
-}
-
-function initializeFirebaseGasMonitor() {
-    const gasContainer = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
-
+/* INITIALIZE FIREBASE CORE SERVICES */
+function initializeFirebasePortalEngine() {
     const stationConfigs = {
-        "48100": { town: "flora", display: "Flora", name: "CASEY'S", logo: "Casey's.png" },      
-        "48101": { town: "flora", display: "Flora", name: "HUCK'S", logo: "Hucks.png" },      
+        "48100": { town: "flora", display: "Flora", name: "CASEY'S", logo: "Casey's.png" },     
+        "48101": { town: "flora", display: "Flora", name: "HUCK'S", logo: "Hucks.png" },     
         "128128": { town: "flora", display: "Flora", name: "MACH 1", logo: "Mach 1.png" },    
         "120226": { town: "flora", display: "Flora", name: "FAST STOP", logo: "Fast stop.png" },  
         "48026": { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" }, 
@@ -387,22 +256,10 @@ function initializeFirebaseGasMonitor() {
         "181818": { town: "xenia", display: "Xenia", name: "KNAPP'S", logo: "Knapps.png" }  
     };
 
-    if (typeof firebase !== 'undefined' && typeof firebase.database === 'function') {
-        bindFirebaseServices(stationConfigs, gasContainer);
-    } else {
-        setTimeout(() => {
-            if (typeof firebase !== 'undefined' && typeof firebase.database === 'function') {
-                bindFirebaseServices(stationConfigs, gasContainer);
-            }
-        }, 800);
-    }
-}
-
-function bindFirebaseServices(stationConfigs, gasContainer) {
     const firebaseConfig = {
         apiKey: "AIzaSyBYPbGWDNPUmCSnFWDPPWtiXe2F6MPinXg",
         authDomain: "smlc-fuel-monitor.firebaseapp.com",
-        databaseURL: "https://smlc-fuel-monitor-default-rtdb.firebaseio.com",
+        databaseURL: FIREBASE_BASE_URL,
         projectId: "smlc-fuel-monitor",
         storageBucket: "smlc-fuel-monitor.firebasestorage.app",
         messagingSenderId: "22397440085",
@@ -414,6 +271,8 @@ function bindFirebaseServices(stationConfigs, gasContainer) {
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         
+        // 1. Gas Monitor Sync
+        const gasContainer = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
         if (gasContainer) {
             db.ref('fuel_prices').on('value', (snap) => {
                 const val = snap.val();
@@ -421,179 +280,18 @@ function bindFirebaseServices(stationConfigs, gasContainer) {
             }, (err) => console.warn("Firebase fuel_prices warning:", err.message));
         }
 
-        bindFirebaseLocalLinksEngine(db);
-        bindFirebaseSection3And4Engine(db);
+        // 2. Bind Town Sections, Local Links, Navigation Menu, Footer, & Partners
         bindFirebaseMenuEngine(db);
+        bindFirebaseSection3And4Engine(db);
+        bindFirebaseLocalLinksEngine(db);
+        bindFirebaseFooterEngine(db);
         bindFirebasePartnersEngine(db);
-        bindFirestoreNewsAndEvents(); // Restored execution call
     } catch(e) {
         console.warn("Firebase initialization warning:", e.message);
     }
 }
 
-/* CASCADING PARTNERS ENGINE (SECTIONS 6 & 8) */
-function bindFirebasePartnersEngine(db) {
-    if (!db) return;
-    const townName = ACTIVE_TOWN.dbTownKey || "Clay City";
-    const townPartnersPath = `master_county_data/towns/${townName}/sections/partners`;
-    const globalPartnersPath = `master_county_data/global/sections/partners`;
-
-    let townPartners = [];
-    let globalPartners = [];
-
-    const updatePartnersUI = () => {
-        const combinedList = [...townPartners, ...globalPartners];
-        const topGrid = document.getElementById('partners-grid-top') || document.querySelector('.scotts-partners-top') || document.querySelectorAll('.partner-card-container')[0];
-        const bottomGrid = document.getElementById('partners-grid-bottom') || document.querySelector('.scotts-partners-bottom') || document.querySelectorAll('.partner-card-container')[1];
-
-        if (combinedList.length > 0) {
-            const shuffledPoolSec6 = shuffleArray([...combinedList]);
-            const patternIndices = [1, 3, 2, 4, 0]; 
-            const shuffledPoolSec8 = [];
-            
-            for (let i = 0; i < combinedList.length; i++) {
-                const targetIdx = patternIndices[i % patternIndices.length];
-                shuffledPoolSec8.push(shuffledPoolSec6[targetIdx % shuffledPoolSec6.length]);
-            }
-
-            if (topGrid) renderFixedCardSlideshow(topGrid, shuffledPoolSec6, 'section6', 5);
-            if (bottomGrid) renderFixedCardSlideshow(bottomGrid, shuffledPoolSec8, 'section8', 5);
-        }
-    };
-
-    if (activeFbRefPartnersTown) activeFbRefPartnersTown.off();
-    if (activeFbRefPartnersGlobal) activeFbRefPartnersGlobal.off();
-
-    activeFbRefPartnersTown = db.ref(townPartnersPath);
-    activeFbRefPartnersGlobal = db.ref(globalPartnersPath);
-
-    activeFbRefPartnersTown.on('value', (snapshot) => {
-        const val = snapshot.val();
-        townPartners = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
-        updatePartnersUI();
-    });
-
-    activeFbRefPartnersGlobal.on('value', (snapshot) => {
-        const val = snapshot.val();
-        globalPartners = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
-        updatePartnersUI();
-    });
-}
-
-/* FIRESTORE LIVE LISTENERS (NEWS & UNFILTERED EVENTS) */
-async function bindFirestoreNewsAndEvents() {
-    if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function') {
-        console.warn("Firestore SDK waiting to initialize...");
-        setTimeout(bindFirestoreNewsAndEvents, 500);
-        return;
-    }
-    const db = firebase.firestore();
-
-    /* 1. LOCAL NEWS (Collection: local_news -> Filters on location and tags array) */
-    try {
-        db.collection('local_news').onSnapshot(newsSnapshot => {
-            const newsList = [];
-            newsSnapshot.forEach(doc => {
-                const item = doc.data();
-                
-                const locStr = (item.location || "").toUpperCase();
-                const tagsArr = Array.isArray(item.tags) ? item.tags.map(t => String(t).toUpperCase()) : [];
-                const fullSearch = (JSON.stringify(item)).toUpperCase();
-
-                const isCountyWide = locStr.includes("CLAY COUNTY") || tagsArr.includes("CLAY COUNTY") || ACTIVE_TOWN.isHome;
-                const matchesTown = ACTIVE_TOWN.keywords.some(kw => locStr.includes(kw) || tagsArr.some(t => t.includes(kw)) || fullSearch.includes(kw));
-
-                if (isCountyWide || matchesTown) {
-                    newsList.push(item);
-                }
-            });
-
-            window.newsCacheBlock = newsList;
-            const targetGrid = document.getElementById('news-matrix-target');
-            if (targetGrid) {
-                if (newsList.length > 0) {
-                    applyHighDensityScrollLimits(targetGrid, newsList.length, 520);
-                    targetGrid.innerHTML = newsList.map((story, idx) => {
-                        const storyText = story.full_story || story.description || story.summary || '';
-                        const isLong = storyText.length > 150;
-                        const displayStory = isLong ? storyText.substring(0, 140) + "..." : storyText;
-
-                        return `
-                            <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
-                                ${story.image ? `<img src="${story.image}" alt="" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})" onerror="this.style.display='none';">` : ''}
-                                <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-top:10px;">${formatHumanTimestamp(story.date || story.pubDate)}</div>
-                                <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${story.title}</div>
-                                <div style="font-size:14px; color:#444;">${parseInteractiveContent(displayStory)}</div>
-                                ${isLong ? `<div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: var(--primary); font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>` : ''}
-                            </div>
-                        `;
-                    }).join('');
-                } else {
-                    targetGrid.innerHTML = `<div style="padding:15px; color:#666;">No news dispatches currently listed for ${ACTIVE_TOWN.primaryName}.</div>`;
-                }
-            }
-        });
-    } catch(e) { console.warn("Firestore News listener error:", e.message); }
-
-    /* 2. CALENDAR EVENTS (Collection: smlc_events -> UNFILTERED FULL COUNTY LIST) */
-    try {
-        db.collection('smlc_events').onSnapshot(eventsSnapshot => {
-            const eventsList = [];
-            eventsSnapshot.forEach(doc => {
-                eventsList.push(doc.data());
-            });
-
-            window.calendarCachedEvents = eventsList;
-            const scroller = document.getElementById('bulletin-scroller-target');
-            if (scroller) {
-                if (eventsList.length > 0) {
-                    applyHighDensityScrollLimits(scroller, eventsList.length, 500);
-
-                    const eventsHtml = eventsList.map((item, idx) => {
-                        const eventLoc = item.location || ACTIVE_TOWN.primaryName + ", IL";
-                        const rawDetails = item.details || item.description || "";
-                        
-                        const { imageUrl: extractedImg, cleanText } = extractImageFromText(rawDetails);
-                        const finalEventImg = item.imageUrl || item.image || extractedImg || null;
-
-                        const parsedDetails = parseInteractiveContent(cleanText.substring(0, 110));
-                        const rawDate = item.date || item.displayDate || item.event_date || item.pubDate;
-                        const dateText = formatHumanTimestamp(rawDate);
-
-                        const thumbnailHtml = finalEventImg ? `
-                            <div style="float: right; margin: 0 0 10px 12px;">
-                                <img src="${finalEventImg}" alt="" onclick="openCalendarLightboxModal(${idx})" style="width:85px; height:85px; object-fit:cover; border-radius:6px; border:2px solid #222; cursor:pointer; display:block; transition:transform 0.2s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'" onerror="this.parentElement.style.display='none';" />
-                            </div>
-                        ` : '';
-
-                        return `
-                            <div class="divi-event-item" style="margin-bottom:15px; padding-bottom:10px; border-bottom:1px dashed #ccc; overflow:hidden;">
-                                ${thumbnailHtml}
-                                <div class="divi-event-date" style="font-size:12px; color:var(--primary); font-weight:bold;">${dateText} &bull; ${item.time || item.displayTime || 'TBA'}</div>
-                                <div class="divi-event-title" style="font-size:16px; font-weight:bold;">${item.name || item.title}</div>
-                                <div class="event-info-text" style="font-size:13px; color:#333;">
-                                    <strong>Where:</strong> ${eventLoc}
-                                </div>
-                                <div style="font-size:13px; color:#555; margin-top:4px;">${parsedDetails}...</div>
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; flex-wrap:wrap; gap:6px; clear:both;">
-                                    <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:var(--primary); font-weight:bold; cursor:pointer; font-size:13px;">Read Details &rarr;</div>
-                                    <button onclick="downloadSingleEventIcs(${idx})" style="background:#28a745; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
-                                        📅 Add to Calendar (.ics)
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-
-                    scroller.innerHTML = eventsHtml;
-                } else {
-                    scroller.innerHTML = `<div style="padding:15px; color:#666;">No upcoming events listed.</div>`;
-                }
-            }
-        });
-    } catch(e) { console.warn("Firestore Events listener error:", e.message); }
-}
-
+/* FIREBASE MENU NAVIGATION ENGINE */
 function bindFirebaseMenuEngine(db) {
     if (!db) return;
     const menuContainer = document.getElementById('dynamic-menu-links');
@@ -624,7 +322,10 @@ function bindFirebaseMenuEngine(db) {
             const itemNameUpper = name.toUpperCase();
             const isActive = (activeTownName === itemNameUpper || (ACTIVE_TOWN.isHome && itemNameUpper === "HOME") || (window.location.hash || "").toUpperCase().includes(itemNameUpper.replace(/\s+/g, '-'))) ? 'class="active"' : '';
 
-            const imgTag = normImageUrl ? `<img src="${normImageUrl}" alt="" class="menu-thumb-icon" onerror="this.style.display='none';" />` : '';
+            const safeImg = escapeJsString(normImageUrl);
+            const safeName = escapeJsString(name);
+
+            const imgTag = normImageUrl ? `<img src="${normImageUrl}" alt="${safeName}" class="menu-thumb-icon" onclick="event.stopPropagation(); fireLightbox('${safeImg}', '${safeName}', 'MENU ICON', '', '${safeImg}', '${safeName}')" onerror="this.style.display='none';" />` : '';
 
             return `
                 <li>
@@ -638,6 +339,7 @@ function bindFirebaseMenuEngine(db) {
     }, (err) => console.warn("Firebase Menu Listener warning:", err.message));
 }
 
+/* FIREBASE TOWN SECTIONS ENGINE (Spotlight, Slideshow, Articles, Timeline) */
 function bindFirebaseSection3And4Engine(db) {
     if (!db) return;
     const townName = ACTIVE_TOWN.dbTownKey || "Clay City";
@@ -647,7 +349,8 @@ function bindFirebaseSection3And4Engine(db) {
     activeFbRef34 = db.ref(townPath);
 
     activeFbRef34.on('value', (snapshot) => {
-        const sections = snapshot.val() || {};
+        const sections = snapshot.val();
+        if (!sections) return;
 
         /* SECTION 3.1.1 (Slideshow) */
         if (sections.sec_3_1_1) {
@@ -674,7 +377,7 @@ function bindFirebaseSection3And4Engine(db) {
 
                         return `
                             <div class="slider-slide ${idx === 0 ? 'active' : ''}" style="position: absolute; inset: 0; opacity: ${idx === 0 ? 1 : 0}; transition: opacity 0.8s ease-in-out; z-index: ${idx === 0 ? 2 : 1};">
-                                <img src="${imgUrl}" alt="" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'SLIDESHOW VIEW', '${safeAlt}', '${safeSrc}', '${safeAlt}')" style="width:100%; height:100%; object-fit:cover; cursor:pointer;">
+                                <img src="${imgUrl}" alt="${safeAlt}" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'SLIDESHOW VIEW', '${safeAlt}', '${safeSrc}', '${safeAlt}')" style="width:100%; height:100%; object-fit:cover; cursor:pointer;">
                                 ${captionTitle ? `<div class="slider-caption">${captionTitle}</div>` : ''}
                             </div>
                         `;
@@ -716,7 +419,6 @@ function bindFirebaseSection3And4Engine(db) {
             rTitle.innerText = extractText(s321.title || s321.Header || s322.title) || `Historic ${ACTIVE_TOWN.primaryName} Landmark`;
         }
 
-        // Landmark Image 1
         const i1 = document.getElementById('dual-img-1');
         const h1 = document.getElementById('dual-header-1');
         const { url: img1Url, alt: alt1TextRaw } = extractImageAndAlt(s322.image1 || s322);
@@ -724,25 +426,23 @@ function bindFirebaseSection3And4Engine(db) {
         const alt1Text = alt1TextRaw || s322.alt1 || h1Text;
 
         if (i1 && img1Url) {
-            safeSetImageSource(i1, img1Url, null);
+            safeSetImageSource(i1, img1Url, null, alt1Text);
             i1.onclick = () => fireLightbox(escapeJsString(img1Url), escapeJsString(h1Text), 'LANDMARK ARCHIVE', escapeJsString(alt1Text), escapeJsString(s322.source_url || s322.link || ''), escapeJsString(alt1Text));
         }
         if (h1) h1.innerText = h1Text;
 
-        // Landmark Image 2
         const i2 = document.getElementById('dual-img-2');
         const h2 = document.getElementById('dual-header-2');
         const { url: img2Url, alt: alt2TextRaw } = extractImageAndAlt(s322.image2 || s323.image2 || s323.image1 || s323);
-        const h2Text = extractText(s322.header2 || s322.caption2 || s323.header2 || s323.header1 || s323.caption) || "Local Landmark";
+        const h2Text = extractText(s322.header2 || s322.caption2 || s323.header2 || s323.header1 || s323.caption) || "Historic Landmark";
         const alt2Text = alt2TextRaw || s322.alt2 || s323.alt2 || h2Text;
 
         if (i2 && img2Url) {
-            safeSetImageSource(i2, img2Url, null);
-            i2.onclick = () => fireLightbox(escapeJsString(img2Url), escapeJsString(h2Text), 'LANDMARK ARCHIVE', escapeJsString(alt2Text), escapeJsString(s322.source_url2 || s323.source_url || s323.link || ''), escapeJsString(alt2Text));
+            safeSetImageSource(i2, img2Url, null, alt2Text);
+            i2.onclick = () => fireLightbox(escapeJsString(img2Url), escapeJsString(h2Text), 'LANDMARK ARCHIVE', escapeJsString(alt2Text), escapeJsString(s322.source_url2 || s323.source_url || s333.link || ''), escapeJsString(alt2Text));
         }
         if (h2) h2.innerText = h2Text;
 
-        // Landmark Description
         const descTarget = document.getElementById('right-card-meta-desc1');
         if (descTarget) {
             const parsedDesc = extractText(s324) || extractText(s322.description);
@@ -752,24 +452,11 @@ function bindFirebaseSection3And4Engine(db) {
             }
         }
 
-        /* SECTION 4.1 / 4.1.1 (Featured Article) */
-        let targetS41 = {};
-        if (sections.sec_4_1 && typeof sections.sec_4_1 === 'object') {
-            targetS41 = { ...sections.sec_4_1 };
-            if (sections.sec_4_1.sec_4_1_1 && typeof sections.sec_4_1.sec_4_1_1 === 'object') {
-                targetS41 = { ...targetS41, ...sections.sec_4_1.sec_4_1_1 };
-            }
-        }
-        if (sections.sec_4_1_1 && typeof sections.sec_4_1_1 === 'object') {
-            targetS41 = { ...targetS41, ...sections.sec_4_1_1 };
-        }
+        /* SECTION 4.1 (Featured Article) */
+        let targetS41 = sections.sec_4_1 || {};
+        if (targetS41.sec_4_1_1) targetS41 = { ...targetS41, ...targetS41.sec_4_1_1 };
 
-        let imgObj = targetS41.image1 || targetS41.image || targetS41.imageUrl || targetS41.image_url;
-        if (!imgObj && targetS41.sec_4_1_1) {
-            imgObj = targetS41.sec_4_1_1.image1 || targetS41.sec_4_1_1.image;
-        }
-
-        const { url: imgUrl, alt: imgAltRaw } = extractImageAndAlt(imgObj);
+        const { url: imgUrl, alt: imgAltRaw } = extractImageAndAlt(targetS41.image1 || targetS41.image);
 
         const catTagEl = document.getElementById('sec4-category-tag');
         const artTitleEl = document.getElementById('sec4-article-title');
@@ -812,11 +499,12 @@ function bindFirebaseSection3And4Engine(db) {
                 <figure class="article-media-frame" style="margin:24px 0; padding:0; width:100%;">
                     <img id="sec-4-1-article-img" 
                          src="${imgUrl}" 
-                         alt="" 
+                         alt="${safeAlt}" 
                          class="lightbox-triggerable-element" 
                          onclick="fireLightbox('${safeImg}', '${safeTitle}', '${safeCategory}', '${safeAlt}', '${safeSource}', '${safeAlt}')" 
                          style="width:100%; max-width:100%; height:auto; max-height:380px; object-fit:cover; display:block; margin:16px auto; border-radius:6px; border:2px solid #222; box-shadow:4px 4px 0px #000; cursor:pointer;"
                          onerror="this.parentElement.style.display='none';" />
+                    <figcaption id="sec4-img-caption" style="font-size:0.95rem; font-style:italic; text-align:center; color:#555; margin-top:8px;">${finalAlt}</figcaption>
                 </figure>
             ` : '';
 
@@ -833,23 +521,17 @@ function bindFirebaseSection3And4Engine(db) {
             artBodyEl.innerHTML = bodyHtml;
         }
 
-        /* SECTION 4.2 (BUSINESS SPOTLIGHT: MATCHED HEIGHT & FALLBACK TO GLOBAL RTDB NODE) */
-        const spotlightTarget = document.querySelector('.clay-county-news-box.spotlight-clipping');
-        if (spotlightTarget) {
-            spotlightTarget.style.display = "flex";
-            spotlightTarget.style.flexDirection = "column";
-            spotlightTarget.style.justifyContent = "space-between";
-            spotlightTarget.style.minHeight = "480px";
-            spotlightTarget.style.height = "100%";
-
-            const renderSpotlight = (s42) => {
-                if (!s42) return;
+        /* SECTION 4.2 (Business Spotlight) */
+        if (sections.sec_4_2) {
+            const s42 = sections.sec_4_2;
+            const spotlightTarget = document.querySelector('.clay-county-news-box.spotlight-clipping');
+            if (spotlightTarget) {
                 const nameText = extractText(s42.name || s42.title) || "Local Merchant";
                 const descText = extractText(s42.description) || "Supporting local commerce across Clay County.";
                 const { url: imgUrl, alt: altTextRaw } = extractImageAndAlt(s42.image1 || s42);
                 const altText = altTextRaw || nameText;
                 const websiteUrl = attachUtmParameters(s42.website?.url || s42.website_url || "#");
-                const locText = s42.location || ACTIVE_TOWN.primaryName + ", IL";
+                const locText = ACTIVE_TOWN.primaryName + ", IL";
 
                 const safeImg = escapeJsString(imgUrl);
                 const safeName = escapeJsString(nameText);
@@ -859,27 +541,17 @@ function bindFirebaseSection3And4Engine(db) {
                 const safeAlt = escapeJsString(altText);
 
                 spotlightTarget.innerHTML = `
-                    <div>
-                        <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
-                        <div class="spotlight-image-wrap" style="margin-top:12px;"><img src="${imgUrl}" alt="" onclick="fireLightbox('${safeImg}', '${safeName}', '${safeLoc}', '${safeDesc}', '${safeWeb}', '${safeAlt}')" style="width:100%; max-height:220px; object-fit:cover; border-radius:6px; cursor:pointer;" onerror="this.parentElement.style.display='none';"></div>
-                        <span class="biz-title" style="display:block; font-weight:bold; font-size:18px; margin-top:10px;">${nameText}</span>
-                        <span class="biz-location" style="display:block; font-size:12px; color:#666;">${locText}</span>
-                        <p class="biz-description" style="margin-top:8px; line-height:1.5;">"${descText}"</p>
-                    </div>
-                    <a href="${websiteUrl}" target="_blank" class="spotlight-btn" data-ga-label="business_spotlight" style="margin-top:15px; display:inline-block; text-align:center;">Visit Business &rarr;</a>
+                    <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
+                    <div class="spotlight-image-wrap"><img src="${imgUrl}" alt="${safeAlt}" onclick="fireLightbox('${safeImg}', '${safeName}', '${safeLoc}', '${safeDesc}', '${safeWeb}', '${safeAlt}')" onerror="this.parentElement.style.display='none';"></div>
+                    <span class="biz-title">${nameText}</span>
+                    <span class="biz-location">${locText}</span>
+                    <p class="biz-description">"${descText}"</p>
+                    <a href="${websiteUrl}" target="_blank" class="spotlight-btn" data-ga-label="business_spotlight">Visit Business &rarr;</a>
                 `;
-            };
-
-            if (sections.sec_4_2) {
-                renderSpotlight(sections.sec_4_2);
-            } else {
-                db.ref('master_county_data/global/sections/sec_4_2').once('value', (snap) => {
-                    if (snap.val()) renderSpotlight(snap.val());
-                });
             }
         }
 
-        /* SECTION 5 (Historical Timeline from Realtime DB sec_5) */
+        /* SECTION 5 (Historical Timeline) */
         if (sections.sec_5) {
             const historyRowTarget = document.getElementById('history-row-target');
             const rawTimeline = Array.isArray(sections.sec_5) ? sections.sec_5 : Object.values(sections.sec_5);
@@ -904,8 +576,6 @@ function bindFirebaseSection3And4Engine(db) {
             window.historyCachedTimeline = validTimelineCards;
 
             if (validTimelineCards.length > 0 && historyRowTarget) {
-                applyHighDensityScrollLimits(historyRowTarget, validTimelineCards.length, 520);
-
                 historyRowTarget.innerHTML = validTimelineCards.map((evt, idx) => {
                     const desc = evt.description || "";
                     const isLong = desc.length > 150;
@@ -917,7 +587,7 @@ function bindFirebaseSection3And4Engine(db) {
                             <h3>${evt.title}</h3>
                             <p>${parseInteractiveContent(displayDesc)}</p>
                             ${isLong ? `<span class="read-more-trigger">Read Details &rarr;</span>` : ''}
-                            ${evt.image ? `<div class="history-img-box"><img src="${evt.image}" alt="" onerror="this.parentElement.style.display='none';"></div>` : ''}
+                            ${evt.image ? `<div class="history-img-box"><img src="${evt.image}" alt="${escapeJsString(evt.alt)}" onerror="this.parentElement.style.display='none';"></div>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -926,6 +596,7 @@ function bindFirebaseSection3And4Engine(db) {
     }, (err) => console.warn("Firebase Section 3/4 warning:", err.message));
 }
 
+/* FIREBASE LOCAL LINKS ENGINE */
 function bindFirebaseLocalLinksEngine(db) {
     if (!db) return;
     const linkTarget = document.getElementById('local-links-target-container');
@@ -956,7 +627,6 @@ function bindFirebaseLocalLinksEngine(db) {
         });
 
         if (filteredLinks.length > 0) {
-            applyHighDensityScrollLimits(linkTarget, filteredLinks.length, 360);
             linkTarget.innerHTML = filteredLinks.map(link => {
                 const name = extractText(link.title || link.name || link.label) || "Local Resource";
                 const targetRawUrl = link.website || link.url || link.link || link.href || "#";
@@ -973,7 +643,7 @@ function bindFirebaseLocalLinksEngine(db) {
                             </a>
                             <span style="font-size: 12px; color: #666; margin-left: 6px;">(${displayLoc})</span>
                             <div style="margin-top: 8px;">
-                                <img src="${targetRawUrl}" alt="" onclick="fireLightbox('${safeImg}', '${escapeJsString(name)}', '${escapeJsString(displayLoc)}', '', '${escapeJsString(taggedUrl)}')" style="max-width:100%; max-height:180px; border-radius:6px; border:2px solid #222; cursor:pointer;" onerror="this.style.display='none';" />
+                                <img src="${targetRawUrl}" alt="${escapeJsString(name)}" onclick="fireLightbox('${safeImg}', '${escapeJsString(name)}', '${escapeJsString(displayLoc)}', '', '${escapeJsString(taggedUrl)}')" style="max-width:100%; max-height:180px; border-radius:6px; border:2px solid #222; cursor:pointer;" onerror="this.style.display='none';" />
                             </div>
                         </div>
                     `;
@@ -999,27 +669,86 @@ function bindFirebaseLocalLinksEngine(db) {
 
     activeFbRefLinksTown.on('value', (snapshot) => {
         const val = snapshot.val();
-        if (val) {
-            const linksData = val.links || val;
-            townLinks = Array.isArray(linksData) ? linksData : Object.values(linksData);
-        } else {
-            townLinks = [];
-        }
+        townLinks = val ? (Array.isArray(val.links || val) ? (val.links || val) : Object.values(val.links || val)) : [];
         renderCombinedLinks();
     }, (err) => console.warn("Firebase local links town warning:", err.message));
 
     activeFbRefLinksGlobal.on('value', (snapshot) => {
         const val = snapshot.val();
-        if (val) {
-            const linksData = val.links || val;
-            globalLinks = Array.isArray(linksData) ? linksData : Object.values(linksData);
-        } else {
-            globalLinks = [];
-        }
+        globalLinks = val ? (Array.isArray(val.links || val) ? (val.links || val) : Object.values(val.links || val)) : [];
         renderCombinedLinks();
     }, (err) => console.warn("Firebase local links global warning:", err.message));
 }
 
+/* FIREBASE FOOTER ENGINE */
+function bindFirebaseFooterEngine(db) {
+    if (!db) return;
+    const footerPath = `master_county_data/global/footer`;
+
+    if (activeFbRefFooter) activeFbRefFooter.off();
+    activeFbRefFooter = db.ref(footerPath);
+
+    activeFbRefFooter.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+
+        const contact = data.contact_info || data;
+
+        if (contact) {
+            const phoneTarget = document.getElementById('footer-phone-target');
+            if (phoneTarget && Array.isArray(contact.phone)) {
+                phoneTarget.innerHTML = contact.phone.map(p => {
+                    const cleanNum = (p.number || "").replace(/[^\d]/g, '');
+                    const displayLabel = p.label ? `<strong>${p.label}:</strong> ` : '';
+                    return `<div><a href="tel:${cleanNum}" style="color:#fff; text-decoration:none;">${displayLabel}${p.number}</a></div>`;
+                }).join('');
+            }
+
+            const emailTarget = document.getElementById('footer-email-target');
+            if (emailTarget && (contact.email?.address || contact.email)) {
+                const mailAddr = contact.email.address || contact.email;
+                emailTarget.href = `mailto:${mailAddr}`;
+                emailTarget.innerText = mailAddr;
+            }
+
+            const addressTarget = document.getElementById('footer-address-target');
+            if (addressTarget && (contact.address?.text || contact.address)) {
+                const addrText = contact.address.text || contact.address;
+                addressTarget.innerHTML = `<span style="color:#fff;">${addrText}</span>`;
+            }
+
+            const copyTarget = document.getElementById('footer-copy-target');
+            if (copyTarget && data.copyright) {
+                copyTarget.innerHTML = data.copyright;
+            }
+        }
+    }, (err) => console.warn("Firebase Footer warning:", err.message));
+}
+
+/* FIREBASE PARTNERS CAROUSEL ENGINE */
+function bindFirebasePartnersEngine(db) {
+    if (!db) return;
+    const partnersPath = `master_county_data/global/sections/sec_6`;
+
+    if (activeFbRefPartners) activeFbRefPartners.off();
+    activeFbRefPartners = db.ref(partnersPath);
+
+    activeFbRefPartners.on('value', (snapshot) => {
+        const val = snapshot.val();
+        if (!val) return;
+
+        const partnersList = Array.isArray(val) ? val : Object.values(val);
+        const topGrid = document.getElementById('partners-grid-top') || document.querySelector('.scotts-partners-top');
+        const bottomGrid = document.getElementById('partners-grid-bottom') || document.querySelector('.scotts-partners-bottom');
+
+        if (partnersList.length > 0) {
+            if (topGrid) renderFixedCardSlideshow(topGrid, partnersList, 0, 'section6', 5);
+            if (bottomGrid) renderFixedCardSlideshow(bottomGrid, partnersList, 3, 'section8', 5);
+        }
+    }, (err) => console.warn("Firebase Partners warning:", err.message));
+}
+
+/* RENDER FUEL BILLBOARD INDEX */
 function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
     const gasTownsArray = Array.isArray(activeGasTowns) ? activeGasTowns : [activeGasTowns];
     const stationIds = Object.keys(stationConfigs).filter(id => gasTownsArray.includes(stationConfigs[id].town));
@@ -1029,8 +758,6 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
         clearInterval(gasMonitorRotator);
         gasMonitorRotator = null;
     }
-
-    const updatePortalUrl = "https://werewolf3788.github.io/SMLC/update-gas.html";
 
     let currentIdx = 0;
 
@@ -1047,19 +774,18 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
         const safeLogo = encodeURIComponent(config.logo);
 
         container.style.cursor = "pointer";
-        container.onclick = () => window.open(attachUtmParameters(updatePortalUrl), '_blank');
 
         container.innerHTML = `
             <div class="sidebar-widget-title">${config.display.toUpperCase()} FUEL INDEX MONITOR</div>
             <div class="fuel-station-header">
-                <div class="station-logo-frame"><img src="https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/${safeLogo}" alt=""></div>
+                <div class="station-logo-frame"><img src="https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/${safeLogo}" alt="${config.name}"></div>
                 <div class="station-meta-title">${config.name} (${config.display})</div>
             </div>
             <div class="fuel-pricing-grid">
                 <div class="price-box"><span class="price-type-label">REGULAR</span><span class="price-value-regular">${regPrice}</span></div>
                 <div class="price-box"><span class="price-type-label">DIESEL</span><span class="price-value-diesel">${dslPrice}</span></div>
             </div>
-            <div class="sync-timestamp-label">Updated: ${updateDate} &bull; Click to Update</div>
+            <div class="sync-timestamp-label">Updated: ${updateDate}</div>
         `;
         currentIdx = (currentIdx + 1) % stationIds.length;
     };
@@ -1071,25 +797,9 @@ function renderGasBillboardUI(data, stationConfigs, activeGasTowns, container) {
     }
 }
 
-function shuffleArray(array) {
-    const arr = [...array];
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-}
-
-function renderFixedCardSlideshow(containerElement, partnerPool, sectionId = 'section6', cardsToShow = 5) {
-    if (!containerElement || !partnerPool || !partnerPool.length) return;
-
-    if (sectionId === 'section6') {
-        section6PartnerTimers.forEach(t => clearInterval(t));
-        section6PartnerTimers = [];
-    } else if (sectionId === 'section8') {
-        section8PartnerTimers.forEach(t => clearInterval(t));
-        section8PartnerTimers = [];
-    }
+/* RENDER PARTNER SLIDESHOW CAROUSELS */
+function renderFixedCardSlideshow(containerElement, partnerPool, offsetSeed = 0, sectionId = 'section6', cardsToShow = 5) {
+    if (!containerElement || !partnerPool.length) return;
 
     containerElement.style.display = "flex";
     containerElement.style.justifyContent = "space-between";
@@ -1100,11 +810,23 @@ function renderFixedCardSlideshow(containerElement, partnerPool, sectionId = 'se
 
     const poolSize = partnerPool.length;
     const totalCards = Math.min(cardsToShow, poolSize);
+    const cardSlotsData = [];
 
-    containerElement.innerHTML = Array.from({ length: totalCards }).map((_, idx) => {
-        const initialPartner = partnerPool[idx % poolSize];
+    for (let slotIndex = 0; slotIndex < totalCards; slotIndex++) {
+        const slotRotationQueue = [];
+        for (let step = 0; step < poolSize; step++) {
+            const partnerIndex = (slotIndex + offsetSeed + (step * totalCards)) % poolSize;
+            if (!slotRotationQueue.includes(partnerPool[partnerIndex])) {
+                slotRotationQueue.push(partnerPool[partnerIndex]);
+            }
+        }
+        cardSlotsData.push(slotRotationQueue);
+    }
+
+    containerElement.innerHTML = cardSlotsData.map((slot, idx) => {
+        const initialPartner = slot[0];
         const initialUrl = attachUtmParameters(initialPartner.websiteUrl || initialPartner.url || '#');
-        const { url: initialImg } = extractImageAndAlt(initialPartner);
+        const initialImg = initialPartner.image || initialPartner.logo || '';
         const initialName = initialPartner.name || 'Local Partner';
 
         const safeImg = escapeJsString(initialImg);
@@ -1114,67 +836,26 @@ function renderFixedCardSlideshow(containerElement, partnerPool, sectionId = 'se
         return `
             <div class="partner-card fixed-slide-card" data-slot-index="${idx}" style="flex: 1 1 180px; max-width: 260px; transition: opacity 0.4s ease;">
                 <div class="partner-logo-box">
-                    <img class="partner-card-img" src="${initialImg}" alt="" onclick="fireLightbox('${safeImg}', '${safeName}', 'PARTNER DIRECTORY', 'Local Sponsor', '${safeUrl}', '${safeName}')" style="cursor:pointer;" onerror="this.closest('.fixed-slide-card').style.display='none';">
+                    <img class="partner-card-img" src="${initialImg}" alt="${safeName}" onclick="fireLightbox('${safeImg}', '${safeName}', 'PARTNER DIRECTORY', 'Local Sponsor', '${safeUrl}', '${safeName}')" style="cursor:pointer;" onerror="this.closest('.fixed-slide-card').style.display='none';">
                 </div>
                 <h4><a class="partner-card-link" href="${initialUrl}" target="_blank" data-ga-label="partner_link">${initialName}</a></h4>
             </div>
         `;
     }).join('');
-
-    if (poolSize >= 2) {
-        let isSectionPaused = false;
-        containerElement.addEventListener('mouseenter', () => { isSectionPaused = true; });
-        containerElement.addEventListener('mouseleave', () => { isSectionPaused = false; });
-        containerElement.addEventListener('touchstart', () => { isSectionPaused = true; }, { passive: true });
-        containerElement.addEventListener('touchend', () => { isSectionPaused = false; });
-
-        const cardNodes = containerElement.querySelectorAll('.fixed-slide-card');
-
-        cardNodes.forEach((cardNode, slotIdx) => {
-            let currentPartnerIndex = slotIdx % poolSize;
-
-            const timerInstance = setInterval(() => {
-                if (isSectionPaused) return;
-
-                currentPartnerIndex = (currentPartnerIndex + 1) % poolSize;
-                const nextItem = partnerPool[currentPartnerIndex];
-                
-                const nextUrl = attachUtmParameters(nextItem.websiteUrl || nextItem.url || '#');
-                const { url: nextImg } = extractImageAndAlt(nextItem);
-                const nextName = nextItem.name || 'Local Partner';
-
-                const safeImg = escapeJsString(nextImg);
-                const safeName = escapeJsString(nextName);
-                const safeUrl = escapeJsString(nextUrl);
-
-                cardNode.style.opacity = '0';
-
-                setTimeout(() => {
-                    const imgEl = cardNode.querySelector('.partner-card-img');
-                    const linkEl = cardNode.querySelector('.partner-card-link');
-
-                    if (imgEl) {
-                        safeSetImageSource(imgEl, nextImg, cardNode);
-                        imgEl.onclick = () => fireLightbox(safeImg, safeName, 'PARTNER DIRECTORY', 'Local Sponsor', safeUrl, safeName);
-                    }
-
-                    if (linkEl) {
-                        linkEl.href = nextUrl;
-                        linkEl.innerText = nextName;
-                    }
-
-                    cardNode.style.opacity = '1';
-                }, 400);
-            }, 5000 + (slotIdx * 600));
-
-            if (sectionId === 'section6') section6PartnerTimers.push(timerInstance);
-            if (sectionId === 'section8') section8PartnerTimers.push(timerInstance);
-        });
-    }
 }
 
-async function processDataPipelines() {
-    initializeFirebaseGasMonitor();
+function openHistoryLightboxModal(idx) {
+    const item = window.historyCachedTimeline[idx];
+    if (!item) return;
+
+    fireLightbox(
+        item.image || '',
+        item.title || 'Historical Landmark',
+        `YEAR ${item.year}`,
+        item.description || item.alt || '',
+        item.link || '',
+        item.alt || item.title || ''
+    );
 }
 
 function hydrateTownHeroUI() {
@@ -1199,7 +880,7 @@ function updateNavigationActiveState() {
         const href = (link.getAttribute("href") || "").toLowerCase();
         if (href === currentHash || (currentHash.includes("clay-city") && href.includes("clay-city"))) {
             link.classList.add("active");
-            link.style.color = "var(--cc-gold)";
+            link.style.color = "var(--louis-gold)";
             link.style.fontWeight = "bold";
         } else {
             link.classList.remove("active");
@@ -1217,8 +898,7 @@ async function handleSPAHashNavigation() {
     
     hydrateTownHeroUI();
     updateNavigationActiveState();
-    
-    await processDataPipelines();
+    initializeFirebasePortalEngine();
 }
 
 window.addEventListener('hashchange', () => {
@@ -1227,5 +907,5 @@ window.addEventListener('hashchange', () => {
 
 window.addEventListener('DOMContentLoaded', () => {
     handleSPAHashNavigation();
-    console.log(`Universal Engine running smoothly for ${ACTIVE_TOWN.primaryName}. Build: 2026-08-01_FirebaseListenerFixed`);
+    console.log(`Master Firebase Engine running smoothly for ${ACTIVE_TOWN.primaryName}.`);
 });
