@@ -1298,6 +1298,41 @@
             });
         });
 
+        // Auto-rotate fuel carousel every 5 seconds
+        setInterval(() => {
+            currentFuelIndex = (currentFuelIndex + 1) % currentFuelList.length;
+            renderFuelCarousel();
+        }, 5000);
+
+        // Mobile Touch Swipe Support
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const fuelContainer = document.getElementById('fuel-carousel-container');
+
+        if (fuelContainer) {
+            fuelContainer.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+
+            fuelContainer.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleFuelSwipe();
+            }, { passive: true });
+        }
+
+        function handleFuelSwipe() {
+            const swipeThreshold = 40;
+            if (touchEndX < touchStartX - swipeThreshold) {
+                // Swiped Left -> Next Town
+                currentFuelIndex = (currentFuelIndex + 1) % currentFuelList.length;
+                renderFuelCarousel();
+            } else if (touchEndX > touchStartX + swipeThreshold) {
+                // Swiped Right -> Previous Town
+                currentFuelIndex = (currentFuelIndex - 1 + currentFuelList.length) % currentFuelList.length;
+                renderFuelCarousel();
+            }
+        }
+
         // Mobile Hamburger Toggle
         const hamburger = document.getElementById('hamburger');
         const mobileMenu = document.getElementById('mobile-menu');
