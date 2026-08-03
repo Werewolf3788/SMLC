@@ -1,6 +1,6 @@
 /* === SECTION: File Header & Config === */
-// Active Version: v1.7.0 | Timestamp: 2026-07-29_13:54:00
-// Description: Complete Local News Scraper & Firestore Pipeline with Dynamic RSS Parsing
+// Active Version: v1.8.0 | Timestamp: 2026-08-03_20:10:00
+// Description: Complete Local News Scraper & Firestore Pipeline (All-Time Archive & Copyright Stripper)
 
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
@@ -39,17 +39,17 @@ const GLOBAL_CATEGORY_KEYWORDS = [
 
 /* === SECTION: Town Keyword Maps === */
 
-// 1. Relaxed Town Matching (For Local Feeds like WNOI, Freedom 92.9, etc.)
+// 1. Relaxed Town Matching (For Local Feeds like Freedom 92.9, etc.)
 const LOCAL_TOWN_KEYWORD_MAP = {
-    "Flora": ["flora", "floyd henson"],
-    "Louisville": ["louisville", "north clay"],
-    "Clay City": ["clay city"],
+    "Flora": ["flora", "floyd henson", "floyd henson jr high", "flora wolves", "lady wolves", "flora unit 35"],
+    "Louisville": ["louisville", "north clay", "nc cardinals", "north clay cardinals", "north clay indians"],
+    "Clay City": ["clay city", "clay city wolves", "clay city lady wolves", "clay city cusd"],
     "Xenia": ["xenia"],
     "Sailor Springs": ["sailor springs"],
     "Iola": ["iola"],
     "Ingraham": ["ingraham"],
     "Bible Grove": ["bible grove"],
-    "Unincorporated Clay County": ["hord", "wendelin", "oskaloosa", "riffle"]
+    "Unincorporated Clay County": ["hord", "wendelin", "oskaloosa", "riffle", "blair", "harter", "larkinsburg", "pixley", "songer", "stanford"]
 };
 
 // 2. Strict Town Matching Patterns (For Web Sweeps / Google Alerts ONLY)
@@ -57,7 +57,8 @@ const GOOGLE_ALERT_TOWN_REGEX_MAP = {
     "Flora": [
         /\bflora\b.*?\b(il|illinois)\b/i,
         /\bflora\s*,?\s*(il|illinois)\b/i,
-        /\bfloyd henson\b/i
+        /\bfloyd henson\b/i,
+        /\bflora wolves\b/i
     ],
     "Louisville": [
         /\blouisville\b.*?\b(il|illinois)\b/i,
@@ -66,7 +67,8 @@ const GOOGLE_ALERT_TOWN_REGEX_MAP = {
     ],
     "Clay City": [
         /\bclay city\b.*?\b(il|illinois)\b/i,
-        /\bclay city\s*,?\s*(il|illinois)\b/i
+        /\bclay city\s*,?\s*(il|illinois)\b/i,
+        /\bclay city wolves\b/i
     ],
     "Xenia": [
         /\bxenia\b.*?\b(il|illinois)\b/i,
@@ -91,11 +93,16 @@ const GOOGLE_ALERT_TOWN_REGEX_MAP = {
 };
 
 /* === SECTION: Extraction Helpers === */
+
+/**
+ * REFINED CLEANER:
+ * Strips HTML tags and hides/removes any line or phrase containing "copyright".
+ */
 function extractStory(item) {
     const rawStory = item.contentEncoded || item.content || item.contentSnippet || item.summary || item.description || "";
     return rawStory
-        .replace(/<[^>]+>/g, '') // Strips HTML tags for clean paragraph text
-        .replace(/[\u00a9\u24b8\u2122]?\s*Copyright\s+\d{4},?\s*WNOI[\s\S]*/gi, '')
+        .replace(/<[^>]+>/g, '') // Strips HTML tags
+        .replace(/(?:[\u00a9\u24b8\u2122]|&copy;)?\s*copyright[^\.\n]*\.?/gi, '') // Removes any phrase/sentence saying copyright
         .trim();
 }
 
@@ -119,15 +126,6 @@ function extractImage(item) {
 function generateUniqueKey(title) {
     const cleanTitle = (title || "").toLowerCase().replace(/[^a-z0-9]/g, "");
     return `news_${cleanTitle.slice(0, 30)}`;
-}
-
-function isWithinPast48Hours(dateString) {
-    if (!dateString) return true;
-    const articleTime = new Date(dateString).getTime();
-    if (isNaN(articleTime)) return true;
-
-    const FortyEightHoursInMs = 48 * 60 * 60 * 1000;
-    return articleTime >= (Date.now() - FortyEightHoursInMs);
 }
 
 /* === SECTION: Location & Category Resolution === */
@@ -236,7 +234,6 @@ async function runScraper() {
         if (
             !title || 
             title === "Freedom 92.9" || 
-            title === "WNOI Radio" || 
             title === "Flora City Official" || 
             link.endsWith('/feed/') || 
             (!story && !image)
@@ -245,11 +242,7 @@ async function runScraper() {
             continue;
         }
 
-        // 1. Recency Check (Past 48 Hours)
-        if (!isWithinPast48Hours(articleDate)) {
-            skippedCount++;
-            continue;
-        }
+        // REMOVED 48-HOUR RECENCY LIMIT so all-time news from RSS feed is pushed to Firestore
 
         // 2. Deduplication Check
         const docId = generateUniqueKey(title);
@@ -286,7 +279,7 @@ async function runScraper() {
             updatedAt: new Date().toISOString()
         }, { merge: true })
         .then(() => {
-            console.log(`[SAVED] "${title}" -> Location: ${primaryLocation}`);
+            console.log(`[SAVED TO FIRESTORE] "${title}" -> Location: ${primaryLocation}`);
             savedCount++;
         })
         .catch((err) => {
