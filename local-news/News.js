@@ -1,11 +1,15 @@
 /* === SECTION: File Header & Config === */
-// Active Version: v1.8.2 | Timestamp: 2026-08-03_20:20:00
-// Description: Local News Scraper - Direct Town Match OR Clay County Default Pipeline
+// Active Version: v1.8.7 | Timestamp: 2026-08-03_20:45:00
+// Description: Multi-Source Local News Scraper (RSS + Google Alerts + Custom HTML Scraping)
 
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 import Parser from "rss-parser";
-import sourcesData from "./rssfeed.json" with { type: "json" };
+import * as cheerio from "cheerio";
+import fs from "fs";
+
+// Safe JSON reading across all Node.js environments
+const sourcesData = JSON.parse(fs.readFileSync(new URL("./rssfeed.json", import.meta.url), "utf8"));
 
 const firebaseConfig = {
     apiKey: "AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg",
@@ -20,7 +24,9 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
 const rssParser = new Parser({
+    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) LocalNewsBot/1.8' },
     customFields: {
         item: [
             ['content:encoded', 'contentEncoded'],
@@ -32,7 +38,6 @@ const rssParser = new Parser({
 
 /* === SECTION: Town Keyword Maps === */
 
-// 1. Relaxed Town Matching (For Local Feeds)
 const LOCAL_TOWN_KEYWORD_MAP = {
     "Flora": ["flora", "floyd henson", "floyd henson jr high", "flora wolves", "lady wolves", "flora unit 35"],
     "Louisville": ["louisville", "north clay", "nc cardinals", "north clay cardinals", "north clay indians"],
@@ -45,89 +50,126 @@ const LOCAL_TOWN_KEYWORD_MAP = {
     "Unincorporated Clay County": ["hord", "wendelin", "oskaloosa", "riffle", "blair", "harter", "larkinsburg", "pixley", "songer", "stanford"]
 };
 
-// 2. Strict Town Matching Patterns (For Web Sweeps / Google Alerts ONLY)
 const GOOGLE_ALERT_TOWN_REGEX_MAP = {
-    "Flora": [
-        /\bflora\b.*?\b(il|illinois)\b/i,
-        /\bflora\s*,?\s*(il|illinois)\b/i,
-        /\bfloyd henson\b/i,
-        /\bflora wolves\b/i
-    ],
-    "Louisville": [
-        /\blouisville\b.*?\b(il|illinois)\b/i,
-        /\blouisville\s*,?\s*(il|illinois)\b/i,
-        /\bnorth clay\b/i
-    ],
-    "Clay City": [
-        /\bclay city\b.*?\b(il|illinois)\b/i,
-        /\bclay city\s*,?\s*(il|illinois)\b/i,
-        /\bclay city wolves\b/i
-    ],
-    "Xenia": [
-        /\bxenia\b.*?\b(il|illinois)\b/i,
-        /\bxenia\s*,?\s*(il|illinois)\b/i
-    ],
-    "Sailor Springs": [
-        /\bsailor springs\b.*?\b(il|illinois)\b/i,
-        /\bsailor springs\s*,?\s*(il|illinois)\b/i
-    ],
-    "Iola": [
-        /\biola\b.*?\b(il|illinois)\b/i,
-        /\biola\s*,?\s*(il|illinois)\b/i
-    ],
-    "Ingraham": [
-        /\bingraham\b.*?\b(il|illinois)\b/i,
-        /\bingraham\s*,?\s*(il|illinois)\b/i
-    ],
-    "Bible Grove": [
-        /\bbible grove\b.*?\b(il|illinois)\b/i,
-        /\bbible grove\s*,?\s*(il|illinois)\b/i
-    ]
+    "Flora": [/\bflora\b.*?\b(il|illinois)\b/i, /\bflora\s*,?\s*(il|illinois)\b/i, /\bfloyd henson\b/i, /\bflora wolves\b/i],
+    "Louisville": [/\blouisville\b.*?\b(il|illinois)\b/i, /\blouisville\s*,?\s*(il|illinois)\b/i, /\bnorth clay\b/i],
+    "Clay City": [/\bclay city\b.*?\b(il|illinois)\b/i, /\bclay city\s*,?\s*(il|illinois)\b/i, /\bclay city wolves\b/i],
+    "Xenia": [/\bxenia\b.*?\b(il|illinois)\b/i, /\bxenia\s*,?\s*(il|illinois)\b/i],
+    "Sailor Springs": [/\bsailor springs\b.*?\b(il|illinois)\b/i, /\bsailor springs\s*,?\s*(il|illinois)\b/i],
+    "Iola": [/\biola\b.*?\b(il|illinois)\b/i, /\biola\s*,?\s*(il|illinois)\b/i],
+    "Ingraham": [/\bingraham\b.*?\b(il|illinois)\b/i, /\bingraham\s*,?\s*(il|illinois)\b/i],
+    "Bible Grove": [/\bbible grove\b.*?\b(il|illinois)\b/i, /\bbible grove\s*,?\s*(il|illinois)\b/i]
 };
 
-/* === SECTION: Extraction Helpers === */
+/* === SECTION: Data Cleaning & Extraction Helpers === */
 
-/**
- * REFINED CLEANER:
- * Strips HTML tags and hides/removes any line or phrase containing "copyright".
- */
-function extractStory(item) {
-    const rawStory = item.contentEncoded || item.content || item.contentSnippet || item.summary || item.description || "";
-    return rawStory
-        .replace(/<[^>]+>/g, '') // Strips HTML tags
-        .replace(/(?:[\u00a9\u24b8\u2122]|&copy;)?\s*copyright[^\.\n]*\.?/gi, '') // Removes copyright lines
+function cleanTitle(rawTitle) {
+    if (!rawTitle) return "";
+    return rawTitle
+        .replace(/<[^>]+>/g, '')
+        .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&').replace(/&#39;/g, "'")
+        .replace(/&quot;/g, '"')
         .trim();
 }
 
-function extractImage(item) {
-    if (item.enclosure && item.enclosure.url) {
-        return item.enclosure.url;
+function cleanStoryText(rawText) {
+    if (!rawText) return "";
+    return rawText
+        .replace(/<[^>]+>/g, '') // Strips HTML tags
+        .replace(/(?:[\u00a9\u24b8\u2122]|&copy;)?\s*copyright[^\.\n]*\.?/gi, '') // Removes copyright notices
+        .replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"')
+        .trim();
+}
+
+function cleanLink(rawLink) {
+    if (!rawLink) return "";
+    if (rawLink.includes("google.com/url?") || rawLink.includes("google.com/alerts/url?")) {
+        const urlMatch = rawLink.match(/(?:url|q)=([^&]+)/);
+        if (urlMatch && urlMatch[1]) {
+            return decodeURIComponent(urlMatch[1]);
+        }
     }
-    if (item.mediaContent && item.mediaContent.$ && item.mediaContent.$.url) {
-        return item.mediaContent.$.url;
-    }
-    if (item.mediaThumbnail && item.mediaThumbnail.$ && item.mediaThumbnail.$.url) {
-        return item.mediaThumbnail.$.url;
-    }
+    return rawLink;
+}
+
+function extractImageFromFeed(item) {
+    if (item.enclosure && item.enclosure.url) return item.enclosure.url;
+    if (item.mediaContent && item.mediaContent.$ && item.mediaContent.$.url) return item.mediaContent.$.url;
+    if (item.mediaThumbnail && item.mediaThumbnail.$ && item.mediaThumbnail.$.url) return item.mediaThumbnail.$.url;
     
     const rawContent = item.contentEncoded || item.content || item.description || "";
     const imgMatch = rawContent.match(/<img[^>]+src=["']([^"']+)["']/i);
     return (imgMatch && imgMatch[1]) ? imgMatch[1] : "";
 }
 
+/**
+ * HTML WEBPAGE SCRAPER ENGINE:
+ * Scrapes direct HTML sources (e.g. Flora City Official & Olney Gazette) or acts as an RSS fallback
+ */
+async function scrapeWebPageContent(url) {
+    try {
+        const res = await fetch(url, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) LocalNewsBot/1.8' },
+            signal: AbortSignal.timeout(6000)
+        });
+        
+        if (!res.ok) return { title: "", story: "", image: "" };
+        const html = await res.text();
+        const $ = cheerio.load(html);
+
+        // Remove scripts, styles, navigation, headers, footers
+        $('script, style, nav, header, footer, iframe, noscript, .comments, .sidebar').remove();
+
+        const pageTitle = cleanTitle($('h1').first().text() || $('title').text() || "");
+
+        // Extract lead image
+        let leadImage = $('meta[property="og:image"]').attr('content') || 
+                        $('meta[name="twitter:image"]').attr('content') || 
+                        $('article img').first().attr('src') || 
+                        $('.content img').first().attr('src') || "";
+
+        // Normalize relative image URLs
+        if (leadImage && !leadImage.startsWith('http')) {
+            const urlObj = new URL(url);
+            leadImage = `${urlObj.origin}${leadImage.startsWith('/') ? '' : '/'}${leadImage}`;
+        }
+
+        // Extract main story text from paragraphs
+        let storyParagraphs = [];
+        const selector = $('article').length ? 'article p' : 'main p, .content p, .entry-content p, p';
+        
+        $(selector).each((_, el) => {
+            const txt = $(el).text().trim();
+            if (txt.length > 25) {
+                storyParagraphs.push(txt);
+            }
+        });
+
+        const fullStory = storyParagraphs.join("\n\n");
+        return {
+            title: pageTitle,
+            story: cleanStoryText(fullStory),
+            image: leadImage
+        };
+    } catch (err) {
+        console.warn(`[HTML SCRAPE WARN] Could not scrape webpage ${url}:`, err.message);
+        return { title: "", story: "", image: "" };
+    }
+}
+
 function generateUniqueKey(title) {
-    const cleanTitle = (title || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-    return `news_${cleanTitle.slice(0, 30)}`;
+    const sanitizedTitle = (title || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    return `news_${sanitizedTitle.slice(0, 30)}`;
 }
 
 /* === SECTION: Location Resolution === */
+
 function resolveStoryTags(titleText, storyText, isGoogleAlert) {
     const textBlob = `${titleText} ${storyText}`.toLowerCase();
     const detectedTowns = new Set();
 
-    // Check for town matches
     if (isGoogleAlert) {
-        // Strict matching for web alert sweeps
         for (const [townName, regexArray] of Object.entries(GOOGLE_ALERT_TOWN_REGEX_MAP)) {
             for (const pattern of regexArray) {
                 if (pattern.test(textBlob)) {
@@ -137,7 +179,6 @@ function resolveStoryTags(titleText, storyText, isGoogleAlert) {
             }
         }
     } else {
-        // Direct word boundary matching for local RSS feeds
         for (const [townName, keywords] of Object.entries(LOCAL_TOWN_KEYWORD_MAP)) {
             for (const kw of keywords) {
                 const regex = new RegExp(`\\b${kw}\\b`, 'i');
@@ -149,39 +190,79 @@ function resolveStoryTags(titleText, storyText, isGoogleAlert) {
         }
     }
 
-    // RULE 1: If town(s) mentioned, tag with those town name(s)
     if (detectedTowns.size > 0) {
         return Array.from(detectedTowns);
     }
 
-    // RULE 2: If NO town name mentioned, default strictly to "Clay County"
     return ["Clay County"];
 }
 
-/* === SECTION: Dynamic Feed Fetching === */
+/* === SECTION: Dynamic Multi-Source Ingestion === */
+
 async function fetchAllFeedItems() {
     const extractedArticles = [];
 
     for (const source of sourcesData) {
-        if (source.type !== "rss") continue;
+        const sourceType = (source.type || "").toLowerCase();
+        
+        // 1. Direct HTML Source Scraper (e.g. Flora City Official, Olney Gazette)
+        if (sourceType === "html" || sourceType === "webpage") {
+            try {
+                console.log(`[HTML SCRAPING] ${source.name} (${source.url})`);
+                const htmlData = await scrapeWebPageContent(source.url);
+                
+                if (htmlData.story || htmlData.title) {
+                    extractedArticles.push({
+                        title: htmlData.title || source.name,
+                        link: source.url,
+                        date: new Date().toISOString(),
+                        full_story: htmlData.story,
+                        image: htmlData.image,
+                        source_name: source.name,
+                        source_url: source.url
+                    });
+                }
+            } catch (err) {
+                console.error(`[HTML SOURCE ERROR] Failed parsing ${source.name}:`, err.message);
+            }
+            continue;
+        }
 
+        // 2. RSS & Google Alert Feeds
         try {
-            console.log(`Fetching feed: ${source.name} (${source.url})`);
+            console.log(`[FEED FETCHING] ${source.name} (${source.url})`);
             const feed = await rssParser.parseURL(source.url);
 
             for (const item of feed.items) {
+                const itemTitle = cleanTitle(item.title);
+                const itemLink = cleanLink(item.link || source.url);
+                let itemStory = cleanStoryText(item.contentEncoded || item.content || item.contentSnippet || item.summary || item.description || "");
+                let itemImage = extractImageFromFeed(item);
+
+                // HTML Fallback for short snippets (e.g. Google Alerts or brief RSS summaries)
+                if (itemStory.length < 100 && itemLink.startsWith("http")) {
+                    console.log(`[HTML FALLBACK] Short snippet for "${itemTitle}". Scraping destination URL...`);
+                    const scraped = await scrapeWebPageContent(itemLink);
+                    if (scraped.story.length > itemStory.length) {
+                        itemStory = scraped.story;
+                    }
+                    if (!itemImage && scraped.image) {
+                        itemImage = scraped.image;
+                    }
+                }
+
                 extractedArticles.push({
-                    title: item.title || "",
-                    link: item.link || source.url,
+                    title: itemTitle,
+                    link: itemLink,
                     date: item.isoDate || item.pubDate || new Date().toISOString(),
-                    full_story: extractStory(item),
-                    image: extractImage(item),
+                    full_story: itemStory,
+                    image: itemImage,
                     source_name: source.name,
                     source_url: source.url
                 });
             }
         } catch (err) {
-            console.error(`[FEED ERROR] Failed parsing ${source.name}:`, err.message);
+            console.error(`[FEED ERROR] Failed parsing feed "${source.name}":`, err.message);
         }
     }
 
@@ -189,11 +270,12 @@ async function fetchAllFeedItems() {
 }
 
 /* === SECTION: Execution Pipeline === */
+
 async function runScraper() {
     console.log(`Starting news pipeline... Loaded ${sourcesData.length} sources from rssfeed.json`);
     
     const articles = await fetchAllFeedItems();
-    console.log(`Extracted ${articles.length} individual items to process.`);
+    console.log(`Extracted ${articles.length} total items from all sources.`);
 
     const writePromises = [];
     const processedKeys = new Set();
@@ -209,20 +291,13 @@ async function runScraper() {
         const image = item.image;
         const articleDate = item.date;
 
-        if (
-            !title || 
-            title === "Freedom 92.9" || 
-            title === "Flora City Official" || 
-            link.endsWith('/feed/') || 
-            (!story && !image)
-        ) {
+        if (!title || title.trim() === "" || link.endsWith('/feed/')) {
             skippedCount++;
             continue;
         }
 
         const docId = generateUniqueKey(title);
         if (processedKeys.has(docId)) {
-            console.log(`[DUPLICATE INTERCEPTED] "${title}"`);
             duplicateCount++;
             continue;
         }
@@ -232,11 +307,9 @@ async function runScraper() {
         const sourceUrl = (item.source_url || "").toLowerCase();
         const isGoogleAlert = sourceName.includes("google alert") || sourceUrl.includes("google.com/alerts");
 
-        // Resolve location tag (Town name if mentioned, otherwise "Clay County")
         const tags = resolveStoryTags(title, story, isGoogleAlert);
         const primaryLocation = tags.join(", ");
 
-        // Save entry directly to Firestore /local_news
         const p = setDoc(doc(db, "local_news", docId), {
             date: articleDate,
             full_story: story,
@@ -252,7 +325,7 @@ async function runScraper() {
             savedCount++;
         })
         .catch((err) => {
-            console.error(`[ERROR] Failed writing "${title}":`, err.message);
+            console.error(`[FIRESTORE WRITE ERROR] Failed writing "${title}":`, err.message);
         });
 
         writePromises.push(p);
