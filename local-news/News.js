@@ -1,6 +1,6 @@
 /* === SECTION: File Header & Config === */
-// Active Version: v1.8.8 | Timestamp: 2026-08-03_20:50:00
-// Description: Multi-Source Local News Scraper with Full Field Mapping (Includes Source Tracking)
+// Active Version: v1.8.9 | Timestamp: 2026-08-03_20:55:00
+// Description: Multi-Source Local News Scraper with Strict Clay County Relevance Filtering
 
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
@@ -39,7 +39,18 @@ const rssParser = new Parser({
 /* === SECTION: Town Keyword Maps === */
 
 const LOCAL_TOWN_KEYWORD_MAP = {
-    "Flora": ["flora", "floyd henson", "floyd henson jr high", "flora wolves", "lady wolves", "flora unit 35"],
+    "Flora": [
+        "flora", 
+        "floyd henson", 
+        "floyd henson jr high", 
+        "flora wolves", 
+        "lady wolves", 
+        "flora unit 35",
+        "frank & bright",
+        "frank and bright",
+        "frank & bright funeral home",
+        "frank and bright funeral home"
+    ],
     "Louisville": ["louisville", "north clay", "nc cardinals", "north clay cardinals", "north clay indians"],
     "Clay City": ["clay city", "clay city wolves", "clay city lady wolves", "clay city cusd"],
     "Xenia": ["xenia"],
@@ -50,18 +61,10 @@ const LOCAL_TOWN_KEYWORD_MAP = {
     "Unincorporated Clay County": ["hord", "wendelin", "oskaloosa", "riffle", "blair", "harter", "larkinsburg", "pixley", "songer", "stanford"]
 };
 
-const GOOGLE_ALERT_TOWN_REGEX_MAP = {
-    "Flora": [/\bflora\b.*?\b(il|illinois)\b/i, /\bflora\s*,?\s*(il|illinois)\b/i, /\bfloyd henson\b/i, /\bflora wolves\b/i],
-    "Louisville": [/\blouisville\b.*?\b(il|illinois)\b/i, /\blouisville\s*,?\s*(il|illinois)\b/i, /\bnorth clay\b/i],
-    "Clay City": [/\bclay city\b.*?\b(il|illinois)\b/i, /\bclay city\s*,?\s*(il|illinois)\b/i, /\bclay city wolves\b/i],
-    "Xenia": [/\bxenia\b.*?\b(il|illinois)\b/i, /\bxenia\s*,?\s*(il|illinois)\b/i],
-    "Sailor Springs": [/\bsailor springs\b.*?\b(il|illinois)\b/i, /\bsailor springs\s*,?\s*(il|illinois)\b/i],
-    "Iola": [/\biola\b.*?\b(il|illinois)\b/i, /\biola\s*,?\s*(il|illinois)\b/i],
-    "Ingraham": [/\bingraham\b.*?\b(il|illinois)\b/i, /\bingraham\s*,?\s*(il|illinois)\b/i],
-    "Bible Grove": [/\bbible grove\b.*?\b(il|illinois)\b/i, /\bbible grove\s*,?\s*(il|illinois)\b/i]
-};
+// Broad Clay County Check (For general county mentions)
+const GENERAL_CLAY_COUNTY_REGEX = /\bclay\s*county\b/i;
 
-/* === SECTION: Data Cleaning & Extractors === */
+/* === SECTION: Data Cleaning & Extraction Helpers === */
 
 function cleanTitle(rawTitle) {
     if (!rawTitle) return "";
@@ -155,29 +158,23 @@ function generateUniqueKey(title) {
     return `news_${sanitizedTitle.slice(0, 30)}`;
 }
 
-/* === SECTION: Location Resolution === */
+/* === SECTION: Strict Location Filtering Engine === */
 
-function resolveStoryTags(titleText, storyText, isGoogleAlert) {
+/**
+ * Returns array of tags if story is relevant to Clay County.
+ * Returns null if the story has NO relation to Clay County or its towns.
+ */
+function resolveStoryTags(titleText, storyText) {
     const textBlob = `${titleText} ${storyText}`.toLowerCase();
     const detectedTowns = new Set();
 
-    if (isGoogleAlert) {
-        for (const [townName, regexArray] of Object.entries(GOOGLE_ALERT_TOWN_REGEX_MAP)) {
-            for (const pattern of regexArray) {
-                if (pattern.test(textBlob)) {
-                    detectedTowns.add(townName);
-                    break;
-                }
-            }
-        }
-    } else {
-        for (const [townName, keywords] of Object.entries(LOCAL_TOWN_KEYWORD_MAP)) {
-            for (const kw of keywords) {
-                const regex = new RegExp(`\\b${kw}\\b`, 'i');
-                if (regex.test(textBlob)) {
-                    detectedTowns.add(townName);
-                    break;
-                }
+    // 1. Check for specific towns or local landmarks (Flora, Frank & Bright, Louisville, etc.)
+    for (const [townName, keywords] of Object.entries(LOCAL_TOWN_KEYWORD_MAP)) {
+        for (const kw of keywords) {
+            const regex = new RegExp(`\\b${kw}\\b`, 'i');
+            if (regex.test(textBlob)) {
+                detectedTowns.add(townName);
+                break;
             }
         }
     }
@@ -186,7 +183,13 @@ function resolveStoryTags(titleText, storyText, isGoogleAlert) {
         return Array.from(detectedTowns);
     }
 
-    return ["Clay County"];
+    // 2. Check for explicit "Clay County" mentions if no specific town was hit
+    if (GENERAL_CLAY_COUNTY_REGEX.test(textBlob)) {
+        return ["Clay County"];
+    }
+
+    // 3. Reject story entirely if neither town nor county is mentioned (e.g. Salem, Marion County)
+    return null;
 }
 
 /* === SECTION: Dynamic Multi-Source Ingestion === */
@@ -197,6 +200,7 @@ async function fetchAllFeedItems() {
     for (const source of sourcesData) {
         const sourceType = (source.type || "").toLowerCase();
         
+        // 1. Direct HTML Scraping
         if (sourceType === "html" || sourceType === "webpage") {
             try {
                 console.log(`[HTML SCRAPING] ${source.name} (${source.url})`);
@@ -219,6 +223,7 @@ async function fetchAllFeedItems() {
             continue;
         }
 
+        // 2. RSS & Google Alert Feeds
         try {
             console.log(`[FEED FETCHING] ${source.name} (${source.url})`);
             const feed = await rssParser.parseURL(source.url);
@@ -229,6 +234,7 @@ async function fetchAllFeedItems() {
                 let itemStory = cleanStoryText(item.contentEncoded || item.content || item.contentSnippet || item.summary || item.description || "");
                 let itemImage = extractImageFromFeed(item);
 
+                // HTML Fallback for short snippets
                 if (itemStory.length < 100 && itemLink.startsWith("http")) {
                     console.log(`[HTML FALLBACK] Short snippet for "${itemTitle}". Scraping destination URL...`);
                     const scraped = await scrapeWebPageContent(itemLink);
@@ -264,13 +270,14 @@ async function runScraper() {
     console.log(`Starting news pipeline... Loaded ${sourcesData.length} sources from rssfeed.json`);
     
     const articles = await fetchAllFeedItems();
-    console.log(`Extracted ${articles.length} total items from all sources.`);
+    console.log(`Extracted ${articles.length} total raw items from all sources.`);
 
     const writePromises = [];
     const processedKeys = new Set();
 
     let savedCount = 0;
     let duplicateCount = 0;
+    let irrelevantCount = 0;
     let skippedCount = 0;
 
     for (const item of articles) {
@@ -292,14 +299,18 @@ async function runScraper() {
         }
         processedKeys.add(docId);
 
-        const sourceName = (item.source_name || "").toLowerCase();
-        const sourceUrl = (item.source_url || "").toLowerCase();
-        const isGoogleAlert = sourceName.includes("google alert") || sourceUrl.includes("google.com/alerts");
+        // Location Check
+        const tags = resolveStoryTags(title, story);
 
-        const tags = resolveStoryTags(title, story, isGoogleAlert);
+        // REJECTION RULE: If story doesn't mention Clay County or its towns, discard it!
+        if (!tags) {
+            console.log(`[DISCARDED - OUT OF AREA] "${title}"`);
+            irrelevantCount++;
+            continue;
+        }
+
         const primaryLocation = tags.join(", ");
 
-        // Writes to Firestore including source_name and source_url
         const p = setDoc(doc(db, "local_news", docId), {
             date: articleDate,
             full_story: story,
@@ -324,7 +335,7 @@ async function runScraper() {
     }
 
     await Promise.all(writePromises);
-    console.log(`Pipeline complete! Saved: ${savedCount} | Duplicates: ${duplicateCount} | Skipped: ${skippedCount}`);
+    console.log(`Pipeline complete! Saved: ${savedCount} | Out of Area Dropped: ${irrelevantCount} | Duplicates: ${duplicateCount} | Skipped: ${skippedCount}`);
     process.exit(0);
 }
 
