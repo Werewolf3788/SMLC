@@ -1,6 +1,6 @@
 /* === SECTION: File Header & Config === */
-// Active Version: v1.8.7 | Timestamp: 2026-08-03_20:45:00
-// Description: Multi-Source Local News Scraper (RSS + Google Alerts + Custom HTML Scraping)
+// Active Version: v1.8.8 | Timestamp: 2026-08-03_20:50:00
+// Description: Multi-Source Local News Scraper with Full Field Mapping (Includes Source Tracking)
 
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
@@ -61,7 +61,7 @@ const GOOGLE_ALERT_TOWN_REGEX_MAP = {
     "Bible Grove": [/\bbible grove\b.*?\b(il|illinois)\b/i, /\bbible grove\s*,?\s*(il|illinois)\b/i]
 };
 
-/* === SECTION: Data Cleaning & Extraction Helpers === */
+/* === SECTION: Data Cleaning & Extractors === */
 
 function cleanTitle(rawTitle) {
     if (!rawTitle) return "";
@@ -77,7 +77,7 @@ function cleanStoryText(rawText) {
     if (!rawText) return "";
     return rawText
         .replace(/<[^>]+>/g, '') // Strips HTML tags
-        .replace(/(?:[\u00a9\u24b8\u2122]|&copy;)?\s*copyright[^\.\n]*\.?/gi, '') // Removes copyright notices
+        .replace(/(?:[\u00a9\u24b8\u2122]|&copy;)?\s*copyright[^\.\n]*\.?/gi, '') // Strips copyright notices
         .replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"')
         .trim();
 }
@@ -103,10 +103,6 @@ function extractImageFromFeed(item) {
     return (imgMatch && imgMatch[1]) ? imgMatch[1] : "";
 }
 
-/**
- * HTML WEBPAGE SCRAPER ENGINE:
- * Scrapes direct HTML sources (e.g. Flora City Official & Olney Gazette) or acts as an RSS fallback
- */
 async function scrapeWebPageContent(url) {
     try {
         const res = await fetch(url, {
@@ -118,24 +114,20 @@ async function scrapeWebPageContent(url) {
         const html = await res.text();
         const $ = cheerio.load(html);
 
-        // Remove scripts, styles, navigation, headers, footers
         $('script, style, nav, header, footer, iframe, noscript, .comments, .sidebar').remove();
 
         const pageTitle = cleanTitle($('h1').first().text() || $('title').text() || "");
 
-        // Extract lead image
         let leadImage = $('meta[property="og:image"]').attr('content') || 
                         $('meta[name="twitter:image"]').attr('content') || 
                         $('article img').first().attr('src') || 
                         $('.content img').first().attr('src') || "";
 
-        // Normalize relative image URLs
         if (leadImage && !leadImage.startsWith('http')) {
             const urlObj = new URL(url);
             leadImage = `${urlObj.origin}${leadImage.startsWith('/') ? '' : '/'}${leadImage}`;
         }
 
-        // Extract main story text from paragraphs
         let storyParagraphs = [];
         const selector = $('article').length ? 'article p' : 'main p, .content p, .entry-content p, p';
         
@@ -205,7 +197,6 @@ async function fetchAllFeedItems() {
     for (const source of sourcesData) {
         const sourceType = (source.type || "").toLowerCase();
         
-        // 1. Direct HTML Source Scraper (e.g. Flora City Official, Olney Gazette)
         if (sourceType === "html" || sourceType === "webpage") {
             try {
                 console.log(`[HTML SCRAPING] ${source.name} (${source.url})`);
@@ -228,7 +219,6 @@ async function fetchAllFeedItems() {
             continue;
         }
 
-        // 2. RSS & Google Alert Feeds
         try {
             console.log(`[FEED FETCHING] ${source.name} (${source.url})`);
             const feed = await rssParser.parseURL(source.url);
@@ -239,7 +229,6 @@ async function fetchAllFeedItems() {
                 let itemStory = cleanStoryText(item.contentEncoded || item.content || item.contentSnippet || item.summary || item.description || "");
                 let itemImage = extractImageFromFeed(item);
 
-                // HTML Fallback for short snippets (e.g. Google Alerts or brief RSS summaries)
                 if (itemStory.length < 100 && itemLink.startsWith("http")) {
                     console.log(`[HTML FALLBACK] Short snippet for "${itemTitle}". Scraping destination URL...`);
                     const scraped = await scrapeWebPageContent(itemLink);
@@ -310,18 +299,21 @@ async function runScraper() {
         const tags = resolveStoryTags(title, story, isGoogleAlert);
         const primaryLocation = tags.join(", ");
 
+        // Writes to Firestore including source_name and source_url
         const p = setDoc(doc(db, "local_news", docId), {
             date: articleDate,
             full_story: story,
             image: image,
             link: link,
             location: primaryLocation,
+            source_name: item.source_name || "Local News",
+            source_url: item.source_url || link,
             tags: tags,
             title: title,
             updatedAt: new Date().toISOString()
         }, { merge: true })
         .then(() => {
-            console.log(`[SAVED TO FIRESTORE] "${title}" -> Location: ${primaryLocation}`);
+            console.log(`[SAVED TO FIRESTORE] "${title}" -> Source: ${item.source_name} | Location: ${primaryLocation}`);
             savedCount++;
         })
         .catch((err) => {
