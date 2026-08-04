@@ -980,6 +980,64 @@
             });
         }
 
+        function loadNavigationMenu() {
+            const menuRef = ref(rtdb, 'master_county_data/global/menu');
+            onValue(menuRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    let items = [];
+                    if (Array.isArray(data)) {
+                        items = data;
+                    } else if (typeof data === 'object' && data !== null) {
+                        if (data.items) {
+                            items = Array.isArray(data.items) ? data.items : Object.values(data.items);
+                        } else {
+                            items = Object.values(data);
+                        }
+                    }
+
+                    if (items.length > 0) {
+                        const navLinksContainer = document.getElementById('nav-links');
+                        const mobileMenuContainer = document.getElementById('mobile-menu');
+
+                        if (navLinksContainer && mobileMenuContainer) {
+                            navLinksContainer.innerHTML = '';
+                            mobileMenuContainer.innerHTML = '';
+
+                            const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+
+                            items.forEach((item, index) => {
+                                if (!item) return;
+                                const label = decodeHtml(item.title || item.name || item.label || item.text || (typeof item === 'string' ? item : `Link ${index+1}`));
+                                let url = item.url || item.link || item.href || '#';
+                                const target = item.target || (url.startsWith('http') ? '_blank' : '_self');
+                                
+                                const isActive = url.includes(currentPath) || (currentPath === 'index.html' && (url === 'index.html' || url === '/'));
+
+                                // Desktop Link
+                                const desktopA = document.createElement('a');
+                                desktopA.href = url;
+                                desktopA.textContent = label;
+                                desktopA.className = `nav-link ${isActive ? 'active' : ''}`;
+                                if (target === '_blank') desktopA.target = '_blank';
+                                navLinksContainer.appendChild(desktopA);
+
+                                // Mobile Link
+                                const mobileA = document.createElement('a');
+                                mobileA.href = url;
+                                mobileA.textContent = label;
+                                mobileA.className = `block nav-link ${isActive ? 'active' : ''}`;
+                                if (target === '_blank') mobileA.target = '_blank';
+                                mobileMenuContainer.appendChild(mobileA);
+                            });
+                        }
+                    }
+                }
+            }, (error) => {
+                console.warn("RTDB menu snapshot notice:", error);
+            });
+        }
+
         function renderEventItem(name, location, dateStr, fullDesc, itemData = {}) {
             const list = document.getElementById('direct-event-list');
             const item = document.createElement('div');
@@ -1431,8 +1489,114 @@
 
             renderFuelCarousel();
             loadBusinessSpotlight();
+            loadNavigationMenu();
+            loadSlideshow();
+            loadFooter();
+            loadFuelPrices();
             setupCommunityEventsListener();
             setupLocalNewsListener();
+        }
+
+        // --- DYNAMIC FIREBASE SLIDESHOW LISTENER ---
+        function loadSlideshow() {
+            const slideRef = ref(rtdb, 'master_county_data/global/sections/sec_3_1_1');
+            onValue(slideRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    let items = [];
+                    if (data.items) {
+                        items = Array.isArray(data.items) ? data.items : Object.values(data.items);
+                    } else if (Array.isArray(data)) {
+                        items = data;
+                    } else if (typeof data === 'object') {
+                        items = Object.values(data);
+                    }
+
+                    const validSlides = items.filter(item => item && (item.image || item.src || item.url || item.image1 || typeof item === 'string'));
+                    if (validSlides.length > 0) {
+                        const track = document.getElementById('hero-slideshow-track');
+                        if (track) {
+                            track.innerHTML = '';
+                            validSlides.forEach((slide) => {
+                                const imgUrl = slide.image || slide.src || slide.url || slide.image1 || (typeof slide === 'string' ? slide : '');
+                                const altText = slide.alt || slide.title || 'Clay County Banner';
+                                const slideDiv = document.createElement('div');
+                                slideDiv.className = 'slideshow-slide';
+                                slideDiv.innerHTML = `<img src="${imgUrl}" alt="${altText}" class="lightbox-clickable">`;
+                                track.appendChild(slideDiv);
+                            });
+                            totalSlides = validSlides.length;
+                            goToSlide(0);
+                        }
+                    }
+                }
+            }, (error) => console.warn("RTDB Slideshow notice:", error));
+        }
+
+        // --- DYNAMIC FIREBASE FOOTER LISTENER ---
+        function loadFooter() {
+            const footerRef = ref(rtdb, 'master_county_data/global/footer');
+            onValue(footerRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    const copyright = decodeHtml(data.copyright || data.text1 || data.content || (typeof data === 'string' ? data : ''));
+                    const subtext = decodeHtml(data.rights || data.subtext || '');
+                    const footerContainer = document.querySelector('.site-footer .max-w-7xl');
+                    if (footerContainer && copyright) {
+                        footerContainer.innerHTML = `
+                            <p>${copyright}</p>
+                            ${subtext ? `<p>${subtext}</p>` : `<p>All Rights Reserved - <a href="https://www.skventuresigns.com" target="_blank" class="text-amber-400 font-bold hover:underline">S&K Ventures</a></p>`}
+                        `;
+                    }
+                }
+            }, (error) => console.warn("RTDB Footer notice:", error));
+        }
+
+        // --- DYNAMIC FIREBASE FUEL MONITOR LISTENER ---
+        function loadFuelPrices() {
+            // Listen to RTDB Global Towns Data
+            const townsRef = ref(rtdb, 'master_county_data/global/towns');
+            onValue(townsRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    let townList = Array.isArray(data) ? data : Object.values(data);
+                    if (townList.length > 0) {
+                        currentFuelList = townList.map(t => ({
+                            town: t.name || t.town || 'Clay County',
+                            station: t.station || t.gasStation || `${t.name || 'Local'} Station`,
+                            price: parseFloat(t.price || t.fuelPrice || 3.45),
+                            updated: t.updated || 'Live',
+                            trend: t.trend || 'stable'
+                        }));
+                        renderFuelCarousel();
+                    }
+                }
+            }, (error) => console.warn("RTDB Towns notice:", error));
+
+            // Listen to Firestore User Fuel Submissions
+            const fuelColRef = collection(db, 'artifacts', appId, 'public', 'data', 'fuel_prices');
+            onSnapshot(fuelColRef, (snapshot) => {
+                if (!snapshot.empty) {
+                    snapshot.docs.forEach(docSnap => {
+                        const rep = docSnap.data();
+                        const matchIdx = currentFuelList.findIndex(f => f.town.toLowerCase() === (rep.town || '').toLowerCase());
+                        if (matchIdx !== -1) {
+                            currentFuelList[matchIdx].price = parseFloat(rep.price);
+                            currentFuelList[matchIdx].station = rep.station || currentFuelList[matchIdx].station;
+                            currentFuelList[matchIdx].updated = 'Just now';
+                        } else if (rep.town && rep.price) {
+                            currentFuelList.push({
+                                town: rep.town,
+                                station: rep.station || 'Local Station',
+                                price: parseFloat(rep.price),
+                                updated: 'Just now',
+                                trend: 'stable'
+                            });
+                        }
+                    });
+                    renderFuelCarousel();
+                }
+            }, (error) => console.warn("Firestore fuel_prices notice:", error));
         }
 
         window.addEventListener('load', startApp);
