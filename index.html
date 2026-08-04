@@ -279,11 +279,11 @@
             <!-- Navigation Links -->
             <nav id="nav-links" class="hidden lg:flex items-center gap-1.5">
                 <a href="index.html" class="nav-link active">Home</a>
-                <a href="#" class="https://werewolf3788.github.io/SMLC/clay-city">Clay City</a>
-                <a href="https://werewolf3788.github.io/SMLC/flora" target="_blank" class="nav-link">Flora</a>
-                <a href="#" class="https://werewolf3788.github.io/SMLC/louisville">Louisville</a>
-                <a href="#" class="https://werewolf3788.github.io/SMLC/sailor-springs">Sailor Springs</a>
-                <a href="#" class="https://werewolf3788.github.io/SMLC/xenia">Xenia</a>
+                <a href="#" class="nav-link">Clay City</a>
+                <a href="https://www.ourflora.com" target="_blank" class="nav-link">Flora</a>
+                <a href="#" class="nav-link">Louisville</a>
+                <a href="#" class="nav-link">Sailor Springs</a>
+                <a href="#" class="nav-link">Xenia</a>
             </nav>
         </div>
 
@@ -425,7 +425,7 @@
                             </div>
                             <div class="wf-row">
                                 <label class="wf-label" for="email">Email</label>
-                                <input name="email" id="email" type="email" class="wf-field-input" required placeholder="info@supportmylocalcommunity.com" />
+                                <input name="email" id="email" type="email" class="wf-field-input" required placeholder="scott@supportmylocalcommunity.com" />
                             </div>
 
                             <div class="wform-btn-wrap pt-2">
@@ -986,13 +986,25 @@
                 if (snapshot.exists()) {
                     const data = snapshot.val();
                     let items = [];
+
+                    // Robust parser for different potential Firebase menu structures
                     if (Array.isArray(data)) {
-                        items = data;
+                        items = data.filter(Boolean);
                     } else if (typeof data === 'object' && data !== null) {
-                        if (data.items) {
+                        // Check if it's a simple Key-Value pair store (e.g. { "Home": "index.html" })
+                        const values = Object.values(data);
+                        const isSimpleMap = values.length > 0 && values.every(v => typeof v === 'string');
+                        
+                        if (isSimpleMap) {
+                            items = Object.entries(data).map(([key, val]) => ({ name: key, url: val }));
+                        } else if (data.items) {
                             items = Array.isArray(data.items) ? data.items : Object.values(data.items);
                         } else {
-                            items = Object.values(data);
+                            // Assume it's an object containing objects (standard Firebase push keys)
+                            items = Object.keys(data).map(key => {
+                                const val = data[key];
+                                return typeof val === 'object' ? { ...val, _fallbackKey: key } : { name: key, url: val };
+                            });
                         }
                     }
 
@@ -1006,10 +1018,17 @@
 
                             const currentPath = window.location.pathname.split('/').pop() || 'index.html';
 
+                            // Sort items if they have an 'order' property
+                            items.sort((a, b) => (a.order || 0) - (b.order || 0));
+
                             items.forEach((item, index) => {
                                 if (!item) return;
-                                const label = decodeHtml(item.title || item.name || item.label || item.text || (typeof item === 'string' ? item : `Link ${index+1}`));
-                                let url = item.url || item.link || item.href || '#';
+                                
+                                // Aggressively find the label and URL regardless of field names
+                                const labelText = item.title || item.name || item.label || item.text || item.content || item._fallbackKey || `Link ${index+1}`;
+                                const label = decodeHtml(labelText);
+                                
+                                let url = item.url || item.link || item.href || item.path || item.value || '#';
                                 const target = item.target || (url.startsWith('http') ? '_blank' : '_self');
                                 
                                 const isActive = url.includes(currentPath) || (currentPath === 'index.html' && (url === 'index.html' || url === '/'));
