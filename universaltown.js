@@ -1,19 +1,21 @@
 /* ==========================================================================
-   Active Version: v1.2.3
+   Active Version: v1.3.0
    File: universaltown.js
    Project: SMLC County Portal Semantic Master Script
-   Description: Complete multi-town client engine connecting to Firebase RTDB.
-                Maps semantic nodes (slideshow, point_of_interest, article, 
-                spotlight, history, town_links, partners, menu, footer).
-                Implements device-aware turn-by-turn navigation (Apple Maps on iOS, 
-                Google Maps on Android/Windows), dual phone lines (Phone 1 Call or 
-                WhatsApp, Phone 2 Call only), default mailto email client triggers, 
-                mobile hamburger drawer toggles, and locks image alt descriptions 
-                strictly to the lightbox modal.
-   Timestamp: 2026-10-01 16:53 EDT (New York)
+   Description: Complete multi-town engine connecting to Firebase RTDB.
+                - AdBlock-immune naming for community partners
+                - Smooth touch/hover-pausing partner & photo carousels
+                - Dual individual & global Google/iCal calendar subscription hooks
+                - Zero "TBA" strings (defaults to "All Day Event")
+                - Strict town-specific & global news parsing
+                - Turn-by-turn navigation (Apple Maps on iOS, Google Maps on Android/PC)
+                - Dynamic plain-text URL linkification in modals
+                - Deep GA4 engagement, impression, outbound, & contact event tracking
+                - Dynamic DOM translation re-triggering for Google Translate
+   Timestamp: 2026-10-01 17:20 EDT (New York)
    ========================================================================== */
 
-// Line 18: Google Translate Window Callback Registration
+// Line 23: Google Translate Global Callback & Dynamic Mutation Scanner
 window.googleTranslateElementInit = function() {
     try {
         if (window.google && window.google.translate) {
@@ -23,24 +25,121 @@ window.googleTranslateElementInit = function() {
             }, 'google_translate_element');
         }
     } catch(e) {
-        console.warn("Google Translate initialization warning:", e.message);
+        console.warn("Google Translate initialization notice:", e.message);
     }
 };
 
-// Line 32: Master Town Alias Map
+// Re-notify Google Translate when dynamic Firebase content renders into DOM
+function triggerGoogleTranslateUpdate(targetNode) {
+    if (!targetNode) return;
+    try {
+        if (window.google && window.google.translate && window.google.translate.TranslateElement) {
+            const fontTags = document.querySelectorAll('font[color]');
+            if (fontTags.length > 0) {
+                targetNode.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+    } catch(e) {
+        // Soft fail if translate script is still loading
+    }
+}
+
+// Line 52: Master Town Alias & Keyword Filter Definitions
 const TOWN_ALIAS_MAP = {
-    "HOME": { primaryName: "Clay County", dbTownKey: "Global", jsonKey: "all", gasKey: ["louisville", "flora", "clay-city", "xenia"], historyKey: "all", keywords: [], zipCodes: [], isHome: true, scorestreamId: "68601", seatBadge: "Clay County Seat", estMeta: "Est. 1824 | Zip Code 62824", riverMarquee: "COMMUNITY DIGITAL NETWORK MAP", themeAccent: "#0258A3" },
-    "CLAY COUNTY": { primaryName: "Clay County", dbTownKey: "Global", jsonKey: "all", gasKey: ["louisville", "flora", "clay-city", "xenia"], historyKey: "all", keywords: [], zipCodes: [], isHome: true, scorestreamId: "68601", seatBadge: "Clay County Seat", estMeta: "Est. 1824 | Zip Code 62824", riverMarquee: "COMMUNITY DIGITAL NETWORK MAP", themeAccent: "#0258A3" },
-    "CLAY CITY": { primaryName: "Clay City", dbTownKey: "Clay City", jsonKey: "clay_city", gasKey: ["clay-city"], historyKey: "clay_city", keywords: ["CLAY CITY", "CC"], zipCodes: ["62824"], scorestreamId: "64422", seatBadge: "Clay County Hub", estMeta: "Est. 1868 | Zip Code 62824", riverMarquee: "HOME OF THE CLAY CITY BULLDOGS & CUBIES", themeAccent: "#4A154B" },
-    "FLORA": { primaryName: "Flora", dbTownKey: "Flora", jsonKey: "flora", gasKey: ["flora"], historyKey: "flora", keywords: ["FLORA", "FLO", "WOLVES"], zipCodes: ["62839"], scorestreamId: "68602", seatBadge: "Clay County Commerce Center", estMeta: "Est. 1854 | Zip Code 62839", riverMarquee: "HOME OF THE FLORA WOLVES • COMMERCE CENTER", themeAccent: "#0258A3" },
-    "LOUISVILLE": { primaryName: "Louisville", dbTownKey: "Louisville", jsonKey: "louisville", gasKey: ["louisville"], historyKey: "louisville", keywords: ["LOUISVILLE", "NORTH CLAY", "NC", "HOOSIER"], zipCodes: ["62858"], scorestreamId: "68601", seatBadge: "Clay County Seat", estMeta: "Est. 1836 | Zip Code 62858", riverMarquee: "HOME OF THE NORTH CLAY CARDINALS", themeAccent: "#EB1C24" },
-    "XENIA": { primaryName: "Xenia", dbTownKey: "Xenia", jsonKey: "clay_county_teams", gasKey: ["xenia"], historyKey: "xenia", keywords: ["XENIA"], zipCodes: ["62899"], scorestreamId: "68988", seatBadge: "Clay County Gateway", estMeta: "Est. 1834 | Zip Code 62899", riverMarquee: "HISTORIC PRIDE & RURAL HERITAGE", themeAccent: "#1C5640" },
-    "SAILOR SPRINGS": { primaryName: "Sailor Springs", dbTownKey: "Sailor Springs", jsonKey: "sailor_springs", gasKey: ["louisville", "clay-city"], historyKey: "sailor_springs", keywords: ["SAILOR SPRINGS"], zipCodes: ["62879"], scorestreamId: "68988", seatBadge: "Clay County Village", estMeta: "Est. 1879 | Zip Code 62879", riverMarquee: "HISTORIC MINERAL SPRINGS HAVEN", themeAccent: "#00695C" },
-    "IOLA": { primaryName: "Iola", dbTownKey: "Iola", jsonKey: "iola", gasKey: ["louisville"], historyKey: "iola", keywords: ["IOLA"], zipCodes: ["62849"], scorestreamId: "68601", seatBadge: "Clay County Village", estMeta: "Est. 1860 | Zip Code 62849", riverMarquee: "NORTHWEST CLAY COUNTY COMMUNITY", themeAccent: "#E65100" },
-    "INGRAHAM": { primaryName: "Ingraham", dbTownKey: "Ingraham", jsonKey: "louisville", gasKey: ["louisville", "clay-city"], historyKey: "ingraham", keywords: ["INGRAHAM"], zipCodes: ["62434"], scorestreamId: "68601", seatBadge: "Clay County Village", estMeta: "Est. 1858 | Zip Code 62434", riverMarquee: "NORTHEAST CLAY COUNTY COMMUNITY", themeAccent: "#4E342E" }
+    "HOME": { 
+        primaryName: "Clay County", 
+        dbTownKey: "Global", 
+        jsonKey: "all", 
+        gasKey: ["louisville", "flora", "clay-city", "xenia"], 
+        historyKey: "all", 
+        keywords: [], 
+        isHome: true, 
+        seatBadge: "Clay County Seat", 
+        estMeta: "Est. 1824 | Zip Code 62824", 
+        riverMarquee: "COMMUNITY DIGITAL NETWORK MAP", 
+        themeAccent: "#0258A3" 
+    },
+    "CLAY COUNTY": { 
+        primaryName: "Clay County", 
+        dbTownKey: "Global", 
+        jsonKey: "all", 
+        gasKey: ["louisville", "flora", "clay-city", "xenia"], 
+        historyKey: "all", 
+        keywords: [], 
+        isHome: true, 
+        seatBadge: "Clay County Seat", 
+        estMeta: "Est. 1824 | Zip Code 62824", 
+        riverMarquee: "COMMUNITY DIGITAL NETWORK MAP", 
+        themeAccent: "#0258A3" 
+    },
+    "CLAY CITY": { 
+        primaryName: "Clay City", 
+        dbTownKey: "Clay City", 
+        jsonKey: "clay_city", 
+        gasKey: ["clay-city"], 
+        historyKey: "clay_city", 
+        keywords: ["CLAY CITY", "CC", "CUBIES"], 
+        isHome: false, 
+        seatBadge: "Clay County Hub", 
+        estMeta: "Est. 1868 | Zip Code 62824", 
+        riverMarquee: "HOME OF THE CLAY CITY BULLDOGS & CUBIES", 
+        themeAccent: "#4A154B" 
+    },
+    "FLORA": { 
+        primaryName: "Flora", 
+        dbTownKey: "Flora", 
+        jsonKey: "flora", 
+        gasKey: ["flora"], 
+        historyKey: "flora", 
+        keywords: ["FLORA", "WOLVES", "WOLVES FOOTBALL", "WOLF PUP", "FLO"], 
+        isHome: false, 
+        seatBadge: "Clay County Commerce Center", 
+        estMeta: "Est. 1854 | Zip Code 62839", 
+        riverMarquee: "HOME OF THE FLORA WOLVES • COMMERCE CENTER", 
+        themeAccent: "#0258A3" 
+    },
+    "LOUISVILLE": { 
+        primaryName: "Louisville", 
+        dbTownKey: "Louisville", 
+        jsonKey: "louisville", 
+        gasKey: ["louisville"], 
+        historyKey: "louisville", 
+        keywords: ["LOUISVILLE", "NORTH CLAY", "NC", "INDIANS", "NC CARDINALS"], 
+        isHome: false, 
+        seatBadge: "Clay County Seat", 
+        estMeta: "Est. 1836 | Zip Code 62858", 
+        riverMarquee: "HOME OF THE NORTH CLAY CARDINALS", 
+        themeAccent: "#EB1C24" 
+    },
+    "XENIA": { 
+        primaryName: "Xenia", 
+        dbTownKey: "Xenia", 
+        jsonKey: "xenia", 
+        gasKey: ["xenia"], 
+        historyKey: "xenia", 
+        keywords: ["XENIA"], 
+        isHome: false, 
+        seatBadge: "Clay County Gateway", 
+        estMeta: "Est. 1834 | Zip Code 62899", 
+        riverMarquee: "HISTORIC PRIDE & RURAL HERITAGE", 
+        themeAccent: "#1C5640" 
+    },
+    "SAILOR SPRINGS": { 
+        primaryName: "Sailor Springs", 
+        dbTownKey: "Sailor Springs", 
+        jsonKey: "sailor_springs", 
+        gasKey: ["louisville", "clay-city"], 
+        historyKey: "sailor_springs", 
+        keywords: ["SAILOR SPRINGS"], 
+        isHome: false, 
+        seatBadge: "Clay County Village", 
+        estMeta: "Est. 1879 | Zip Code 62879", 
+        riverMarquee: "HISTORIC MINERAL SPRINGS HAVEN", 
+        themeAccent: "#00695C" 
+    }
 };
 
-// Line 45: Active Town Config Resolver
+// Line 148: Active Town Config Resolver
 function getActiveTownConfig() {
     try {
         const hashRoute = (window.location.hash || "").replace("#/", "").replace("#", "").replace(/-/g, " ").toUpperCase();
@@ -60,7 +159,7 @@ function getActiveTownConfig() {
             }
         }
     } catch(e) {
-        console.warn("Town config resolution warning:", e.message);
+        console.warn("Town resolution notice:", e.message);
     }
 
     return TOWN_ALIAS_MAP["XENIA"];
@@ -76,10 +175,11 @@ const DEFAULT_APP_CONFIG = {
     }
 };
 
+// Global Timers and Subscriptions
 let globalSlideshowTicker = null;
 let gasMonitorRotator = null;
-let topPartnerTimer = null;
-let bottomPartnerTimer = null;
+let topCarouselInterval = null;
+let bottomCarouselInterval = null;
 
 let activeFbRefSections = null;
 let activeFbRefGlobalSections = null;
@@ -96,12 +196,12 @@ window.newsCacheBlock = [];
 window.townPartnersPool = [];
 window.globalPartnersPool = [];
 
-// Line 98: Clear Active Intervals on SPA Route Changes
+// Line 208: Reset Intervals
 function resetAllActiveTimers() {
     if (globalSlideshowTicker) { clearInterval(globalSlideshowTicker); globalSlideshowTicker = null; }
     if (gasMonitorRotator) { clearInterval(gasMonitorRotator); gasMonitorRotator = null; }
-    if (topPartnerTimer) { clearInterval(topPartnerTimer); topPartnerTimer = null; }
-    if (bottomPartnerTimer) { clearInterval(bottomPartnerTimer); bottomPartnerTimer = null; }
+    if (topCarouselInterval) { clearInterval(topCarouselInterval); topCarouselInterval = null; }
+    if (bottomCarouselInterval) { clearInterval(bottomCarouselInterval); bottomCarouselInterval = null; }
 }
 
 function cleanRawUrl(urlStr) {
@@ -152,13 +252,17 @@ function extractText(val) {
     return "";
 }
 
-function formatHumanTimestamp(rawString) {
-    if (!rawString || rawString === "undefined" || rawString === "null") return "Date TBA";
-    try {
-        const dateObj = new Date(rawString);
-        if (isNaN(dateObj.getTime())) return rawString;
-        return dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    } catch(e) { return rawString; }
+// Convert any plain text URLs inside descriptions or strings into active, clickable links
+function linkifyRawUrls(text) {
+    if (!text) return "";
+    const urlPattern = /(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi;
+    return String(text).replace(urlPattern, (match) => {
+        let cleanHref = match;
+        if (!cleanHref.match(/^https?:\/\//i)) {
+            cleanHref = '//' + cleanHref;
+        }
+        return `<a href="${cleanHref}" target="_blank" rel="noopener" style="color:var(--link-bright-blue); text-decoration:underline; word-break:break-all;">${match}</a>`;
+    });
 }
 
 function applyHighDensityScrollLimits(containerElement, itemCount, maxHeightPx = 480) {
@@ -174,9 +278,19 @@ function applyHighDensityScrollLimits(containerElement, itemCount, maxHeightPx =
     }
 }
 
-// Line 177: Target Link URL Decoration with UTM Tracking & Domain Target Logic
+// Line 293: GA4 Event Tracking Wrappers
+function trackGa4Event(eventName, eventParams = {}) {
+    try {
+        if (typeof window.gtag === 'function') {
+            window.gtag('event', eventName, eventParams);
+        }
+    } catch(e) {
+        console.warn("GA4 event dispatch notice:", e.message);
+    }
+}
+
 function attachUtmParameters(urlStr) {
-    if (!urlStr || urlStr === "#" || urlStr.startsWith("javascript:")) return urlStr;
+    if (!urlStr || urlStr === "#" || urlStr.startsWith("javascript:") || urlStr.startsWith("tel:") || urlStr.startsWith("mailto:")) return urlStr;
     try {
         const pageTitle = encodeURIComponent((document.title || "smlc_portal").trim());
         const urlObj = new URL(urlStr, window.location.origin);
@@ -203,6 +317,63 @@ function resolveLinkTarget(urlStr) {
     }
 }
 
+// Bind Global Outbound and Contact Click Tracking
+document.addEventListener('click', (e) => {
+    const anchor = e.target.closest('a');
+    if (!anchor || !anchor.href) return;
+
+    const href = anchor.href.toLowerCase();
+
+    // 1. Phone Tracking
+    if (href.startsWith('tel:')) {
+        trackGa4Event('contact_phone_click', {
+            phone_number: anchor.href.replace('tel:', ''),
+            page_location: window.location.href
+        });
+        return;
+    }
+
+    // 2. WhatsApp Tracking
+    if (href.includes('wa.me') || href.includes('whatsapp.com')) {
+        trackGa4Event('contact_whatsapp_click', {
+            target_url: anchor.href,
+            page_location: window.location.href
+        });
+        return;
+    }
+
+    // 3. Email Tracking
+    if (href.startsWith('mailto:')) {
+        trackGa4Event('contact_email_click', {
+            email_address: anchor.href.replace('mailto:', ''),
+            page_location: window.location.href
+        });
+        return;
+    }
+
+    // 4. Map Directions Tracking
+    if (href.includes('maps.google.com') || href.includes('maps.apple.com')) {
+        trackGa4Event('navigation_directions_click', {
+            map_service: href.includes('apple.com') ? 'apple_maps' : 'google_maps',
+            destination: anchor.href
+        });
+        return;
+    }
+
+    // 5. Outbound Domain Exit Tracking
+    try {
+        const targetUrlObj = new URL(anchor.href, window.location.origin);
+        if (targetUrlObj.hostname !== window.location.hostname) {
+            trackGa4Event('outbound_click', {
+                destination_domain: targetUrlObj.hostname,
+                target_url: anchor.href,
+                link_text: (anchor.innerText || "").trim().substring(0, 100)
+            });
+        }
+    } catch(err) {}
+}, true);
+
+// Line 392: Image Loading & Lightbox Modal Handlers
 function safeSetImageSource(imgElement, srcUrl, fallbackWrapper = null, altText = "") {
     if (!imgElement) return;
     const parentContainer = fallbackWrapper || imgElement.closest('figure, .spotlight-image-wrap, .section3-landmark-img-wrap, .polaroid-wrap, .article-media-frame') || imgElement.parentElement;
@@ -234,7 +405,6 @@ function closeLightbox(event) {
     }
 }
 
-// Line 238: Global Lightbox Launcher (Restricting Alt Descriptions to Lightbox Modal)
 function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = "") {
     const overlay = document.getElementById('portal-global-lightbox');
     const targetImg = document.getElementById('lightbox-target-img');
@@ -248,14 +418,21 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = ""
         targetImg.parentElement.style.display = 'none';
     }
 
-    const dateEl = document.getElementById('lightbox-target-date'); if (dateEl) dateEl.innerHTML = dateText || '';
-    const titleEl = document.getElementById('lightbox-target-title'); if (titleEl) titleEl.innerText = title || '';
+    const dateEl = document.getElementById('lightbox-target-date'); 
+    if (dateEl) dateEl.innerHTML = linkifyRawUrls(dateText || '');
+
+    const titleEl = document.getElementById('lightbox-target-title'); 
+    if (titleEl) titleEl.innerText = title || '';
+
+    const parsedBody = linkifyRawUrls(bodyText || '');
+    const parsedAlt = linkifyRawUrls(altText || '');
 
     const displayStory = (altText && altText !== title) 
-        ? `<div style="font-style:italic; font-size:14px; color:#444; margin-bottom:12px; border-left:3px solid var(--primary); padding-left:10px;">Description: ${altText}</div>${bodyText || ''}`
-        : (bodyText || '');
+        ? `<div style="font-style:italic; font-size:14px; color:#444; margin-bottom:12px; border-left:3px solid var(--primary); padding-left:10px;">Details: ${parsedAlt}</div>${parsedBody}`
+        : parsedBody;
 
-    const storyEl = document.getElementById('lightbox-target-story'); if (storyEl) storyEl.innerHTML = displayStory;
+    const storyEl = document.getElementById('lightbox-target-story'); 
+    if (storyEl) storyEl.innerHTML = displayStory;
 
     if (targetUrl && actionLink && actionRow) {
         actionLink.href = attachUtmParameters(targetUrl);
@@ -264,10 +441,16 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = ""
     } else if (actionRow) {
         actionRow.style.display = 'none';
     }
+
     if (overlay) {
         overlay.style.display = 'flex';
         overlay.onclick = closeLightbox;
     }
+
+    trackGa4Event('modal_lightbox_open', {
+        title: title || 'Asset Lightbox',
+        target_url: targetUrl || ''
+    });
 }
 
 function openHistoryLightboxModal(idx) {
@@ -289,13 +472,12 @@ function openCalendarLightboxModal(idx) {
     if (!targetItem) return;
 
     const title = targetItem.name || targetItem.title || "Community Event";
-    const rawDate = targetItem.date || targetItem.displayDate || targetItem.event_date || targetItem.pubDate;
-    const dateText = formatHumanTimestamp(rawDate);
-    const timeText = targetItem.time || targetItem.displayTime || "Time TBA";
+    const dateText = cleanCalendarDate(targetItem.date || targetItem.displayDate || targetItem.event_date);
+    const timeText = cleanCalendarTime(targetItem.time || targetItem.displayTime);
     const rawLoc = targetItem.location || ACTIVE_TOWN.primaryName + ", IL";
-    const rawDetails = targetItem.details || targetItem.description || "No details provided.";
+    const rawDetails = targetItem.details || targetItem.description || "No additional event details provided.";
     const finalEventImg = targetItem.imageUrl || targetItem.image || null;
-    const metaHeader = `${dateText} @ ${timeText} | Location: ${rawLoc}`;
+    const metaHeader = `${dateText} &bull; ${timeText}<br>Location: ${rawLoc}`;
 
     fireLightbox(finalEventImg, title, metaHeader, rawDetails, '', title);
 }
@@ -306,14 +488,82 @@ function openNewsLightboxModal(idx) {
     fireLightbox(
         story.image || '',
         story.title || 'Local News Dispatch',
-        formatHumanTimestamp(story.date || story.pubDate) + (story.location ? ` | ${story.location}` : ''),
+        cleanCalendarDate(story.date || story.pubDate) + (story.location ? ` | ${story.location}` : ''),
         story.full_story || story.description || '',
         story.link || story.url || '',
         story.title || 'Local News Dispatch'
     );
 }
 
-// Line 317: Mobile Hamburger Drawer Menu Toggle Handlers
+// Line 516: Clean Calendar Parsers (No "TBA" or Raw Strings)
+function cleanCalendarTime(rawTime) {
+    if (!rawTime || typeof rawTime !== 'string') return "All Day Event";
+    const t = rawTime.trim().toUpperCase();
+    if (!t || t === "TBA" || t === "TIME TBA" || t === "00:00" || t === "NULL" || t === "UNDEFINED") {
+        return "All Day Event";
+    }
+    return rawTime.trim();
+}
+
+function cleanCalendarDate(rawDate) {
+    if (!rawDate || rawDate === "undefined" || rawDate === "null") return "Date to be Announced";
+    try {
+        const d = new Date(rawDate);
+        if (isNaN(d.getTime())) return String(rawDate);
+        return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    } catch(e) {
+        return String(rawDate);
+    }
+}
+
+// Format UTC Dates for Google & iCal Subscription Links
+function formatIcalTimestamp(rawDate, rawTime) {
+    try {
+        const d = new Date(rawDate);
+        if (isNaN(d.getTime())) {
+            const now = new Date();
+            return now.toISOString().replace(/-|:|\.\d+/g, '');
+        }
+        return d.toISOString().replace(/-|:|\.\d+/g, '').substring(0, 15) + 'Z';
+    } catch(e) {
+        return new Date().toISOString().replace(/-|:|\.\d+/g, '').substring(0, 15) + 'Z';
+    }
+}
+
+function generateGoogleCalendarEventUrl(title, dateStr, timeStr, location, details) {
+    const baseUrl = "https://calendar.google.com/calendar/render?action=TEMPLATE";
+    const stamp = formatIcalTimestamp(dateStr, timeStr);
+    const startStr = stamp.substring(0, 8);
+    
+    const params = new URLSearchParams({
+        text: title || "Community Event",
+        dates: `${startStr}/${startStr}`,
+        details: details || "Community Event hosted in Clay County, IL",
+        location: location || "Clay County, IL"
+    });
+    return `${baseUrl}&${params.toString()}`;
+}
+
+function generateIcalDataBlob(title, dateStr, timeStr, location, details) {
+    const stamp = formatIcalTimestamp(dateStr, timeStr);
+    const icsContent = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//SMLC Community Network//EN",
+        "BEGIN:VEVENT",
+        `SUMMARY:${title || "Community Event"}`,
+        `DESCRIPTION:${details || "Event in Clay County, IL"}`,
+        `LOCATION:${location || "Clay County, IL"}`,
+        `DTSTART:${stamp.substring(0, 8)}`,
+        `DTEND:${stamp.substring(0, 8)}`,
+        "END:VEVENT",
+        "END:VCALENDAR"
+    ].join("\r\n");
+
+    return `data:text/calendar;charset=utf8,${encodeURIComponent(icsContent)}`;
+}
+
+// Line 587: Mobile Hamburger Drawer Handlers
 window.toggleMobileMenu = function() {
     const nav = document.getElementById('site-navigation-drawer');
     const toggleBtn = document.getElementById('mobile-menu-toggle-btn');
@@ -361,11 +611,11 @@ function bindFirebaseServices() {
         bindFirebaseSemanticSectionsEngine(db);
         bindFirebasePartnersEngine(db);
     } catch(e) {
-        console.warn("Firebase initialization warning:", e.message);
+        console.warn("Firebase initialization notice:", e.message);
     }
 }
 
-// === MENU ENGINE (Global Navigation) ===
+// === MENU ENGINE (Strict Sandwich Drawer on Mobile/Tablet) ===
 function bindFirebaseMenuEngine(db) {
     if (!db) return;
     const menuContainer = document.getElementById('dynamic-menu-links');
@@ -405,13 +655,14 @@ function bindFirebaseMenuEngine(db) {
                     </li>
                 `;
             }).join('');
-        }, (err) => console.warn("Firebase Menu Listener warning:", err.message));
+            triggerGoogleTranslateUpdate(menuContainer);
+        });
     } catch(err) {
         console.warn("Firebase Menu Engine error:", err.message);
     }
 }
 
-// === FOOTER ENGINE (Turn-by-turn Directions, Dual Phones, WhatsApp, Email, & Copyright) ===
+// === FOOTER ENGINE (Directions Routing, Dual Phone Lines, & Complete Fields) ===
 function bindFirebaseFooterEngine(db) {
     if (!db) return;
     try {
@@ -427,7 +678,6 @@ function bindFirebaseFooterEngine(db) {
             if (phoneTarget) {
                 let phoneHtml = '';
 
-                // Phone 1 (Device Call or WhatsApp Option)
                 if (contact.phone1) {
                     const cleanP1 = String(contact.phone1).replace(/[^\d]/g, '');
                     phoneHtml += `
@@ -440,7 +690,6 @@ function bindFirebaseFooterEngine(db) {
                     `;
                 }
 
-                // Phone 2 (Device Call Only)
                 if (contact.phone2) {
                     const cleanP2 = String(contact.phone2).replace(/[^\d]/g, '');
                     phoneHtml += `
@@ -453,14 +702,14 @@ function bindFirebaseFooterEngine(db) {
                 if (phoneHtml) phoneTarget.innerHTML = phoneHtml;
             }
 
-            // 2. Electronic Mail (System Mail Client Trigger)
+            // 2. Email Address
             const emailTarget = document.getElementById('footer-email-target');
             if (emailTarget && contact.email) {
                 emailTarget.href = `mailto:${contact.email}`;
                 emailTarget.innerText = contact.email;
             }
 
-            // 3. Physical Address with Device-Aware Turn-by-Turn Navigation Routing
+            // 3. Physical Address with Device-Aware Turn-by-Turn Routing
             const street = contact.street ? String(contact.street).trim() : '';
             const city = contact.city ? String(contact.city).trim() : ACTIVE_TOWN.primaryName;
             const state = contact.state ? String(contact.state).trim() : 'IL';
@@ -490,13 +739,14 @@ function bindFirebaseFooterEngine(db) {
             if (copyTarget && contact.copyright) {
                 copyTarget.innerHTML = contact.copyright;
             }
-        }, (err) => console.warn("Firebase Footer Engine warning:", err.message));
+            triggerGoogleTranslateUpdate(document.getElementById('global-footer-container'));
+        });
     } catch(err) {
         console.warn("Firebase Footer Engine error:", err.message);
     }
 }
 
-// === LOCAL LINKS ENGINE (Town + Global Merged) ===
+// === LOCAL LINKS ENGINE ===
 function bindFirebaseLocalLinksEngine(db) {
     if (!db) return;
     const linkTarget = document.getElementById('local-links-target-container');
@@ -534,9 +784,10 @@ function bindFirebaseLocalLinksEngine(db) {
                         </div>
                     `;
                 }).join('');
+                triggerGoogleTranslateUpdate(linkTarget);
             }
         } catch(e) {
-            console.warn("Render combined links warning:", e.message);
+            console.warn("Render combined links notice:", e.message);
         }
     };
 
@@ -545,7 +796,7 @@ function bindFirebaseLocalLinksEngine(db) {
         if (activeFbRefLinksGlobal) activeFbRefLinksGlobal.off();
 
         activeFbRefLinksTown = db.ref(`master_county_data/towns/${townName}/sections/town_links/links`);
-        activeFbRefLinksGlobal = db.ref(`master_county_data/global/sections/town_links/links`);
+        activeFbRefGlobalSections = db.ref(`master_county_data/global/sections/town_links/links`);
 
         activeFbRefLinksTown.on('value', (snap) => {
             const val = snap.val();
@@ -553,13 +804,13 @@ function bindFirebaseLocalLinksEngine(db) {
             renderCombinedLinks();
         });
 
-        activeFbRefLinksGlobal.on('value', (snap) => {
+        activeFbRefGlobalSections.on('value', (snap) => {
             const val = snap.val();
             globalLinks = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
             renderCombinedLinks();
         });
     } catch(e) {
-        console.warn("Local links subscription warning:", e.message);
+        console.warn("Local links subscription notice:", e.message);
     }
 }
 
@@ -576,7 +827,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
         let globalSectionsData = {};
 
         const renderResolvedSections = () => {
-            // --- 1. SLIDESHOW BLENDING ---
+            // --- 1. SLIDESHOW BLENDING (With Hover/Touch Pause) ---
             const townSlides = (townSectionsData.slideshow?.items) 
                 ? (Array.isArray(townSectionsData.slideshow.items) ? townSectionsData.slideshow.items : Object.values(townSectionsData.slideshow.items))
                 : [];
@@ -613,8 +864,16 @@ function bindFirebaseSemanticSectionsEngine(db) {
                 const slides = viewport.querySelectorAll('.slider-slide');
                 if (slides.length > 1) {
                     let currentSlideIdx = 0;
+                    let isSlideshowPaused = false;
+
+                    viewport.addEventListener('mouseenter', () => { isSlideshowPaused = true; });
+                    viewport.addEventListener('mouseleave', () => { isSlideshowPaused = false; });
+                    viewport.addEventListener('touchstart', () => { isSlideshowPaused = true; }, { passive: true });
+                    viewport.addEventListener('touchend', () => { isSlideshowPaused = false; });
+
                     if (globalSlideshowTicker) clearInterval(globalSlideshowTicker);
                     globalSlideshowTicker = setInterval(() => {
+                        if (isSlideshowPaused) return;
                         slides[currentSlideIdx].style.opacity = "0";
                         slides[currentSlideIdx].style.zIndex = "1";
                         currentSlideIdx = (currentSlideIdx + 1) % slides.length;
@@ -632,7 +891,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
 
             if (poiTitleEl && poi.title) poiTitleEl.innerText = poi.title;
             if (poiAboutEl && poi.about_text) poiAboutEl.innerText = poi.about_text;
-            if (poiDescEl && poi.landmark_description) poiDescEl.innerHTML = poi.landmark_description;
+            if (poiDescEl && poi.landmark_description) poiDescEl.innerHTML = linkifyRawUrls(poi.landmark_description);
 
             const i1 = document.getElementById('dual-img-1');
             const h1 = document.getElementById('dual-header-1');
@@ -667,7 +926,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
             if (artCatEl && art.category) artCatEl.innerText = art.category;
             if (artDeckEl && art.deck) artDeckEl.innerText = art.deck;
             if (artBodyEl && art.body) {
-                artBodyEl.innerHTML = `<p style="margin-bottom:1.5em; text-align:justify; line-height:1.8;">${art.body}</p>`;
+                artBodyEl.innerHTML = `<p style="margin-bottom:1.5em; text-align:justify; line-height:1.8;">${linkifyRawUrls(art.body)}</p>`;
             }
             const artImgUrl = normalizeImageUrl(art.imageUrl);
             const artAltText = art.alt || art.title || "Featured Article Image";
@@ -730,6 +989,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
                     `;
                 }).join('');
             }
+            triggerGoogleTranslateUpdate(document.getElementById('adaptive-time-portal-chassis'));
         };
 
         activeFbRefSections = db.ref(`master_county_data/towns/${townName}/sections`);
@@ -749,7 +1009,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
     }
 }
 
-// === PARTNERS ENGINE (Multi-Card Desktop, Single Column Mobile Container with 44px+ CTA) ===
+// === PARTNER SHOWCASE ENGINE (AdBlock Safe Naming, True Sliding Carousel, Touch/Hover Pause) ===
 function bindFirebasePartnersEngine(db) {
     if (!db) return;
     const townName = ACTIVE_TOWN.dbTownKey || "Xenia";
@@ -787,8 +1047,8 @@ function bindFirebasePartnersEngine(db) {
                 }
             }
 
-            if (topGrid) renderFlashingPartnerRotator(topGrid, upperPool, 'top_strip', 0);
-            if (bottomGrid) renderFlashingPartnerRotator(bottomGrid, lowerPool, 'bottom_strip', 2);
+            if (topGrid) renderCarouselPartnerRotator(topGrid, upperPool, 'top_strip', 0);
+            if (bottomGrid) renderCarouselPartnerRotator(bottomGrid, lowerPool, 'bottom_strip', 2);
         };
 
         activeFbRefPartnersTown = db.ref(`master_county_data/towns/${townName}/sections/partners`);
@@ -810,119 +1070,128 @@ function bindFirebasePartnersEngine(db) {
     }
 }
 
-function renderFlashingPartnerRotator(containerElement, partnerPool, stripKey, seedOffset = 0, maxVisibleCards = 5) {
+function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, seedOffset = 0) {
     if (!containerElement || !partnerPool.length) return;
 
-    if (stripKey === 'top_strip' && topPartnerTimer) {
-        clearInterval(topPartnerTimer);
-        topPartnerTimer = null;
+    if (stripKey === 'top_strip' && topCarouselInterval) {
+        clearInterval(topCarouselInterval);
+        topCarouselInterval = null;
     }
-    if (stripKey === 'bottom_strip' && bottomPartnerTimer) {
-        clearInterval(bottomPartnerTimer);
-        bottomPartnerTimer = null;
-    }
-
-    const poolLength = partnerPool.length;
-    const totalSlots = Math.min(maxVisibleCards, poolLength);
-
-    const slotQueues = [];
-    for (let slot = 0; slot < totalSlots; slot++) {
-        const queue = [];
-        for (let step = 0; step < poolLength; step++) {
-            const partnerIndex = (slot + seedOffset + (step * totalSlots)) % poolLength;
-            const candidate = partnerPool[partnerIndex];
-            if (!queue.includes(candidate)) {
-                queue.push(candidate);
-            }
-        }
-        slotQueues.push(queue);
+    if (stripKey === 'bottom_strip' && bottomCarouselInterval) {
+        clearInterval(bottomCarouselInterval);
+        bottomCarouselInterval = null;
     }
 
-    containerElement.innerHTML = slotQueues.map((queue, sIdx) => {
-        const initial = queue[0];
-        const imgUrl = normalizeImageUrl(initial.imageUrl || initial.image1);
-        const name = initial.name || 'Local Partner';
-        const rawUrl = initial.website || '#';
+    const isMobileOrTablet = window.innerWidth < 1024;
+    let poolIndex = seedOffset % partnerPool.length;
+    let isCarouselPaused = false;
+    let hoverStartTime = 0;
+
+    // Helper to render individual card markup using AdBlock-safe naming
+    const createPartnerMarkup = (partner, slotIdx) => {
+        const imgUrl = normalizeImageUrl(partner.imageUrl || partner.image1);
+        const name = partner.name || 'Local Community Partner';
+        const rawUrl = partner.website || '#';
         const link = attachUtmParameters(rawUrl);
         const linkTargetAttr = resolveLinkTarget(rawUrl);
-        const altText = initial.alt || name;
+        const altText = partner.alt || name;
 
         return `
-            <div class="partner-card flashing-slide-card" data-slot="${sIdx}">
-                <div class="partner-logo-box">
-                    <img class="partner-card-img" src="${imgUrl}" alt="" onclick="fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'PARTNER DIRECTORY', 'Community Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')" style="cursor:pointer;" onerror="this.closest('.flashing-slide-card').style.display='none';">
+            <div class="community-partner-card" data-partner-name="${escapeJsString(name)}" style="transition: transform 0.35s ease, opacity 0.35s ease;">
+                <div class="partner-logo-container">
+                    <img class="partner-logo-asset" src="${imgUrl}" alt="" onclick="fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')" style="cursor:pointer;" onerror="this.closest('.community-partner-card').style.display='none';">
                 </div>
-                <h4 class="partner-card-title">${name}</h4>
-                <a class="partner-card-link-cta" href="${link}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} data-ga-label="partner_cta">Visit Partner &rarr;</a>
+                <h4 class="partner-title">${name}</h4>
+                <a class="directory-tile-link" href="${link}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} data-ga-label="partner_cta">Visit Partner &rarr;</a>
             </div>
         `;
-    }).join('');
+    };
 
-    let isPaused = false;
-    containerElement.addEventListener('mouseenter', () => { isPaused = true; });
-    containerElement.addEventListener('mouseleave', () => { isPaused = false; });
-    containerElement.addEventListener('touchstart', () => { isPaused = true; }, { passive: true });
-    containerElement.addEventListener('touchend', () => { isPaused = false; });
+    // Desktop: Renders multi-slot display; Mobile/Tablet: Renders dedicated sliding container
+    const visibleCount = isMobileOrTablet ? 1 : Math.min(5, partnerPool.length);
+    const initialCards = [];
+    for (let i = 0; i < visibleCount; i++) {
+        const p = partnerPool[(poolIndex + i) % partnerPool.length];
+        initialCards.push(createPartnerMarkup(p, i));
+    }
+    containerElement.innerHTML = initialCards.join('');
 
-    const cardElements = containerElement.querySelectorAll('.flashing-slide-card');
-    const activeTimers = [];
+    // Pause on Touch / Hover
+    const onPauseEnter = () => {
+        isCarouselPaused = true;
+        hoverStartTime = Date.now();
+    };
 
-    cardElements.forEach((cardEl) => {
-        const sIdx = parseInt(cardEl.getAttribute('data-slot'), 10);
-        const queue = slotQueues[sIdx];
-
-        if (queue && queue.length > 1) {
-            let currentIndex = 0;
-            const slotInterval = 4200 + (sIdx * 850);
-
-            const timer = setInterval(() => {
-                if (isPaused) return;
-
-                currentIndex = (currentIndex + 1) % queue.length;
-                const nextPartner = queue[currentIndex];
-                const nextImg = normalizeImageUrl(nextPartner.imageUrl || nextPartner.image1);
-                const nextName = nextPartner.name || 'Local Partner';
-                const nextRawUrl = nextPartner.website || '#';
-                const nextLink = attachUtmParameters(nextRawUrl);
-                const nextTargetAttr = resolveLinkTarget(nextRawUrl);
-                const nextAlt = nextPartner.alt || nextName;
-
-                cardEl.style.boxShadow = "0 0 18px var(--cc-gold)";
-                cardEl.style.transform = "scale(1.04)";
-                cardEl.style.opacity = "0.2";
-
-                setTimeout(() => {
-                    const imgEl = cardEl.querySelector('.partner-card-img');
-                    const titleEl = cardEl.querySelector('.partner-card-title');
-                    const ctaEl = cardEl.querySelector('.partner-card-link-cta');
-
-                    if (imgEl && nextImg) {
-                        safeSetImageSource(imgEl, nextImg, cardEl, '');
-                        imgEl.onclick = () => fireLightbox(escapeJsString(nextImg), escapeJsString(nextName), 'PARTNER DIRECTORY', 'Community Sponsor', escapeJsString(nextLink), escapeJsString(nextAlt));
-                    }
-                    if (titleEl) titleEl.innerText = nextName;
-                    if (ctaEl) {
-                        ctaEl.href = nextLink;
-                        ctaEl.target = nextTargetAttr;
-                    }
-
-                    cardEl.style.opacity = "1";
-                    cardEl.style.transform = "scale(1)";
-                    setTimeout(() => {
-                        cardEl.style.boxShadow = "4px 4px 0px #000000";
-                    }, 250);
-                }, 320);
-            }, slotInterval);
-
-            activeTimers.push(timer);
+    const onPauseLeave = () => {
+        isCarouselPaused = false;
+        if (hoverStartTime > 0) {
+            const durationSec = Math.round((Date.now() - hoverStartTime) / 1000);
+            const activeCard = containerElement.querySelector('.community-partner-card');
+            const pName = activeCard ? activeCard.getAttribute('data-partner-name') : 'Unknown';
+            if (durationSec >= 1) {
+                trackGa4Event('partner_engagement_time', {
+                    partner_name: pName,
+                    seconds_viewed: durationSec
+                });
+            }
+            hoverStartTime = 0;
         }
+    };
+
+    containerElement.addEventListener('mouseenter', onPauseEnter);
+    containerElement.addEventListener('mouseleave', onPauseLeave);
+    containerElement.addEventListener('touchstart', onPauseEnter, { passive: true });
+    containerElement.addEventListener('touchend', onPauseLeave);
+
+    // Track initial card impressions
+    containerElement.querySelectorAll('.community-partner-card').forEach(card => {
+        const pName = card.getAttribute('data-partner-name');
+        trackGa4Event('partner_card_impression', { partner_name: pName, strip: stripKey });
     });
 
-    if (stripKey === 'top_strip') topPartnerTimer = activeTimers[0];
-    if (stripKey === 'bottom_strip') bottomPartnerTimer = activeTimers[0];
+    // Auto-Sliding Interval
+    const slideDuration = isMobileOrTablet ? 3800 : 5000;
+    const intervalId = setInterval(() => {
+        if (isCarouselPaused) return;
+
+        poolIndex = (poolIndex + 1) % partnerPool.length;
+        const nextPartner = partnerPool[poolIndex];
+
+        const cards = containerElement.querySelectorAll('.community-partner-card');
+        if (cards.length > 0) {
+            cards.forEach(c => {
+                c.style.opacity = '0.3';
+                c.style.transform = 'scale(0.96)';
+            });
+
+            setTimeout(() => {
+                if (isMobileOrTablet) {
+                    containerElement.innerHTML = createPartnerMarkup(nextPartner, 0);
+                } else {
+                    const newCards = [];
+                    for (let i = 0; i < visibleCount; i++) {
+                        const p = partnerPool[(poolIndex + i) % partnerPool.length];
+                        newCards.push(createPartnerMarkup(p, i));
+                    }
+                    containerElement.innerHTML = newCards.join('');
+                }
+
+                const updatedCards = containerElement.querySelectorAll('.community-partner-card');
+                updatedCards.forEach(c => {
+                    c.style.opacity = '1';
+                    c.style.transform = 'scale(1)';
+                    const pName = c.getAttribute('data-partner-name');
+                    trackGa4Event('partner_card_impression', { partner_name: pName, strip: stripKey });
+                });
+            }, 300);
+        }
+    }, slideDuration);
+
+    if (stripKey === 'top_strip') topCarouselInterval = intervalId;
+    if (stripKey === 'bottom_strip') bottomCarouselInterval = intervalId;
 }
 
-// === FUEL MONITOR (Realtime Billboard Network Listener) ===
+// === FUEL MONITOR BILLBOARD ===
 function initializeFirebaseGasMonitor(db) {
     const gasContainer = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
     if (!gasContainer) return;
@@ -954,7 +1223,7 @@ function initializeFirebaseGasMonitor(db) {
             }
         });
     } catch(e) {
-        console.warn("Gas monitor initialization warning:", e.message);
+        console.warn("Gas monitor notice:", e.message);
     }
 }
 
@@ -1000,7 +1269,7 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
     }
 }
 
-// === COMMUNITY BULLETIN (Google Apps Script Feed) ===
+// === COMMUNITY BULLETIN (Top & Bottom Global Subscriptions + Individual Event Subscribe) ===
 async function loadCommunityBulletinFeed() {
     const scroller = document.getElementById('bulletin-scroller-target');
     if (!scroller) return;
@@ -1017,21 +1286,29 @@ async function loadCommunityBulletinFeed() {
                 const webcalFeedUrl = "script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec?feed=ics";
                 const googleSubUrl = `https://www.google.com/calendar/render?cid=webcal://${encodeURIComponent(webcalFeedUrl)}`;
 
-                const subscriptionHeaderHtml = `
-                    <div style="background:#f8f9fa; border:1px solid #e2e8f0; padding:10px; border-radius:6px; margin-bottom:15px; text-align:center;">
-                        <span style="font-size:12px; font-weight:bold; color:#333; display:block; margin-bottom:6px;">SUBSCRIBE TO FULL COUNTY CALENDAR</span>
+                const createGlobalSubscriptionBanner = (headerText) => `
+                    <div style="background:#f8f9fa; border:1px solid #e2e8f0; padding:10px; border-radius:6px; margin: 12px 0; text-align:center;">
+                        <span style="font-size:12px; font-weight:bold; color:#222; display:block; margin-bottom:6px; text-transform:uppercase;">${headerText}</span>
                         <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
-                            <a href="${googleSubUrl}" target="_blank" rel="noopener" style="font-size:11px; font-weight:bold; color:#ffffff !important; background:#1a73e8; padding:6px 12px; border-radius:4px; text-decoration:none; display:inline-block;">Google Calendar</a>
-                            <a href="webcal://${webcalFeedUrl}" style="font-size:11px; font-weight:bold; color:#ffffff !important; background:#1e7e34; padding:6px 12px; border-radius:4px; text-decoration:none; display:inline-block;">Apple / iCal</a>
+                            <a href="${googleSubUrl}" target="_blank" rel="noopener" style="font-size:11px; font-weight:bold; color:#ffffff !important; background:#1a73e8; padding:6px 12px; border-radius:4px; text-decoration:none; display:inline-block;" data-ga-label="global_cal_google">Google Calendar</a>
+                            <a href="webcal://${webcalFeedUrl}" style="font-size:11px; font-weight:bold; color:#ffffff !important; background:#1e7e34; padding:6px 12px; border-radius:4px; text-decoration:none; display:inline-block;" data-ga-label="global_cal_ical">Apple / iCal</a>
                         </div>
                     </div>
                 `;
 
+                const topBannerHtml = createGlobalSubscriptionBanner("Subscribe to Full County Calendar");
+                const bottomBannerHtml = createGlobalSubscriptionBanner("County-Wide Calendar Subscriptions");
+
                 const eventsHtml = elements.map((item, idx) => {
+                    const eventTitle = item.name || item.title || "Community Gathering";
                     const eventLoc = item.location || ACTIVE_TOWN.primaryName + ", IL";
                     const rawDetails = item.details || item.description || "";
-                    const dateText = formatHumanTimestamp(item.date || item.displayDate);
+                    const dateText = cleanCalendarDate(item.date || item.displayDate);
+                    const timeText = cleanCalendarTime(item.time || item.displayTime);
                     const finalEventImg = normalizeImageUrl(item.imageUrl || item.image);
+
+                    const singleGoogleUrl = generateGoogleCalendarEventUrl(eventTitle, item.date || item.displayDate, item.time || item.displayTime, eventLoc, rawDetails);
+                    const singleIcalBlob = generateIcalDataBlob(eventTitle, item.date || item.displayDate, item.time || item.displayTime, eventLoc, rawDetails);
 
                     const thumbnailHtml = finalEventImg ? `
                         <div style="float: right; margin: 0 0 10px 12px;">
@@ -1040,26 +1317,36 @@ async function loadCommunityBulletinFeed() {
                     ` : '';
 
                     return `
-                        <div class="divi-event-item" style="margin-bottom:15px; padding-bottom:10px; border-bottom:1px dashed #ccc; overflow:hidden;">
+                        <div class="divi-event-item" style="margin-bottom:15px; padding-bottom:12px; border-bottom:1px dashed #ccc; overflow:hidden;">
                             ${thumbnailHtml}
-                            <div class="divi-event-date" style="font-size:12px; color:var(--primary); font-weight:bold;">${dateText} &bull; ${item.time || 'TBA'}</div>
-                            <div class="divi-event-title" style="font-size:16px; font-weight:bold;">${item.name || item.title}</div>
+                            <div class="divi-event-date" style="font-size:12px; color:var(--primary); font-weight:bold;">${dateText} &bull; ${timeText}</div>
+                            <div class="divi-event-title" style="font-size:16px; font-weight:bold; margin: 4px 0;">${eventTitle}</div>
                             <div class="event-info-text" style="font-size:13px; color:#333;">
                                 <strong>Where:</strong> ${eventLoc}
                             </div>
-                            <div style="font-size:13px; color:#555; margin-top:4px;">${rawDetails.substring(0, 110)}...</div>
-                            <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:var(--primary); font-weight:bold; cursor:pointer; font-size:13px; margin-top:8px;">Read Details &rarr;</div>
+                            <div style="font-size:13px; color:#555; margin-top:4px;">${linkifyRawUrls(rawDetails.substring(0, 110))}...</div>
+                            
+                            <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                                <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:var(--primary); font-weight:bold; cursor:pointer; font-size:12px; text-decoration:underline;">Read Details &rarr;</div>
+                                <span style="color:#bbb; font-size:11px;">|</span>
+                                <a href="${singleGoogleUrl}" target="_blank" rel="noopener" style="font-size:11px; color:#1a73e8; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_google">+ Google Cal</a>
+                                <span style="color:#bbb; font-size:11px;">|</span>
+                                <a href="${singleIcalBlob}" download="${eventTitle.replace(/\s+/g, '_')}.ics" style="font-size:11px; color:#1e7e34; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_ical">+ iCal (.ics)</a>
+                            </div>
                         </div>
                     `;
                 }).join('');
 
-                scroller.innerHTML = subscriptionHeaderHtml + eventsHtml;
+                scroller.innerHTML = topBannerHtml + eventsHtml + bottomBannerHtml;
+                triggerGoogleTranslateUpdate(scroller);
             }
         }
-    } catch(err) { console.warn("Bulletin Wire warning:", err.message); }
+    } catch(err) { 
+        console.warn("Bulletin Wire notice:", err.message); 
+    }
 }
 
-// === LOCAL NEWS DISPATCHES ===
+// === LOCAL NEWS DISPATCHES (Strict Match Town Filtering & County-Wide Fallback) ===
 async function loadLocalNewsDispatches() {
     const targetGrid = document.getElementById('news-matrix-target');
     if (!targetGrid) return;
@@ -1071,8 +1358,22 @@ async function loadLocalNewsDispatches() {
             const newsArray = await res.json();
             if (Array.isArray(newsArray)) {
                 window.newsCacheBlock = newsArray.filter(item => {
-                    const text = ((item.title || '') + ' ' + (item.full_story || '') + ' ' + (item.location || '')).toUpperCase();
-                    return ACTIVE_TOWN.keywords.some(kw => text.includes(kw)) || ACTIVE_TOWN.isHome;
+                    const textContent = ((item.title || '') + ' ' + (item.full_story || '') + ' ' + (item.description || '') + ' ' + (item.location || '')).toUpperCase();
+                    
+                    // Specific Town Rules
+                    if (!ACTIVE_TOWN.isHome && ACTIVE_TOWN.keywords.length > 0) {
+                        return ACTIVE_TOWN.keywords.some(kw => textContent.includes(kw));
+                    }
+
+                    // Global/County-Wide Rules
+                    const isGlobalHospitalOrCourthouse = textContent.includes("CLAY COUNTY HOSPITAL") || textContent.includes("CLAY COUNTY COURTHOUSE") || textContent.includes("CLAY COUNTY");
+                    const hasSpecificFloraTag = ["FLORA", "WOLVES", "WOLVES FOOTBALL", "WOLF PUP"].some(k => textContent.includes(k));
+                    const hasSpecificLouisvilleTag = ["LOUISVILLE", "NORTH CLAY", "NC CARDINALS", "INDIANS"].some(k => textContent.includes(k));
+                    
+                    if (isGlobalHospitalOrCourthouse) return true;
+                    if (!hasSpecificFloraTag && !hasSpecificLouisvilleTag) return true;
+
+                    return ACTIVE_TOWN.isHome;
                 });
 
                 if (window.newsCacheBlock.length > 0) {
@@ -1086,17 +1387,22 @@ async function loadLocalNewsDispatches() {
                         return `
                             <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
                                 ${imgUrl ? `<img src="${imgUrl}" alt="" style="width:100\%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})" onerror="this.style.display='none';">` : ''}
-                                <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-top:10px;">${formatHumanTimestamp(story.date)}</div>
+                                <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-top:10px;">${cleanCalendarDate(story.date)}</div>
                                 <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${story.title}</div>
-                                <div style="font-size:14px; color:#444;">${displayStory}</div>
+                                <div style="font-size:14px; color:#444;">${linkifyRawUrls(displayStory)}</div>
                                 ${isLong ? `<div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: var(--primary); font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>` : ''}
                             </div>
                         `;
                     }).join('');
+                    triggerGoogleTranslateUpdate(targetGrid);
+                } else {
+                    targetGrid.innerHTML = `<div style="text-align:center; padding:20px; font-style:italic; color:#666;">No localized dispatches found for this town.</div>`;
                 }
             }
         }
-    } catch(e) { console.warn("Local news warning:", e.message); }
+    } catch(e) { 
+        console.warn("Local news notice:", e.message); 
+    }
 }
 
 function hydrateTownHeroUI() {
