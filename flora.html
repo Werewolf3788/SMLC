@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Line 2: Town identifier attribute set to FLORA -->
-<!-- Timestamp: 2026-10-01 16:30 EDT (New York) | Version: v1.2.0 -->
+<!-- Timestamp: 2026-10-01 17:58 EDT (New York) | Version: v1.3.2 -->
 <html lang="en-US" data-town="FLORA">
 <head>
     <meta charset="UTF-8" />
@@ -70,7 +70,18 @@
     <!-- PERSISTENT STICKY TOP NAVIGATION BAR -->
     <header class="menu-bar">
         <div class="menu-inner">
-            <nav>
+            <!-- 3-Line Sandwich Toggle Button (Visible on Mobile & Tablet, Hidden on Desktop) -->
+            <button id="mobile-menu-toggle-btn" class="mobile-nav-toggle-btn" onclick="window.toggleMobileMenu();" aria-label="Toggle Navigation Menu" aria-expanded="false">
+                <span class="hamburger-icon-group">
+                    <span class="hamburger-bar"></span>
+                    <span class="hamburger-bar"></span>
+                    <span class="hamburger-bar"></span>
+                </span>
+                <span class="mobile-menu-btn-label">MENU</span>
+            </button>
+
+            <!-- Navigation Links Container (Hidden on Mobile/Tablet until Hamburger is tapped) -->
+            <nav id="site-navigation-drawer" class="navigation-drawer-panel">
                 <ul id="dynamic-menu-links" class="menu-links">
                     <li><a href="#/home" data-ga-label="NavHomeButton" target="_self"><span>Home</span></a></li>
                     <li><a href="#/clay-city" data-ga-label="NavClayCityButton" target="_self"><span>Clay City</span></a></li>
@@ -80,6 +91,7 @@
                     <li><a href="#/xenia" data-ga-label="NavXeniaButton" target="_self"><span>Xenia</span></a></li>
                 </ul>
             </nav>
+
             <!-- Google Translate Dropdown Selector -->
             <div id="google_translate_element" class="translate-box-header"></div>
         </div>
@@ -394,30 +406,32 @@
 
     <!-- GLOBAL SITE FOOTER -->
     <footer id="global-footer-container" class="site-global-footer-matrix">
-        <div style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:20px; max-width:1200px; margin:0 auto; padding-bottom:20px;">
+        <div class="footer-columns-grid">
             <div>
-                <span style="font-weight:bold; color:var(--flora-orange);">Contact Us:</span>
+                <span class="footer-col-header">Phone Numbers:</span>
                 <div id="footer-phone-target">618-662-8341</div>
             </div>
             <div>
-                <span style="font-weight:bold; color:var(--flora-orange);">Email:</span><br>
-                <a id="footer-email-target" href="mailto:Scott.Robinson@skventuresigns.com" style="color:#fff;" data-ga-label="footer_email">Scott.Robinson@skventuresigns.com</a>
+                <span class="footer-col-header">Electronic Mail:</span>
+                <a id="footer-email-target" href="mailto:Scott.Robinson@skventuresigns.com" data-ga-label="footer_email">Scott.Robinson@skventuresigns.com</a>
             </div>
             <div>
-                <span style="font-weight:bold; color:var(--flora-orange);">Address:</span>
-                <div id="footer-address-target">Clay County, Illinois</div>
+                <span class="footer-col-header">Mailing Address:</span>
+                <div id="footer-address-target">
+                    Clay County, Illinois
+                </div>
             </div>
         </div>
         <div style="border-top:1px solid #333; padding-top:15px;">
             <p id="footer-copy-target">&copy; 2026 Flora Community Portal. All rights reserved.</p>
-            <p id="footer-build-version-stamp" style="margin-top: 8px; opacity: 0.9; font-size: 13px; color: #FE4E02; letter-spacing: 0.5px;">
-                <strong>System Build Version:</strong> v1.2.0 | <strong>Active Version:</strong> 2026-10-01_16:30
+            <p id="footer-build-version-stamp">
+                <strong>System Build Version:</strong> v1.3.2 | <strong>Active Version:</strong> 2026-10-01_17:58
             </p>
         </div>
     </footer>
 
     <!-- RETURN TO TOP ANCHOR -->
-    <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top" style="position:fixed; bottom:20px; right:20px; padding:10px 15px; background:#222; color:#fff; border:1px solid var(--flora-orange); border-radius:4px; cursor:pointer;">↑</button>
+    <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top">↑</button>
 
     <!-- CORE SCRIPT -->
     <script src="./universaltown.js"></script>
