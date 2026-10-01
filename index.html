@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Line 2: Town identifier attribute set to HOME (Global County Hub) -->
-<!-- Timestamp: 2026-10-01 18:30 EDT (New York) | Version: v1.3.4 -->
+<!-- Timestamp: 2026-10-01 18:40 EDT (New York) | Version: v1.3.5 -->
 <html lang="en" data-town="HOME">
 <head>
     <meta charset="UTF-8">
@@ -14,9 +14,6 @@
     <link rel="preconnect" href="//fonts.gstatic.com" crossorigin>
     <link href="//fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
     
-    <!-- Stylesheet -->
-    <link rel="stylesheet" href="style.css">
-
     <!-- Global Script Error Safeguard -->
     <script>
         window.addEventListener('error', function(e) {
@@ -56,6 +53,624 @@
         }
     </script>
     <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+    <!-- CONSOLIDATED COMPLETE STYLESHEET -->
+    <style>
+        /* ==========================================================================
+           SUPPORT MY LOCAL COMMUNITY - MASTER STYLESHEET
+           Timestamp: 2026-10-01 18:40 EDT (New York) | Version: v1.3.5
+           ========================================================================== */
+        :root {
+            --container-width: 96%;
+            --county-blue: #0258A3;
+            --county-gold: #FFC10E;
+            --cc-gold: #FFC10E;
+            
+            --primary: #0258A3;
+            --secondary: #000000;
+            
+            --dynamic-bg: #121212;
+            --dynamic-text: #FFFFFF;
+            --link-bright-blue: #3182CE;
+
+            /* Card Tokens */
+            --card-surface-bg: #fffdf5;
+            --card-article-bg: #ffffff;
+            --card-text-primary: #1a1a1a;
+            --card-text-secondary: #333333;
+            --card-border-color: #222222;
+            --card-shadow-color: #000000;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --card-surface-bg: #1c1c1e;
+                --card-article-bg: #18181b;
+                --card-text-primary: #f4f4f5;
+                --card-text-secondary: #d4d4d8;
+                --card-border-color: #3f3f46;
+                --card-shadow-color: #000000;
+            }
+            .clay-county-news-box {
+                background-color: var(--card-surface-bg) !important;
+                color: var(--card-text-primary) !important;
+                border-color: var(--card-border-color) !important;
+            }
+            .glossy-wrapper {
+                background: rgba(20, 24, 33, 0.95) !important;
+            }
+        }
+
+        * { 
+            font-family: 'Times New Roman', Times, serif !important; 
+            box-sizing: border-box; 
+        }
+
+        html, body {
+            width: 100%;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        body.home-bg {
+            font-size: 16px;
+            background-color: #0a0a0a !important;
+            background-image: linear-gradient(180deg, #041b30 0%, #082442 15%, #2c2c2e 38%, #1c1c1e 65%, #0a0a0a 90%, #000000 100%) !important;
+            background-attachment: fixed !important;
+            background-repeat: no-repeat !important;
+            background-size: cover !important;
+            color: var(--dynamic-text);
+        }
+
+        /* HEADER & STICKY SANDWICH DRAWER NAVIGATION */
+        .header {
+            width: 100% !important;
+            background: var(--county-blue) !important;
+            padding: 10px 0 !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 1000 !important;
+            border-bottom: 4px solid var(--county-gold);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.85);
+        }
+
+        .header-inner-row {
+            width: var(--container-width);
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            padding: 0 12px;
+        }
+
+        .header-logo {
+            height: 48px;
+            width: auto;
+            object-fit: contain;
+            display: block;
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            justify-content: space-around;
+            width: 48px;
+            height: 48px;
+            background: rgba(0, 0, 0, 0.45);
+            border: 2px solid var(--county-gold);
+            border-radius: 6px;
+            padding: 10px;
+            cursor: pointer;
+            z-index: 1100;
+        }
+
+        .hamburger span {
+            width: 100%;
+            height: 3px;
+            background-color: #ffffff;
+            border-radius: 2px;
+        }
+
+        .nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-links {
+            display: flex;
+            flex-wrap: wrap;
+            list-style: none;
+            gap: 14px;
+            margin: 0;
+            padding: 0;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #ffffff !important;
+            font-size: 15px;
+            font-weight: 800;
+            padding: 8px 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-flex;
+            align-items: center;
+            min-height: 48px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--county-gold) !important;
+            border: 2px solid var(--county-gold);
+            background: rgba(0, 0, 0, 0.6) !important;
+            border-radius: 8px;
+        }
+
+        .translate-box-header {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--county-gold);
+            border-radius: 6px;
+            padding: 4px 8px;
+        }
+
+        @media (max-width: 1023px) {
+            .hamburger {
+                display: flex !important;
+            }
+
+            .nav-bar {
+                display: none !important;
+                position: absolute !important;
+                top: 100% !important;
+                left: 0 !important;
+                width: 100% !important;
+                background-color: #041b30 !important;
+                border-bottom: 4px solid var(--county-gold) !important;
+                box-shadow: 0 14px 28px rgba(0, 0, 0, 0.95) !important;
+                padding: 16px 0 !important;
+                z-index: 9999 !important;
+            }
+
+            .nav-bar.drawer-open {
+                display: block !important;
+            }
+
+            .nav-links {
+                flex-direction: column !important;
+                gap: 10px !important;
+                width: 100% !important;
+            }
+
+            .nav-links li {
+                width: 85% !important;
+                margin: 0 auto !important;
+            }
+
+            .nav-links a {
+                width: 100% !important;
+                justify-content: flex-start !important;
+                padding: 12px 18px !important;
+                background: rgba(0, 0, 0, 0.5) !important;
+                border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                border-radius: 6px !important;
+            }
+        }
+
+        /* HERO DIRECTORY CTA & SLIDESHOW */
+        .home-hero-cta {
+            background: linear-gradient(135deg, #b45309 0%, #d97706 50%, #f59e0b 100%);
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 20px rgba(217, 119, 6, 0.4);
+            border: 2px solid #fef08a;
+            border-radius: 12px;
+            padding: 16px 20px;
+            text-align: center;
+            margin: 20px auto;
+            width: var(--container-width);
+        }
+
+        .home-hero-cta h1 {
+            font-size: clamp(1.2rem, 2.5vw, 2rem);
+            font-weight: 900;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .smlc-fullwidth-wrapper {
+            width: var(--container-width);
+            margin: 20px auto;
+            border: 3px solid var(--county-gold);
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.7);
+        }
+
+        .smlc-track {
+            width: 100%;
+            height: 380px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slider-slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+        }
+
+        .slider-slide.active {
+            opacity: 1;
+        }
+
+        .slider-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background-color: #0a0a0a;
+        }
+
+        /* PARTNER SHOWCASE STRIPS (ADBLOCK SAFE) */
+        .widescreen-strip-container {
+            width: 100% !important;
+            background-color: #02122b !important;
+            background-image: radial-gradient(ellipse at top, rgba(12, 113, 195, 0.35) 0%, rgba(2, 18, 43, 0.95) 70%);
+            padding: 24px clamp(16px, 3vw, 40px) !important;
+            margin: 20px 0 !important;
+            border-top: 3px solid var(--county-gold);
+            border-bottom: 3px solid var(--county-gold);
+        }
+
+        .partners-horizontal-strip {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: stretch !important;
+            gap: 18px !important;
+            overflow-x: auto !important;
+            width: 100% !important;
+        }
+
+        .community-partner-card {
+            flex: 0 1 230px !important;
+            width: 230px !important;
+            max-width: 240px !important;
+            min-width: 180px !important;
+            background: var(--card-surface-bg) !important;
+            border: 2px solid var(--card-border-color) !important;
+            border-radius: 8px !important;
+            padding: 12px !important;
+            box-shadow: 4px 4px 0px var(--card-shadow-color) !important;
+            text-align: center !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            transition: transform 0.25s ease !important;
+        }
+
+        .partner-logo-container {
+            width: 100% !important;
+            height: 85px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: #ffffff !important;
+            border: 1px solid #ddd !important;
+            border-radius: 6px !important;
+            padding: 6px !important;
+        }
+
+        .partner-logo-container img {
+            max-width: 95% !important;
+            max-height: 75px !important;
+            object-fit: contain !important;
+        }
+
+        .partner-title {
+            font-size: 15px !important;
+            font-weight: bold !important;
+            margin: 8px 0 !important;
+            color: var(--card-text-primary) !important;
+        }
+
+        .directory-tile-link {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-height: 40px !important;
+            background: var(--county-blue) !important;
+            color: #ffffff !important;
+            border: 2px solid var(--county-gold) !important;
+            border-radius: 6px !important;
+            font-size: 13px !important;
+            font-weight: bold !important;
+            text-transform: uppercase !important;
+            text-decoration: none !important;
+        }
+
+        @media (max-width: 767px) {
+            .community-partner-card {
+                flex: 0 0 88% !important;
+                width: 88% !important;
+                max-width: 340px !important;
+                margin: 0 auto !important;
+            }
+        }
+
+        /* DISCOVER CLAY COUNTY & GLOSSY BOX */
+        .discover-clay-county-section {
+            width: var(--container-width);
+            margin: 36px auto;
+        }
+
+        .index-heading-row h2 {
+            font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+            color: var(--county-gold);
+            margin: 0 0 16px 0;
+            font-family: 'Playfair Display', serif !important;
+        }
+
+        .index-grid-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        @media (max-width: 1024px) {
+            .index-grid-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .glossy-wrapper {
+            background: rgba(15, 23, 42, 0.95);
+            border: 2px solid var(--county-gold);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            height: 100%;
+        }
+
+        .yellow-text {
+            color: #fef08a !important;
+        }
+
+        .courthouse-img {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #333;
+        }
+
+        /* ORANGE MASTER SECTION, NEWSLETTER & FUEL MONITOR */
+        .orange-master-section {
+            width: var(--container-width);
+            margin: 36px auto;
+            background: linear-gradient(135deg, rgba(69, 26, 3, 0.9) 0%, rgba(28, 25, 23, 0.95) 100%);
+            border: 2px solid #f97316;
+            border-radius: 12px;
+            padding: 28px;
+        }
+
+        .clay-county-news-box {
+            background-color: #fffdf5;
+            border: 2px solid #222;
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+            box-shadow: 6px 6px 0px #000;
+        }
+
+        .clipping-tag-black {
+            position: absolute;
+            top: -12px;
+            right: 16px;
+            background-color: #000;
+            color: var(--county-gold);
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--county-gold);
+        }
+
+        .clipping-btn {
+            display: block;
+            text-align: center;
+            background: #222;
+            color: #fff !important;
+            padding: 12px;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 6px;
+        }
+
+        .clipping-btn:hover {
+            background: var(--county-blue);
+        }
+
+        .wf-field-input {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            background: #fff;
+            color: #000;
+            font-size: 14px;
+        }
+
+        .fuel-monitor-billboard-card {
+            background-color: var(--card-surface-bg) !important;
+            border: 2px solid var(--card-border-color) !important;
+            box-shadow: 6px 6px 0px var(--card-shadow-color) !important;
+            border-radius: 8px;
+            padding: 20px;
+            color: var(--card-text-primary);
+        }
+
+        .fuel-station-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 8px;
+            margin-bottom: 14px;
+        }
+
+        .station-logo-frame {
+            width: 44px;
+            height: 44px;
+            border: 2px solid #000;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .station-logo-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .station-meta-title {
+            font-size: 17px;
+            font-weight: bold;
+            color: var(--card-text-primary);
+        }
+
+        .fuel-pricing-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 12px !important;
+        }
+
+        .price-box {
+            padding: 12px 8px;
+            background: #000 !important;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .price-type-label {
+            display: block;
+            font-size: 12px !important;
+            color: #aaa !important;
+            font-weight: bold;
+        }
+
+        .price-value-regular {
+            color: #39ff14 !important;
+            font-size: 26px !important;
+            font-weight: 900 !important;
+        }
+
+        .price-value-diesel {
+            color: #eb1c24 !important;
+            font-size: 26px !important;
+            font-weight: 900 !important;
+        }
+
+        .sync-timestamp-label {
+            font-size: 11px;
+            color: #777;
+            text-align: center;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        /* INTRICATE 3-COLUMN CHASSIS */
+        .intricate-grid-container {
+            width: var(--container-width);
+            margin: 36px auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 28px;
+        }
+
+        @media (max-width: 1024px) {
+            .intricate-grid-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* BLUE NEWS FRAME & THANKFUL SECTION */
+        .blue-news-frame {
+            width: var(--container-width);
+            margin: 36px auto;
+            background: #0f172a;
+            border: 2px solid #3b82f6;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .thankful-section {
+            width: var(--container-width);
+            margin: 36px auto;
+            background: #fffdf5;
+            border: 2px solid #222;
+            border-radius: 8px;
+            box-shadow: 6px 6px 0px #000;
+        }
+
+        /* GLOBAL FOOTER MATRIX & LIGHTBOX */
+        .site-footer {
+            width: 100% !important;
+            background-color: #000000 !important;
+            color: #ffffff !important;
+            padding: 40px 0 20px 0 !important;
+            border-top: 4px solid var(--county-gold) !important;
+        }
+
+        .lightbox-overlay-mask {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background-color: rgba(0, 0, 0, 0.88) !important;
+            backdrop-filter: blur(8px) !important;
+            z-index: 10000 !important;
+            display: none;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 20px !important;
+        }
+
+        .lightbox-modal-window {
+            background: var(--card-surface-bg) !important;
+            border: 2px solid var(--card-border-color) !important;
+            box-shadow: 12px 12px 0px var(--card-shadow-color) !important;
+            max-width: 54rem !important;
+            width: 100% !important;
+            border-radius: 6px !important;
+            max-height: 90vh !important;
+            overflow: hidden !important;
+            color: var(--card-text-primary) !important;
+        }
+
+        #back-to-top-anchor {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background: #222;
+            color: #fff;
+            border: 1px solid var(--county-gold);
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 500;
+        }
+    </style>
 </head>
 <body class="home-bg" data-town="HOME">
 
@@ -242,7 +857,7 @@
 
     <!-- INTRICATE 3-COLUMN OPERATIONAL DATA CHASSIS -->
     <div class="intricate-grid-container">
-        <!-- COLUMN 1: COMMUNITY BULLETIN (Top & Bottom Subscribe Options, Zero TBA) -->
+        <!-- COLUMN 1: COMMUNITY BULLETIN -->
         <div class="intricate-col">
             <div class="clay-county-news-box">
                 <div class="clipping-tag-black">Community Bulletin</div>
@@ -325,7 +940,7 @@
     </div>
 
     <!-- BLUE NEWS FRAME: DYNAMIC COUNTY-WIDE NEWS MASONRY -->
-    <div class="blue-news-frame" style="margin: 36px 0;">
+    <div class="blue-news-frame" style="margin: 36px auto;">
         <div class="news-content-90" style="max-width: 1200px; margin: 0 auto;">
             <div class="news-heading-bar" style="border-bottom: 2px solid #3b82f6; padding-bottom: 8px; margin-bottom: 18px;">
                 <h3 style="font-size: 26px; color: #93c5fd; text-transform: uppercase; margin: 0; font-family: 'Playfair Display', serif;">
@@ -393,7 +1008,7 @@
         <div style="border-top: 1px solid #333; padding-top: 16px; text-align: center;">
             <p id="footer-copy-target" style="margin: 0; color: #bbb;">All Content, Photographs, Writings, Letters and Documents &copy; 2026 - Support My Local Community</p>
             <p id="footer-build-version-stamp" style="margin: 6px 0 0 0; color: #FFC10E; font-family: monospace; font-size: 12px;">
-                <strong>System Build Version:</strong> v1.3.4 | <strong>Active Version:</strong> 2026-10-01_18:30
+                <strong>System Build Version:</strong> v1.3.5 | <strong>Active Version:</strong> 2026-10-01_18:40
             </p>
         </div>
     </footer>
@@ -427,7 +1042,7 @@
     <!-- RETURN TO TOP ANCHOR -->
     <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top">↑</button>
 
-    <!-- Master Portal Engine -->
+    <!-- Master Portal Engine Link -->
     <script src="./universaltown.js"></script>
 </body>
 </html>
