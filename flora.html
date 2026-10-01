@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <!-- Line 2: Town identifier attribute set to FLORA -->
+<!-- Timestamp: 2026-10-01 16:30 EDT (New York) | Version: v1.2.0 -->
 <html lang="en-US" data-town="FLORA">
 <head>
     <meta charset="UTF-8" />
@@ -7,17 +8,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flora, IL - SMLC Digital Town Square Portal</title>
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
-
-    <!-- Stylesheet -->
+    <link rel="preconnect" href="//fonts.googleapis.com">
+    <link rel="preconnect" href="//fonts.gstatic.com" crossorigin>
+    <link href="//fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="flora.css" />
 
-    <!-- Global Script Error Safeguard -->
     <script>
-        /* Line 20: Script error safeguard */
         window.addEventListener('error', function(e) {
             if (e.message && (e.message.includes('Script error') || e.message.includes('ResizeObserver'))) {
                 e.preventDefault();
@@ -26,52 +22,70 @@
         }, true);
     </script>
 
-    <!-- Firebase SDK Dependencies -->
-    <script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <!-- Firebase SDK (Compat v9.22.1) -->
+    <script crossorigin="anonymous" src="//www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script crossorigin="anonymous" src="//www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
-    <!-- Global Analytics Watermarks -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-L376P3NPY4" onerror="console.warn('GTM Script blocked or unavailable')"></script>
+    <!-- Global Site Tag (gtag.js) - Google Analytics & GTM -->
+    <script async src="//www.googletagmanager.com/gtag/js?id=G-CTYHDF4MSD" onerror="console.warn('GTM Script blocked or unavailable')"></script>
     <script>
-        /* Line 36: GA Data Layer Setup */
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
 
+        gtag('config', 'G-CTYHDF4MSD', {
+            'send_page_view': true,
+            'cookie_flags': 'SameSite=None;Secure'
+        });
         gtag('config', 'G-L376P3NPY4');
         gtag('config', 'G-H6Q756MVE8');
     </script>
+
+    <!-- Google Translate Initialization Script -->
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </head>
 <body data-town="FLORA">
 
+    <!-- FLOATING HUD INDICATOR -->
     <div class="portal-floating-hud-track">
         <div id="hud-county-age-target" class="hud-floating-badge county-anniversary-badge" style="display: none;"></div>
         <div id="hud-holiday-title-target" class="hud-floating-badge holiday-celebration-badge" style="display: none;"></div>
     </div>
 
-    <!-- SECTION 1: HEADER BILLBOARD & STICKY MENU BAR -->
+    <!-- SITE BRAND HEADER -->
     <div id="global-header-container" class="site-brand-header">
-        <a href="#/home" class="header-billboard-link" data-ga-label="HeaderBillboardLink">
-            <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="SMLC Community Digital Network Map" class="header-billboard-img" />
+        <a href="#/home" class="header-billboard-link" data-ga-label="HeaderBillboardLink" target="_self">
+            <img src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="" class="header-billboard-img" />
         </a>
     </div>
 
+    <!-- PERSISTENT STICKY TOP NAVIGATION BAR -->
     <header class="menu-bar">
         <div class="menu-inner">
             <nav>
                 <ul id="dynamic-menu-links" class="menu-links">
-                    <li><a href="#/home" data-ga-label="NavHomeButton"><span>Home</span></a></li>
-                    <li><a href="#/clay-city" data-ga-label="NavClayCityButton"><span>Clay City</span></a></li>
-                    <li><a href="#/flora" class="active" data-ga-label="NavFloraButton"><span>Flora</span></a></li>
-                    <li><a href="#/louisville" data-ga-label="NavLouisvilleButton"><span>Louisville</span></a></li>
-                    <li><a href="#/sailor-springs" data-ga-label="NavSailorSpringsButton"><span>Sailor Springs</span></a></li>
-                    <li><a href="#/xenia" data-ga-label="NavXeniaButton"><span>Xenia</span></a></li>
+                    <li><a href="#/home" data-ga-label="NavHomeButton" target="_self"><span>Home</span></a></li>
+                    <li><a href="#/clay-city" data-ga-label="NavClayCityButton" target="_self"><span>Clay City</span></a></li>
+                    <li><a href="#/flora" class="active" data-ga-label="NavFloraButton" target="_self"><span>Flora</span></a></li>
+                    <li><a href="#/louisville" data-ga-label="NavLouisvilleButton" target="_self"><span>Louisville</span></a></li>
+                    <li><a href="#/sailor-springs" data-ga-label="NavSailorSpringsButton" target="_self"><span>Sailor Springs</span></a></li>
+                    <li><a href="#/xenia" data-ga-label="NavXeniaButton" target="_self"><span>Xenia</span></a></li>
                 </ul>
             </nav>
+            <!-- Google Translate Dropdown Selector -->
+            <div id="google_translate_element" class="translate-box-header"></div>
         </div>
     </header>
 
-    <!-- SECTION 2: TOWN HERO BANNER -->
+    <!-- HERO BANNER SECTION -->
     <div class="main-container" style="padding-bottom: 0;">
         <section class="town-hero-banner static-hero-colors">
             <div class="banner-content">
@@ -83,57 +97,132 @@
         </section>
     </div>
 
-    <!-- SECTION 3: SPLIT LAYOUT -->
-    <section class="section3-split-layout">
-        <div class="section3-container-grid">
-            <div class="section3-row-1">
-                <h2 class="section3-main-title" id="sec3-main-title">Discover Flora's Vibrant Community</h2>
-                <p class="section3-intro-text" id="sec3-intro-text">Explore Flora's local businesses, rich railroad history, and civic events in the heart of Clay County.</p>
+    <!-- UPPER REGIONAL PARTNERS STRIP (Positioned under Hero Banner) -->
+    <div class="widescreen-strip-container section8-town-images-strip hero-adjacent-strip">
+        <section class="showcase-widget full-bleed-widget">
+            <div class="partners-horizontal-strip" id="partners-grid-bottom">
+                <div class="feed-loading-placeholder" style="color: #fff; text-align: center; width: 100%;">Syncing regional sponsor arrays...</div>
             </div>
+        </section>
+    </div>
 
-            <div class="section3-row-2">
-                <div class="section3-left-col">
-                    <div id="flora-town-slideshow-matrix" class="section3-slideshow-box">
-                        <div id="flora-slideshow" class="slider-viewport">
-                            <div class="slider-slide active">
-                                <img src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Flora Community View">
-                                <div class="slider-caption">Flora Town Square</div>
-                            </div>
+    <!-- THREE-COLUMN PORTAL CHASSIS: Events, Newsroom & Directory, Social Voice -->
+    <section class="smlc-three-column-portal-wrapper" id="adaptive-time-portal-chassis">
+        <div class="portal-grid-layout-fixed">
+            <!-- Left Column: Community Calendar & Events -->
+            <div class="portal-column-cell-box left-cell-stack">
+                <div class="clay-county-news-box event-clipping">
+                    <div class="clipping-tag">Community Bulletin</div>
+                    <div class="event-clipping-header">
+                        <h3>What's Happening?</h3>
+                        <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #222; font-weight: bold;">Clay County Community Calendar</span>
+                    </div>
+                    <p class="event-clipping-text">
+                        "Got a local fundraiser, school event, or church dinner coming up? Share your news with the community for free!"
+                    </p>
+                    <a href="https://www.supportmylocalcommunity.com/submit-event" target="_blank" rel="noopener" class="event-clipping-btn" data-ga-label="submit_event_btn">Submit Your Event</a>
+                    <div class="clipping-footer">Clay City • Flora • Louisville • Sailor Springs • Xenia</div>
+                </div>
+
+                <div class="card-module-wrapper">
+                    <h2 class="et_pb_module_heading">Upcoming Events in Flora</h2>
+                    <div class="news-clipping-wrapper">
+                        <div class="clipping-masthead">
+                            <span class="black-tag">Community Bulletin</span>
+                            <p class="clipping-tagline" id="month-tagline">Upcoming Events</p> 
+                        </div>
+                        <div id="bulletin-scroller-target">
+                            <div style="text-align:center; padding: 20px; font-style:italic;">Loading community calendar...</div>
+                        </div>
+                        <div class="clipping-footer">
+                            View Full Community Calendar &amp; Details<br>
+                            Support My Local Community
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <div class="section3-about-box">
-                        <span class="section3-about-tag" id="sec3-about-tag">About Flora</span>
-                        <p class="section3-about-text" id="desc2-target-1">Flora, IL was established in 1854 as a major rail hub. Known for its strong economic presence, beautiful parks, and energetic civic spirit, it serves as a central hub in Clay County.</p>
+            <!-- Center Column: Local News & Business Directory Banner -->
+            <div class="portal-column-cell-box center-cell-stack">
+                <div class="card-module-wrapper">
+                    <h2 class="et_pb_module_heading">Flora News</h2>
+                    <div class="newspaper-feed-chassis">
+                        <div class="clipping-masthead">
+                            <span class="black-tag">SMLC Newsroom</span>
+                            <p class="clipping-tagline">Flora Local Dispatches</p>
+                        </div>
+                        <div id="news-matrix-target" class="news-dynamic-masonry">
+                            <div class="feed-loading-placeholder">Reconstructing localized newsroom dispatches...</div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="section3-right-col">
-                    <div class="section3-landmark-card">
-                        <h3 class="section3-landmark-title" id="right-card-meta-title">Historic Flora Depot & Landmarks</h3>
-                        <div class="section3-landmark-images">
-                            <div class="section3-landmark-img-wrap">
-                                <img id="dual-img-1" src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Flora Landmark 1" class="lightbox-triggerable-element">
-                                <span class="section3-landmark-caption" id="dual-header-1">B&O Depot</span>
-                            </div>
-                            <div class="section3-landmark-img-wrap">
-                                <img id="dual-img-2" src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Flora Landmark 2" class="lightbox-triggerable-element">
-                                <span class="section3-landmark-caption" id="dual-header-2">Charley Brown Park</span>
+                <div class="card-module-wrapper">
+                    <h2 class="et_pb_module_heading">Business Directory</h2>
+                    <div class="town-directory-container-s7">
+                        <img src="//ourflora.com/wp-content/uploads/2026/02/smlc.png?v=20260730_1630" 
+                             alt="" 
+                             class="town-directory-banner-s7 lightbox-triggerable-element" />
+                        <a href="https://clay-county-business-directory.supportmylocalcommunity.com/" target="_blank" rel="noopener" class="town-directory-interactive-btn-s7" style="width: 100%;" data-ga-label="section7_directory_btn">
+                            Clay County Business Directory
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: SMLC Facebook Voice & Town Directory Links -->
+            <div class="portal-column-cell-box right-cell-stack">
+                <div class="card-module-wrapper">
+                    <h2 class="et_pb_module_heading">SMLC Facebook</h2>
+                    <div class="clay-county-news-box group-invitation-master">
+                        <div class="notice-tag-red">Local Conversation</div>
+                        <div class="polaroid-wrap">
+                            <img src="//ourflora.com/wp-content/uploads/2023/08/Ourflora.png" alt="" class="lightbox-triggerable-element">
+                        </div>
+                        <div class="invitation-header-main">
+                            <h3>Join the Community</h3>
+                            <span class="sub-header-text">Official SMLC Facebook Page</span>
+                        </div>
+                        <p class="invitation-body-text">
+                            "Stay connected with your neighbors. Discuss local news, share community updates, and join neighbors in the Clay County conversation."
+                        </p>
+                        <a href="https://www.facebook.com/OurFloraIL" target="_blank" rel="noopener" class="fb-action-btn" data-ga-label="facebook_group_btn">
+                            Enter the Conversation
+                        </a>
+                        <span class="community-voice-footer">
+                            Community Voice • Clay County, IL
+                        </span>
+                    </div>
+                </div>
+
+                <div class="card-module-wrapper">
+                    <h2 class="et_pb_module_heading">town local links</h2>
+                    <div class="clay-county-news-box group-invitation-master">
+                        <div class="notice-tag-red">Town Directory</div>
+                        <div class="invitation-header-main" style="margin-top:15px;">
+                            <h3>Local Links &amp; Resources</h3>
+                            <span class="sub-header-text">Official Flora &amp; Clay County Portals</span>
+                        </div>
+                        <div class="scrollable-directory-stream">
+                            <div id="local-links-target-container" class="local-links-stream">
+                                <div style="font-style:italic; font-size:12px; color:#666;">Loading directory links...</div>
                             </div>
                         </div>
-                        <p id="right-card-meta-desc1" class="section3-landmark-desc">Loading landmark historical details...</p>
+                        <span class="community-voice-footer">
+                            Verified Resources • Clay County, IL
+                        </span>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- SECTION 4: 2-COLUMN LAYOUT -->
+    <!-- SECTION 4: FEATURED ARTICLE & SIDEBAR (Spotlight + Fuel Index) -->
     <div class="section4-two-box-wrapper">
         <div class="section4-left-article-box">
             <header class="section4-centered-article-header">
-                <div class="category-tag" id="sec4-category-tag">Commerce & Heritage</div>
-                <h1 class="article-stacked-title" id="sec4-article-title">Flora's Railroad & Industrial Roots</h1>
+                <div class="category-tag" id="sec4-category-tag">Commerce &amp; Heritage</div>
+                <h1 class="article-stacked-title" id="sec4-article-title">Flora's Railroad &amp; Industrial Roots</h1>
                 <p class="article-stacked-deck" id="sec4-article-deck">Connecting transportation, industry, and community life in Clay County.</p>
             </header>
 
@@ -144,8 +233,8 @@
 
                 <figure class="article-media-frame">
                     <img id="sec-4-1-article-img" 
-                         src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" 
-                         alt="Downtown Flora Feature" 
+                         src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" 
+                         alt="" 
                          class="lightbox-triggerable-element" />
                     <figcaption id="sec4-img-caption">Downtown Flora — Flora, IL</figcaption>
                 </figure>
@@ -165,19 +254,19 @@
             <div class="clay-county-news-box spotlight-clipping">
                 <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
                 <div class="spotlight-image-wrap">
-                    <img id="spotlight-asset-img" src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Business Spotlight">
+                    <img id="spotlight-asset-img" src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="">
                 </div>
                 <span class="biz-title" id="spotlight-asset-name">Local Merchant</span>
                 <span class="biz-location" id="spotlight-asset-loc">Flora, IL</span>
                 <p class="biz-description" id="spotlight-asset-desc">Supporting local commerce across Clay County.</p>
-                <a href="#" id="spotlight-asset-link" target="_blank" class="spotlight-btn" data-ga-label="spotlight_btn">Visit Business &rarr;</a>
+                <a href="#" id="spotlight-asset-link" target="_blank" rel="noopener" class="spotlight-btn" data-ga-label="spotlight_btn">Visit Business &rarr;</a>
             </div>
 
             <div id="fuel-monitor-target-box" class="fuel-monitor-billboard-card">
                 <div class="sidebar-widget-title">FLORA FUEL INDEX MONITOR</div>
                 <div class="fuel-station-header">
                     <div class="station-logo-frame">
-                        <img src="https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/Casey's.png" alt="Gas Station">
+                        <img src="//raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/Casey's.png" alt="">
                     </div>
                     <div class="station-meta-title">CASEY'S</div>
                 </div>
@@ -211,131 +300,61 @@
         </section>
     </div>
 
-    <!-- SECTION 6: ADVERTISING PARTNERS STRIP PANEL -->
+    <!-- LOWER REGIONAL PARTNERS STRIP (Positioned Above Section 3 Split Layout) -->
     <div class="widescreen-strip-container">
         <section class="showcase-widget full-bleed-widget">
-            <div class="partners-horizontal-strip" id="partners-grid-top"></div>
+            <div class="partners-horizontal-strip" id="partners-grid-top">
+                <div class="feed-loading-placeholder" style="color: #fff; text-align: center; width: 100%;">Syncing regional sponsor arrays...</div>
+            </div>
         </section>
     </div>
 
-    <!-- SECTION 7: THREE-COLUMN OPERATIONAL DATA INTERFACE -->
-    <section class="smlc-three-column-portal-wrapper" id="adaptive-time-portal-chassis">
-        <div class="portal-grid-layout-fixed">
-            <div class="portal-column-cell-box left-cell-stack">
-                <div class="clay-county-news-box event-clipping">
-                    <div class="clipping-tag">Community Bulletin</div>
-                    <div class="event-clipping-header">
-                        <h3>What's Happening?</h3>
-                        <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #222; font-weight: bold;">Clay County Community Calendar</span>
-                    </div>
-                    <p class="event-clipping-text">
-                        "Got a local fundraiser, school event, or church dinner coming up? Share your news with the community for free!"
-                    </p>
-                    <a href="https://www.supportmylocalcommunity.com/submit-event" target="_blank" class="event-clipping-btn" data-ga-label="submit_event_btn">Submit Your Event</a>
-                    <div class="clipping-footer">Clay City • Flora • Louisville • Sailor Springs • Xenia</div>
-                </div>
-
-                <div class="card-module-wrapper">
-                    <h2 class="et_pb_module_heading">Upcoming Events in Flora</h2>
-                    <div class="news-clipping-wrapper">
-                        <div class="clipping-masthead">
-                            <span class="black-tag">Community Bulletin</span>
-                            <p class="clipping-tagline" id="month-tagline">Upcoming Events</p> 
-                        </div>
-                        <div id="bulletin-scroller-target">
-                            <div style="text-align:center; padding: 20px; font-style:italic;">Loading community calendar...</div>
-                        </div>
-                        <div class="clipping-footer">
-                            View Full Community Calendar &amp; Details<br>
-                            Support My Local Community
-                        </div>
-                    </div>
-                </div>
+    <!-- SECTION 3: SPLIT LAYOUT (Slideshow, Community Overview & Landmarks) -->
+    <section class="section3-split-layout">
+        <div class="section3-container-grid">
+            <div class="section3-row-1">
+                <h2 class="section3-main-title" id="sec3-main-title">Discover Flora's Vibrant Community</h2>
+                <p class="section3-intro-text" id="sec3-intro-text">Explore Flora's local businesses, rich railroad history, and civic events in the heart of Clay County.</p>
             </div>
 
-            <div class="portal-column-cell-box center-cell-stack">
-                <div class="card-module-wrapper">
-                    <h2 class="et_pb_module_heading">Flora News</h2>
-                    <div class="newspaper-feed-chassis">
-                        <div class="clipping-masthead">
-                            <span class="black-tag">SMLC Newsroom</span>
-                            <p class="clipping-tagline">Flora Local Dispatches</p>
-                        </div>
-                        <div id="news-matrix-target" class="news-dynamic-masonry">
-                            <div class="feed-loading-placeholder">Reconstructing localized newsroom dispatches...</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-module-wrapper">
-                    <h2 class="et_pb_module_heading">Business Directory</h2>
-                    <div class="town-directory-container-s7">
-                        <img src="https://ourflora.com/wp-content/uploads/2026/02/smlc.png?v=20260730_1630" 
-                             alt="Support My Local Community Logo" 
-                             class="town-directory-banner-s7 lightbox-triggerable-element" />
-                        <a href="https://clay-county-business-directory.supportmylocalcommunity.com/" target="_blank" class="town-directory-interactive-btn-s7" style="width: 100%;" data-ga-label="section7_directory_btn">
-                            Clay County Business Directory
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="portal-column-cell-box right-cell-stack">
-                <div class="card-module-wrapper">
-                    <h2 class="et_pb_module_heading">SMLC Facebook</h2>
-                    <div class="clay-county-news-box group-invitation-master">
-                        <div class="notice-tag-red">Local Conversation</div>
-                        <div class="polaroid-wrap">
-                            <img src="https://ourflora.com/wp-content/uploads/2023/08/Ourflora.png" alt="OurFlora Community" class="lightbox-triggerable-element">
-                        </div>
-                        <div class="invitation-header-main">
-                            <h3>Join the Community</h3>
-                            <span class="sub-header-text">Official SMLC Facebook Page</span>
-                        </div>
-                        <p class="invitation-body-text">
-                            "Stay connected with your neighbors. Discuss local news, share community updates, and join neighbors in the Clay County conversation."
-                        </p>
-                        <a href="https://www.facebook.com/OurFloraIL" target="_blank" class="fb-action-btn" data-ga-label="facebook_group_btn">
-                            Enter the Conversation
-                        </a>
-                        <span class="community-voice-footer">
-                            Community Voice • Clay County, IL
-                        </span>
-                    </div>
-                </div>
-
-                <div class="card-module-wrapper">
-                    <h2 class="et_pb_module_heading">town local links</h2>
-                    <div class="clay-county-news-box group-invitation-master">
-                        <div class="notice-tag-red">Town Directory</div>
-                        <div class="invitation-header-main" style="margin-top:15px;">
-                            <h3>Local Links &amp; Resources</h3>
-                            <span class="sub-header-text">Official Flora &amp; Clay County Portals</span>
-                        </div>
-                        <div class="scrollable-directory-stream">
-                            <div id="local-links-target-container" class="local-links-stream">
-                                <div style="font-style:italic; font-size:12px; color:#666;">Loading directory links...</div>
+            <div class="section3-row-2">
+                <div class="section3-left-col">
+                    <div id="flora-town-slideshow-matrix" class="section3-slideshow-box">
+                        <div id="flora-slideshow" class="slider-viewport">
+                            <div class="slider-slide active">
+                                <img src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="">
+                                <div class="slider-caption">Flora Town Square</div>
                             </div>
                         </div>
-                        <span class="community-voice-footer">
-                            Verified Resources • Clay County, IL
-                        </span>
+                    </div>
+
+                    <div class="section3-about-box">
+                        <span class="section3-about-tag" id="sec3-about-tag">About Flora</span>
+                        <p class="section3-about-text" id="desc2-target-1">Flora, IL was established in 1854 as a major rail hub. Known for its strong economic presence, beautiful parks, and energetic civic spirit, it serves as a central hub in Clay County.</p>
+                    </div>
+                </div>
+
+                <div class="section3-right-col">
+                    <div class="section3-landmark-card">
+                        <h3 class="section3-landmark-title" id="right-card-meta-title">Historic Flora Depot &amp; Landmarks</h3>
+                        <div class="section3-landmark-images">
+                            <div class="section3-landmark-img-wrap">
+                                <img id="dual-img-1" src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="" class="lightbox-triggerable-element">
+                                <span class="section3-landmark-caption" id="dual-header-1">B&amp;O Depot</span>
+                            </div>
+                            <div class="section3-landmark-img-wrap">
+                                <img id="dual-img-2" src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="" class="lightbox-triggerable-element">
+                                <span class="section3-landmark-caption" id="dual-header-2">Charley Brown Park</span>
+                            </div>
+                        </div>
+                        <p id="right-card-meta-desc1" class="section3-landmark-desc">Loading landmark historical details...</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- SECTION 8: FULL WIDTH TOWN IMAGES STRIP -->
-    <div class="widescreen-strip-container section8-town-images-strip">
-        <section class="showcase-widget full-bleed-widget">
-            <div class="partners-horizontal-strip" id="partners-grid-bottom">
-                <div class="feed-loading-placeholder" style="color: #fff; text-align: center; width: 100%;">Syncing regional timeline showcase arrays...</div>
-            </div>
-        </section>
-    </div>
-
-    <!-- SECTION 9 & 10: PROCLAMATION BLOCK -->
+    <!-- SECTION 9 & 10: PROCLAMATION CARD & S&K VENTURE SIGNS CONTACT -->
     <div class="main-container section9-bold-print-wrapper section10-message-chassis">
         <section class="section10-proclamation-card-box">
             <p class="proclamation-body-text">
@@ -347,7 +366,7 @@
         </section>
     </div>
 
-    <!-- LIGHTBOX OVERLAY -->
+    <!-- PORTAL GLOBAL LIGHTBOX MODAL -->
     <div id="portal-global-lightbox" class="lightbox-overlay-mask" onclick="closeLightbox(event)">
         <div class="lightbox-modal-window">
             <div class="lightbox-header-bar" style="padding:15px; border-bottom:2px solid #222; display:flex; justify-content:space-between; align-items:center;">
@@ -360,46 +379,47 @@
                 <div id="lightbox-target-date" style="font-size: 13px; color: #cc0000; font-weight: bold; margin-bottom: 12px;">Wire Sync Info</div>
                 <p id="lightbox-target-story" style="font-size:16px; line-height:1.6;">Story Body</p>
                 <div id="lightbox-img-wrapper" style="margin-top:15px; text-align:center;">
-                    <img id="lightbox-target-img" src="" alt="Expanded Asset Content" style="max-width:100%; max-height:65vh; border-radius:4px; object-fit:contain;">
+                    <img id="lightbox-target-img" src="" alt="" style="max-width:100%; max-height:65vh; border-radius:4px; object-fit:contain;">
                 </div>
             </div>
             
             <div class="lightbox-footer-bar" style="padding:15px; border-top:1px solid #ddd; text-align:center; font-size:12px; color:#666;">
                 <span>SUPPORT MY LOCAL COMMUNITY NETWORK &copy; 2026</span>
                 <div id="lightbox-action-row" style="display:none; margin-top:8px;">
-                    <a id="lightbox-target-link" href="#" target="_blank" style="color: #0258A3; font-weight: bold;" data-ga-label="lightbox_open_source">Open Source &rarr;</a>
+                    <a id="lightbox-target-link" href="#" target="_blank" rel="noopener" style="color: #0258A3; font-weight: bold;" data-ga-label="lightbox_open_source">Open Source &rarr;</a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- GLOBAL FOOTER -->
+    <!-- GLOBAL SITE FOOTER -->
     <footer id="global-footer-container" class="site-global-footer-matrix">
         <div style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:20px; max-width:1200px; margin:0 auto; padding-bottom:20px;">
             <div>
-                <span style="font-weight:bold; color:var(--cc-gold);">Contact Us:</span>
+                <span style="font-weight:bold; color:var(--flora-orange);">Contact Us:</span>
                 <div id="footer-phone-target">618-662-8341</div>
             </div>
             <div>
-                <span style="font-weight:bold; color:var(--cc-gold);">Email:</span><br>
+                <span style="font-weight:bold; color:var(--flora-orange);">Email:</span><br>
                 <a id="footer-email-target" href="mailto:Scott.Robinson@skventuresigns.com" style="color:#fff;" data-ga-label="footer_email">Scott.Robinson@skventuresigns.com</a>
             </div>
             <div>
-                <span style="font-weight:bold; color:var(--cc-gold);">Address:</span>
+                <span style="font-weight:bold; color:var(--flora-orange);">Address:</span>
                 <div id="footer-address-target">Clay County, Illinois</div>
             </div>
         </div>
         <div style="border-top:1px solid #333; padding-top:15px;">
             <p id="footer-copy-target">&copy; 2026 Flora Community Portal. All rights reserved.</p>
-            <p style="margin-top: 8px; opacity: 0.8; font-size: 12px; color: #aaaaaa;">
-                <strong>System Build Version:</strong> v1.1.2 | <strong>Active Version:</strong> 2026-07-31_13:40
+            <p id="footer-build-version-stamp" style="margin-top: 8px; opacity: 0.9; font-size: 13px; color: #FE4E02; letter-spacing: 0.5px;">
+                <strong>System Build Version:</strong> v1.2.0 | <strong>Active Version:</strong> 2026-10-01_16:30
             </p>
         </div>
     </footer>
 
-    <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top" style="position:fixed; bottom:20px; right:20px; padding:10px 15px; background:#222; color:#fff; border:1px solid var(--cc-gold); border-radius:4px; cursor:pointer;">↑</button>
+    <!-- RETURN TO TOP ANCHOR -->
+    <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top" style="position:fixed; bottom:20px; right:20px; padding:10px 15px; background:#222; color:#fff; border:1px solid var(--flora-orange); border-radius:4px; cursor:pointer;">↑</button>
 
-    <!-- Line 333: Master Engine Link -->
+    <!-- CORE SCRIPT -->
     <script src="./universaltown.js"></script>
 </body>
 </html>
