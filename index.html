@@ -1,1624 +1,439 @@
 <!DOCTYPE html>
-<html lang="en">
+<!-- Line 2: Town identifier attribute set to HOME / CLAY COUNTY -->
+<!-- Timestamp: 2026-10-01 18:15 EDT (New York) | Version: v1.3.3 -->
+<html lang="en-US" data-town="HOME">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Support My Local Community | Clay County, IL</title>
-    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/skventuresigns-design/media/main/favicon.png">
-    
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Playfair+Display:ital,wght@0,600;0,800;1,600&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <title>Clay County, IL - SMLC Digital Town Square Portal</title>
 
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0b0f19;
-            color: #f1f5f9;
+    <link rel="preconnect" href="//fonts.googleapis.com">
+    <link rel="preconnect" href="//fonts.gstatic.com" crossorigin>
+    <link href="//fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="home.css" />
+
+    <script>
+        window.addEventListener('error', function(e) {
+            if (e.message && (e.message.includes('Script error') || e.message.includes('ResizeObserver'))) {
+                e.preventDefault();
+                return true;
+            }
+        }, true);
+    </script>
+
+    <!-- Firebase SDK (Compat v9.22.1) -->
+    <script crossorigin="anonymous" src="//www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script crossorigin="anonymous" src="//www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <!-- Global Site Tag (gtag.js) - Google Analytics & GTM -->
+    <script async src="//www.googletagmanager.com/gtag/js?id=G-CTYHDF4MSD" onerror="console.warn('GTM Script blocked or unavailable')"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-CTYHDF4MSD', {
+            'send_page_view': true,
+            'cookie_flags': 'SameSite=None;Secure'
+        });
+        gtag('config', 'G-L376P3NPY4');
+        gtag('config', 'G-H6Q756MVE8');
+    </script>
+
+    <!-- Google Translate Initialization Script -->
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+            }, 'google_translate_element');
         }
-
-        .cinzel { font-family: 'Cinzel', serif; }
-        .playfair { font-family: 'Playfair Display', serif; }
-
-        .home-bg {
-            background: radial-gradient(circle at top, #1e293b 0%, #0f172a 60%, #080d1a 100%);
-            background-attachment: fixed;
-        }
-
-        /* HEADER & NAVIGATION */
-        .site-header {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(12px);
-            border-bottom: 2px solid #d97706;
-        }
-
-        .nav-link {
-            color: #cbd5e1;
-            font-weight: 700;
-            font-size: 0.875rem;
-            text-transform: uppercase;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            transition: all 0.2s ease;
-        }
-
-        .nav-link:hover, .nav-link.active {
-            color: #fbbf24;
-            background: rgba(217, 119, 6, 0.15);
-            border-bottom: 2px solid #fbbf24;
-        }
-
-        /* HERO DIRECTORY CTA */
-        .home-hero-cta {
-            background: linear-gradient(135deg, #b45309 0%, #d97706 50%, #f59e0b 100%);
-            color: #ffffff;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            box-shadow: 0 10px 25px -5px rgba(217, 119, 6, 0.4);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            border: 2px solid #fef08a;
-        }
-
-        .home-hero-cta:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 30px -5px rgba(217, 119, 6, 0.6);
-        }
-
-        /* TOP SLIDESHOW */
-        .slideshow-viewport {
-            overflow: hidden;
-            border-radius: 1rem;
-            border: 3px solid #d97706;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
-            background-color: #020617;
-        }
-
-        .slideshow-track {
-            display: flex;
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .slideshow-slide {
-            min-width: 100%;
-            height: 240px;
-        }
-
-        @media (min-width: 640px) { .slideshow-slide { height: 340px; } }
-        @media (min-width: 1024px) { .slideshow-slide { height: 420px; } }
-
-        .slideshow-slide img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            background-color: #0f172a;
-            cursor: pointer;
-        }
-
-        /* GLOSSY BOX & SECTIONS */
-        .glossy-wrapper {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
-            border: 2px solid #d97706;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-        }
-
-        .yellow-text { color: #fef08a; }
-
-        /* VINTAGE GAZETTE CLIPPING BOXES */
-        .clay-county-news-box {
-            background-color: #fffbeb;
-            color: #1c1917;
-            border-radius: 0.75rem;
-            padding: 1.25rem;
-            border: 2px solid #d97706;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-            position: relative;
-        }
-
-        .clipping-tag-black {
-            position: absolute;
-            top: -12px;
-            right: 16px;
-            background-color: #1c1917;
-            color: #fbbf24;
-            font-size: 10px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 2px 10px;
-            border-radius: 4px;
-            border: 1px solid #d97706;
-        }
-
-        .news-box-header h3 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.25rem;
-            font-weight: 800;
-            color: #78350f;
-            border-bottom: 2px solid #d97706;
-            padding-bottom: 4px;
-        }
-
-        .clipping-btn {
-            background: linear-gradient(135deg, #991b1b 0%, #b91c1c 100%);
-            color: #ffffff;
-            font-weight: 800;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 1px;
-            padding: 0.6rem 1rem;
-            border-radius: 0.5rem;
-            text-align: center;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 10px rgba(185, 28, 28, 0.3);
-            border: 1px solid #f87171;
-            display: block;
-        }
-
-        .clipping-btn:hover {
-            background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
-            transform: translateY(-1px);
-        }
-
-        .wf-field-input {
-            width: 100%;
-            padding: 0.5rem 0.75rem;
-            border-radius: 0.375rem;
-            border: 1px solid #d97706;
-            background-color: #ffffff;
-            color: #1c1917;
-            font-size: 0.875rem;
-        }
-
-        .wf-label {
-            display: block;
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: #78350f;
-            margin-bottom: 2px;
-        }
-
-        /* FUEL SLIDE-THRU MONITOR */
-        .fuel-section {
-            background: linear-gradient(135deg, #1c1917 0%, #292524 100%);
-            border: 2px solid #f97316;
-            box-shadow: 0 12px 30px rgba(249, 115, 22, 0.2);
-        }
-
-        /* FEATURED BUSINESS SPOTLIGHT */
-        .spotlight-clipping {
-            background-color: #fffbeb;
-            border: 2px dashed #b45309;
-        }
-
-        /* NEWSPAPER FRAME FOR DISPATCHES */
-        .blue-news-frame {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            border: 2px solid #3b82f6;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            box-shadow: 0 12px 30px rgba(30, 58, 138, 0.3);
-        }
-
-        @media (min-width: 640px) { .blue-news-frame { padding: 2rem; } }
-
-        .news-paper-card {
-            background-color: #fffbeb;
-            color: #1c1917;
-            border-radius: 0.75rem;
-            padding: 1.25rem;
-            border: 1px solid #d97706;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-
-        .thankful-section {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            border: 2px solid #d97706;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            text-align: center;
-            color: #cbd5e1;
-        }
-
-        .site-footer {
-            background-color: #020617;
-            border-t: 2px solid #d97706;
-            color: #94a3b8;
-            padding: 1.5rem 1rem;
-            text-align: center;
-            font-size: 0.875rem;
-        }
-
-        .pulse-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #10b981;
-            border-radius: 50%;
-            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
-
-        .lightbox-clickable {
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-
-        .lightbox-clickable:hover {
-            opacity: 0.9;
-        }
-    </style>
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </head>
-<body class="home-bg min-h-screen flex flex-col justify-between">
+<body data-town="HOME">
 
-    <!-- GLOBAL HEADER & NAV BAR -->
-    <header class="site-header sticky top-0 z-50 shadow-xl">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-            <a href="index.html" class="flex items-center gap-3">
-                <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" class="h-12 sm:h-14 object-contain lightbox-clickable" alt="Support My Local Community Logo">
-            </a>
+    <!-- FLOATING HUD INDICATOR -->
+    <div class="portal-floating-hud-track">
+        <div id="hud-county-age-target" class="hud-floating-badge county-anniversary-badge" style="display: none;"></div>
+        <div id="hud-holiday-title-target" class="hud-floating-badge holiday-celebration-badge" style="display: none;"></div>
+    </div>
 
-            <!-- Mobile Hamburger Toggle -->
-            <button id="hamburger" class="lg:hidden text-amber-400 p-2 text-2xl focus:outline-none" aria-label="Toggle Navigation">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-
-            <!-- Navigation Links -->
-            <nav id="nav-links" class="hidden lg:flex items-center gap-1.5">
-                <a href="index.html" class="nav-link active">Home</a>
-                <a href="#" class="nav-link">Clay City</a>
-                <a href="https://www.ourflora.com" target="_blank" class="nav-link">Flora</a>
-                <a href="#" class="nav-link">Louisville</a>
-                <a href="#" class="nav-link">Sailor Springs</a>
-                <a href="#" class="nav-link">Xenia</a>
-            </nav>
-        </div>
-
-        <!-- Mobile Drawer Navigation -->
-        <div id="mobile-menu" class="hidden lg:hidden bg-slate-900 border-t border-amber-600/40 px-4 py-3 space-y-2">
-            <a href="index.html" class="block nav-link active">Home</a>
-            <a href="#" class="block nav-link">Clay City</a>
-            <a href="https://www.ourflora.com" target="_blank" class="block nav-link">Flora</a>
-            <a href="#" class="block nav-link">Louisville</a>
-            <a href="#" class="block nav-link">Sailor Springs</a>
-            <a href="#" class="block nav-link">Xenia</a>
-        </div>
-    </header>
-
-    <!-- HERO DIRECTORY CTA BANNER -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 w-full">
-        <a href="https://clay-county-business-directory.supportmylocalcommunity.com" target="_blank" class="block">
-            <div class="home-hero-cta rounded-2xl py-4 px-6 text-center">
-                <h1 class="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-wide uppercase flex items-center justify-center gap-3">
-                    <i class="fa-solid fa-store text-yellow-300"></i>
-                    Click to see Our Business Directory
-                    <i class="fa-solid fa-arrow-right text-yellow-300"></i>
-                </h1>
-            </div>
+    <!-- SITE BRAND HEADER -->
+    <div id="global-header-container" class="site-brand-header">
+        <a href="#/home" class="header-billboard-link" data-ga-label="HeaderBillboardLink" target="_self">
+            <img src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="" class="header-billboard-img" />
         </a>
     </div>
 
-    <!-- AUTOMATED MOVING SLIDESHOW BANNER -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
-        <div class="slideshow-viewport relative">
-            <div id="hero-slideshow-track" class="slideshow-track">
-                <div class="slideshow-slide">
-                    <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/claycounty.png" alt="Clay County Illinois Welcomes You" class="lightbox-clickable">
+    <!-- PERSISTENT STICKY TOP NAVIGATION BAR -->
+    <header class="menu-bar">
+        <div class="menu-inner">
+            <!-- 3-Line Sandwich Toggle Button (Visible on Mobile & Tablet, Hidden on Desktop) -->
+            <button id="mobile-menu-toggle-btn" class="mobile-nav-toggle-btn" onclick="window.toggleMobileMenu();" aria-label="Toggle Navigation Menu" aria-expanded="false">
+                <span class="hamburger-icon-group">
+                    <span class="hamburger-bar"></span>
+                    <span class="hamburger-bar"></span>
+                    <span class="hamburger-bar"></span>
+                </span>
+                <span class="mobile-menu-btn-label">MENU</span>
+            </button>
+
+            <!-- Navigation Links Container (Hidden on Mobile/Tablet until Hamburger is tapped) -->
+            <nav id="site-navigation-drawer" class="navigation-drawer-panel">
+                <ul id="dynamic-menu-links" class="menu-links">
+                    <li><a href="#/home" class="active" data-ga-label="NavHomeButton" target="_self"><span>Home</span></a></li>
+                    <li><a href="#/clay-city" data-ga-label="NavClayCityButton" target="_self"><span>Clay City</span></a></li>
+                    <li><a href="#/flora" data-ga-label="NavFloraButton" target="_self"><span>Flora</span></a></li>
+                    <li><a href="#/louisville" data-ga-label="NavLouisvilleButton" target="_self"><span>Louisville</span></a></li>
+                    <li><a href="#/sailor-springs" data-ga-label="NavSailorSpringsButton" target="_self"><span>Sailor Springs</span></a></li>
+                    <li><a href="#/xenia" data-ga-label="NavXeniaButton" target="_self"><span>Xenia</span></a></li>
+                </ul>
+            </nav>
+
+            <!-- Google Translate Dropdown Selector -->
+            <div id="google_translate_element" class="translate-box-header"></div>
+        </div>
+    </header>
+
+    <!-- HERO BANNER SECTION -->
+    <div class="main-container" style="padding-bottom: 0;">
+        <section class="town-hero-banner static-hero-colors">
+            <div class="banner-content">
+                <span class="seat-badge" id="hero-seat-badge">Clay County Digital Hub</span>
+                <h1 class="town-title outlined-headline" id="hero-town-title">Clay County, Illinois</h1>
+                <p class="town-established-meta" id="hero-established-meta">Est. 1824 | County Seat: Louisville</p>
+                <div class="river-marquee" id="hero-river-marquee">COMMUNITY DIGITAL NETWORK MAP • FIVE TOWNS STRONG</div>
+            </div>
+        </section>
+    </div>
+
+    <!-- UPPER REGIONAL PARTNERS STRIP (Positioned under Hero Banner) -->
+    <div class="widescreen-strip-container section8-town-images-strip hero-adjacent-strip">
+        <section class="showcase-widget full-bleed-widget">
+            <div class="partners-horizontal-strip" id="partners-grid-bottom">
+                <div class="feed-loading-placeholder" style="color: #fff; text-align: center; width: 100%;">Syncing regional sponsor arrays...</div>
+            </div>
+        </section>
+    </div>
+
+    <!-- THREE-COLUMN PORTAL CHASSIS: Events, Newsroom & Directory, Social Voice -->
+    <section class="smlc-three-column-portal-wrapper" id="adaptive-time-portal-chassis">
+        <div class="portal-grid-layout-fixed">
+            <!-- Left Column: County Community Calendar & Events -->
+            <div class="portal-column-cell-box left-cell-stack">
+                <div class="clay-county-news-box event-clipping">
+                    <div class="clipping-tag">Community Bulletin</div>
+                    <div class="event-clipping-header">
+                        <h3>What's Happening?</h3>
+                        <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #222; font-weight: bold;">Clay County Community Calendar</span>
+                    </div>
+                    <p class="event-clipping-text">
+                        "Got a local fundraiser, school event, or church dinner coming up? Share your news with the community for free!"
+                    </p>
+                    <a href="https://www.supportmylocalcommunity.com/submit-event" target="_blank" rel="noopener" class="event-clipping-btn" data-ga-label="submit_event_btn">Submit Your Event</a>
+                    <div class="clipping-footer">Clay City • Flora • Louisville • Sailor Springs • Xenia</div>
                 </div>
-                <div class="slideshow-slide">
-                    <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/skbanner.png" alt="S&K Ventures Signs & Design Banner" class="lightbox-clickable">
-                </div>
-                <div class="slideshow-slide">
-                    <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-banner.png" alt="Support My Local Community Official Banner" class="lightbox-clickable">
+
+                <div class="card-module-wrapper">
+                    <h2 class="et_pb_module_heading">Clay County Events</h2>
+                    <div class="news-clipping-wrapper">
+                        <div class="clipping-masthead">
+                            <span class="black-tag">Community Bulletin</span>
+                            <p class="clipping-tagline" id="month-tagline">Upcoming County Gatherings</p> 
+                        </div>
+                        <div id="bulletin-scroller-target">
+                            <div style="text-align:center; padding: 20px; font-style:italic;">Loading community calendar...</div>
+                        </div>
+                        <div class="clipping-footer">
+                            View Full Community Calendar &amp; Details<br>
+                            Support My Local Community
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Slideshow Navigation Controls -->
-            <button id="hero-slide-prev" class="absolute left-3 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/90 text-amber-300 w-10 h-10 rounded-full flex items-center justify-center border border-amber-500/50 shadow-lg" aria-label="Previous Slide">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <button id="hero-slide-next" class="absolute right-3 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/90 text-amber-300 w-10 h-10 rounded-full flex items-center justify-center border border-amber-500/50 shadow-lg" aria-label="Next Slide">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
+            <!-- Center Column: County News & Business Directory Banner -->
+            <div class="portal-column-cell-box center-cell-stack">
+                <div class="card-module-wrapper">
+                    <h2 class="et_pb_module_heading">Clay County News</h2>
+                    <div class="newspaper-feed-chassis">
+                        <div class="clipping-masthead">
+                            <span class="black-tag">SMLC Newsroom</span>
+                            <p class="clipping-tagline">County-Wide Dispatches</p>
+                        </div>
+                        <div id="news-matrix-target" class="news-dynamic-masonry">
+                            <div class="feed-loading-placeholder">Reconstructing localized newsroom dispatches...</div>
+                        </div>
+                    </div>
+                </div>
 
-            <!-- Dots Indicator -->
-            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/50 px-3 py-1 rounded-full border border-amber-500/30">
-                <button class="hero-dot w-2.5 h-2.5 rounded-full bg-amber-400" data-slide="0" aria-label="Slide 1"></button>
-                <button class="hero-dot w-2.5 h-2.5 rounded-full bg-slate-500" data-slide="1" aria-label="Slide 2"></button>
-                <button class="hero-dot w-2.5 h-2.5 rounded-full bg-slate-500" data-slide="2" aria-label="Slide 3"></button>
+                <div class="card-module-wrapper">
+                    <h2 class="et_pb_module_heading">Business Directory</h2>
+                    <div class="town-directory-container-s7">
+                        <img src="//ourflora.com/wp-content/uploads/2026/02/smlc.png?v=20260730_1630" 
+                             alt="" 
+                             class="town-directory-banner-s7 lightbox-triggerable-element" />
+                        <a href="https://clay-county-business-directory.supportmylocalcommunity.com/" target="_blank" rel="noopener" class="town-directory-interactive-btn-s7" style="width: 100%;" data-ga-label="section7_directory_btn">
+                            Clay County Business Directory
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: SMLC Facebook Voice & County Directory Links -->
+            <div class="portal-column-cell-box right-cell-stack">
+                <div class="card-module-wrapper">
+                    <h2 class="et_pb_module_heading">SMLC Facebook</h2>
+                    <div class="clay-county-news-box group-invitation-master">
+                        <div class="notice-tag-red">Local Conversation</div>
+                        <div class="polaroid-wrap">
+                            <img src="//ourflora.com/wp-content/uploads/2023/08/Ourflora.png" alt="" class="lightbox-triggerable-element">
+                        </div>
+                        <div class="invitation-header-main">
+                            <h3>Join the Community</h3>
+                            <span class="sub-header-text">Official SMLC Facebook Page</span>
+                        </div>
+                        <p class="invitation-body-text">
+                            "Stay connected with your neighbors. Discuss local news, share community updates, and join neighbors in the Clay County conversation."
+                        </p>
+                        <a href="https://www.facebook.com/SupportMyLocalCommunity/" target="_blank" rel="noopener" class="fb-action-btn" data-ga-label="facebook_group_btn">
+                            Enter the Conversation
+                        </a>
+                        <span class="community-voice-footer">
+                            Community Voice • Clay County, IL
+                        </span>
+                    </div>
+                </div>
+
+                <div class="card-module-wrapper">
+                    <h2 class="et_pb_module_heading">County Local Links</h2>
+                    <div class="clay-county-news-box group-invitation-master">
+                        <div class="notice-tag-red">County Directory</div>
+                        <div class="invitation-header-main" style="margin-top:15px;">
+                            <h3>Local Links &amp; Resources</h3>
+                            <span class="sub-header-text">Official County Portals &amp; Municipal Offices</span>
+                        </div>
+                        <div class="scrollable-directory-stream">
+                            <div id="local-links-target-container" class="local-links-stream">
+                                <div style="font-style:italic; font-size:12px; color:#666;">Loading directory links...</div>
+                            </div>
+                        </div>
+                        <span class="community-voice-footer">
+                            Verified Resources • Clay County, IL
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 4: FEATURED ARTICLE & SIDEBAR (Spotlight + County Fuel Index) -->
+    <div class="section4-two-box-wrapper">
+        <div class="section4-left-article-box">
+            <header class="section4-centered-article-header">
+                <div class="category-tag" id="sec4-category-tag">Heritage &amp; Governance</div>
+                <h1 class="article-stacked-title" id="sec4-article-title">Clay County's Agricultural &amp; Civic Heart</h1>
+                <p class="article-stacked-deck" id="sec4-article-deck">Uniting communities, local commerce, and generations of rural tradition across Southern Illinois.</p>
+            </header>
+
+            <article class="article-body-content" id="sec4-article-body">
+                <p>
+                    Established in 1824 and named in honor of American statesman Henry Clay, Clay County stands as an essential agricultural and industrial hub in southeastern Illinois.
+                </p>
+
+                <figure class="article-media-frame">
+                    <img id="sec-4-1-article-img" 
+                         src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" 
+                         alt="" 
+                         class="lightbox-triggerable-element" />
+                    <figcaption id="sec4-img-caption">Clay County Community Network — Clay County, IL</figcaption>
+                </figure>
+
+                <p>
+                    From the bustling commerce in Flora to the civic seat in Louisville and the historic corridors of Clay City, Xenia, and Sailor Springs, Clay County represents enduring community pride and steadfast growth.
+                </p>
+            </article>
+
+            <div class="article-footer">
+                <span>County Dispatches | Jan 2026</span>
+                <span>Issue No. 1 | Page 1</span>
+            </div>
+        </div>
+
+        <aside class="section4-right-widgets-stack">
+            <div class="clay-county-news-box spotlight-clipping">
+                <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
+                <div class="spotlight-image-wrap">
+                    <img id="spotlight-asset-img" src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="">
+                </div>
+                <span class="biz-title" id="spotlight-asset-name">Local Merchant</span>
+                <span class="biz-location" id="spotlight-asset-loc">Clay County, IL</span>
+                <p class="biz-description" id="spotlight-asset-desc">Supporting local commerce across Clay County.</p>
+                <a href="#" id="spotlight-asset-link" target="_blank" rel="noopener" class="spotlight-btn" data-ga-label="spotlight_btn">Visit Business &rarr;</a>
+            </div>
+
+            <div id="fuel-monitor-target-box" class="fuel-monitor-billboard-card">
+                <div class="sidebar-widget-title">CLAY COUNTY FUEL INDEX MONITOR</div>
+                <div class="fuel-station-header">
+                    <div class="station-logo-frame">
+                        <img src="//raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/Casey's.png" alt="">
+                    </div>
+                    <div class="station-meta-title">REGIONAL FUEL</div>
+                </div>
+                <div class="fuel-pricing-grid">
+                    <div class="price-box">
+                        <span class="price-type-label">REGULAR</span>
+                        <span class="price-value-regular">$3.29</span>
+                    </div>
+                    <div class="price-box">
+                        <span class="price-type-label">DIESEL</span>
+                        <span class="price-value-diesel">$3.89</span>
+                    </div>
+                </div>
+                <div class="sync-timestamp-label">Syncing Real-Time Prices...</div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- SECTION 5: HISTORICAL TIMELINE -->
+    <div class="main-container">
+        <section class="historical-timeline-chassis-wrapper">
+            <div class="timeline-inner-bounds">
+                <div class="timeline-row-1-header">
+                    <span class="main-timeline-center-title-node">Historical Timeline</span>
+                    <p class="main-timeline-sub-caption-node">Journey through the foundational milestones that shaped Clay County, IL.</p>
+                </div>
+                <div id="history-row-target" class="timeline-row-2-cards">
+                    <div class="feed-loading-placeholder">Parsing landmark records ledger database tracking layers...</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- LOWER REGIONAL PARTNERS STRIP (Positioned Above Section 3 Split Layout) -->
+    <div class="widescreen-strip-container">
+        <section class="showcase-widget full-bleed-widget">
+            <div class="partners-horizontal-strip" id="partners-grid-top">
+                <div class="feed-loading-placeholder" style="color: #fff; text-align: center; width: 100%;">Syncing regional sponsor arrays...</div>
+            </div>
+        </section>
+    </div>
+
+    <!-- SECTION 3: SPLIT LAYOUT (County Slideshow, Overview & Landmarks) -->
+    <section class="section3-split-layout">
+        <div class="section3-container-grid">
+            <div class="section3-row-1">
+                <h2 class="section3-main-title" id="sec3-main-title">Discover Clay County Communities</h2>
+                <p class="section3-intro-text" id="sec3-intro-text">Explore our thriving businesses, historic landmarks, and community spirit across all five townships.</p>
+            </div>
+
+            <div class="section3-row-2">
+                <div class="section3-left-col">
+                    <div id="xenia-town-slideshow-matrix" class="section3-slideshow-box">
+                        <div id="xenia-slideshow" class="slider-viewport">
+                            <div class="slider-slide active">
+                                <img src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="">
+                                <div class="slider-caption">Clay County Scenic Views</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section3-about-box">
+                        <span class="section3-about-tag" id="sec3-about-tag">About Clay County</span>
+                        <p class="section3-about-text" id="desc2-target-1">Formed in 1824, Clay County encompasses over 469 square miles of productive farmland, rich river heritage, and resilient historic communities anchored by hardworking neighbors.</p>
+                    </div>
+                </div>
+
+                <div class="section3-right-col">
+                    <div class="section3-landmark-card">
+                        <h3 class="section3-landmark-title" id="right-card-meta-title">Historic County Landmarks</h3>
+                        <div class="section3-landmark-images">
+                            <div class="section3-landmark-img-wrap">
+                                <img id="dual-img-1" src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="" class="lightbox-triggerable-element">
+                                <span class="section3-landmark-caption" id="dual-header-1">County Courthouse</span>
+                            </div>
+                            <div class="section3-landmark-img-wrap">
+                                <img id="dual-img-2" src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="" class="lightbox-triggerable-element">
+                                <span class="section3-landmark-caption" id="dual-header-2">Little Wabash River</span>
+                            </div>
+                        </div>
+                        <p id="right-card-meta-desc1" class="section3-landmark-desc">Loading landmark historical details...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 9 & 10: PROCLAMATION CARD & S&K VENTURE SIGNS CONTACT -->
+    <div class="main-container section9-bold-print-wrapper section10-message-chassis">
+        <section class="section10-proclamation-card-box">
+            <p class="proclamation-body-text">
+                We are very Thankful and Blessed for our Customers who allow us to advertise their Business to the Community. We hope to be of Service, not only to the Large Corporations, but also to the Small Business’ in the area. A Large Corporation once started out as a small business, so our hope is to help those Small Business’ we serve reach the fullest potential they desire. You will never know what we are able to do for Your Business unless you ask. I hope to hear from you.
+            </p>
+            <p class="proclamation-contact-text">
+                For questions or comments about this site please email <a href="mailto:Scott.Robinson@skventuresigns.com" data-ga-label="proclamation_email">Scott.Robinson@skventuresigns.com</a>
+            </p>
+        </section>
+    </div>
+
+    <!-- PORTAL GLOBAL LIGHTBOX MODAL -->
+    <div id="portal-global-lightbox" class="lightbox-overlay-mask" onclick="closeLightbox(event)">
+        <div class="lightbox-modal-window">
+            <div class="lightbox-header-bar" style="padding:15px; border-bottom:2px solid #222; display:flex; justify-content:space-between; align-items:center;">
+                <span id="lightbox-label" style="font-weight:bold; font-size:18px;">SMLC Dispatches</span>
+                <button onclick="document.getElementById('portal-global-lightbox').style.display='none'" class="lightbox-close-btn" style="font-size:24px; cursor:pointer; background:none; border:none;">&times;</button>
+            </div>
+            
+            <div style="padding:20px; overflow-y:auto;">
+                <h3 id="lightbox-target-title" style="font-size:24px; margin-top:0;">Title</h3>
+                <div id="lightbox-target-date" style="font-size: 13px; color: #cc0000; font-weight: bold; margin-bottom: 12px;">Wire Sync Info</div>
+                <p id="lightbox-target-story" style="font-size:16px; line-height:1.6;">Story Body</p>
+                <div id="lightbox-img-wrapper" style="margin-top:15px; text-align:center;">
+                    <img id="lightbox-target-img" src="" alt="" style="max-width:100%; max-height:65vh; border-radius:4px; object-fit:contain;">
+                </div>
+            </div>
+            
+            <div class="lightbox-footer-bar" style="padding:15px; border-top:1px solid #ddd; text-align:center; font-size:12px; color:#666;">
+                <span>SUPPORT MY LOCAL COMMUNITY NETWORK &copy; 2026</span>
+                <div id="lightbox-action-row" style="display:none; margin-top:8px;">
+                    <a id="lightbox-target-link" href="#" target="_blank" rel="noopener" style="color: #0258A3; font-weight: bold;" data-ga-label="lightbox_open_source">Open Source &rarr;</a>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- MAIN CONTENT BODY -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 py-4 w-full">
-
-        <!-- DISCOVER CLAY COUNTY ILLINOIS SECTION -->
-        <div class="discover-clay-county-section space-y-4">
-            <div class="index-heading-row border-b-2 border-amber-500 pb-2">
-                <h2 class="text-2xl sm:text-3xl font-black text-amber-400 cinzel">
-                    <u>Discover Clay County Illinois</u>
-                </h2>
+    <!-- GLOBAL SITE FOOTER (All fields from Firebase) -->
+    <footer id="global-footer-container" class="site-global-footer-matrix">
+        <div class="footer-columns-grid">
+            <div>
+                <span class="footer-col-header">Phone Numbers:</span>
+                <div id="footer-phone-target">618-662-8341</div>
             </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-                <!-- Left Column: Glossy Box -->
-                <div class="lg:col-span-6 flex flex-col">
-                    <div class="glossy-wrapper flex-grow flex flex-col justify-between">
-                        <div>
-                            <div class="clay-county-title mb-2">
-                                <h1 class="yellow-text cinzel text-3xl sm:text-4xl font-extrabold">Clay County</h1>
-                            </div>
-                            <p class="sub-headline yellow-text text-sm font-semibold italic mb-4">Southeastern Illinois | Est. 1842</p>
-                            <div class="content-body text-slate-200 leading-relaxed text-sm sm:text-base space-y-3">
-                                <p class="yellow-text">
-                                    Nestled in southeastern Illinois, Clay County is a community rich in history and culture. With <strong>Louisville</strong> as its county seat, it boasts a population of 13,288. Known for its welcoming towns like <strong>Louisville, Flora, Xenia, Clay City, and Sailor Springs</strong>, Clay County offers a unique blend of small-town charm and economic potential.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="mission-text border-t-2 border-amber-500/50 pt-4 mt-6">
-                            <p class="yellow-text text-xs sm:text-sm italic">
-                                <strong>Our Mission:</strong> To highlight the county's significance and promote local business growth, ensuring a prosperous future for all residents.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right Column: Clay County Courthouse Image -->
-                <div class="lg:col-span-6 flex flex-col justify-between bg-slate-900 border-2 border-amber-500/50 rounded-2xl p-6 shadow-xl">
-                    <h2 class="courthouse-heading text-xl sm:text-2xl font-bold text-amber-300 cinzel mb-4 text-center">
-                        Clay County Court House, Louisville, IL
-                    </h2>
-                    <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/clay-county-courthouse.png" alt="Clay County Court House, Louisville, IL - Historic Civic Seat" class="courthouse-img w-full h-72 object-cover rounded-xl border border-amber-400/40 shadow-lg lightbox-clickable" onerror="this.onerror=null; this.src='https://placehold.co/800x500/1e293b/fbbf24?text=Clay+County+Courthouse';">
+            <div>
+                <span class="footer-col-header">Electronic Mail:</span>
+                <a id="footer-email-target" href="mailto:Scott.Robinson@skventuresigns.com" data-ga-label="footer_email">Scott.Robinson@skventuresigns.com</a>
+            </div>
+            <div>
+                <span class="footer-col-header">Mailing Address:</span>
+                <div id="footer-address-target">
+                    Clay County, Illinois
                 </div>
             </div>
         </div>
-
-        <!-- ORANGE MASTER SECTION: YOUR SOURCE FOR LOCAL NEWS -->
-        <div class="orange-master-section space-y-4 bg-gradient-to-r from-amber-950/80 to-stone-900/90 border-2 border-amber-600 rounded-2xl p-6 sm:p-8 shadow-2xl">
-            <div class="news-heading-bar border-b border-amber-500/40 pb-3">
-                <h2 class="text-2xl sm:text-3xl font-black text-amber-300 playfair flex items-center gap-2">
-                    <i class="fa-solid fa-newspaper text-rose-400"></i>
-                    <u>Your Source For Local News</u>
-                </h2>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-                <!-- Left: News Header Image Banner -->
-                <div class="lg:col-span-6 flex">
-                    <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/clay-county-news.png" alt="Clay County Local News Banner" class="w-full h-full min-h-[220px] object-cover rounded-xl border-2 border-amber-500/40 shadow-lg lightbox-clickable" onerror="this.onerror=null; this.src='https://placehold.co/800x400/1c1917/f59e0b?text=Clay+County+News';">
-                </div>
-
-                <!-- Right: Newsletter Signup Box -->
-                <div class="lg:col-span-6 flex flex-col">
-                    <div id="newsletter-form-container" class="clay-county-news-box flex-grow">
-                        <div class="clipping-tag-black">Official Signup</div>
-                        <div class="news-box-header mb-4">
-                            <h3>Newsletter Signup</h3>
-                            <span class="text-[10px] uppercase tracking-widest text-amber-900 font-extrabold block">GET LOCAL UPDATES DELIVERED TO YOUR INBOX</span>
-                        </div>
-
-                        <form id="newsletter-form" class="space-y-3">
-                            <input type="hidden" name="formType" value="newsletter">
-                            
-                            <div class="wf-row">
-                                <label class="wf-label" for="firstName">First Name</label>
-                                <input name="firstName" id="firstName" type="text" class="wf-field-input" required placeholder="Scott" />
-                            </div>
-                            <div class="wf-row">
-                                <label class="wf-label" for="lastName">Last Name</label>
-                                <input name="lastName" id="lastName" type="text" class="wf-field-input" required placeholder="Smith" />
-                            </div>
-                            <div class="wf-row">
-                                <label class="wf-label" for="email">Email</label>
-                                <input name="email" id="email" type="email" class="wf-field-input" required placeholder="scott@supportmylocalcommunity.com" />
-                            </div>
-
-                            <div class="wform-btn-wrap pt-2">
-                                <button type="submit" id="nl-submit-btn" class="clipping-btn w-full">Subscribe</button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <div id="thank-you-clipping" class="clay-county-news-box text-center flex-grow flex flex-col justify-center" style="display: none;">
-                        <div class="clipping-tag-black">Success!</div>
-                        <div class="news-box-header py-4">
-                            <i class="fa-solid fa-circle-check text-emerald-600 text-5xl mb-3"></i>
-                            <h3>Thank You!</h3>
-                            <p class="biz-description text-lg font-bold text-amber-950 mt-2">Thank You for Signing up for the Newsletter!</p>
-                            <p class="italic text-rose-900 mt-2 text-sm">Thank you for joining the Newsletter, we will be sending some good information soon !!</p>
-                            <button onclick="resetNewsletterForm()" class="mt-4 text-xs font-bold text-rose-800 underline uppercase">Subscribe another email</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- REALTIME FUEL SLIDE-THRU MONITOR -->
-        <div class="fuel-section rounded-2xl p-6 sm:p-8">
-            <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-                <div>
-                    <span class="px-2.5 py-0.5 rounded-full bg-orange-500/20 border border-orange-400/50 text-orange-300 text-xs font-bold uppercase tracking-widest">
-                        Realtime Fuel Monitor
-                    </span>
-                    <h2 class="cinzel text-2xl sm:text-3xl font-bold text-amber-300 flex items-center gap-2 mt-1">
-                        <i class="fa-solid fa-gas-pump text-orange-400"></i>
-                        Clay County Fuel Slide-Thru
-                    </h2>
-                    <p class="text-xs text-orange-200/80">Live price monitoring across Louisville, Flora, Xenia, Clay City, and Sailor Springs</p>
-                </div>
-
-                <button id="add-fuel-price-btn" class="px-4 py-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-bold hover:brightness-110 shadow-lg transition flex items-center gap-2">
-                    <i class="fa-solid fa-plus-circle"></i> Report Fuel Price
-                </button>
-            </div>
-
-            <!-- Town Slide Tabs -->
-            <div id="fuel-town-tabs" class="flex overflow-x-auto gap-2 pb-2 mb-4 scrollbar-none">
-                <button data-index="0" class="fuel-tab px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap bg-amber-500 text-stone-950 shadow-md">📍 Louisville</button>
-                <button data-index="1" class="fuel-tab px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap bg-stone-900/80 border border-orange-500/30 text-orange-200 hover:bg-orange-950">📍 Flora</button>
-                <button data-index="2" class="fuel-tab px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap bg-stone-900/80 border border-orange-500/30 text-orange-200 hover:bg-orange-950">📍 Xenia</button>
-                <button data-index="3" class="fuel-tab px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap bg-stone-900/80 border border-orange-500/30 text-orange-200 hover:bg-orange-950">📍 Clay City</button>
-                <button data-index="4" class="fuel-tab px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap bg-stone-900/80 border border-orange-500/30 text-orange-200 hover:bg-orange-950">📍 Sailor Springs</button>
-            </div>
-
-            <!-- Slide Display Box -->
-            <div class="relative bg-stone-950/90 border-2 border-orange-500/40 rounded-2xl p-6 sm:p-8 shadow-2xl overflow-hidden">
-                <div id="fuel-carousel-container">
-                    <!-- Dynamic slide content -->
-                </div>
-
-                <div class="flex items-center justify-between border-t border-orange-500/30 pt-4 mt-6">
-                    <div class="flex items-center gap-2 text-xs text-orange-300">
-                        <div class="pulse-dot"></div>
-                        <span>SMLC Realtime: <strong id="live-db-status" class="text-emerald-400">Connected</strong></span>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <button id="fuel-prev-btn" class="px-3 py-1.5 rounded-lg bg-orange-950 border border-orange-500/40 text-orange-200 text-xs font-bold hover:bg-orange-800 transition">
-                            <i class="fa-solid fa-arrow-left mr-1"></i> Prev Town
-                        </button>
-                        <button id="fuel-next-btn" class="px-3 py-1.5 rounded-lg bg-orange-950 border border-orange-500/40 text-orange-200 text-xs font-bold hover:bg-orange-800 transition">
-                            Next Town <i class="fa-solid fa-arrow-right ml-1"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- INTRICATE GRID CONTAINER (3 COLUMNS) -->
-        <div class="intricate-grid-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
-            
-            <!-- COLUMN 1: COMMUNITY BULLETIN (FIRESTORE smlc_events) -->
-            <div class="intricate-col space-y-6">
-                <div class="clay-county-news-box">
-                    <div class="clipping-tag-black">Community Bulletin</div>
-                    <div class="news-box-header mb-3">
-                        <h3>Local Events</h3>
-                        <span class="text-[10px] uppercase tracking-widest text-amber-900 font-extrabold block">Clay County Community Calendar</span>
-                    </div>
-
-                    <div id="direct-event-list" class="space-y-3 text-stone-900 max-h-[400px] overflow-y-auto pr-1">
-                        <p class="text-center italic text-xs py-4 text-amber-900">Loading events from smlc_events...</p>
-                    </div>
-
-                    <div class="text-center mt-4 pt-3 border-t border-amber-700/30">
-                        <button onclick="openSubmitEventModal()" class="text-xs font-black uppercase text-amber-900 underline hover:text-black">
-                            View Full Calendar & Submit Details
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- COLUMN 2: FEATURED BUSINESS SPOTLIGHT (REALTIME DATABASE sec_4_2) -->
-            <div class="intricate-col space-y-6">
-                <!-- Business Spotlight Box -->
-                <div class="clay-county-news-box spotlight-clipping" id="spotlight-card">
-                    <div class="clipping-tag-black">Featured</div>
-                    <div class="news-box-header mb-2 text-center">
-                        <h3>Business Spotlight</h3>
-                        <span class="text-[10px] uppercase tracking-widest text-amber-900 font-extrabold block">Supporting Local Clay County News</span>
-                    </div>
-                    
-                    <div class="spotlight-image-wrap my-3 rounded-lg overflow-hidden border border-amber-600/40 bg-slate-900">
-                        <img id="spotlight-img" src="" alt="S & K Venture Signs" referrerpolicy="no-referrer" class="w-full h-44 object-contain lightbox-clickable bg-amber-900/20">
-                    </div>
-
-                    <span id="spotlight-title" class="text-2xl font-black block text-center text-amber-950 mb-0.5">S & K Venture Signs</span>
-                    <span id="spotlight-location" class="text-xs uppercase font-extrabold text-rose-700 block text-center mb-3 tracking-wider">Clay County, Illinois</span>
-                    <p id="spotlight-desc" class="biz-description text-xs text-amber-900 text-center mb-4 leading-relaxed">
-                        Help advertis your business
-                    </p>
-                    <a id="spotlight-link" href="https://www.facebook.com/SKVenturesInc" target="_blank" class="clipping-btn w-full block">Visit Website</a>
-                </div>
-
-                <!-- What's Happening Clipping -->
-                <div class="clay-county-news-box">
-                    <div class="clipping-tag-black">Submit Event</div>
-                    <div class="news-box-header text-center mb-2">
-                        <h3>What's Happening?</h3>
-                        <span class="text-[10px] uppercase tracking-widest text-amber-900 font-extrabold block">Clay County Community Calendar</span>
-                    </div>
-                    <p class="biz-description text-xs italic text-center text-amber-950 mb-4">
-                        "Got a local fundraiser, school event, or church dinner coming up? Share your news with the community for free!"
-                    </p>
-                    <button onclick="openSubmitEventModal()" class="clipping-btn w-full block">Submit Your Event</button>
-                </div>
-            </div>
-
-            <!-- COLUMN 3: JOIN THE COMMUNITY & FACEBOOK GROUPS -->
-            <div class="intricate-col space-y-6">
-                <!-- SMLC Facebook Page -->
-                <div class="clay-county-news-box">
-                    <div class="clipping-tag-black">Social</div>
-                    <div class="spotlight-image-wrap rounded-lg overflow-hidden mb-3 border border-amber-600/40">
-                        <img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-banner.png" alt="Support My Local Community Facebook Community" class="w-full h-36 object-cover lightbox-clickable">
-                    </div>
-                    <div class="news-box-header text-center mb-2">
-                        <h3>Join the Community</h3>
-                        <span class="text-[10px] uppercase tracking-widest text-amber-900 font-extrabold block">Official Support My Local Community Facebook Page</span>
-                    </div>
-                    <span class="text-sm font-bold block text-center text-amber-950 mb-2">Support My Local Community</span>
-                    <p class="biz-description text-xs text-amber-900 text-center mb-4">
-                        Stay connected with neighbors. Discuss local news, share updates, and join the conversation.
-                    </p>
-                    <a href="https://www.facebook.com/SupportMyLocalCommunity" target="_blank" class="clipping-btn w-full block">Enter the Conversation</a>
-                </div>
-
-                <!-- Richards' News and Reviews -->
-                <div class="clay-county-news-box">
-                    <div class="clipping-tag-black">FB Group</div>
-                    <div class="news-box-header mb-2 text-center">
-                        <h3>Richards' News and Reviews</h3>
-                        <span class="text-[10px] uppercase tracking-widest text-rose-800 font-extrabold block">Join the Group</span>
-                    </div>
-                    <p class="biz-description text-xs italic text-amber-950 text-center mb-4">
-                        "Get involved in the conversation! Richard's News and Reviews Facebook Group."
-                    </p>
-                    <a href="https://www.facebook.com/groups/1069055660369865" target="_blank" class="clipping-btn w-full block">Visit Facebook Group</a>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- BLUE NEWS FRAME: CLAY COUNTY LOCAL NEWS (FIRESTORE local_news TAGGED CLAY COUNTY) -->
-        <div class="blue-news-frame">
-            <div class="flex flex-wrap items-center justify-between gap-4 mb-4 border-b border-blue-400/30 pb-3">
-                <div>
-                    <h3 class="cinzel text-xl sm:text-2xl font-bold text-sky-300 flex items-center gap-2">
-                        <i class="fa-solid fa-newspaper text-sky-400"></i>
-                        Clay County Local News Dispatches
-                    </h3>
-                    <p class="text-xs text-sky-200/80">Filtered exclusively for dispatches tagged under <strong>Clay County</strong></p>
-                </div>
-                <div id="news-tag-indicator" class="text-xs px-3 py-1 bg-sky-900/80 border border-sky-400/40 text-amber-300 rounded-full font-bold">
-                    Tag: Clay County
-                </div>
-            </div>
-
-            <!-- Dynamic Dispatches Container -->
-            <div id="clay-county-news-dispatches" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <p class="text-sky-200 text-center py-6 col-span-2 italic">Loading Clay County news dispatches...</p>
-            </div>
-        </div>
-
-        <!-- THANKFUL SECTION -->
-        <div class="thankful-section">
-            <div class="max-w-4xl mx-auto space-y-4">
-                <p class="text-sm sm:text-base leading-relaxed">
-                    We are very Thankful and Blessed for our Customers who allow us to advertise their Business to the Community. We hope to be of Service, not only to the Large Corporations, but also to the Small Business’ in the area. A Large Corporation once started out as a small business, so our hope is to help those Small Business’ we serve reach the fullest potential they desire. You will never know what we are able to do for Your Business unless you ask. I hope to hear from you.
-                </p>
-                <p class="text-xs sm:text-sm font-bold text-amber-300">
-                    For questions or comments about this site please email 
-                    <a href="mailto:info@supportmylocalcommunity.com" class="underline underline-offset-4 hover:text-white">info@supportmylocalcommunity.com</a>
-                </p>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- GLOBAL SITE FOOTER -->
-    <footer class="site-footer">
-        <div class="max-w-7xl mx-auto space-y-2">
-            <p>All Content, Photographs, Writings, Letters and Documents &copy; 2026 - Support My Local Community</p>
-            <p>All Rights Reserved - <a href="https://www.skventuresigns.com" target="_blank" class="text-amber-400 font-bold hover:underline">S&K Ventures</a></p>
+        <div style="border-top:1px solid #333; padding-top:16px;">
+            <p id="footer-copy-target">&copy; 2026 Clay County Community Portal. All rights reserved.</p>
+            <p id="footer-build-version-stamp">
+                <strong>System Build Version:</strong> v1.3.3 | <strong>Active Version:</strong> 2026-10-01_18:15
+            </p>
         </div>
     </footer>
 
-    <!-- SMLC DISPATCHES NEWSPAPER MODAL (MATCHING image_3d187b.jpg) -->
-    <div id="dispatch-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white text-stone-900 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative p-6 sm:p-8 border-2 border-stone-300">
-            <div class="flex items-center justify-between border-b border-stone-300 pb-2 mb-4">
-                <span class="text-xs font-sans font-bold uppercase tracking-wider text-stone-600">SMLC Dispatches</span>
-                <button id="dispatch-modal-close" class="text-stone-500 hover:text-stone-900 text-2xl font-sans font-bold px-2 leading-none" aria-label="Close Modal">&times;</button>
-            </div>
-            
-            <h2 id="dispatch-modal-title" class="text-2xl sm:text-3xl font-black text-stone-900 uppercase tracking-tight mb-2 leading-tight playfair">
-                Dispatch Title
-            </h2>
-            
-            <div id="dispatch-modal-date" class="text-rose-700 font-sans font-extrabold text-xs uppercase tracking-wider mb-4">
-                August 3, 2026
-            </div>
-            
-            <div id="dispatch-modal-body" class="text-stone-800 text-sm sm:text-base leading-relaxed space-y-4 font-serif">
-                <!-- Article content rendered dynamically -->
-            </div>
-
-            <div id="dispatch-modal-img-wrap" class="mt-6 hidden text-center border-t border-stone-200 pt-4">
-                <img id="dispatch-modal-img" src="" alt="Dispatch Image" class="w-full max-h-96 object-cover rounded border border-stone-300 shadow-md mb-2">
-                <span id="dispatch-modal-caption" class="text-[10px] font-sans uppercase tracking-widest text-stone-500 block font-bold">SUPPORT MY LOCAL COMMUNITY NETWORK &copy; 2026</span>
-            </div>
-
-            <div id="dispatch-modal-link-wrap" class="mt-4 pt-3 border-t border-stone-200 text-right font-sans hidden">
-                <a id="dispatch-modal-link" href="#" target="_blank" class="text-xs font-bold text-rose-800 underline uppercase hover:text-stone-900">Open Source &rarr;</a>
-            </div>
-        </div>
-    </div>
-
-    <!-- GLOBAL UNIVERSAL LIGHTBOX MODAL -->
-    <div id="universal-lightbox" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border-2 border-amber-500 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative p-6 text-slate-100 flex flex-col gap-4">
-            <button id="lightbox-close-btn" class="absolute top-4 right-4 text-amber-400 hover:text-white bg-slate-800/80 w-10 h-10 rounded-full flex items-center justify-center border border-amber-500/40 text-xl z-10" aria-label="Close Lightbox">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-
-            <!-- Lightbox Image Slot -->
-            <div id="lightbox-img-wrap" class="w-full flex justify-center hidden">
-                <img id="lightbox-img" src="" alt="" class="max-h-[60vh] object-contain rounded-xl border border-amber-500/40 shadow-xl">
-            </div>
-
-            <!-- Lightbox Header & Title -->
-            <div id="lightbox-header">
-                <span id="lightbox-badge" class="px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/50 text-amber-300 text-xs font-bold uppercase tracking-widest inline-block mb-1">
-                    LightBox View
-                </span>
-                <h3 id="lightbox-title" class="cinzel text-2xl font-bold text-amber-300">
-                    Title Placeholder
-                </h3>
-                <p id="lightbox-sub" class="text-xs text-rose-300 italic mt-1 hidden"></p>
-            </div>
-
-            <!-- Lightbox Content Body -->
-            <div id="lightbox-body" class="text-slate-200 text-sm leading-relaxed space-y-3 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
-                Content goes here...
-            </div>
-
-            <!-- Lightbox Alt / Caption Display -->
-            <div id="lightbox-alt-wrap" class="bg-amber-950/80 border border-amber-500/40 p-3 rounded-xl text-xs text-amber-200 italic flex items-center gap-2">
-                <i class="fa-solid fa-info-circle text-amber-400 text-base flex-shrink-0"></i>
-                <span id="lightbox-alt-text">Alt image information...</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL FOR REPORTING FUEL PRICE -->
-    <div id="fuel-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border-2 border-orange-500/50 rounded-2xl p-6 max-w-md w-full shadow-2xl relative text-slate-100">
-            <button id="close-modal-btn" class="absolute top-4 right-4 text-slate-400 hover:text-white" aria-label="Close Fuel Form">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-            <h3 class="cinzel text-xl font-bold text-amber-400 mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-gas-pump text-orange-400"></i> Report Local Fuel Price
-            </h3>
-            <form id="fuel-report-form" class="space-y-4">
-                <div>
-                    <label class="block text-xs uppercase font-bold text-amber-300 mb-1" for="fuel-town">Town</label>
-                    <select id="fuel-town" class="wf-field-input" style="background:#1e293b; color:#fff;" required>
-                        <option value="Louisville">Louisville</option>
-                        <option value="Flora">Flora</option>
-                        <option value="Xenia">Xenia</option>
-                        <option value="Clay City">Clay City</option>
-                        <option value="Sailor Springs">Sailor Springs</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs uppercase font-bold text-amber-300 mb-1" for="fuel-station">Station Name</label>
-                    <input id="fuel-station" type="text" class="wf-field-input" placeholder="e.g. Clay County Energy Center" required />
-                </div>
-                <div>
-                    <label class="block text-xs uppercase font-bold text-amber-300 mb-1" for="fuel-price">Price Per Gallon ($)</label>
-                    <input id="fuel-price" type="number" step="0.01" min="1.00" max="10.00" class="wf-field-input" placeholder="3.49" required />
-                </div>
-                <button type="submit" class="w-full clipping-btn text-center mt-2">Submit Price Report</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL FOR SUBMITTING COMMUNITY EVENT -->
-    <div id="event-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border-2 border-amber-500/50 rounded-2xl p-6 max-w-md w-full shadow-2xl relative text-slate-100">
-            <button id="close-event-modal-btn" class="absolute top-4 right-4 text-slate-400 hover:text-white" aria-label="Close Event Form">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-            <h3 class="cinzel text-xl font-bold text-amber-400 mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-calendar-plus text-amber-400"></i> Submit Community Event
-            </h3>
-            <form id="event-submit-form" class="space-y-3">
-                <div>
-                    <label class="block text-xs uppercase font-bold text-amber-300 mb-1" for="event-name">Event Name</label>
-                    <input id="event-name" type="text" class="wf-field-input" placeholder="e.g. Clay County Fish Fry" required />
-                </div>
-                <div>
-                    <label class="block text-xs uppercase font-bold text-amber-300 mb-1" for="event-location">Location / Address</label>
-                    <input id="event-location" type="text" class="wf-field-input" placeholder="e.g. 929 Stacy Burk Dr, Flora, IL" required />
-                </div>
-                <div>
-                    <label class="block text-xs uppercase font-bold text-amber-300 mb-1" for="event-date">Event Date & Time</label>
-                    <input id="event-date" type="text" class="wf-field-input" placeholder="e.g. Mon, Aug 1, 8:00 AM" required />
-                </div>
-                <div>
-                    <label class="block text-xs uppercase font-bold text-amber-300 mb-1" for="event-desc">Event Description</label>
-                    <textarea id="event-desc" class="wf-field-input" rows="3" placeholder="Mark your calendars for our event..."></textarea>
-                </div>
-                <button type="submit" class="w-full clipping-btn text-center mt-2">Post Event to Calendar</button>
-            </form>
-        </div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg",
-            authDomain: "smlc-fuel-monitor.firebaseapp.com",
-            databaseURL: "https://smlc-fuel-monitor-default-rtdb.firebaseio.com",
-            projectId: "smlc-fuel-monitor",
-            storageBucket: "smlc-fuel-monitor.firebasestorage.app",
-            messagingSenderId: "22397440085",
-            appId: "1:22397440085:web:c00e716858ed58895bc4dc",
-            measurementId: "G-687D605K75"
-        };
-
-        // Initialize Firebase services
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const rtdb = getDatabase(app);
-        const appId = firebaseConfig.appId;
-        let currentUser = null;
-
-        function decodeHtml(html) {
-            if (!html) return '';
-            const txt = document.createElement('textarea');
-            txt.innerHTML = html;
-            return txt.value;
-        }
-
-        window.openDispatchModal = function(title, dateStr, locationStr, fullStory, imgSrc, linkUrl) {
-            const cleanTitle = decodeHtml(title).replace(/<[^>]*>?/gm, '');
-            const cleanStory = decodeHtml(fullStory).replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>?/gm, '');
-            
-            document.getElementById('dispatch-modal-title').textContent = cleanTitle;
-            document.getElementById('dispatch-modal-date').textContent = `${dateStr}${locationStr ? ' | ' + locationStr : ''}`;
-            
-            const paragraphs = cleanStory.split(/\n+/).filter(p => p.trim().length > 0);
-            const formattedStory = paragraphs.map(p => `<p class="mb-3 leading-relaxed text-stone-800 font-serif text-sm sm:text-base">${p.trim()}</p>`).join('');
-            
-            document.getElementById('dispatch-modal-body').innerHTML = formattedStory || `<p class="text-stone-800 text-sm sm:text-base">${cleanStory}</p>`;
-
-            const imgWrap = document.getElementById('dispatch-modal-img-wrap');
-            const imgEl = document.getElementById('dispatch-modal-img');
-            if (imgSrc && imgSrc.trim() !== '' && !imgSrc.includes('clay-county-news.png')) {
-                imgEl.src = imgSrc;
-                imgWrap.classList.remove('hidden');
-            } else {
-                imgWrap.classList.add('hidden');
-            }
-
-            const linkWrap = document.getElementById('dispatch-modal-link-wrap');
-            const linkEl = document.getElementById('dispatch-modal-link');
-            if (linkUrl && linkUrl !== '#' && linkUrl.trim() !== '') {
-                linkEl.href = linkUrl;
-                linkWrap.classList.remove('hidden');
-            } else {
-                linkWrap.classList.add('hidden');
-            }
-
-            const dispatchModal = document.getElementById('dispatch-modal');
-            if (dispatchModal) dispatchModal.classList.remove('hidden');
-        };
-
-        window.openLightbox = function(options) {
-            const { title, badge, sub, content, imgSrc, altText } = options || {};
-            const lightbox = document.getElementById('universal-lightbox');
-            if (!lightbox) return;
-
-            document.getElementById('lightbox-title').textContent = title || 'Details';
-            
-            const badgeEl = document.getElementById('lightbox-badge');
-            if (badge) {
-                badgeEl.textContent = badge;
-                badgeEl.classList.remove('hidden');
-            } else {
-                badgeEl.classList.add('hidden');
-            }
-
-            const subEl = document.getElementById('lightbox-sub');
-            if (sub && subEl) {
-                subEl.textContent = sub;
-                subEl.classList.remove('hidden');
-            } else if (subEl) {
-                subEl.classList.add('hidden');
-            }
-
-            const bodyEl = document.getElementById('lightbox-body');
-            if (bodyEl) {
-                bodyEl.innerHTML = content || '';
-            }
-
-            const imgWrap = document.getElementById('lightbox-img-wrap');
-            const imgEl = document.getElementById('lightbox-img');
-            if (imgSrc && imgEl && imgWrap) {
-                imgEl.src = imgSrc;
-                imgWrap.classList.remove('hidden');
-            } else if (imgWrap) {
-                imgWrap.classList.add('hidden');
-            }
-
-            const altWrap = document.getElementById('lightbox-alt-wrap');
-            const altTextEl = document.getElementById('lightbox-alt-text');
-            if (altText && altTextEl && altWrap) {
-                altTextEl.textContent = altText;
-                altWrap.classList.remove('hidden');
-            } else if (altWrap) {
-                altWrap.classList.add('hidden');
-            }
-
-            lightbox.classList.remove('hidden');
-        };
-
-        // Event Listeners for Closing Modals
-        document.getElementById('dispatch-modal-close')?.addEventListener('click', () => {
-            document.getElementById('dispatch-modal')?.classList.add('hidden');
-        });
-
-        document.getElementById('lightbox-close-btn')?.addEventListener('click', () => {
-            document.getElementById('universal-lightbox')?.classList.add('hidden');
-        });
-
-        // Global Click Listener for Lightbox Images
-        document.addEventListener('click', (e) => {
-            const target = e.target.closest('.lightbox-clickable');
-            if (target) {
-                const imgSrc = target.src || target.getAttribute('src');
-                const title = target.alt || target.getAttribute('alt') || 'Clay County View';
-                const altText = target.getAttribute('data-alt') || target.alt || '';
-                window.openLightbox({
-                    title: title,
-                    badge: 'Media Preview',
-                    imgSrc: imgSrc,
-                    altText: altText
-                });
-            }
-        });
-
-        function loadBusinessSpotlight() {
-            const spotlightRef = ref(rtdb, 'master_county_data/global/sections/sec_4_2');
-            onValue(spotlightRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-
-                    const name = decodeHtml(data.name?.content || (typeof data.name === 'string' ? data.name : 'S & K Venture Signs'));
-                    const desc = decodeHtml(data.description?.content || (typeof data.description === 'string' ? data.description : 'Help advertis your business'));
-                    const websiteUrl = data.website?.url || (typeof data.website === 'string' ? data.website : 'https://www.facebook.com/SKVenturesInc');
-                    
-                    let rawImg = '';
-                    let altMsg = 'S & K Venture Signs';
-
-                    if (data.image1) {
-                        if (typeof data.image1 === 'object') {
-                            rawImg = data.image1.image1 || data.image1.url || data.image1.src || '';
-                            if (data.image1.alt) {
-                                altMsg = decodeHtml(data.image1.alt);
-                            }
-                        } else if (typeof data.image1 === 'string') {
-                            rawImg = data.image1;
-                        }
-                    }
-
-                    document.getElementById('spotlight-title').textContent = name;
-                    document.getElementById('spotlight-desc').textContent = desc;
-                    document.getElementById('spotlight-link').href = websiteUrl;
-
-                    const imgEl = document.getElementById('spotlight-img');
-                    imgEl.alt = name;
-                    imgEl.setAttribute('data-alt', altMsg);
-
-                    if (rawImg && rawImg.trim().length > 0) {
-                        let cleanUrl = rawImg.trim();
-                        let fileId = '';
-
-                        // Extract Google Drive File ID if present
-                        if (cleanUrl.includes('/d/')) {
-                            fileId = cleanUrl.split('/d/')[1]?.split('/')[0]?.split('?')[0]?.split('=')[0];
-                        } else if (cleanUrl.includes('id=')) {
-                            fileId = cleanUrl.split('id=')[1]?.split('&')[0];
-                        }
-
-                        if (fileId) {
-                            // Primary attempt using uc export
-                            imgEl.src = `https://drive.google.com/uc?export=view&id=${fileId}`;
-                            imgEl.onerror = function() {
-                                // Fallback 1: thumbnail format
-                                if (this.src.includes('uc?export=view')) {
-                                    this.src = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
-                                } 
-                                // Fallback 2: lh3 usercontent format
-                                else if (this.src.includes('thumbnail')) {
-                                    this.src = `https://lh3.googleusercontent.com/d/${fileId}=s1000`;
-                                } 
-                                // Fallback 3: raw URL from database
-                                else if (this.src !== cleanUrl) {
-                                    this.src = cleanUrl;
-                                }
-                            };
-                        } else {
-                            imgEl.src = cleanUrl;
-                        }
-                    }
-                }
-            }, (error) => {
-                console.warn("RTDB sec_4_2 snapshot notice:", error);
-            });
-        }
-
-        function loadNavigationMenu() {
-            const menuRef = ref(rtdb, 'master_county_data/global/menu');
-            onValue(menuRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    let items = [];
-
-                    // Robust parser for different potential Firebase menu structures
-                    if (Array.isArray(data)) {
-                        items = data.filter(Boolean);
-                    } else if (typeof data === 'object' && data !== null) {
-                        // Check if it's a simple Key-Value pair store (e.g. { "Home": "index.html" })
-                        const values = Object.values(data);
-                        const isSimpleMap = values.length > 0 && values.every(v => typeof v === 'string');
-                        
-                        if (isSimpleMap) {
-                            items = Object.entries(data).map(([key, val]) => ({ name: key, url: val }));
-                        } else if (data.items) {
-                            items = Array.isArray(data.items) ? data.items : Object.values(data.items);
-                        } else {
-                            // Assume it's an object containing objects (standard Firebase push keys)
-                            items = Object.keys(data).map(key => {
-                                const val = data[key];
-                                return typeof val === 'object' ? { ...val, _fallbackKey: key } : { name: key, url: val };
-                            });
-                        }
-                    }
-
-                    if (items.length > 0) {
-                        const navLinksContainer = document.getElementById('nav-links');
-                        const mobileMenuContainer = document.getElementById('mobile-menu');
-
-                        if (navLinksContainer && mobileMenuContainer) {
-                            navLinksContainer.innerHTML = '';
-                            mobileMenuContainer.innerHTML = '';
-
-                            const currentPath = window.location.pathname.split('/').pop() || 'index.html';
-
-                            // Sort items if they have an 'order' property
-                            items.sort((a, b) => (a.order || 0) - (b.order || 0));
-
-                            items.forEach((item, index) => {
-                                if (!item) return;
-                                
-                                // Aggressively find the label and URL regardless of field names
-                                const labelText = item.title || item.name || item.label || item.text || item.content || item._fallbackKey || `Link ${index+1}`;
-                                const label = decodeHtml(labelText);
-                                
-                                let url = item.url || item.link || item.href || item.path || item.value || '#';
-                                const target = item.target || (url.startsWith('http') ? '_blank' : '_self');
-                                
-                                const isActive = url.includes(currentPath) || (currentPath === 'index.html' && (url === 'index.html' || url === '/'));
-
-                                // Desktop Link
-                                const desktopA = document.createElement('a');
-                                desktopA.href = url;
-                                desktopA.textContent = label;
-                                desktopA.className = `nav-link ${isActive ? 'active' : ''}`;
-                                if (target === '_blank') desktopA.target = '_blank';
-                                navLinksContainer.appendChild(desktopA);
-
-                                // Mobile Link
-                                const mobileA = document.createElement('a');
-                                mobileA.href = url;
-                                mobileA.textContent = label;
-                                mobileA.className = `block nav-link ${isActive ? 'active' : ''}`;
-                                if (target === '_blank') mobileA.target = '_blank';
-                                mobileMenuContainer.appendChild(mobileA);
-                            });
-                        }
-                    }
-                }
-            }, (error) => {
-                console.warn("RTDB menu snapshot notice:", error);
-            });
-        }
-
-        function renderEventItem(name, location, dateStr, fullDesc, itemData = {}) {
-            const list = document.getElementById('direct-event-list');
-            const item = document.createElement('div');
-            item.className = 'py-3 border-b border-amber-800/30 text-xs space-y-1';
-
-            const cleanName = decodeHtml(name).replace(/<[^>]*>?/gm, '');
-            const cleanLoc = decodeHtml(location).replace(/<[^>]*>?/gm, '');
-            const cleanDesc = decodeHtml(fullDesc).replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>?/gm, '');
-            
-            // Check for image URL from any potential field name
-            const eventImg = itemData.image || itemData.img || itemData.imageUrl || itemData.photo || itemData.pic || '';
-
-            const isLong = cleanDesc.length > 120 || eventImg !== '';
-            const shortDesc = cleanDesc.length > 120 ? cleanDesc.substring(0, 120) + '...' : cleanDesc;
-
-            const gCalLink = itemData.subscribeGoogle || `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(cleanName)}&details=${encodeURIComponent(cleanDesc)}&location=${encodeURIComponent(cleanLoc)}`;
-            
-            let icsLink = itemData.subscribeIcal || itemData.subscribeIcalUrl || itemData.ics || '#';
-            if (!icsLink || icsLink === '#') {
-                const icsContent = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${cleanName}\nLOCATION:${cleanLoc}\nDESCRIPTION:${cleanDesc}\nEND:VEVENT\nEND:VCALENDAR`;
-                icsLink = "data:text/calendar;charset=utf8," + encodeURIComponent(icsContent);
-            }
-
-            item.innerHTML = `
-                <div class="text-rose-800 font-black uppercase text-[11px] flex items-center gap-1">
-                    <i class="fa-solid fa-calendar-day text-[10px]"></i> ${dateStr}
-                </div>
-                ${eventImg ? `<img src="${eventImg}" alt="${cleanName}" class="w-full h-32 object-cover rounded-lg my-1 border border-amber-600/40 lightbox-clickable shadow-md" onerror="this.style.display='none';">` : ''}
-                <div class="font-extrabold text-amber-950 text-sm leading-snug">${cleanName}</div>
-                <div class="text-amber-900 font-semibold text-[11px]"><i class="fa-solid fa-location-dot text-rose-800"></i> ${cleanLoc}</div>
-                ${shortDesc ? `<p class="text-stone-800 text-[11px] leading-relaxed pt-1">${shortDesc}</p>` : ''}
-                <div class="pt-1 flex items-center gap-2 flex-wrap">
-                    ${isLong ? `
-                        <button class="read-more-event-btn text-[11px] text-rose-900 font-extrabold underline hover:text-black">
-                            Read More
-                        </button>
-                        <span class="text-stone-400">|</span>
-                    ` : ''}
-                    <a href="${gCalLink}" target="_blank" class="text-[10px] font-black text-rose-900 uppercase underline">Google</a>
-                    <span class="text-stone-400">|</span>
-                    <a href="${icsLink}" download="event.ics" class="text-[10px] font-black text-rose-900 uppercase underline">iCal / Apple</a>
-                </div>
-            `;
-
-            if (isLong) {
-                item.querySelector('.read-more-event-btn')?.addEventListener('click', () => {
-                    const formattedDescHtml = cleanDesc.split(/\n+/).map(p => `<p class="mb-2 leading-relaxed text-slate-200 text-sm">${p.trim()}</p>`).join('');
-                    openLightbox({
-                        title: cleanName,
-                        badge: 'Community Event Details',
-                        sub: `${dateStr} | ${cleanLoc}`,
-                        imgSrc: eventImg,
-                        content: `
-                            <div class="space-y-4">
-                                <div class="bg-amber-950/50 p-3 rounded-lg border border-amber-500/30">
-                                    <p class="text-xs text-amber-300 font-bold mb-1"><i class="fa-solid fa-clock"></i> ${dateStr}</p>
-                                    <p class="text-xs text-slate-300"><i class="fa-solid fa-location-dot text-rose-400"></i> ${cleanLoc}</p>
-                                </div>
-                                <div class="p-4 bg-slate-950 rounded-xl border border-slate-800 leading-relaxed max-h-60 overflow-y-auto">
-                                    ${formattedDescHtml || '<p class="text-xs text-slate-400 italic">No additional description provided.</p>'}
-                                </div>
-                                <div class="flex items-center gap-3 pt-2">
-                                    <a href="${gCalLink}" target="_blank" class="px-4 py-2 bg-rose-700 text-white font-bold rounded-lg text-xs uppercase hover:bg-rose-600 transition">Add to Google Calendar</a>
-                                    <a href="${icsLink}" download="event.ics" class="px-4 py-2 bg-slate-700 text-amber-300 font-bold rounded-lg text-xs uppercase hover:bg-slate-600 transition">Apple / iCal</a>
-                                </div>
-                            </div>
-                        `
-                    });
-                });
-            }
-
-            list.appendChild(item);
-        }
-
-        function setupCommunityEventsListener() {
-            const eventsRef = collection(db, 'smlc_events');
-            onSnapshot(eventsRef, (snapshot) => {
-                const list = document.getElementById('direct-event-list');
-                if (!list) return;
-
-                if (snapshot.empty) {
-                    list.innerHTML = '<p class="text-center italic text-xs py-4 text-amber-900">No events scheduled.</p>';
-                    return;
-                }
-
-                const events = [];
-                snapshot.docs.forEach(docSnap => {
-                    events.push({ id: docSnap.id, ...docSnap.data() });
-                });
-
-                list.innerHTML = '';
-                events.forEach(item => {
-                    renderEventItem(
-                        item.title || item.name || 'Community Event',
-                        item.addr || item.location || 'Clay County, IL',
-                        item.displayDate || item.date || 'Upcoming',
-                        item.desc || item.details || '',
-                        item
-                    );
-                });
-            }, (error) => {
-                console.warn("Firestore smlc_events notice:", error);
-                const list = document.getElementById('direct-event-list');
-                if (list) list.innerHTML = '<p class="text-center italic text-xs py-4 text-amber-900">Unable to load live events.</p>';
-            });
-        }
-
-        function setupLocalNewsListener() {
-            const newsRef = collection(db, 'local_news');
-            onSnapshot(newsRef, (snapshot) => {
-                const container = document.getElementById('clay-county-news-dispatches');
-                if (snapshot.empty) {
-                    renderFallbackNews();
-                    return;
-                }
-
-                const clayCountyArticles = [];
-                snapshot.docs.forEach(docSnap => {
-                    const data = docSnap.data();
-                    
-                    const tag = (data.location || data.tag || '').toString().toLowerCase();
-                    const tags = Array.isArray(data.tags) ? data.tags.map(t => t.toString().toLowerCase()) : [];
-                    
-                    if (tag.includes('clay county') || tags.includes('clay county')) {
-                        clayCountyArticles.push(data);
-                    }
-                });
-
-                if (clayCountyArticles.length === 0) {
-                    renderFallbackNews();
-                    return;
-                }
-
-                // Sort articles: Newest First to Oldest Last
-                clayCountyArticles.sort((a, b) => {
-                    const timeA = new Date(a.date || a.timestamp || 0).getTime();
-                    const timeB = new Date(b.date || b.timestamp || 0).getTime();
-                    return timeB - timeA;
-                });
-
-                container.innerHTML = '';
-                clayCountyArticles.forEach(art => {
-                    const title = decodeHtml(art.title || 'Clay County News').replace(/<[^>]*>?/gm, '');
-                    const fullStory = art.full_story || art.summary || art.content || '';
-                    const cleanStoryText = decodeHtml(fullStory).replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>?/gm, '');
-
-                    let dateStr = art.date || 'Jul 29, 2024';
-                    try {
-                        const d = new Date(art.date);
-                        if (!isNaN(d.getTime())) {
-                            dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                        }
-                    } catch(e) {}
-
-                    const locationStr = decodeHtml(art.location || 'Clay County');
-                    const imgSrc = art.image || 'https://raw.githubusercontent.com/skventuresigns-design/media/main/clay-county-news.png';
-                    const linkUrl = art.link || '#';
-
-                    const isLong = cleanStoryText.length > 150;
-                    const shortStory = isLong ? cleanStoryText.substring(0, 150) + '...' : cleanStoryText;
-
-                    const card = document.createElement('div');
-                    card.className = 'news-paper-card space-y-3 flex flex-col justify-between';
-                    card.innerHTML = `
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between border-b border-amber-700/30 pb-1">
-                                <span class="text-[10px] uppercase font-extrabold text-rose-800 tracking-wider"><i class="fa-regular fa-clock"></i> ${dateStr}</span>
-                                <span class="text-[10px] uppercase font-extrabold bg-amber-900/20 px-2 py-0.5 rounded text-amber-900">${locationStr}</span>
-                            </div>
-                            <h4 class="text-base font-extrabold text-amber-950 playfair leading-snug">${title}</h4>
-                            <p class="text-xs text-stone-900 leading-relaxed">${shortStory}</p>
-                        </div>
-                        <div class="pt-2 border-t border-amber-800/20 flex items-center justify-between">
-                            <button class="news-read-more-btn text-xs font-black text-rose-900 hover:text-black underline uppercase flex items-center gap-1">
-                                <span>Read More</span>
-                                <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                            </button>
-                        </div>
-                    `;
-
-                    const btn = card.querySelector('.news-read-more-btn');
-                    btn.addEventListener('click', () => {
-                        openDispatchModal(title, dateStr, locationStr, fullStory, imgSrc, linkUrl);
-                    });
-
-                    container.appendChild(card);
-                });
-            }, (error) => {
-                console.warn("Firestore local_news notice:", error);
-                renderFallbackNews();
-            });
-        }
-
-        function renderFallbackNews() {
-            const container = document.getElementById('clay-county-news-dispatches');
-            container.innerHTML = `
-                <div class="news-paper-card space-y-3 flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between border-b border-amber-700/30 pb-1 mb-2">
-                            <span class="text-[10px] uppercase font-extrabold text-rose-800 tracking-wider">Jul 29, 2024</span>
-                            <span class="text-[10px] uppercase font-extrabold bg-amber-900/20 px-2 py-0.5 rounded text-amber-900">Clay County</span>
-                        </div>
-                        <h4 class="text-base font-extrabold text-amber-950 playfair">William 'Bill' Edward Holman Obituary</h4>
-                        <p class="text-xs text-stone-900 leading-relaxed mt-2">Obituaries: Community: Funeral Home in Flora. To share a condolence or memory, visit the local dispatches directory.</p>
-                    </div>
-                </div>
-            `;
-        }
-
-        // --- TOP BANNER MOVING SLIDESHOW LOGIC ---
-        let currentSlideIndex = 0;
-        const totalSlides = 3;
-        const heroTrack = document.getElementById('hero-slideshow-track');
-        const heroDots = document.querySelectorAll('.hero-dot');
-
-        function goToSlide(index) {
-            currentSlideIndex = (index + totalSlides) % totalSlides;
-            heroTrack.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
-            heroDots.forEach((dot, idx) => {
-                dot.className = idx === currentSlideIndex 
-                    ? "hero-dot w-2.5 h-2.5 rounded-full bg-amber-400" 
-                    : "hero-dot w-2.5 h-2.5 rounded-full bg-slate-500";
-            });
-        }
-
-        document.getElementById('hero-slide-next').addEventListener('click', () => goToSlide(currentSlideIndex + 1));
-        document.getElementById('hero-slide-prev').addEventListener('click', () => goToSlide(currentSlideIndex - 1));
-
-        heroDots.forEach(dot => {
-            dot.addEventListener('click', (e) => {
-                const index = parseInt(e.target.getAttribute('data-slide'));
-                goToSlide(index);
-            });
-        });
-
-        setInterval(() => {
-            goToSlide(currentSlideIndex + 1);
-        }, 4000);
-
-        // --- FUEL SLIDE-THRU CAROUSEL ---
-        const defaultFuelData = [
-            { town: 'Louisville', station: 'Louisville Main Stop Gas', price: 3.45, updated: '5m ago', trend: 'stable' },
-            { town: 'Flora', station: 'Flora Energy Station', price: 3.39, updated: '12m ago', trend: 'down' },
-            { town: 'Xenia', station: 'Xenia Express Fuel', price: 3.49, updated: '25m ago', trend: 'up' },
-            { town: 'Clay City', station: 'Clay City Oil & Gas', price: 3.42, updated: '1h ago', trend: 'stable' },
-            { town: 'Sailor Springs', station: 'Springs Country Store', price: 3.55, updated: '2h ago', trend: 'stable' }
-        ];
-
-        let currentFuelList = [...defaultFuelData];
-        let currentFuelIndex = 0;
-
-        function renderFuelCarousel() {
-            const container = document.getElementById('fuel-carousel-container');
-            const data = currentFuelList[currentFuelIndex] || currentFuelList[0];
-
-            let trendBadge = `<span class="text-emerald-400 bg-emerald-950/80 border border-emerald-500/30 px-2.5 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-minus"></i> Stable</span>`;
-            if (data.trend === 'down') {
-                trendBadge = `<span class="text-emerald-400 bg-emerald-950/80 border border-emerald-500/30 px-2.5 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-arrow-down mr-1"></i> -$0.05 (Down)</span>`;
-            } else if (data.trend === 'up') {
-                trendBadge = `<span class="text-rose-400 bg-rose-950/80 border border-rose-500/30 px-2.5 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-arrow-up mr-1"></i> +$0.04 (Up)</span>`;
-            }
-
-            container.innerHTML = `
-                <div class="space-y-4">
-                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-orange-500/30 pb-4">
-                        <div>
-                            <span class="text-xs uppercase font-extrabold tracking-widest text-orange-400 block mb-1">Municipal Fuel Station</span>
-                            <h3 class="text-3xl font-black text-amber-300 cinzel">${data.town}, IL</h3>
-                        </div>
-                        <div>${trendBadge}</div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center py-2">
-                        <div>
-                            <span class="text-xs text-orange-200/70 uppercase font-bold block mb-1">Station Name</span>
-                            <p class="text-xl font-bold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-store text-amber-400"></i> ${data.station}
-                            </p>
-                            <span class="text-xs text-stone-400 mt-2 block"><i class="fa-regular fa-clock"></i> Reported: ${data.updated}</span>
-                        </div>
-
-                        <div class="bg-gradient-to-r from-orange-950 to-stone-900 border border-orange-500/40 p-5 rounded-xl text-right">
-                            <span class="text-xs uppercase font-bold text-orange-300 block mb-1">Regular Unleaded / Gallon</span>
-                            <div class="text-4xl sm:text-5xl font-black text-amber-400 font-mono tracking-tight">$${parseFloat(data.price).toFixed(2)}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            document.querySelectorAll('.fuel-tab').forEach((tab, idx) => {
-                if (idx === currentFuelIndex) {
-                    tab.className = "fuel-tab px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap bg-amber-500 text-stone-950 shadow-md";
-                } else {
-                    tab.className = "fuel-tab px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap bg-stone-900/80 border border-orange-500/30 text-orange-200 hover:bg-orange-950";
-                }
-            });
-        }
-
-        document.getElementById('fuel-next-btn').addEventListener('click', () => {
-            currentFuelIndex = (currentFuelIndex + 1) % currentFuelList.length;
-            renderFuelCarousel();
-        });
-
-        document.getElementById('fuel-prev-btn').addEventListener('click', () => {
-            currentFuelIndex = (currentFuelIndex - 1 + currentFuelList.length) % currentFuelList.length;
-            renderFuelCarousel();
-        });
-
-        document.querySelectorAll('.fuel-tab').forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                const idx = parseInt(e.currentTarget.getAttribute('data-index'));
-                if (!isNaN(idx) && idx < currentFuelList.length) {
-                    currentFuelIndex = idx;
-                    renderFuelCarousel();
-                }
-            });
-        });
-
-        // Auto-rotate fuel carousel every 5 seconds
-        setInterval(() => {
-            currentFuelIndex = (currentFuelIndex + 1) % currentFuelList.length;
-            renderFuelCarousel();
-        }, 5000);
-
-        // Mobile Touch Swipe Support
-        let touchStartX = 0;
-        let touchEndX = 0;
-        const fuelContainer = document.getElementById('fuel-carousel-container');
-
-        if (fuelContainer) {
-            fuelContainer.addEventListener('touchstart', (e) => {
-                touchStartX = e.changedTouches[0].screenX;
-            }, { passive: true });
-
-            fuelContainer.addEventListener('touchend', (e) => {
-                touchEndX = e.changedTouches[0].screenX;
-                handleFuelSwipe();
-            }, { passive: true });
-        }
-
-        function handleFuelSwipe() {
-            const swipeThreshold = 40;
-            if (touchEndX < touchStartX - swipeThreshold) {
-                // Swiped Left -> Next Town
-                currentFuelIndex = (currentFuelIndex + 1) % currentFuelList.length;
-                renderFuelCarousel();
-            } else if (touchEndX > touchStartX + swipeThreshold) {
-                // Swiped Right -> Previous Town
-                currentFuelIndex = (currentFuelIndex - 1 + currentFuelList.length) % currentFuelList.length;
-                renderFuelCarousel();
-            }
-        }
-
-        // Mobile Hamburger Toggle
-        const hamburger = document.getElementById('hamburger');
-        const mobileMenu = document.getElementById('mobile-menu');
-        hamburger.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
-
-        // Newsletter Form
-        const newsletterForm = document.getElementById('newsletter-form');
-        newsletterForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const submitBtn = document.getElementById('nl-submit-btn');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Joining...';
-
-            const firstName = document.getElementById('firstName').value.trim();
-            const lastName = document.getElementById('lastName').value.trim();
-            const email = document.getElementById('email').value.trim();
-
-            try {
-                const subRef = collection(db, 'artifacts', appId, 'public', 'data', 'newsletter_subscribers');
-                await addDoc(subRef, { firstName, lastName, email, timestamp: new Date().toISOString() });
-            } catch (err) {
-                console.error("Error saving subscriber:", err);
-            } finally {
-                document.getElementById('newsletter-form-container').style.display = 'none';
-                document.getElementById('thank-you-clipping').style.display = 'flex';
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Subscribe';
-            }
-        });
-
-        window.resetNewsletterForm = function() {
-            newsletterForm.reset();
-            document.getElementById('thank-you-clipping').style.display = 'none';
-            document.getElementById('newsletter-form-container').style.display = 'block';
-        };
-
-        // Fuel Modal
-        const fuelModal = document.getElementById('fuel-modal');
-        document.getElementById('add-fuel-price-btn').addEventListener('click', () => fuelModal.classList.remove('hidden'));
-        document.getElementById('close-modal-btn').addEventListener('click', () => fuelModal.classList.add('hidden'));
-
-        document.getElementById('fuel-report-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const town = document.getElementById('fuel-town').value;
-            const station = document.getElementById('fuel-station').value.trim();
-            const price = parseFloat(document.getElementById('fuel-price').value);
-
-            if (!station || isNaN(price)) return;
-
-            try {
-                const fuelRef = collection(db, 'artifacts', appId, 'public', 'data', 'fuel_prices');
-                await addDoc(fuelRef, { town, station, price, updated: 'Just now', trend: 'stable', timestamp: new Date().toISOString() });
-                fuelModal.classList.add('hidden');
-                document.getElementById('fuel-report-form').reset();
-            } catch (err) {
-                console.error("Error submitting fuel report:", err);
-                fuelModal.classList.add('hidden');
-            }
-        });
-
-        // Event Submission Modal
-        const eventModal = document.getElementById('event-modal');
-        window.openSubmitEventModal = function() { eventModal.classList.remove('hidden'); };
-        document.getElementById('close-event-modal-btn').addEventListener('click', () => eventModal.classList.add('hidden'));
-
-        document.getElementById('event-submit-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const title = document.getElementById('event-name').value.trim();
-            const addr = document.getElementById('event-location').value.trim();
-            const displayDate = document.getElementById('event-date').value.trim();
-            const desc = document.getElementById('event-desc').value.trim();
-
-            if (!title || !addr || !displayDate) return;
-
-            try {
-                const eventsRef = collection(db, 'smlc_events');
-                await addDoc(eventsRef, { title, addr, displayDate, desc, timestamp: new Date().toISOString() });
-                eventModal.classList.add('hidden');
-                document.getElementById('event-submit-form').reset();
-            } catch (err) {
-                console.error("Error submitting event:", err);
-                eventModal.classList.add('hidden');
-            }
-        });
-
-        // App Initialization
-        async function startApp() {
-            try {
-                const userCred = await signInAnonymously(auth);
-                currentUser = userCred.user;
-                document.getElementById('live-db-status').textContent = "Connected";
-            } catch (error) {
-                console.warn("Auth mode running in anonymous/offline mode:", error);
-                document.getElementById('live-db-status').textContent = "Live Feed";
-            }
-
-            renderFuelCarousel();
-            loadBusinessSpotlight();
-            loadNavigationMenu();
-            loadSlideshow();
-            loadFooter();
-            loadFuelPrices();
-            setupCommunityEventsListener();
-            setupLocalNewsListener();
-        }
-
-        // --- DYNAMIC FIREBASE SLIDESHOW LISTENER ---
-        function loadSlideshow() {
-            const slideRef = ref(rtdb, 'master_county_data/global/sections/sec_3_1_1');
-            onValue(slideRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    let items = [];
-                    if (data.items) {
-                        items = Array.isArray(data.items) ? data.items : Object.values(data.items);
-                    } else if (Array.isArray(data)) {
-                        items = data;
-                    } else if (typeof data === 'object') {
-                        items = Object.values(data);
-                    }
-
-                    const validSlides = items.filter(item => item && (item.image || item.src || item.url || item.image1 || typeof item === 'string'));
-                    if (validSlides.length > 0) {
-                        const track = document.getElementById('hero-slideshow-track');
-                        if (track) {
-                            track.innerHTML = '';
-                            validSlides.forEach((slide) => {
-                                const imgUrl = slide.image || slide.src || slide.url || slide.image1 || (typeof slide === 'string' ? slide : '');
-                                const altText = slide.alt || slide.title || 'Clay County Banner';
-                                const slideDiv = document.createElement('div');
-                                slideDiv.className = 'slideshow-slide';
-                                slideDiv.innerHTML = `<img src="${imgUrl}" alt="${altText}" class="lightbox-clickable">`;
-                                track.appendChild(slideDiv);
-                            });
-                            totalSlides = validSlides.length;
-                            goToSlide(0);
-                        }
-                    }
-                }
-            }, (error) => console.warn("RTDB Slideshow notice:", error));
-        }
-
-        // --- DYNAMIC FIREBASE FOOTER LISTENER ---
-        function loadFooter() {
-            const footerRef = ref(rtdb, 'master_county_data/global/footer');
-            onValue(footerRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    const copyright = decodeHtml(data.copyright || data.text1 || data.content || (typeof data === 'string' ? data : ''));
-                    const subtext = decodeHtml(data.rights || data.subtext || '');
-                    const footerContainer = document.querySelector('.site-footer .max-w-7xl');
-                    if (footerContainer && copyright) {
-                        footerContainer.innerHTML = `
-                            <p>${copyright}</p>
-                            ${subtext ? `<p>${subtext}</p>` : `<p>All Rights Reserved - <a href="https://www.skventuresigns.com" target="_blank" class="text-amber-400 font-bold hover:underline">S&K Ventures</a></p>`}
-                        `;
-                    }
-                }
-            }, (error) => console.warn("RTDB Footer notice:", error));
-        }
-
-        // --- DYNAMIC FIREBASE FUEL MONITOR LISTENER ---
-        function loadFuelPrices() {
-            // Listen to RTDB Global Towns Data
-            const townsRef = ref(rtdb, 'master_county_data/global/towns');
-            onValue(townsRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    let townList = Array.isArray(data) ? data : Object.values(data);
-                    if (townList.length > 0) {
-                        currentFuelList = townList.map(t => ({
-                            town: t.name || t.town || 'Clay County',
-                            station: t.station || t.gasStation || `${t.name || 'Local'} Station`,
-                            price: parseFloat(t.price || t.fuelPrice || 3.45),
-                            updated: t.updated || 'Live',
-                            trend: t.trend || 'stable'
-                        }));
-                        renderFuelCarousel();
-                    }
-                }
-            }, (error) => console.warn("RTDB Towns notice:", error));
-
-            // Listen to Firestore User Fuel Submissions
-            const fuelColRef = collection(db, 'artifacts', appId, 'public', 'data', 'fuel_prices');
-            onSnapshot(fuelColRef, (snapshot) => {
-                if (!snapshot.empty) {
-                    snapshot.docs.forEach(docSnap => {
-                        const rep = docSnap.data();
-                        const matchIdx = currentFuelList.findIndex(f => f.town.toLowerCase() === (rep.town || '').toLowerCase());
-                        if (matchIdx !== -1) {
-                            currentFuelList[matchIdx].price = parseFloat(rep.price);
-                            currentFuelList[matchIdx].station = rep.station || currentFuelList[matchIdx].station;
-                            currentFuelList[matchIdx].updated = 'Just now';
-                        } else if (rep.town && rep.price) {
-                            currentFuelList.push({
-                                town: rep.town,
-                                station: rep.station || 'Local Station',
-                                price: parseFloat(rep.price),
-                                updated: 'Just now',
-                                trend: 'stable'
-                            });
-                        }
-                    });
-                    renderFuelCarousel();
-                }
-            }, (error) => console.warn("Firestore fuel_prices notice:", error));
-        }
-
-        window.addEventListener('load', startApp);
-    </script>
+    <!-- RETURN TO TOP ANCHOR -->
+    <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top">↑</button>
+
+    <!-- CORE SCRIPT -->
+    <script src="./universaltown.js"></script>
 </body>
 </html>
