@@ -1,27 +1,26 @@
 /* ==========================================================================
-   SMLC DIGITAL TOWN SQUARE PORTAL MASTER STYLESHEET
-   Active Version: v1.1.9
-   Date/Time Stamp: 2026-10-01 16:15 EDT (New York)
-   Description: Responsive layout supporting sticky navigation, centered links,
-                embedded Google Translate, dual light/dark mode support,
-                and mobile-first vertical partner ad containers with 44px+ CTAs.
+   FLORA, IL - SMLC DIGITAL TOWN SQUARE PORTAL STYLESHEET
+   Active Version: v1.2.0
+   Date/Time Stamp: 2026-10-01 16:20 EDT (New York)
+   Description: Flora identity stylesheet (Royal Blue & Wolf Orange).
+                Includes sticky centered menu, Google Translate styling,
+                prefers-color-scheme dark mode, and mobile ad cards.
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&family=Playfair+Display:wght@700;900&display=swap');
 
-/* Line 15: Global Design Tokens & Theme Palettes */
 :root {
     --container-width: 96%;
     
-    /* Brand Accent Colors */
-    --xenia-green: #1C5640;
+    /* Flora Town Color Tokens */
     --flora-blue: #0258A3;
+    --flora-black: #000000;
     --flora-orange: #FE4E02;
-    --louis-red: #EB1C24;
-    --cc-gold: #FFC10E;
+    --cc-gold: #FE4E02; /* Primary accent detail mapped to Wolf Orange */
     
-    --primary: #1C5640;
+    --primary: #0258A3;
     --secondary: #000000;
+    --accent: #FE4E02;
     
     --dynamic-bg: #121212;
     --dynamic-text: #FFFFFF;
@@ -35,37 +34,25 @@
     --card-border-color: #222222;
     --card-shadow-color: #000000;
 
-    /* High-Contrast Granite Background Tokens */
+    /* High-Contrast Granite Background Tokens (Flora Navy/Slate Tones) */
+    --granite-blue: #041b30;
     --granite-dark: #1c1c1e;
     --granite-mid: #2c2c2e;
     --granite-black: #0a0a0a;
 }
 
-/* Line 46: Active Town Dynamic Theme Overrides */
-body[data-town="XENIA"],
-html[data-town="XENIA"] body {
-    --town-accent: var(--xenia-green);
-    --town-detail: var(--cc-gold);
-    --primary: var(--xenia-green);
-}
-
-body[data-town="LOUISVILLE"],
-html[data-town="LOUISVILLE"] body {
-    --town-accent: var(--louis-red);
-    --town-detail: var(--cc-gold);
-    --primary: var(--louis-red);
-}
-
 body[data-town="FLORA"],
-html[data-town="FLORA"] body {
+html[data-town="FLORA"] body,
+body[data-town="flora"],
+html[data-town="flora"] body {
     --town-accent: var(--flora-blue);
+    --town-secondary: var(--flora-black);
     --town-detail: var(--flora-orange);
-    --primary: var(--flora-orange);
+    --primary: var(--flora-blue);
 }
 
 /* ==========================================================================
    DEVICE DARK MODE OVERRIDES (prefers-color-scheme: dark)
-   Swaps light/cream surfaces to granite dark tones without washouts
    ========================================================================== */
 @media (prefers-color-scheme: dark) {
     :root {
@@ -126,7 +113,6 @@ html[data-town="FLORA"] body {
     }
 }
 
-/* Line 129: Core Document Layout */
 * { 
     font-family: 'Times New Roman', Times, serif !important; 
     box-sizing: border-box; 
@@ -143,8 +129,8 @@ body {
     font-size: 16px;
     background-color: #0a0a0a !important;
     background-image: linear-gradient(180deg, 
-        #091f16 0%, 
-        #0d2e23 15%, 
+        var(--granite-blue) 0%, 
+        #082442 15%, 
         var(--granite-mid) 38%, 
         var(--granite-dark) 65%, 
         var(--granite-black) 90%, 
@@ -162,7 +148,7 @@ a {
 }
 
 /* ==========================================================================
-   BRAND HEADER & PERSISTENT STICKY NAVIGATION BAR
+   BRAND HEADER & STICKY NAVIGATION BAR (FLORA ROYAL BLUE)
    ========================================================================== */
 .site-brand-header { 
     width: 100% !important; 
@@ -189,15 +175,14 @@ a {
     vertical-align: bottom !important; 
 }
 
-/* Line 196: Sticky Menu Container */
 .menu-bar { 
     width: 100% !important; 
-    background: var(--primary) !important; 
+    background: var(--flora-blue) !important; 
     padding: clamp(10px, 1.2vw, 18px) 0; 
     position: sticky !important; 
     top: 0 !important; 
     z-index: 1000 !important; 
-    border-bottom: 4px solid var(--cc-gold); 
+    border-bottom: 4px solid var(--flora-orange); 
     margin-top: 0 !important; 
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.85); 
 }
@@ -238,13 +223,12 @@ a {
 
 .menu-links a:hover, 
 .menu-links a.active { 
-    color: var(--cc-gold) !important; 
-    border: 2px solid var(--cc-gold); 
+    color: var(--flora-orange) !important; 
+    border: 2px solid var(--flora-orange); 
     background: rgba(0, 0, 0, 0.6) !important; 
     border-radius: 8px; 
 }
 
-/* Strict Thumbnail Icon Size Lock */
 .menu-links img,
 .menu-links a img,
 .menu-links a img.menu-thumb-icon { 
@@ -265,12 +249,11 @@ a {
     cursor: pointer; 
 }
 
-/* Google Translate Header Integration */
 .translate-box-header {
     display: inline-flex;
     align-items: center;
     background: rgba(0, 0, 0, 0.4);
-    border: 1px solid var(--cc-gold);
+    border: 1px solid var(--flora-orange);
     border-radius: 6px;
     padding: 3px 8px;
     position: absolute;
@@ -307,7 +290,7 @@ a {
 }
 
 /* ==========================================================================
-   TOWN HERO BANNER
+   TOWN HERO BANNER (FLORA NAVY & BLUE GRADIENT)
    ========================================================================== */
 .main-container { 
     width: var(--container-width); 
@@ -322,14 +305,14 @@ a {
     display: flex; 
     align-items: center; 
     justify-content: center; 
-    border-bottom: 4px solid var(--cc-gold); 
+    border-bottom: 4px solid var(--flora-orange); 
     border-radius: 16px; 
     text-align: center; 
     margin-bottom: 36px; 
-    background-color: #0d2e23 !important; 
+    background-color: #021a30 !important; 
     background-image: 
-        radial-gradient(circle at 50% 30%, rgba(28, 86, 64, 0.65) 0%, rgba(0, 0, 0, 0.95) 75%), 
-        repeating-linear-gradient(45deg, rgba(255, 193, 14, 0.05) 0px, rgba(255, 193, 14, 0.05) 2px, transparent 2px, transparent 10px) !important; 
+        radial-gradient(circle at 50% 30%, rgba(2, 88, 163, 0.65) 0%, rgba(0, 0, 0, 0.95) 75%), 
+        repeating-linear-gradient(45deg, rgba(254, 78, 2, 0.05) 0px, rgba(254, 78, 2, 0.05) 2px, transparent 2px, transparent 10px) !important; 
     position: relative; 
     overflow: hidden; 
     box-shadow: 0 8px 32px rgba(0,0,0,0.8); 
@@ -338,8 +321,8 @@ a {
 .seat-badge { 
     display: inline-block; 
     padding: 8px 22px; 
-    background-color: var(--cc-gold); 
-    color: #000000; 
+    background-color: var(--flora-orange); 
+    color: #ffffff; 
     font-weight: 900; 
     text-transform: uppercase; 
     font-size: 14px; 
@@ -366,7 +349,7 @@ a {
     font-size: 15px; 
     letter-spacing: 2px; 
     font-weight: 700; 
-    color: var(--cc-gold); 
+    color: var(--flora-orange); 
     margin: 10px 0 0 0; 
     text-align: center !important; 
 }
@@ -388,8 +371,6 @@ a {
 
 /* ==========================================================================
    PARTNER SHOWCASE STRIPS & DYNAMIC AD CONTAINER SCALING
-   Desktop (1024px+): Multi-column horizontal strip
-   Mobile (<768px): Screen-fit vertical container with prominent 44px+ CTA
    ========================================================================== */
 .widescreen-strip-container,
 .section8-town-images-strip { 
@@ -398,12 +379,12 @@ a {
     background-color: #02122b !important; 
     background-image: 
         radial-gradient(ellipse at top, rgba(12, 113, 195, 0.35) 0%, rgba(2, 18, 43, 0.95) 70%), 
-        repeating-linear-gradient(-45deg, rgba(255, 193, 14, 0.04) 0px, rgba(255, 193, 14, 0.04) 1px, transparent 1px, transparent 12px) !important; 
+        repeating-linear-gradient(-45deg, rgba(254, 78, 2, 0.04) 0px, rgba(254, 78, 2, 0.04) 1px, transparent 1px, transparent 12px) !important; 
     padding: 30px clamp(16px, 4vw, 80px) !important; 
     box-sizing: border-box !important; 
     margin: 0 !important; 
-    border-top: 3px solid var(--cc-gold); 
-    border-bottom: 3px solid var(--cc-gold); 
+    border-top: 3px solid var(--flora-orange); 
+    border-bottom: 3px solid var(--flora-orange); 
 }
 
 .section8-town-images-strip.hero-adjacent-strip { 
@@ -429,7 +410,6 @@ a {
     padding-bottom: 10px !important; 
 }
 
-/* Default Desktop/Tablet Card */
 .partner-card { 
     flex: 1 1 200px !important; 
     max-width: 280px !important; 
@@ -496,9 +476,9 @@ a {
     width: 100% !important;
     min-height: 44px !important;
     padding: 10px 14px !important;
-    background: #000000 !important;
-    color: var(--cc-gold) !important;
-    border: 2px solid var(--cc-gold) !important;
+    background: var(--flora-blue) !important;
+    color: #ffffff !important;
+    border: 2px solid var(--flora-orange) !important;
     border-radius: 6px !important;
     font-size: 14px !important;
     font-weight: bold !important;
@@ -510,11 +490,10 @@ a {
 }
 
 .partner-card-link-cta:hover {
-    background: var(--cc-gold) !important;
-    color: #000000 !important;
+    background: var(--flora-orange) !important;
+    color: #ffffff !important;
 }
 
-/* Line 502: Dedicated Mobile Single-Column Ad Container Rules */
 @media (max-width: 767px) {
     .partners-horizontal-strip {
         display: flex !important;
@@ -572,17 +551,17 @@ a {
 }
 
 /* ==========================================================================
-   THREE-COLUMN PORTAL CHASSIS
+   THREE-COLUMN PORTAL CHASSIS (FLORA NAVY BACKGROUND)
    ========================================================================== */
 .smlc-three-column-portal-wrapper { 
     width: 100%; 
     padding: clamp(36px, 5vh, 72px) clamp(20px, 4vw, 80px) !important; 
-    background-color: #0d2e23 !important; 
+    background-color: #041b30 !important; 
     background-image: 
-        radial-gradient(circle at 50% 50%, rgba(28, 86, 64, 0.35) 0%, rgba(9, 31, 22, 0.98) 80%), 
+        radial-gradient(circle at 50% 50%, rgba(2, 88, 163, 0.35) 0%, rgba(4, 27, 48, 0.98) 80%), 
         repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 6px) !important; 
-    border-top: 4px solid var(--cc-gold); 
-    border-bottom: 4px solid var(--cc-gold); 
+    border-top: 4px solid var(--flora-orange); 
+    border-bottom: 4px solid var(--flora-orange); 
 }
 
 .portal-grid-layout-fixed { 
@@ -615,7 +594,7 @@ a {
 }
 
 .et_pb_module_heading { 
-    background-color: var(--primary) !important; 
+    background-color: var(--flora-blue) !important; 
     color: #ffffff !important; 
     font-family: "Playfair Display", Georgia, "Times New Roman", serif !important; 
     font-size: 24px !important; 
@@ -648,7 +627,7 @@ a {
     top: -12px !important; 
     left: 15px !important; 
     background: #000 !important; 
-    color: var(--cc-gold) !important; 
+    color: var(--flora-orange) !important; 
     font-size: 10px !important; 
     padding: 3px 10px !important; 
     text-transform: uppercase !important; 
@@ -672,7 +651,7 @@ a {
     text-transform: uppercase !important; 
     letter-spacing: 1px !important; 
     margin: 0 !important; 
-    color: var(--primary) !important; 
+    color: var(--flora-blue) !important; 
     font-size: 26px !important; 
     line-height: 1.1 !important; 
 }
@@ -702,8 +681,8 @@ a {
 }
 
 .event-clipping-btn:hover { 
-    background-color: var(--primary) !important; 
-    border-color: var(--primary) !important; 
+    background-color: var(--flora-blue) !important; 
+    border-color: var(--flora-blue) !important; 
     color: #fff !important; 
 }
 
@@ -803,8 +782,8 @@ a {
 }
 
 .notice-tag-red { 
-    background: var(--primary) !important; 
-    color: #fff !important; 
+    background: var(--flora-orange) !important; 
+    color: #ffffff !important; 
     font-size: 11px !important; 
     padding: 4px 15px !important; 
     text-transform: uppercase !important; 
@@ -887,8 +866,8 @@ a {
 }
 
 .fb-action-btn:hover { 
-    background-color: var(--cc-gold) !important; 
-    color: #222 !important; 
+    background-color: var(--flora-orange) !important; 
+    color: #ffffff !important; 
 }
 
 .community-voice-footer { 
@@ -926,8 +905,8 @@ a {
 
 .town-directory-interactive-btn-s7 { 
     background-color: #000000 !important; 
-    color: var(--cc-gold) !important; 
-    border: 2px solid var(--cc-gold) !important; 
+    color: var(--flora-orange) !important; 
+    border: 2px solid var(--flora-orange) !important; 
     border-radius: 31px !important; 
     cursor: pointer; 
     display: inline-block; 
@@ -940,8 +919,8 @@ a {
 }
 
 .town-directory-interactive-btn-s7:hover { 
-    background-color: var(--cc-gold) !important; 
-    color: #000000 !important; 
+    background-color: var(--flora-orange) !important; 
+    color: #ffffff !important; 
 }
 
 /* ==========================================================================
@@ -1003,17 +982,17 @@ a {
 }
 
 .section4-centered-article-header {
-    background: linear-gradient(180deg, var(--primary) 0%, #1a1a1a 100%) !important;
+    background: linear-gradient(180deg, var(--flora-blue) 0%, #1a1a1a 100%) !important;
     color: #ffffff !important;
     padding: clamp(28px, 4vh, 52px) 24px !important;
     text-align: center !important;
-    border-bottom: 8px solid var(--cc-gold) !important;
+    border-bottom: 8px solid var(--flora-orange) !important;
 }
 
 .category-tag {
     font-family: 'Oswald', sans-serif !important;
-    background: var(--cc-gold) !important;
-    color: #000000 !important;
+    background: var(--flora-orange) !important;
+    color: #ffffff !important;
     padding: 6px 18px !important;
     display: inline-block !important;
     letter-spacing: 2px !important;
@@ -1111,7 +1090,7 @@ a {
 }
 
 .sidebar-widget-title {
-    background-color: var(--primary) !important;
+    background-color: var(--flora-blue) !important;
     color: #ffffff !important;
     font-family: 'Oswald', sans-serif !important;
     font-size: 20px !important;
@@ -1159,7 +1138,7 @@ a {
     font-size: 13px !important;
     text-transform: uppercase;
     letter-spacing: 2px;
-    color: var(--cc-gold) !important;
+    color: var(--flora-orange) !important;
     font-weight: bold;
     display: block;
     text-align: center;
@@ -1193,8 +1172,8 @@ a {
 }
 
 .spotlight-btn:hover {
-    background-color: var(--cc-gold) !important;
-    color: #000000 !important;
+    background-color: var(--flora-orange) !important;
+    color: #ffffff !important;
     border-color: #000000 !important;
 }
 
@@ -1286,19 +1265,19 @@ a {
 }
 
 /* ==========================================================================
-   SECTION 5: HISTORICAL TIMELINE
+   SECTION 5: HISTORICAL TIMELINE (FLORA BLUE THEMED CHASSIS)
    ========================================================================== */
 .historical-timeline-chassis-wrapper {
     width: 100% !important;
     padding: clamp(36px, 5vh, 72px) clamp(20px, 3.5vw, 80px) !important;
     background-color: #021a30 !important;
     background-image: 
-        linear-gradient(180deg, rgba(8, 30, 60, 0.9) 0%, rgba(5, 12, 24, 0.95) 100%),
+        linear-gradient(180deg, rgba(2, 88, 163, 0.9) 0%, rgba(4, 27, 48, 0.95) 100%),
         repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 20px, transparent 20px, transparent 40px) !important;
     box-sizing: border-box;
     border-radius: 12px;
-    border-top: 4px solid var(--cc-gold);
-    border-bottom: 4px solid var(--cc-gold);
+    border-top: 4px solid var(--flora-orange);
+    border-bottom: 4px solid var(--flora-orange);
 }
 
 .timeline-inner-bounds { 
@@ -1316,7 +1295,7 @@ a {
     font-family: 'Playfair Display', Georgia, serif !important;
     font-size: clamp(2.2rem, 4vw, 3.5rem) !important;
     font-weight: 900 !important;
-    color: var(--cc-gold) !important;
+    color: var(--flora-orange) !important;
     display: block !important;
     margin-bottom: 12px !important;
     text-shadow: 2px 2px 8px #000000 !important;
@@ -1365,7 +1344,7 @@ a {
     font-family: 'Times New Roman', Times, serif !important;
     font-size: 32px !important;
     font-weight: 900 !important;
-    color: #0258A3 !important;
+    color: var(--flora-blue) !important;
     margin: 0 0 12px 0 !important;
     padding-bottom: 8px !important;
     border-bottom: 2px solid var(--card-border-color) !important;
@@ -1393,7 +1372,7 @@ a {
 .history-card .read-more-trigger {
     font-size: 13px !important;
     font-weight: 900 !important;
-    color: var(--primary) !important;
+    color: var(--flora-orange) !important;
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 16px;
@@ -1425,19 +1404,19 @@ a {
 }
 
 /* ==========================================================================
-   SECTION 3: SPLIT LAYOUT (Slideshow, Community Overview & Landmarks)
+   SECTION 3: SPLIT LAYOUT (SLIDESHOW, OVERVIEW & HISTORIC LANDMARKS)
    ========================================================================== */
 .section3-split-layout { 
     width: 100%; 
     padding: clamp(36px, 5vh, 72px) clamp(20px, 3.5vw, 80px); 
-    background-color: #12161f !important;
+    background-color: #0b1a28 !important;
     background-image: 
-        linear-gradient(135deg, rgba(12, 38, 66, 0.85) 0%, rgba(15, 15, 20, 0.95) 100%),
+        linear-gradient(135deg, rgba(2, 88, 163, 0.85) 0%, rgba(10, 15, 24, 0.95) 100%),
         linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
         linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px) !important;
     background-size: cover, 40px 40px, 40px 40px !important;
-    border-top: 3px solid rgba(255, 193, 14, 0.3);
-    border-bottom: 3px solid rgba(255, 193, 14, 0.3);
+    border-top: 3px solid rgba(254, 78, 2, 0.4);
+    border-bottom: 3px solid rgba(254, 78, 2, 0.4);
 }
 
 .section3-container-grid { 
@@ -1457,7 +1436,7 @@ a {
 .section3-main-title { 
     font-size: clamp(2.2rem, 4vw, 3.4rem) !important; 
     font-weight: bold; 
-    color: var(--cc-gold) !important; 
+    color: var(--flora-orange) !important; 
     margin: 0 0 18px 0; 
     text-shadow: 2px 2px 5px rgba(0,0,0,0.9); 
     text-align: center !important; 
@@ -1545,13 +1524,13 @@ a {
 .section3-about-box { 
     background: rgba(18, 18, 18, 0.9); 
     border: 1px solid rgba(255, 255, 255, 0.2); 
-    border-left: 5px solid var(--cc-gold); 
+    border-left: 5px solid var(--flora-orange); 
     padding: 24px; 
     border-radius: 8px; 
 }
 
 .section3-about-tag { 
-    color: var(--cc-gold); 
+    color: var(--flora-orange); 
     font-size: 15px !important; 
     font-weight: bold; 
     text-transform: uppercase; 
@@ -1576,7 +1555,7 @@ a {
 .section3-landmark-card { 
     background: rgba(18, 18, 18, 0.92); 
     border: 1px solid rgba(255, 255, 255, 0.2); 
-    border-top: 5px solid var(--cc-gold); 
+    border-top: 5px solid var(--flora-orange); 
     padding: 32px; 
     border-radius: 8px; 
     text-align: left; 
@@ -1588,7 +1567,7 @@ a {
 .section3-landmark-title { 
     font-size: clamp(1.4rem, 2.2vw, 2rem) !important; 
     font-weight: bold; 
-    color: var(--cc-gold) !important; 
+    color: var(--flora-orange) !important; 
     margin: 0 0 20px 0; 
     border-bottom: 1px solid rgba(255, 255, 255, 0.2); 
     padding-bottom: 15px; 
@@ -1642,9 +1621,9 @@ a {
     background-color: #031222 !important;
     background-image: 
         linear-gradient(135deg, rgba(2, 88, 163, 0.8) 0%, rgba(10, 10, 10, 0.95) 100%),
-        repeating-linear-gradient(60deg, rgba(255, 193, 14, 0.03) 0px, rgba(255, 193, 14, 0.03) 1px, transparent 1px, transparent 14px) !important;
+        repeating-linear-gradient(60deg, rgba(254, 78, 2, 0.03) 0px, rgba(254, 78, 2, 0.03) 1px, transparent 1px, transparent 14px) !important;
     border-radius: 8px;
-    border: 1px solid var(--cc-gold);
+    border: 1px solid var(--flora-orange);
 }
 
 .section10-proclamation-card-box {
@@ -1676,7 +1655,7 @@ a {
 }
 
 .proclamation-contact-text a {
-    color: #0258A3 !important;
+    color: var(--flora-blue) !important;
     font-weight: 900 !important;
     text-decoration: underline !important;
 }
@@ -1689,7 +1668,7 @@ a {
     background-color: #000000 !important; 
     color: #ffffff !important; 
     padding: 45px 0 25px 0 !important; 
-    border-top: 4px solid var(--cc-gold) !important; 
+    border-top: 4px solid var(--flora-orange) !important; 
     text-align: center !important; 
 }
 
