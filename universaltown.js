@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-10-01_15:15
+   Active Version: 2026-10-01_15:35
    File: universaltown.js
    Project: SMLC County Portal Semantic Master Script
    Description: Complete multi-town client engine connecting to Firebase RTDB.
@@ -7,11 +7,26 @@
                 spotlight, history, town_links, partners, menu, footer),
                 blends town + global slideshows, executes distinct alternating
                 full-pool partner rotations with visual flash animations,
-                and locks image alt descriptions into the global lightbox modal.
-   Timestamp: 2026-10-01 15:15 EDT (New York)
+                locks image alt descriptions into the global lightbox modal,
+                and registers window.googleTranslateElementInit.
+   Timestamp: 2026-10-01 15:35 EDT (New York)
    ========================================================================== */
 
-// Line 14: Master Town Alias Map
+// Line 15: Google Translate Window Callback Initialization
+window.googleTranslateElementInit = function() {
+    try {
+        if (window.google && window.google.translate) {
+            new window.google.translate.TranslateElement({
+                pageLanguage: 'en',
+                layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE
+            }, 'google_translate_element');
+        }
+    } catch(e) {
+        console.warn("Google Translate init warning:", e.message);
+    }
+};
+
+// Line 29: Master Town Alias Map
 const TOWN_ALIAS_MAP = {
     "HOME": { primaryName: "Clay County", dbTownKey: "Global", jsonKey: "all", gasKey: ["louisville", "flora", "clay-city", "xenia"], historyKey: "all", keywords: [], zipCodes: [], isHome: true, scorestreamId: "68601", seatBadge: "Clay County Seat", estMeta: "Est. 1824 | Zip Code 62824", riverMarquee: "COMMUNITY DIGITAL NETWORK MAP", themeAccent: "#0258A3" },
     "CLAY COUNTY": { primaryName: "Clay County", dbTownKey: "Global", jsonKey: "all", gasKey: ["louisville", "flora", "clay-city", "xenia"], historyKey: "all", keywords: [], zipCodes: [], isHome: true, scorestreamId: "68601", seatBadge: "Clay County Seat", estMeta: "Est. 1824 | Zip Code 62824", riverMarquee: "COMMUNITY DIGITAL NETWORK MAP", themeAccent: "#0258A3" },
@@ -24,7 +39,7 @@ const TOWN_ALIAS_MAP = {
     "INGRAHAM": { primaryName: "Ingraham", dbTownKey: "Ingraham", jsonKey: "louisville", gasKey: ["louisville", "clay-city"], historyKey: "ingraham", keywords: ["INGRAHAM"], zipCodes: ["62434"], scorestreamId: "68601", seatBadge: "Clay County Village", estMeta: "Est. 1858 | Zip Code 62434", riverMarquee: "NORTHEAST CLAY COUNTY COMMUNITY", themeAccent: "#4E342E" }
 };
 
-// Line 27: Active Town Config Resolver
+// Line 42: Active Town Config Resolver
 function getActiveTownConfig() {
     try {
         const hashRoute = (window.location.hash || "").replace("#/", "").replace("#", "").replace(/-/g, " ").toUpperCase();
@@ -78,7 +93,7 @@ window.newsCacheBlock = [];
 window.townPartnersPool = [];
 window.globalPartnersPool = [];
 
-// Line 78: Clear Active Intervals on Route Changes
+// Line 93: Clear Active Intervals on Route Changes
 function resetAllActiveTimers() {
     if (globalSlideshowTicker) { clearInterval(globalSlideshowTicker); globalSlideshowTicker = null; }
     if (gasMonitorRotator) { clearInterval(gasMonitorRotator); gasMonitorRotator = null; }
@@ -156,7 +171,7 @@ function applyHighDensityScrollLimits(containerElement, itemCount, maxHeightPx =
     }
 }
 
-// Line 157: Target Link URL Decoration
+// Line 172: Target Link URL Decoration
 function attachUtmParameters(urlStr) {
     if (!urlStr || urlStr === "#" || urlStr.startsWith("javascript:")) return urlStr;
     try {
@@ -204,7 +219,7 @@ function closeLightbox(event) {
     }
 }
 
-// Line 206: Global Lightbox Launcher Locking Alt Descriptions
+// Line 221: Global Lightbox Launcher Locking Alt Descriptions
 function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = "") {
     const overlay = document.getElementById('portal-global-lightbox');
     const targetImg = document.getElementById('lightbox-target-img');
@@ -342,7 +357,7 @@ function bindFirebaseMenuEngine(db) {
 
             return `
                 <li>
-                    <a href="${targetUrl}" ${isActive} data-ga-label="Nav_${name.replace(/\s+/g, '')}">
+                    <a href="${targetUrl}" ${isActive} data-ga-label="Nav_${name.replace(/\s+/g, '')}" target="_self">
                         ${imgTag}
                         <span>${name}</span>
                     </a>
@@ -435,7 +450,7 @@ function bindFirebaseLocalLinksEngine(db) {
     if (activeFbRefLinksGlobal) activeFbRefLinksGlobal.off();
 
     activeFbRefLinksTown = db.ref(`master_county_data/towns/${townName}/sections/town_links/links`);
-    activeFbRefLinksGlobal = db.ref(`master_county_data/global/sections/town_links/links`);
+    activeFbRefGlobalSections = db.ref(`master_county_data/global/sections/town_links/links`);
 
     activeFbRefLinksTown.on('value', (snap) => {
         const val = snap.val();
@@ -443,7 +458,7 @@ function bindFirebaseLocalLinksEngine(db) {
         renderCombinedLinks();
     });
 
-    activeFbRefLinksGlobal.on('value', (snap) => {
+    activeFbRefGlobalSections.on('value', (snap) => {
         const val = snap.val();
         globalLinks = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
         renderCombinedLinks();
@@ -638,8 +653,8 @@ function bindFirebasePartnersEngine(db) {
     if (activeFbRefPartnersTown) activeFbRefPartnersTown.off();
     if (activeFbRefPartnersGlobal) activeFbRefPartnersGlobal.off();
 
-    const topGrid = document.getElementById('partners-grid-bottom'); // Section 8 moved under hero
-    const bottomGrid = document.getElementById('partners-grid-top');  // Section 6 strip above landmarks
+    const topGrid = document.getElementById('partners-grid-bottom'); // Upper Strip under hero
+    const bottomGrid = document.getElementById('partners-grid-top');  // Lower Strip above landmarks
 
     const renderCombinedPartners = () => {
         const rawPool = [...window.townPartnersPool, ...window.globalPartnersPool];
@@ -762,7 +777,6 @@ function renderFlashingPartnerRotator(containerElement, partnerPool, stripKey, s
                 const nextLink = attachUtmParameters(nextPartner.website || '#');
                 const nextAlt = nextPartner.alt || nextName;
 
-                // Eye-catching flash animation transition
                 cardEl.style.boxShadow = "0 0 18px var(--xenia-gold)";
                 cardEl.style.transform = "scale(1.04)";
                 cardEl.style.opacity = "0.2";
@@ -780,7 +794,6 @@ function renderFlashingPartnerRotator(containerElement, partnerPool, stripKey, s
                         linkEl.innerText = nextName;
                     }
 
-                    // Reset card visual state
                     cardEl.style.opacity = "1";
                     cardEl.style.transform = "scale(1)";
                     setTimeout(() => {
