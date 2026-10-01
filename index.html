@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Line 2: Town identifier attribute set to HOME (Global County Hub) -->
-<!-- Timestamp: 2026-10-01 18:40 EDT (New York) | Version: v1.3.5 -->
+<!-- Timestamp: 2026-10-01 18:48 EDT (New York) | Version: v1.3.6 -->
 <html lang="en" data-town="HOME">
 <head>
     <meta charset="UTF-8">
@@ -58,7 +58,7 @@
     <style>
         /* ==========================================================================
            SUPPORT MY LOCAL COMMUNITY - MASTER STYLESHEET
-           Timestamp: 2026-10-01 18:40 EDT (New York) | Version: v1.3.5
+           Timestamp: 2026-10-01 18:48 EDT (New York) | Version: v1.3.6
            ========================================================================== */
         :root {
             --container-width: 96%;
@@ -121,6 +121,36 @@
             background-repeat: no-repeat !important;
             background-size: cover !important;
             color: var(--dynamic-text);
+        }
+
+        /* ==========================================================================
+           NAVIGATION ICON HARD SIZE LOCK (PREVENTS GIANT MENU GRAPHICS)
+           ========================================================================== */
+        .header .nav-links img,
+        .header .nav-links a img,
+        .nav-links img,
+        .nav-links a img,
+        .menu-thumb-icon {
+            width: 24px !important;
+            height: 24px !important;
+            max-width: 24px !important;
+            max-height: 24px !important;
+            min-width: 24px !important;
+            min-height: 24px !important;
+            object-fit: contain !important;
+            vertical-align: middle !important;
+            display: inline-block !important;
+            background-color: rgba(255, 255, 255, 0.15) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            border-radius: 4px !important;
+            padding: 2px !important;
+            margin-right: 8px !important;
+            flex-shrink: 0 !important;
+        }
+
+        .nav-links a {
+            display: inline-flex !important;
+            align-items: center !important;
         }
 
         /* HEADER & STICKY SANDWICH DRAWER NAVIGATION */
@@ -1008,7 +1038,7 @@
         <div style="border-top: 1px solid #333; padding-top: 16px; text-align: center;">
             <p id="footer-copy-target" style="margin: 0; color: #bbb;">All Content, Photographs, Writings, Letters and Documents &copy; 2026 - Support My Local Community</p>
             <p id="footer-build-version-stamp" style="margin: 6px 0 0 0; color: #FFC10E; font-family: monospace; font-size: 12px;">
-                <strong>System Build Version:</strong> v1.3.5 | <strong>Active Version:</strong> 2026-10-01_18:40
+                <strong>System Build Version:</strong> v1.3.6 | <strong>Active Version:</strong> 2026-10-01_18:48
             </p>
         </div>
     </footer>
@@ -1042,7 +1072,7 @@
     <!-- RETURN TO TOP ANCHOR -->
     <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top">↑</button>
 
-    <!-- Master Portal Engine Link -->
-    <script src="./universaltown.js"></script>
+    <!-- Master Portal Engine Link pointing to GitHub -->
+    <script src="//raw.githubusercontent.com/Werewolf3788/SMLC/main/universaltown.js"></script>
 </body>
 </html>
