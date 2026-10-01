@@ -1,11 +1,11 @@
 /* ==========================================================================
    FLORA, IL - SMLC DIGITAL TOWN SQUARE PORTAL STYLESHEET
-   Active Version: v1.3.1
-   Date/Time Stamp: 2026-10-01 17:40 EDT (New York)
+   Active Version: v1.3.2
+   Date/Time Stamp: 2026-10-01 17:58 EDT (New York)
    Description: Complete Flora identity stylesheet (Royal Blue & Wolf Orange).
-                Includes sticky centered menu, Google Translate styling,
-                prefers-color-scheme dark mode, mobile drawer menu, and
-                properly sized AdBlock-immune partner cards.
+                Includes 48x48px sandwich button mobile drawer menu (<1024px),
+                centered desktop horizontal menu, Google Translate styling,
+                prefers-color-scheme dark mode, and AdBlock-immune partner cards.
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&family=Playfair+Display:wght@700;900&display=swap');
@@ -176,15 +176,15 @@ a {
     vertical-align: bottom !important; 
 }
 
+/* Sticky Header Bar */
 .menu-bar { 
     width: 100% !important; 
     background: var(--flora-blue) !important; 
-    padding: clamp(10px, 1.2vw, 16px) 0; 
+    padding: 10px 0 !important; 
     position: sticky !important; 
     top: 0 !important; 
     z-index: 1000 !important; 
     border-bottom: 4px solid var(--flora-orange); 
-    margin-top: 0 !important; 
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.85); 
 }
 
@@ -195,22 +195,30 @@ a {
     justify-content: center; 
     align-items: center;
     position: relative;
-    padding: 0 10px;
+    padding: 0 12px;
 }
 
-/* Mobile Hamburger Toggle Button (Hidden on Desktop) */
+/* Mobile Sandwich Button (Hidden by default on Desktop 1024px+) */
 .mobile-nav-toggle-btn {
     display: none;
-    flex-direction: column;
-    justify-content: space-around;
-    width: 44px;
-    height: 44px;
-    background: transparent;
+    align-items: center;
+    gap: 8px;
+    min-width: 48px;
+    min-height: 48px;
+    padding: 8px 14px;
+    background: rgba(0, 0, 0, 0.45);
     border: 2px solid var(--flora-orange);
     border-radius: 6px;
-    padding: 8px;
     cursor: pointer;
     z-index: 1100;
+}
+
+.hamburger-icon-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 22px;
+    height: 16px;
 }
 
 .hamburger-bar {
@@ -218,8 +226,17 @@ a {
     height: 3px;
     background-color: #ffffff;
     border-radius: 2px;
+    display: block;
 }
 
+.mobile-menu-btn-label {
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+/* Desktop Horizontal View */
 .navigation-drawer-panel {
     display: flex;
     align-items: center;
@@ -230,7 +247,7 @@ a {
     display: flex; 
     flex-wrap: wrap; 
     list-style: none; 
-    gap: clamp(10px, 1.3vw, 20px); 
+    gap: 16px; 
     margin: 0; 
     padding: 0; 
     align-items: center; 
@@ -241,13 +258,13 @@ a {
     color: #ffffff !important; 
     font-size: 15px; 
     font-weight: 800; 
-    padding: 7px 14px; 
+    padding: 8px 14px; 
     text-transform: uppercase; 
     letter-spacing: 1px; 
     display: inline-flex; 
     align-items: center; 
     gap: 8px; 
-    min-height: 44px;
+    min-height: 48px; /* 48px touch target */
     transition: all 0.2s ease; 
 }
 
@@ -279,68 +296,16 @@ a {
     cursor: pointer; 
 }
 
+/* Google Translate Header Dropdown */
 .translate-box-header {
     display: inline-flex;
     align-items: center;
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid var(--flora-orange);
     border-radius: 6px;
-    padding: 3px 8px;
+    padding: 4px 8px;
     position: absolute;
     right: 0;
-}
-
-/* Mobile & Tablet Navigation Drawer (<1024px) */
-@media (max-width: 1024px) {
-    .menu-inner {
-        justify-content: space-between;
-    }
-
-    .mobile-nav-toggle-btn {
-        display: flex;
-    }
-
-    .navigation-drawer-panel {
-        display: none;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        width: 100%;
-        background-color: #041b30;
-        border-bottom: 4px solid var(--flora-orange);
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.95);
-        padding: 16px 0;
-        z-index: 999;
-    }
-
-    .navigation-drawer-panel.drawer-open {
-        display: block;
-    }
-
-    .menu-links {
-        flex-direction: column;
-        gap: 8px;
-        width: 100%;
-    }
-
-    .menu-links li {
-        width: 88%;
-        margin: 0 auto;
-    }
-
-    .menu-links a {
-        width: 100%;
-        justify-content: flex-start;
-        padding: 12px 16px;
-        background: rgba(0, 0, 0, 0.4);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 6px;
-    }
-
-    .translate-box-header {
-        position: static;
-        margin-top: 0;
-    }
 }
 
 .goog-te-gadget-simple {
@@ -358,6 +323,64 @@ a {
 
 .goog-te-gadget-icon {
     display: none !important;
+}
+
+/* ==========================================================================
+   MOBILE & TABLET DRAWER OVERRIDES (< 1024px)
+   ========================================================================== */
+@media (max-width: 1023px) {
+    .menu-inner {
+        justify-content: space-between !important;
+    }
+
+    /* Show the Sandwich button on Mobile/Tablet */
+    .mobile-nav-toggle-btn {
+        display: inline-flex !important;
+    }
+
+    .translate-box-header {
+        position: static !important;
+    }
+
+    /* Completely hide navigation bar until the sandwich button is tapped */
+    .navigation-drawer-panel {
+        display: none !important;
+        position: absolute !important;
+        top: 100% !important;
+        left: 0 !important;
+        width: 100% !important;
+        background-color: #041b30 !important;
+        border-bottom: 4px solid var(--flora-orange) !important;
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.95) !important;
+        padding: 16px 0 !important;
+        z-index: 9999 !important;
+    }
+
+    /* Reveal only when .drawer-open is toggled */
+    .navigation-drawer-panel.drawer-open {
+        display: block !important;
+    }
+
+    .menu-links {
+        flex-direction: column !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+
+    .menu-links li {
+        width: 85% !important;
+        margin: 0 auto !important;
+    }
+
+    .menu-links a {
+        width: 100% !important;
+        justify-content: flex-start !important;
+        padding: 12px 18px !important;
+        min-height: 48px !important;
+        background: rgba(0, 0, 0, 0.5) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 6px !important;
+    }
 }
 
 /* ==========================================================================
@@ -441,7 +464,7 @@ a {
 }
 
 /* ==========================================================================
-   PARTNER SHOWCASE STRIPS & BALANCED CARD SIZING (FIXES GIANT IMAGES)
+   PARTNER SHOWCASE STRIPS & BALANCED CARD SIZING (NO OVERSIZED BANNERS)
    ========================================================================== */
 .widescreen-strip-container,
 .section8-town-images-strip { 
@@ -481,7 +504,7 @@ a {
     padding-bottom: 8px !important; 
 }
 
-/* Proportional Desktop Card Bounds */
+/* Card Container Sizing */
 .community-partner-card { 
     flex: 0 1 230px !important; 
     width: 230px !important;
@@ -506,7 +529,7 @@ a {
     box-shadow: 6px 6px 0px var(--card-shadow-color) !important; 
 }
 
-/* Fixed Logo Height (Forces wide banners to fit inside a clean box) */
+/* Fixed Logo Height (Restricts oversized high-res graphics) */
 .partner-logo-container { 
     width: 100% !important; 
     height: 85px !important; 
@@ -518,7 +541,7 @@ a {
     border: 1px solid #e2e8f0 !important; 
     border-radius: 6px !important; 
     padding: 6px !important; 
-    box-sizing: border-box !important;
+    box-sizing: border-box !important; 
 }
 
 .partner-logo-container img, 
