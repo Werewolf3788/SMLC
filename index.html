@@ -1,18 +1,23 @@
 <!DOCTYPE html>
-<!-- Line 2: Town identifier attribute set to HOME / CLAY COUNTY -->
-<!-- Timestamp: 2026-10-01 18:15 EDT (New York) | Version: v1.3.3 -->
-<html lang="en-US" data-town="HOME">
+<!-- Line 2: Town identifier attribute set to HOME (Global County Hub) -->
+<!-- Timestamp: 2026-10-01 18:30 EDT (New York) | Version: v1.3.4 -->
+<html lang="en" data-town="HOME">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clay County, IL - SMLC Digital Town Square Portal</title>
-
+    <title>Support My Local Community | Clay County, IL</title>
+    <link rel="icon" type="image/png" href="//raw.githubusercontent.com/skventuresigns-design/media/main/favicon.png">
+    
+    <!-- Google Fonts -->
     <link rel="preconnect" href="//fonts.googleapis.com">
     <link rel="preconnect" href="//fonts.gstatic.com" crossorigin>
     <link href="//fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="home.css" />
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
 
+    <!-- Global Script Error Safeguard -->
     <script>
         window.addEventListener('error', function(e) {
             if (e.message && (e.message.includes('Script error') || e.message.includes('ResizeObserver'))) {
@@ -26,7 +31,7 @@
     <script crossorigin="anonymous" src="//www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script crossorigin="anonymous" src="//www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
-    <!-- Global Site Tag (gtag.js) - Google Analytics & GTM -->
+    <!-- Global Analytics (GA4 & GTM) -->
     <script async src="//www.googletagmanager.com/gtag/js?id=G-CTYHDF4MSD" onerror="console.warn('GTM Script blocked or unavailable')"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -52,7 +57,7 @@
     </script>
     <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </head>
-<body data-town="HOME">
+<body class="home-bg" data-town="HOME">
 
     <!-- FLOATING HUD INDICATOR -->
     <div class="portal-floating-hud-track">
@@ -60,57 +65,44 @@
         <div id="hud-holiday-title-target" class="hud-floating-badge holiday-celebration-badge" style="display: none;"></div>
     </div>
 
-    <!-- SITE BRAND HEADER -->
-    <div id="global-header-container" class="site-brand-header">
-        <a href="#/home" class="header-billboard-link" data-ga-label="HeaderBillboardLink" target="_self">
-            <img src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="" class="header-billboard-img" />
-        </a>
-    </div>
+    <!-- HEADER WITH BILLBOARD & SANDWICH DRAWER NAVIGATION -->
+    <header class="header">
+        <div class="header-inner-row">
+            <a href="index.html" class="header-brand-link">
+                <img src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" class="header-logo" alt="Support My Local Community Logo">
+            </a>
 
-    <!-- PERSISTENT STICKY TOP NAVIGATION BAR -->
-    <header class="menu-bar">
-        <div class="menu-inner">
-            <!-- 3-Line Sandwich Toggle Button (Visible on Mobile & Tablet, Hidden on Desktop) -->
-            <button id="mobile-menu-toggle-btn" class="mobile-nav-toggle-btn" onclick="window.toggleMobileMenu();" aria-label="Toggle Navigation Menu" aria-expanded="false">
-                <span class="hamburger-icon-group">
-                    <span class="hamburger-bar"></span>
-                    <span class="hamburger-bar"></span>
-                    <span class="hamburger-bar"></span>
-                </span>
-                <span class="mobile-menu-btn-label">MENU</span>
+            <!-- 48x48px Mobile Hamburger Button -->
+            <button id="mobile-menu-toggle-btn" class="hamburger" onclick="window.toggleMobileMenu();" aria-label="Toggle navigation drawer" aria-expanded="false">
+                <span></span><span></span><span></span>
             </button>
 
-            <!-- Navigation Links Container (Hidden on Mobile/Tablet until Hamburger is tapped) -->
-            <nav id="site-navigation-drawer" class="navigation-drawer-panel">
-                <ul id="dynamic-menu-links" class="menu-links">
-                    <li><a href="#/home" class="active" data-ga-label="NavHomeButton" target="_self"><span>Home</span></a></li>
-                    <li><a href="#/clay-city" data-ga-label="NavClayCityButton" target="_self"><span>Clay City</span></a></li>
-                    <li><a href="#/flora" data-ga-label="NavFloraButton" target="_self"><span>Flora</span></a></li>
-                    <li><a href="#/louisville" data-ga-label="NavLouisvilleButton" target="_self"><span>Louisville</span></a></li>
-                    <li><a href="#/sailor-springs" data-ga-label="NavSailorSpringsButton" target="_self"><span>Sailor Springs</span></a></li>
-                    <li><a href="#/xenia" data-ga-label="NavXeniaButton" target="_self"><span>Xenia</span></a></li>
+            <!-- Navigation Links Container (Desktop Horizontal / Mobile Drawer) -->
+            <nav class="nav-bar" id="site-navigation-drawer">
+                <ul class="nav-links" id="dynamic-menu-links">
+                    <li><a href="index.html" class="active">Home</a></li>
+                    <li><a href="clay-city.html">Clay City</a></li>
+                    <li><a href="flora.html">Flora</a></li>
+                    <li><a href="louisville.html">Louisville</a></li>
+                    <li><a href="sailor-springs.html">Sailor Springs</a></li>
+                    <li><a href="xenia.html">Xenia</a></li>
                 </ul>
             </nav>
 
-            <!-- Google Translate Dropdown Selector -->
+            <!-- Embedded Google Translate Dropdown -->
             <div id="google_translate_element" class="translate-box-header"></div>
         </div>
     </header>
 
-    <!-- HERO BANNER SECTION -->
-    <div class="main-container" style="padding-bottom: 0;">
-        <section class="town-hero-banner static-hero-colors">
-            <div class="banner-content">
-                <span class="seat-badge" id="hero-seat-badge">Clay County Digital Hub</span>
-                <h1 class="town-title outlined-headline" id="hero-town-title">Clay County, Illinois</h1>
-                <p class="town-established-meta" id="hero-established-meta">Est. 1824 | County Seat: Louisville</p>
-                <div class="river-marquee" id="hero-river-marquee">COMMUNITY DIGITAL NETWORK MAP • FIVE TOWNS STRONG</div>
-            </div>
-        </section>
-    </div>
+    <!-- HERO DIRECTORY CTA BANNER -->
+    <a href="https://clay-county-business-directory.supportmylocalcommunity.com" target="_blank" rel="noopener" style="text-decoration: none;" data-ga-label="HeroDirectoryCTA">
+        <div class="home-hero-cta">
+            <h1>Click to see Our Business Directory</h1>
+        </div>
+    </a>
 
-    <!-- UPPER REGIONAL PARTNERS STRIP (Positioned under Hero Banner) -->
-    <div class="widescreen-strip-container section8-town-images-strip hero-adjacent-strip">
+    <!-- UPPER REGIONAL PARTNERS CAROUSEL (AdBlock-Immune Sizing) -->
+    <div class="widescreen-strip-container">
         <section class="showcase-widget full-bleed-widget">
             <div class="partners-horizontal-strip" id="partners-grid-bottom">
                 <div class="feed-loading-placeholder" style="color: #fff; text-align: center; width: 100%;">Syncing regional sponsor arrays...</div>
@@ -118,201 +110,237 @@
         </section>
     </div>
 
-    <!-- THREE-COLUMN PORTAL CHASSIS: Events, Newsroom & Directory, Social Voice -->
-    <section class="smlc-three-column-portal-wrapper" id="adaptive-time-portal-chassis">
-        <div class="portal-grid-layout-fixed">
-            <!-- Left Column: County Community Calendar & Events -->
-            <div class="portal-column-cell-box left-cell-stack">
-                <div class="clay-county-news-box event-clipping">
-                    <div class="clipping-tag">Community Bulletin</div>
-                    <div class="event-clipping-header">
-                        <h3>What's Happening?</h3>
-                        <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #222; font-weight: bold;">Clay County Community Calendar</span>
-                    </div>
-                    <p class="event-clipping-text">
-                        "Got a local fundraiser, school event, or church dinner coming up? Share your news with the community for free!"
-                    </p>
-                    <a href="https://www.supportmylocalcommunity.com/submit-event" target="_blank" rel="noopener" class="event-clipping-btn" data-ga-label="submit_event_btn">Submit Your Event</a>
-                    <div class="clipping-footer">Clay City • Flora • Louisville • Sailor Springs • Xenia</div>
-                </div>
+    <!-- DYNAMIC GLOBAL SLIDESHOW TRACK -->
+    <div class="smlc-fullwidth-wrapper">
+        <div id="flora-slideshow" class="slider-viewport smlc-track">
+            <div class="slider-slide active">
+                <img src="//raw.githubusercontent.com/skventuresigns-design/media/main/claycounty.png" alt="Clay County, Illinois" class="lightbox-triggerable-element">
+            </div>
+        </div>
+    </div>
 
-                <div class="card-module-wrapper">
-                    <h2 class="et_pb_module_heading">Clay County Events</h2>
-                    <div class="news-clipping-wrapper">
-                        <div class="clipping-masthead">
-                            <span class="black-tag">Community Bulletin</span>
-                            <p class="clipping-tagline" id="month-tagline">Upcoming County Gatherings</p> 
+    <!-- DISCOVER CLAY COUNTY ILLINOIS SECTION -->
+    <div class="discover-clay-county-section">
+        <div class="index-heading-row">
+            <h2><strong><u>Discover Clay County Illinois</u></strong></h2>
+        </div>
+        <div class="index-grid-row">
+            <div class="index-col">
+                <div class="glossy-wrapper">
+                    <div class="glossy-box">
+                        <div class="clay-county-title"><h1 class="yellow-text" id="hero-town-title">Clay County</h1></div>
+                        <p class="sub-headline yellow-text" id="hero-established-meta">Southeastern Illinois | Est. 1824</p>
+                        <div class="content-body">
+                            <p class="yellow-text" id="desc2-target-1">
+                                Nestled in southeastern Illinois, Clay County is a community rich in history and culture. With <strong>Louisville</strong> as its county seat, it boasts welcoming towns like <strong>Louisville, Flora, Xenia, Clay City, and Sailor Springs</strong>, offering a unique blend of small-town charm and economic potential.
+                            </p>
                         </div>
-                        <div id="bulletin-scroller-target">
-                            <div style="text-align:center; padding: 20px; font-style:italic;">Loading community calendar...</div>
-                        </div>
-                        <div class="clipping-footer">
-                            View Full Community Calendar &amp; Details<br>
-                            Support My Local Community
+                        <div class="mission-text yellow-border">
+                            <p class="yellow-text"><strong>Our Mission:</strong> To highlight the county's significance and promote local business growth, ensuring a prosperous future for all residents.</p>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Center Column: County News & Business Directory Banner -->
-            <div class="portal-column-cell-box center-cell-stack">
-                <div class="card-module-wrapper">
-                    <h2 class="et_pb_module_heading">Clay County News</h2>
-                    <div class="newspaper-feed-chassis">
-                        <div class="clipping-masthead">
-                            <span class="black-tag">SMLC Newsroom</span>
-                            <p class="clipping-tagline">County-Wide Dispatches</p>
+            <div class="index-col">
+                <div class="section3-landmark-card">
+                    <h2 class="courthouse-heading" id="right-card-meta-title"><strong>Clay County Court House, Louisville, IL</strong></h2>
+                    <div class="section3-landmark-images" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div class="section3-landmark-img-wrap">
+                            <img id="dual-img-1" src="//raw.githubusercontent.com/skventuresigns-design/media/main/clay-county-courthouse.png" alt="Clay County Courthouse" class="courthouse-img lightbox-triggerable-element">
+                            <span class="section3-landmark-caption" id="dual-header-1" style="display:block; text-align:center; font-weight:bold; margin-top:4px;">Courthouse</span>
                         </div>
-                        <div id="news-matrix-target" class="news-dynamic-masonry">
-                            <div class="feed-loading-placeholder">Reconstructing localized newsroom dispatches...</div>
+                        <div class="section3-landmark-img-wrap">
+                            <img id="dual-img-2" src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="Little Wabash River" class="courthouse-img lightbox-triggerable-element">
+                            <span class="section3-landmark-caption" id="dual-header-2" style="display:block; text-align:center; font-weight:bold; margin-top:4px;">Little Wabash</span>
                         </div>
                     </div>
-                </div>
-
-                <div class="card-module-wrapper">
-                    <h2 class="et_pb_module_heading">Business Directory</h2>
-                    <div class="town-directory-container-s7">
-                        <img src="//ourflora.com/wp-content/uploads/2026/02/smlc.png?v=20260730_1630" 
-                             alt="" 
-                             class="town-directory-banner-s7 lightbox-triggerable-element" />
-                        <a href="https://clay-county-business-directory.supportmylocalcommunity.com/" target="_blank" rel="noopener" class="town-directory-interactive-btn-s7" style="width: 100%;" data-ga-label="section7_directory_btn">
-                            Clay County Business Directory
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Column: SMLC Facebook Voice & County Directory Links -->
-            <div class="portal-column-cell-box right-cell-stack">
-                <div class="card-module-wrapper">
-                    <h2 class="et_pb_module_heading">SMLC Facebook</h2>
-                    <div class="clay-county-news-box group-invitation-master">
-                        <div class="notice-tag-red">Local Conversation</div>
-                        <div class="polaroid-wrap">
-                            <img src="//ourflora.com/wp-content/uploads/2023/08/Ourflora.png" alt="" class="lightbox-triggerable-element">
-                        </div>
-                        <div class="invitation-header-main">
-                            <h3>Join the Community</h3>
-                            <span class="sub-header-text">Official SMLC Facebook Page</span>
-                        </div>
-                        <p class="invitation-body-text">
-                            "Stay connected with your neighbors. Discuss local news, share community updates, and join neighbors in the Clay County conversation."
-                        </p>
-                        <a href="https://www.facebook.com/SupportMyLocalCommunity/" target="_blank" rel="noopener" class="fb-action-btn" data-ga-label="facebook_group_btn">
-                            Enter the Conversation
-                        </a>
-                        <span class="community-voice-footer">
-                            Community Voice • Clay County, IL
-                        </span>
-                    </div>
-                </div>
-
-                <div class="card-module-wrapper">
-                    <h2 class="et_pb_module_heading">County Local Links</h2>
-                    <div class="clay-county-news-box group-invitation-master">
-                        <div class="notice-tag-red">County Directory</div>
-                        <div class="invitation-header-main" style="margin-top:15px;">
-                            <h3>Local Links &amp; Resources</h3>
-                            <span class="sub-header-text">Official County Portals &amp; Municipal Offices</span>
-                        </div>
-                        <div class="scrollable-directory-stream">
-                            <div id="local-links-target-container" class="local-links-stream">
-                                <div style="font-style:italic; font-size:12px; color:#666;">Loading directory links...</div>
-                            </div>
-                        </div>
-                        <span class="community-voice-footer">
-                            Verified Resources • Clay County, IL
-                        </span>
-                    </div>
+                    <p id="right-card-meta-desc1" class="section3-landmark-desc" style="font-size: 14px; line-height: 1.5; color: #ddd;">Historic civic governance center located in Louisville, IL.</p>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
 
-    <!-- SECTION 4: FEATURED ARTICLE & SIDEBAR (Spotlight + County Fuel Index) -->
-    <div class="section4-two-box-wrapper">
-        <div class="section4-left-article-box">
-            <header class="section4-centered-article-header">
-                <div class="category-tag" id="sec4-category-tag">Heritage &amp; Governance</div>
-                <h1 class="article-stacked-title" id="sec4-article-title">Clay County's Agricultural &amp; Civic Heart</h1>
-                <p class="article-stacked-deck" id="sec4-article-deck">Uniting communities, local commerce, and generations of rural tradition across Southern Illinois.</p>
-            </header>
+    <!-- ORANGE MASTER SECTION: ARTICLE & SIDEBAR WITH GAS MONITOR -->
+    <div class="orange-master-section">
+        <div class="news-heading-bar">
+            <h2 id="sec4-article-title" style="font-size: 32px !important;"><strong><u>Your Source For Local News</u></strong></h2>
+            <p id="sec4-article-deck" style="font-size: 15px; font-style: italic; color: #fef08a; margin: 4px 0 0 0;">Connecting transportation, industry, and community life in Clay County.</p>
+        </div>
+        
+        <div class="orange-grid-row" style="display: flex; flex-wrap: wrap; align-items: stretch; gap: 24px;">
+            <!-- Left: Featured Story & Media -->
+            <div class="orange-col" style="flex: 1.2; min-width: 300px;">
+                <div class="clay-county-news-box" style="height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+                    <span class="category-tag" id="sec4-category-tag" style="background:#FE4E02; color:#fff; padding:4px 10px; font-weight:bold; text-transform:uppercase; font-size:11px; display:inline-block; margin-bottom:8px; width:max-content;">Commerce &amp; Heritage</span>
+                    <img id="sec-4-1-article-img" src="//raw.githubusercontent.com/skventuresigns-design/media/main/clay-county-news.png" alt="" class="news-img-styled lightbox-triggerable-element" style="width: 100%; max-height: 320px; object-fit: contain; background:#000; border-radius:6px;">
+                    <div id="sec4-article-body" style="font-size: 15px; line-height: 1.6; margin-top: 14px; color: #222;">
+                        <p>Clay County, Illinois stands at the historic center of southeastern agriculture, commerce, and civic spirit.</p>
+                    </div>
+                </div>
+            </div>
 
-            <article class="article-body-content" id="sec4-article-body">
-                <p>
-                    Established in 1824 and named in honor of American statesman Henry Clay, Clay County stands as an essential agricultural and industrial hub in southeastern Illinois.
-                </p>
+            <!-- Right: Newsletter Signup & Live Realtime Fuel Monitor -->
+            <div class="orange-col" style="flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 20px;">
+                <!-- Newsletter Box -->
+                <div id="newsletter-form-container" class="clay-county-news-box event-clipping">
+                    <div class="clipping-tag-black">Official Signup</div>
+                    <div class="news-box-header">
+                        <h3>Newsletter Signup</h3>
+                        <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #444; font-weight: bold;">GET LOCAL UPDATES DELIVERED TO YOUR INBOX</span>
+                    </div>
+                    <form id="newsletter-form">
+                        <input type="hidden" name="formType" value="newsletter">
+                        <div class="wf-row" style="margin-bottom:8px;">
+                            <label class="wf-label">First Name</label>
+                            <input name="firstName" type="text" class="wf-field-input" required />
+                        </div>
+                        <div class="wf-row" style="margin-bottom:8px;">
+                            <label class="wf-label">Last Name</label>
+                            <input name="lastName" type="text" class="wf-field-input" required />
+                        </div>
+                        <div class="wf-row" style="margin-bottom:8px;">
+                            <label class="wf-label">Email</label>
+                            <input name="email" type="email" class="wf-field-input" required />
+                        </div>
+                        <div class="wform-btn-wrap" style="text-align: right; margin-top: 14px;">
+                            <button type="submit" id="nl-submit-btn" class="clipping-btn" style="border:none; cursor:pointer; width:100%;">Subscribe</button>
+                        </div>
+                    </form>
+                </div>
 
-                <figure class="article-media-frame">
-                    <img id="sec-4-1-article-img" 
-                         src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" 
-                         alt="" 
-                         class="lightbox-triggerable-element" />
-                    <figcaption id="sec4-img-caption">Clay County Community Network — Clay County, IL</figcaption>
-                </figure>
+                <div id="thank-you-clipping" class="clay-county-news-box spotlight-clipping" style="display: none; text-align: center;">
+                    <div class="clipping-tag-black">Success!</div>
+                    <div class="news-box-header"><h3>Thank You!</h3></div>
+                    <p class="biz-description" style="font-size: 1.2rem; font-weight: bold;">Thank You for Signing up for the Newsletter!</p>
+                    <p style="font-style: italic; margin-top: 10px;">We will be sending local community updates soon!</p>
+                </div>
 
-                <p>
-                    From the bustling commerce in Flora to the civic seat in Louisville and the historic corridors of Clay City, Xenia, and Sailor Springs, Clay County represents enduring community pride and steadfast growth.
-                </p>
-            </article>
+                <!-- Realtime County Fuel Index Monitor -->
+                <div id="fuel-monitor-target-box" class="fuel-monitor-billboard-card">
+                    <div class="sidebar-widget-title">CLAY COUNTY FUEL INDEX MONITOR</div>
+                    <div class="fuel-station-header">
+                        <div class="station-logo-frame">
+                            <img src="//raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/Casey's.png" alt="">
+                        </div>
+                        <div class="station-meta-title">CASEY'S</div>
+                    </div>
+                    <div class="fuel-pricing-grid">
+                        <div class="price-box">
+                            <span class="price-type-label">REGULAR</span>
+                            <span class="price-value-regular">$3.29</span>
+                        </div>
+                        <div class="price-box">
+                            <span class="price-type-label">DIESEL</span>
+                            <span class="price-value-diesel">$3.89</span>
+                        </div>
+                    </div>
+                    <div class="sync-timestamp-label">Syncing Real-Time Prices...</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            <div class="article-footer">
-                <span>County Dispatches | Jan 2026</span>
-                <span>Issue No. 1 | Page 1</span>
+    <!-- INTRICATE 3-COLUMN OPERATIONAL DATA CHASSIS -->
+    <div class="intricate-grid-container">
+        <!-- COLUMN 1: COMMUNITY BULLETIN (Top & Bottom Subscribe Options, Zero TBA) -->
+        <div class="intricate-col">
+            <div class="clay-county-news-box">
+                <div class="clipping-tag-black">Community Bulletin</div>
+                <div class="news-box-header">
+                    <h3>Local Events</h3>
+                    <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #444; font-weight: bold;">Clay County Community Calendar</span>
+                </div>
+                <!-- Dynamic Scroller Hook for universaltown.js -->
+                <div id="bulletin-scroller-target">
+                    <div style="text-align:center; padding: 20px; font-style:italic;">Loading community calendar...</div>
+                </div>
+                <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd;">
+                    <a href="https://www.supportmylocalcommunity.com/submit-event/" target="_blank" rel="noopener" class="footer-master-link" style="color: #222; font-weight: bold; font-size: 12px; text-transform: uppercase; text-decoration: underline;" data-ga-label="submit_event_link">
+                        Submit Your Event &rarr;
+                    </a>
+                </div>
             </div>
         </div>
 
-        <aside class="section4-right-widgets-stack">
+        <!-- COLUMN 2: BUSINESS SPOTLIGHT & SUBMIT CLIPPING -->
+        <div class="intricate-col">
+            <!-- Dynamic Business Spotlight Box -->
             <div class="clay-county-news-box spotlight-clipping">
-                <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
-                <div class="spotlight-image-wrap">
-                    <img id="spotlight-asset-img" src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="">
+                <div class="clipping-tag-black">Featured</div>
+                <div class="news-box-header" style="text-align: center;">
+                    <h3>Business Spotlight</h3>
+                    <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #444; font-weight: bold;">Supporting Local Clay County News</span>
                 </div>
-                <span class="biz-title" id="spotlight-asset-name">Local Merchant</span>
-                <span class="biz-location" id="spotlight-asset-loc">Clay County, IL</span>
-                <p class="biz-description" id="spotlight-asset-desc">Supporting local commerce across Clay County.</p>
-                <a href="#" id="spotlight-asset-link" target="_blank" rel="noopener" class="spotlight-btn" data-ga-label="spotlight_btn">Visit Business &rarr;</a>
+                <div class="spotlight-image-wrap" style="height: 180px; overflow: hidden; background: #000; border-radius: 6px; margin: 10px 0;">
+                    <img id="spotlight-asset-img" src="//raw.githubusercontent.com/skventuresigns-design/media/main/localbusiness.png" alt="" class="lightbox-triggerable-element" style="width: 100%; height: 100%; object-fit: contain;">
+                </div>
+                <span id="spotlight-asset-name" style="font-size: 22px; font-weight: bold; display: block; text-align: center; margin-bottom: 2px;">Local Merchant</span>
+                <span id="spotlight-asset-loc" style="font-size: 12px; text-transform: uppercase; color: #0258A3; font-weight: bold; display: block; text-align: center; margin-bottom: 12px; letter-spacing: 1px;">Clay County, IL</span>
+                <p id="spotlight-asset-desc" class="biz-description" style="text-align: justify; font-size: 14px; line-height: 1.5; padding: 0 4px; margin-bottom: 16px;">Supporting local commerce across Clay County.</p>
+                <a id="spotlight-asset-link" href="#" target="_blank" rel="noopener" class="clipping-btn" data-ga-label="spotlight_btn">Visit Business &rarr;</a>
             </div>
 
-            <div id="fuel-monitor-target-box" class="fuel-monitor-billboard-card">
-                <div class="sidebar-widget-title">CLAY COUNTY FUEL INDEX MONITOR</div>
-                <div class="fuel-station-header">
-                    <div class="station-logo-frame">
-                        <img src="//raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/Casey's.png" alt="">
-                    </div>
-                    <div class="station-meta-title">REGIONAL FUEL</div>
+            <!-- Event Submission Clipping -->
+            <div class="clay-county-news-box event-clipping" style="margin-top: 24px;">
+                <div class="clipping-tag-black">Community Bulletin</div>
+                <div class="news-box-header" style="text-align: center;">
+                    <h3>What's Happening?</h3>
+                    <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #444; font-weight: bold;">Clay County Community Calendar</span>
                 </div>
-                <div class="fuel-pricing-grid">
-                    <div class="price-box">
-                        <span class="price-type-label">REGULAR</span>
-                        <span class="price-value-regular">$3.29</span>
-                    </div>
-                    <div class="price-box">
-                        <span class="price-type-label">DIESEL</span>
-                        <span class="price-value-diesel">$3.89</span>
-                    </div>
-                </div>
-                <div class="sync-timestamp-label">Syncing Real-Time Prices...</div>
+                <p class="biz-description" style="text-align: center; font-style: italic; font-size: 14px; margin: 12px 0;">"Got a local fundraiser, school event, or church dinner coming up? Share your news with the community for free!"</p>
+                <a href="https://www.supportmylocalcommunity.com/submit-event/" target="_blank" rel="noopener" class="clipping-btn" data-ga-label="submit_event_btn">Submit Your Event</a>
             </div>
-        </aside>
+        </div>
+
+        <!-- COLUMN 3: SMLC FACEBOOK & DYNAMIC LOCAL LINKS -->
+        <div class="intricate-col">
+            <!-- Official Facebook Community Box -->
+            <div class="clay-county-news-box group-invitation-master">
+                <div class="clipping-tag-black">Social</div>
+                <div class="spotlight-image-wrap fb-hero-image" style="height: 140px; overflow: hidden; background: #000; border-radius: 6px; margin-bottom: 10px;">
+                    <img src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-banner.png" alt="" class="lightbox-triggerable-element" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <div class="news-box-header" style="text-align: center;">
+                    <h3>Join the Community</h3>
+                    <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #444; font-weight: bold;">Official SMLC Facebook Page</span>
+                </div>
+                <p class="biz-description" style="text-align: center; font-size: 14px; margin: 10px 0;">Stay connected with neighbors. Discuss local news, share updates, and join the conversation.</p>
+                <a href="https://www.facebook.com/SupportMyLocalCommunity" target="_blank" rel="noopener" class="clipping-btn" data-ga-label="facebook_group_btn">Enter the Conversation</a>
+            </div>
+
+            <!-- Dynamic County-Wide Local Links Stream -->
+            <div class="clay-county-news-box group-clipping" style="margin-top: 24px;">
+                <div class="clipping-tag-black">Town Directory</div>
+                <div class="news-box-header" style="text-align: center;">
+                    <h3>County Portals &amp; Links</h3>
+                    <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #444; font-weight: bold;">Verified Clay County Resources</span>
+                </div>
+                <div class="scrollable-directory-stream" style="max-height: 240px; overflow-y: auto; margin-top: 10px; padding-right: 4px;">
+                    <div id="local-links-target-container" class="local-links-stream">
+                        <div style="font-style:italic; font-size:12px; color:#666;">Loading directory links...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- SECTION 5: HISTORICAL TIMELINE -->
-    <div class="main-container">
-        <section class="historical-timeline-chassis-wrapper">
-            <div class="timeline-inner-bounds">
-                <div class="timeline-row-1-header">
-                    <span class="main-timeline-center-title-node">Historical Timeline</span>
-                    <p class="main-timeline-sub-caption-node">Journey through the foundational milestones that shaped Clay County, IL.</p>
-                </div>
-                <div id="history-row-target" class="timeline-row-2-cards">
-                    <div class="feed-loading-placeholder">Parsing landmark records ledger database tracking layers...</div>
-                </div>
+    <!-- BLUE NEWS FRAME: DYNAMIC COUNTY-WIDE NEWS MASONRY -->
+    <div class="blue-news-frame" style="margin: 36px 0;">
+        <div class="news-content-90" style="max-width: 1200px; margin: 0 auto;">
+            <div class="news-heading-bar" style="border-bottom: 2px solid #3b82f6; padding-bottom: 8px; margin-bottom: 18px;">
+                <h3 style="font-size: 26px; color: #93c5fd; text-transform: uppercase; margin: 0; font-family: 'Playfair Display', serif;">
+                    Clay County News Dispatches
+                </h3>
+                <span style="font-size: 12px; color: #cbd5e1; text-transform: uppercase; letter-spacing: 1px;">County-Wide Dispatches &bull; Hospital &bull; Courthouse</span>
             </div>
-        </section>
+            <!-- Dynamic News Injection Target -->
+            <div id="news-matrix-target" class="news-dynamic-masonry">
+                <div class="feed-loading-placeholder" style="color: #fff; text-align: center; padding: 20px;">Reconstructing localized newsroom dispatches...</div>
+            </div>
+        </div>
     </div>
 
-    <!-- LOWER REGIONAL PARTNERS STRIP (Positioned Above Section 3 Split Layout) -->
+    <!-- LOWER REGIONAL PARTNERS STRIP -->
     <div class="widescreen-strip-container">
         <section class="showcase-widget full-bleed-widget">
             <div class="partners-horizontal-strip" id="partners-grid-top">
@@ -321,64 +349,56 @@
         </section>
     </div>
 
-    <!-- SECTION 3: SPLIT LAYOUT (County Slideshow, Overview & Landmarks) -->
-    <section class="section3-split-layout">
-        <div class="section3-container-grid">
-            <div class="section3-row-1">
-                <h2 class="section3-main-title" id="sec3-main-title">Discover Clay County Communities</h2>
-                <p class="section3-intro-text" id="sec3-intro-text">Explore our thriving businesses, historic landmarks, and community spirit across all five townships.</p>
+    <!-- HISTORICAL TIMELINE SECTION -->
+    <div class="historical-timeline-chassis-wrapper" style="margin: 36px auto; max-width: 1200px;">
+        <div class="timeline-row-1-header" style="text-align: center; margin-bottom: 24px;">
+            <span class="main-timeline-center-title-node" style="font-size: 32px; font-weight: bold; color: #FFC10E; font-family: 'Playfair Display', serif;">Historical Timeline</span>
+            <p style="color: #fff; font-size: 14px; margin: 4px 0 0 0;">Milestones in the founding and development of Clay County, Illinois.</p>
+        </div>
+        <div id="history-row-target" class="timeline-row-2-cards">
+            <div class="feed-loading-placeholder" style="color: #fff; text-align: center;">Parsing historical milestone ledgers...</div>
+        </div>
+    </div>
+
+    <!-- THANKFUL PROCLAMATION SECTION -->
+    <div class="thankful-section">
+        <div class="thankful-content" style="max-width: 900px; margin: 0 auto; text-align: center; padding: 20px;">
+            <p style="font-size: 16px; line-height: 1.7; font-weight: 800; color: #1a1a1a;">
+                We are very Thankful and Blessed for our Customers who allow us to advertise their Business to the Community. We hope to be of Service, not only to the Large Corporations, but also to the Small Business’ in the area. A Large Corporation once started out as a small business, so our hope is to help those Small Business’ we serve reach the fullest potential they desire. You will never know what we are able to do for Your Business unless you ask. I hope to hear from you.
+            </p>
+            <p class="contact-email" style="margin-top: 14px; font-size: 14px; text-transform: uppercase; font-weight: bold; color: #000;">
+                For questions or comments about this site please email <a href="mailto:Scott.Robinson@skventuresigns.com" style="color: #0258A3; text-decoration: underline;" data-ga-label="proclamation_email">Scott.Robinson@skventuresigns.com</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- GLOBAL SITE FOOTER (All fields from Firebase) -->
+    <footer id="global-footer-container" class="site-footer">
+        <div class="footer-columns-grid" style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 24px; max-width: 1200px; margin: 0 auto; padding-bottom: 24px; text-align: left;">
+            <div>
+                <span class="footer-col-header" style="font-weight: bold; color: #FFC10E; display: block; margin-bottom: 8px; text-transform: uppercase;">Phone Numbers:</span>
+                <div id="footer-phone-target">618-662-8341</div>
             </div>
-
-            <div class="section3-row-2">
-                <div class="section3-left-col">
-                    <div id="xenia-town-slideshow-matrix" class="section3-slideshow-box">
-                        <div id="xenia-slideshow" class="slider-viewport">
-                            <div class="slider-slide active">
-                                <img src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="">
-                                <div class="slider-caption">Clay County Scenic Views</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="section3-about-box">
-                        <span class="section3-about-tag" id="sec3-about-tag">About Clay County</span>
-                        <p class="section3-about-text" id="desc2-target-1">Formed in 1824, Clay County encompasses over 469 square miles of productive farmland, rich river heritage, and resilient historic communities anchored by hardworking neighbors.</p>
-                    </div>
-                </div>
-
-                <div class="section3-right-col">
-                    <div class="section3-landmark-card">
-                        <h3 class="section3-landmark-title" id="right-card-meta-title">Historic County Landmarks</h3>
-                        <div class="section3-landmark-images">
-                            <div class="section3-landmark-img-wrap">
-                                <img id="dual-img-1" src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="" class="lightbox-triggerable-element">
-                                <span class="section3-landmark-caption" id="dual-header-1">County Courthouse</span>
-                            </div>
-                            <div class="section3-landmark-img-wrap">
-                                <img id="dual-img-2" src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="" class="lightbox-triggerable-element">
-                                <span class="section3-landmark-caption" id="dual-header-2">Little Wabash River</span>
-                            </div>
-                        </div>
-                        <p id="right-card-meta-desc1" class="section3-landmark-desc">Loading landmark historical details...</p>
-                    </div>
+            <div>
+                <span class="footer-col-header" style="font-weight: bold; color: #FFC10E; display: block; margin-bottom: 8px; text-transform: uppercase;">Electronic Mail:</span>
+                <a id="footer-email-target" href="mailto:Scott.Robinson@skventuresigns.com" style="color:#fff; text-decoration:underline;" data-ga-label="footer_email">Scott.Robinson@skventuresigns.com</a>
+            </div>
+            <div>
+                <span class="footer-col-header" style="font-weight: bold; color: #FFC10E; display: block; margin-bottom: 8px; text-transform: uppercase;">Mailing Address:</span>
+                <div id="footer-address-target" style="color: #fff;">
+                    Clay County, Illinois
                 </div>
             </div>
         </div>
-    </section>
-
-    <!-- SECTION 9 & 10: PROCLAMATION CARD & S&K VENTURE SIGNS CONTACT -->
-    <div class="main-container section9-bold-print-wrapper section10-message-chassis">
-        <section class="section10-proclamation-card-box">
-            <p class="proclamation-body-text">
-                We are very Thankful and Blessed for our Customers who allow us to advertise their Business to the Community. We hope to be of Service, not only to the Large Corporations, but also to the Small Business’ in the area. A Large Corporation once started out as a small business, so our hope is to help those Small Business’ we serve reach the fullest potential they desire. You will never know what we are able to do for Your Business unless you ask. I hope to hear from you.
+        <div style="border-top: 1px solid #333; padding-top: 16px; text-align: center;">
+            <p id="footer-copy-target" style="margin: 0; color: #bbb;">All Content, Photographs, Writings, Letters and Documents &copy; 2026 - Support My Local Community</p>
+            <p id="footer-build-version-stamp" style="margin: 6px 0 0 0; color: #FFC10E; font-family: monospace; font-size: 12px;">
+                <strong>System Build Version:</strong> v1.3.4 | <strong>Active Version:</strong> 2026-10-01_18:30
             </p>
-            <p class="proclamation-contact-text">
-                For questions or comments about this site please email <a href="mailto:Scott.Robinson@skventuresigns.com" data-ga-label="proclamation_email">Scott.Robinson@skventuresigns.com</a>
-            </p>
-        </section>
-    </div>
+        </div>
+    </footer>
 
-    <!-- PORTAL GLOBAL LIGHTBOX MODAL -->
+    <!-- LIGHTBOX OVERLAY MODAL -->
     <div id="portal-global-lightbox" class="lightbox-overlay-mask" onclick="closeLightbox(event)">
         <div class="lightbox-modal-window">
             <div class="lightbox-header-bar" style="padding:15px; border-bottom:2px solid #222; display:flex; justify-content:space-between; align-items:center;">
@@ -404,36 +424,10 @@
         </div>
     </div>
 
-    <!-- GLOBAL SITE FOOTER (All fields from Firebase) -->
-    <footer id="global-footer-container" class="site-global-footer-matrix">
-        <div class="footer-columns-grid">
-            <div>
-                <span class="footer-col-header">Phone Numbers:</span>
-                <div id="footer-phone-target">618-662-8341</div>
-            </div>
-            <div>
-                <span class="footer-col-header">Electronic Mail:</span>
-                <a id="footer-email-target" href="mailto:Scott.Robinson@skventuresigns.com" data-ga-label="footer_email">Scott.Robinson@skventuresigns.com</a>
-            </div>
-            <div>
-                <span class="footer-col-header">Mailing Address:</span>
-                <div id="footer-address-target">
-                    Clay County, Illinois
-                </div>
-            </div>
-        </div>
-        <div style="border-top:1px solid #333; padding-top:16px;">
-            <p id="footer-copy-target">&copy; 2026 Clay County Community Portal. All rights reserved.</p>
-            <p id="footer-build-version-stamp">
-                <strong>System Build Version:</strong> v1.3.3 | <strong>Active Version:</strong> 2026-10-01_18:15
-            </p>
-        </div>
-    </footer>
-
     <!-- RETURN TO TOP ANCHOR -->
     <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top">↑</button>
 
-    <!-- CORE SCRIPT -->
+    <!-- Master Portal Engine -->
     <script src="./universaltown.js"></script>
 </body>
 </html>
