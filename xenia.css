@@ -1,7 +1,7 @@
 /* ==========================================================================
    XENIA, IL - SMLC DIGITAL TOWN SQUARE PORTAL STYLESHEET
-   Date/Time Stamp: 2026-10-01 15:35 EDT (New York)
-   Build Version: v1.1.7
+   Date/Time Stamp: 2026-10-01 15:45 EDT (New York)
+   Build Version: v1.1.8
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&family=Playfair+Display:wght@700;900&display=swap');
@@ -142,7 +142,7 @@ a {
 }
 
 /* ==========================================================================
-   BRAND HEADER & STICKY NAVIGATION WITH GOOGLE TRANSLATE
+   BRAND HEADER & STICKY NAVIGATION (CENTERED LINKS WITH ABSOLUTE TRANSLATE)
    ========================================================================== */
 .site-brand-header { 
     width: 100% !important; 
@@ -169,7 +169,7 @@ a {
     vertical-align: bottom !important; 
 }
 
-/* Persistent Sticky Menu Bar */
+/* Persistent Sticky Centered Menu Bar */
 .menu-bar { 
     width: 100% !important; 
     background: var(--xenia-green) !important; 
@@ -186,10 +186,10 @@ a {
     width: var(--container-width); 
     margin: 0 auto; 
     display: flex; 
-    justify-content: space-between; 
+    justify-content: center; 
     align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
+    position: relative;
+    padding: 0 10px;
 }
 
 .menu-links { 
@@ -253,6 +253,20 @@ a {
     border: 1px solid var(--xenia-gold);
     border-radius: 6px;
     padding: 3px 8px;
+    position: absolute;
+    right: 0;
+}
+
+@media (max-width: 1024px) {
+    .menu-inner {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .translate-box-header {
+        position: static;
+        margin-top: 6px;
+    }
 }
 
 .goog-te-gadget-simple {
