@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Line 2: Town identifier attribute set to XENIA -->
-<!-- Timestamp: 2026-10-01 15:30 EDT (New York) | Version: v1.1.6 -->
+<!-- Timestamp: 2026-10-01 15:35 EDT (New York) | Version: v1.1.7 -->
 <html lang="en-US" data-town="XENIA">
 <head>
     <meta charset="UTF-8" />
@@ -33,7 +33,6 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
 
-        // Tracking configuration: Primary GTM tracking tag with enhanced measurement & signals
         gtag('config', 'G-CTYHDF4MSD', {
             'send_page_view': true,
             'cookie_flags': 'SameSite=None;Secure'
@@ -41,6 +40,17 @@
         gtag('config', 'G-L376P3NPY4');
         gtag('config', 'G-H6Q756MVE8');
     </script>
+
+    <!-- Google Translate Initialization Script -->
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </head>
 <body data-town="XENIA">
 
@@ -57,7 +67,7 @@
         </a>
     </div>
 
-    <!-- PERSISTENT TOP NAVIGATION BAR -->
+    <!-- PERSISTENT STICKY TOP NAVIGATION BAR -->
     <header class="menu-bar">
         <div class="menu-inner">
             <nav>
@@ -70,6 +80,8 @@
                     <li><a href="#/xenia" class="active" data-ga-label="NavXeniaButton" target="_self"><span>Xenia</span></a></li>
                 </ul>
             </nav>
+            <!-- Google Translate Dropdown Selector -->
+            <div id="google_translate_element" class="translate-box-header"></div>
         </div>
     </header>
 
@@ -94,7 +106,7 @@
         </section>
     </div>
 
-    <!-- THREE-COLUMN PORTAL CHASSIS: Community Events, Newsroom & Directory, Social Voice -->
+    <!-- THREE-COLUMN PORTAL CHASSIS: Events, Newsroom & Directory, Social Voice -->
     <section class="smlc-three-column-portal-wrapper" id="adaptive-time-portal-chassis">
         <div class="portal-grid-layout-fixed">
             <!-- Left Column: Community Calendar & Events -->
@@ -399,7 +411,7 @@
         <div style="border-top:1px solid #333; padding-top:15px;">
             <p id="footer-copy-target">&copy; 2026 Xenia Community Portal. All rights reserved.</p>
             <p id="footer-build-version-stamp" style="margin-top: 8px; opacity: 0.9; font-size: 13px; color: #FFC10E; letter-spacing: 0.5px;">
-                <strong>System Build Version:</strong> v1.1.6 | <strong>Active Version:</strong> 2026-10-01_15:30
+                <strong>System Build Version:</strong> v1.1.7 | <strong>Active Version:</strong> 2026-10-01_15:35
             </p>
         </div>
     </footer>
