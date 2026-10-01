@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Line 2: Town identifier attribute set to XENIA -->
-<!-- Timestamp: 2026-10-01 12:35 EDT (New York) | Version: v1.1.5 -->
+<!-- Timestamp: 2026-10-01 15:30 EDT (New York) | Version: v1.1.6 -->
 <html lang="en-US" data-town="XENIA">
 <head>
     <meta charset="UTF-8" />
@@ -52,7 +52,7 @@
 
     <!-- SITE BRAND HEADER -->
     <div id="global-header-container" class="site-brand-header">
-        <a href="#/home" class="header-billboard-link" data-ga-label="HeaderBillboardLink">
+        <a href="#/home" class="header-billboard-link" data-ga-label="HeaderBillboardLink" target="_self">
             <img src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="" class="header-billboard-img" />
         </a>
     </div>
@@ -62,12 +62,12 @@
         <div class="menu-inner">
             <nav>
                 <ul id="dynamic-menu-links" class="menu-links">
-                    <li><a href="#/home" data-ga-label="NavHomeButton"><span>Home</span></a></li>
-                    <li><a href="#/clay-city" data-ga-label="NavClayCityButton"><span>Clay City</span></a></li>
-                    <li><a href="#/flora" data-ga-label="NavFloraButton"><span>Flora</span></a></li>
-                    <li><a href="#/louisville" data-ga-label="NavLouisvilleButton"><span>Louisville</span></a></li>
-                    <li><a href="#/sailor-springs" data-ga-label="NavSailorSpringsButton"><span>Sailor Springs</span></a></li>
-                    <li><a href="#/xenia" class="active" data-ga-label="NavXeniaButton"><span>Xenia</span></a></li>
+                    <li><a href="#/home" data-ga-label="NavHomeButton" target="_self"><span>Home</span></a></li>
+                    <li><a href="#/clay-city" data-ga-label="NavClayCityButton" target="_self"><span>Clay City</span></a></li>
+                    <li><a href="#/flora" data-ga-label="NavFloraButton" target="_self"><span>Flora</span></a></li>
+                    <li><a href="#/louisville" data-ga-label="NavLouisvilleButton" target="_self"><span>Louisville</span></a></li>
+                    <li><a href="#/sailor-springs" data-ga-label="NavSailorSpringsButton" target="_self"><span>Sailor Springs</span></a></li>
+                    <li><a href="#/xenia" class="active" data-ga-label="NavXeniaButton" target="_self"><span>Xenia</span></a></li>
                 </ul>
             </nav>
         </div>
@@ -85,22 +85,16 @@
         </section>
     </div>
 
-    <!-- ========================================================================= -->
-    <!-- SECTION 8 (MOVED UP UNDER THE HERO BANNER)                                -->
-    <!-- Regional Showcase Horizontal Partners Strip                               -->
-    <!-- ========================================================================= -->
+    <!-- UPPER REGIONAL PARTNERS STRIP (Positioned under Hero Banner) -->
     <div class="widescreen-strip-container section8-town-images-strip hero-adjacent-strip">
         <section class="showcase-widget full-bleed-widget">
             <div class="partners-horizontal-strip" id="partners-grid-bottom">
-                <div class="feed-loading-placeholder" style="color: #fff; text-align: center; width: 100%;">Syncing regional timeline showcase arrays...</div>
+                <div class="feed-loading-placeholder" style="color: #fff; text-align: center; width: 100%;">Syncing regional sponsor arrays...</div>
             </div>
         </section>
     </div>
 
-    <!-- ========================================================================= -->
-    <!-- THREE-COLUMN PORTAL CHASSIS                                               -->
-    <!-- Events, News & Business Directory, Facebook Voice                         -->
-    <!-- ========================================================================= -->
+    <!-- THREE-COLUMN PORTAL CHASSIS: Community Events, Newsroom & Directory, Social Voice -->
     <section class="smlc-three-column-portal-wrapper" id="adaptive-time-portal-chassis">
         <div class="portal-grid-layout-fixed">
             <!-- Left Column: Community Calendar & Events -->
@@ -164,7 +158,7 @@
                 </div>
             </div>
 
-            <!-- Right Column: SMLC Social Voice & Resource Links -->
+            <!-- Right Column: SMLC Facebook Voice & Town Directory Links -->
             <div class="portal-column-cell-box right-cell-stack">
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">SMLC Facebook</h2>
@@ -294,17 +288,16 @@
         </section>
     </div>
 
-    <!-- SECTION 6: UPPER PARTNERS STRIP -->
+    <!-- LOWER REGIONAL PARTNERS STRIP (Positioned Above Section 3 Split Layout) -->
     <div class="widescreen-strip-container">
         <section class="showcase-widget full-bleed-widget">
-            <div class="partners-horizontal-strip" id="partners-grid-top"></div>
+            <div class="partners-horizontal-strip" id="partners-grid-top">
+                <div class="feed-loading-placeholder" style="color: #fff; text-align: center; width: 100%;">Syncing regional sponsor arrays...</div>
+            </div>
         </section>
     </div>
 
-    <!-- ========================================================================= -->
-    <!-- SECTION 3: SPLIT LAYOUT                                                   -->
-    <!-- Slideshow, Community Overview & Historical Landmarks Card                 -->
-    <!-- ========================================================================= -->
+    <!-- SECTION 3: SPLIT LAYOUT (Slideshow, Community Overview & Landmarks) -->
     <section class="section3-split-layout">
         <div class="section3-container-grid">
             <div class="section3-row-1">
@@ -361,7 +354,7 @@
         </section>
     </div>
 
-    <!-- PORTAL LIGHTBOX MODAL -->
+    <!-- PORTAL GLOBAL LIGHTBOX MODAL -->
     <div id="portal-global-lightbox" class="lightbox-overlay-mask" onclick="closeLightbox(event)">
         <div class="lightbox-modal-window">
             <div class="lightbox-header-bar" style="padding:15px; border-bottom:2px solid #222; display:flex; justify-content:space-between; align-items:center;">
@@ -374,7 +367,7 @@
                 <div id="lightbox-target-date" style="font-size: 13px; color: #cc0000; font-weight: bold; margin-bottom: 12px;">Wire Sync Info</div>
                 <p id="lightbox-target-story" style="font-size:16px; line-height:1.6;">Story Body</p>
                 <div id="lightbox-img-wrapper" style="margin-top:15px; text-align:center;">
-                    <img id="lightbox-target-img" src="" alt="Expanded Asset Content" style="max-width:100%; max-height:65vh; border-radius:4px; object-fit:contain;">
+                    <img id="lightbox-target-img" src="" alt="" style="max-width:100%; max-height:65vh; border-radius:4px; object-fit:contain;">
                 </div>
             </div>
             
@@ -405,8 +398,8 @@
         </div>
         <div style="border-top:1px solid #333; padding-top:15px;">
             <p id="footer-copy-target">&copy; 2026 Xenia Community Portal. All rights reserved.</p>
-            <p style="margin-top: 8px; opacity: 0.8; font-size: 12px; color: #aaaaaa;">
-                <strong>System Build Version:</strong> v1.1.5 | <strong>Active Version:</strong> 2026-10-01_12:35
+            <p id="footer-build-version-stamp" style="margin-top: 8px; opacity: 0.9; font-size: 13px; color: #FFC10E; letter-spacing: 0.5px;">
+                <strong>System Build Version:</strong> v1.1.6 | <strong>Active Version:</strong> 2026-10-01_15:30
             </p>
         </div>
     </footer>
