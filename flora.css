@@ -1,15 +1,18 @@
 /* ==========================================================================
    FLORA, IL - SMLC DIGITAL TOWN SQUARE PORTAL STYLESHEET
-   Active Version: v1.3.2
-   Date/Time Stamp: 2026-10-01 17:58 EDT (New York)
+   Active Version: v1.4.0
+   Date/Time Stamp: 2026-10-06 17:05 EDT (New York)
    Description: Complete Flora identity stylesheet (Royal Blue & Wolf Orange).
                 Includes 48x48px sandwich button mobile drawer menu (<1024px),
                 centered desktop horizontal menu, Google Translate styling,
-                prefers-color-scheme dark mode, and AdBlock-immune partner cards.
+                prefers-color-scheme dark mode, AdBlock-immune partner cards,
+                interactive 3-pill tab system, and individual news article cards.
    ========================================================================== */
 
+/* Line 12: External Font Declarations */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&family=Playfair+Display:wght@700;900&display=swap');
 
+/* Line 15: Color & Theme Tokens */
 :root {
     --container-width: 96%;
     
@@ -42,6 +45,7 @@
     --granite-black: #0a0a0a;
 }
 
+/* Line 46: Town Data Attribute Scope */
 body[data-town="FLORA"],
 html[data-town="FLORA"] body,
 body[data-town="flora"],
@@ -53,7 +57,7 @@ html[data-town="flora"] body {
 }
 
 /* ==========================================================================
-   DEVICE DARK MODE OVERRIDES (prefers-color-scheme: dark)
+   Line 57: DEVICE DARK MODE OVERRIDES (prefers-color-scheme: dark)
    ========================================================================== */
 @media (prefers-color-scheme: dark) {
     :root {
@@ -114,6 +118,7 @@ html[data-town="flora"] body {
     }
 }
 
+/* Line 116: Global Typography & Reset */
 * { 
     font-family: 'Times New Roman', Times, serif !important; 
     box-sizing: border-box; 
@@ -149,7 +154,7 @@ a {
 }
 
 /* ==========================================================================
-   BRAND HEADER & STICKY NAVIGATION BAR (FLORA ROYAL BLUE)
+   Line 150: BRAND HEADER & STICKY NAVIGATION BAR (FLORA ROYAL BLUE)
    ========================================================================== */
 .site-brand-header { 
     width: 100% !important; 
@@ -193,9 +198,9 @@ a {
     margin: 0 auto; 
     display: flex; 
     justify-content: center; 
-    align-items: center;
-    position: relative;
-    padding: 0 12px;
+    align-items: center; 
+    position: relative; 
+    padding: 0 12px; 
 }
 
 /* Mobile Sandwich Button (Hidden by default on Desktop 1024px+) */
@@ -326,7 +331,7 @@ a {
 }
 
 /* ==========================================================================
-   MOBILE & TABLET DRAWER OVERRIDES (< 1024px)
+   Line 307: MOBILE & TABLET DRAWER OVERRIDES (< 1024px)
    ========================================================================== */
 @media (max-width: 1023px) {
     .menu-inner {
@@ -384,7 +389,7 @@ a {
 }
 
 /* ==========================================================================
-   TOWN HERO BANNER (FLORA NAVY & BLUE GRADIENT)
+   Line 365: TOWN HERO BANNER (FLORA NAVY & BLUE GRADIENT)
    ========================================================================== */
 .main-container { 
     width: var(--container-width); 
@@ -402,7 +407,7 @@ a {
     border-bottom: 4px solid var(--flora-orange); 
     border-radius: 16px; 
     text-align: center; 
-    margin-bottom: 36px; 
+    margin-bottom: 24px; 
     background-color: #021a30 !important; 
     background-image: 
         radial-gradient(circle at 50% 30%, rgba(2, 88, 163, 0.65) 0%, rgba(0, 0, 0, 0.95) 75%), 
@@ -464,7 +469,87 @@ a {
 }
 
 /* ==========================================================================
-   PARTNER SHOWCASE STRIPS & BALANCED CARD SIZING (NO OVERSIZED BANNERS)
+   Line 444: PORTAL CATEGORY PILL NAVIGATION & TAB PANELS (FLORA THEMED)
+   ========================================================================== */
+.portal-pill-tabs-wrapper {
+    width: var(--container-width);
+    margin: 0 auto 28px auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.portal-pill-tabs-nav {
+    display: inline-flex;
+    gap: 14px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 8px 14px;
+    border-radius: 9999px;
+    border: 2px solid var(--flora-orange);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.85);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.portal-pill-btn {
+    min-height: 48px;
+    padding: 10px 26px;
+    background: #000000;
+    color: #ffffff !important;
+    border: 2px solid #333333;
+    border-radius: 9999px;
+    font-family: 'Times New Roman', Times, serif !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.25s ease-in-out;
+}
+
+.portal-pill-btn:hover {
+    border-color: var(--flora-orange);
+    color: var(--flora-orange) !important;
+    transform: translateY(-2px);
+}
+
+.portal-pill-btn.active {
+    background: var(--flora-orange) !important;
+    color: #ffffff !important;
+    border-color: #ffffff !important;
+    box-shadow: 0 0 14px rgba(254, 78, 2, 0.85);
+}
+
+/* Tab Panels Toggle */
+.portal-tab-panel {
+    display: none;
+    width: 100%;
+    animation: fadeInTab 0.35s ease-in-out;
+}
+
+.portal-tab-panel.active {
+    display: block;
+}
+
+@keyframes fadeInTab {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 767px) {
+    .portal-pill-tabs-nav {
+        width: 100%;
+        border-radius: 12px;
+    }
+    
+    .portal-pill-btn {
+        flex: 1 1 100%;
+        text-align: center;
+    }
+}
+
+/* ==========================================================================
+   Line 522: PARTNER SHOWCASE STRIPS & BALANCED CARD SIZING
    ========================================================================== */
 .widescreen-strip-container,
 .section8-town-images-strip { 
@@ -529,7 +614,7 @@ a {
     box-shadow: 6px 6px 0px var(--card-shadow-color) !important; 
 }
 
-/* Fixed Logo Height (Restricts oversized high-res graphics) */
+/* Fixed Logo Height */
 .partner-logo-container { 
     width: 100% !important; 
     height: 85px !important; 
@@ -627,7 +712,7 @@ a {
 }
 
 /* ==========================================================================
-   THREE-COLUMN PORTAL CHASSIS (FLORA NAVY BACKGROUND)
+   Line 674: THREE-COLUMN PORTAL CHASSIS (FLORA NAVY BACKGROUND)
    ========================================================================== */
 .smlc-three-column-portal-wrapper { 
     width: 100%; 
@@ -830,18 +915,40 @@ a {
     background-color: var(--card-surface-bg) !important; 
     border: 3px double var(--card-border-color) !important; 
     box-shadow: 6px 6px 0px var(--card-shadow-color) !important; 
-    padding: 28px !important; 
+    padding: 24px !important; 
     border-radius: 6px; 
     color: var(--card-text-primary) !important; 
 }
 
-.news-dynamic-masonry { 
-    max-height: 560px !important; 
-    overflow-y: auto !important; 
-    padding-right: 8px !important; 
-    text-align: left !important; 
+/* ==========================================================================
+   Line 864: NEWS MATRIX FEED AS INDIVIDUAL CARDS
+   ========================================================================== */
+.news-cards-feed-chassis {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-height: 640px;
+    overflow-y: auto;
+    padding: 8px 10px 8px 4px;
 }
 
+.news-cards-feed-chassis .history-card {
+    background-color: var(--card-surface-bg) !important;
+    border: 2px solid var(--card-border-color) !important;
+    box-shadow: 6px 6px 0px var(--card-shadow-color) !important;
+    border-radius: 6px !important;
+    padding: 22px !important;
+    cursor: pointer;
+    text-align: left;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.news-cards-feed-chassis .history-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 8px 8px 0px var(--card-shadow-color) !important;
+}
+
+/* Local Groups & Invitations */
 .clay-county-news-box.group-invitation-master { 
     box-sizing: border-box !important; 
     width: 100% !important; 
@@ -1000,7 +1107,7 @@ a {
 }
 
 /* ==========================================================================
-   SECTION 4: FEATURED ARTICLE & SIDEBAR
+   Line 1034: SECTION 4: FEATURED ARTICLE & SIDEBAR
    ========================================================================== */
 .section4-two-box-wrapper {
     display: grid;
@@ -1319,17 +1426,17 @@ a {
 }
 
 .price-value-regular { 
-    color: #39ff14 !important;
+    color: #39ff14 !important; 
     font-size: 28px !important; 
     font-weight: 900 !important; 
-    text-shadow: 0 0 10px rgba(57, 255, 20, 0.7);
+    text-shadow: 0 0 10px rgba(57, 255, 20, 0.7); 
 }
 
 .price-value-diesel { 
-    color: #eb1c24 !important;
+    color: #eb1c24 !important; 
     font-size: 28px !important; 
     font-weight: 900 !important; 
-    text-shadow: 0 0 10px rgba(235, 28, 36, 0.7);
+    text-shadow: 0 0 10px rgba(235, 28, 36, 0.7); 
 }
 
 .sync-timestamp-label {
@@ -1341,7 +1448,7 @@ a {
 }
 
 /* ==========================================================================
-   SECTION 5: HISTORICAL TIMELINE (FLORA BLUE THEMED CHASSIS)
+   Line 1344: SECTION 5: HISTORICAL TIMELINE (FLORA BLUE THEMED CHASSIS)
    ========================================================================== */
 .historical-timeline-chassis-wrapper {
     width: 100% !important;
@@ -1480,7 +1587,7 @@ a {
 }
 
 /* ==========================================================================
-   SECTION 3: SPLIT LAYOUT (SLIDESHOW, OVERVIEW & HISTORIC LANDMARKS)
+   Line 1475: SECTION 3: SPLIT LAYOUT (SLIDESHOW, OVERVIEW & HISTORIC LANDMARKS)
    ========================================================================== */
 .section3-split-layout { 
     width: 100%; 
@@ -1686,7 +1793,7 @@ a {
 }
 
 /* ==========================================================================
-   SECTION 9 & 10: PROCLAMATION & MESSAGE CHASSIS
+   Line 1656: SECTION 9 & 10: PROCLAMATION & MESSAGE CHASSIS
    ========================================================================== */
 .section9-bold-print-wrapper,
 .section10-message-chassis {
@@ -1737,7 +1844,7 @@ a {
 }
 
 /* ==========================================================================
-   GLOBAL FOOTER MATRIX
+   Line 1705: GLOBAL FOOTER MATRIX
    ========================================================================== */
 .site-global-footer-matrix { 
     width: 100% !important; 
@@ -1782,7 +1889,7 @@ a {
 }
 
 /* ==========================================================================
-   LIGHTBOX MODAL WINDOW
+   Line 1752: LIGHTBOX MODAL WINDOW
    ========================================================================== */
 .lightbox-overlay-mask { 
     position: fixed !important; 
