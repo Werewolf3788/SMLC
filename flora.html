@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Line 2: Town identifier attribute set to FLORA -->
-<!-- Timestamp: 2026-10-06 17:05 EDT (New York) | Version: v1.4.0 -->
+<!-- Timestamp: 2026-10-10 18:40 EDT (New York) | Version: v1.5.0 -->
 <html lang="en-US" data-town="FLORA">
 <head>
     <!-- Line 6: Document Charset & Compatibility Meta -->
@@ -120,13 +120,13 @@
     <div class="portal-pill-tabs-wrapper">
         <nav class="portal-pill-tabs-nav" aria-label="Portal Category Filter">
             <button type="button" class="portal-pill-btn active" data-tab-target="pill-panel-news-events" onclick="window.switchPortalPill(this, 'pill-panel-news-events');">
-                News / Events
+                Overview &amp; News
             </button>
             <button type="button" class="portal-pill-btn" data-tab-target="pill-panel-history" onclick="window.switchPortalPill(this, 'pill-panel-history');">
                 History
             </button>
             <button type="button" class="portal-pill-btn" data-tab-target="pill-panel-poi" onclick="window.switchPortalPill(this, 'pill-panel-poi');">
-                POI
+                Discover Flora (POI)
             </button>
         </nav>
     </div>
@@ -140,7 +140,7 @@
         </section>
     </div>
 
-    <!-- Line 146: PILL TAB 1: NEWS / EVENTS PANEL -->
+    <!-- Line 146: PILL TAB 1: OVERVIEW & MAIN PAGE CONTENT -->
     <div id="pill-panel-news-events" class="portal-tab-panel active">
         <!-- THREE-COLUMN PORTAL CHASSIS: Events, Newsroom Cards, Facebook & Local Directory -->
         <section class="smlc-three-column-portal-wrapper" id="adaptive-time-portal-chassis">
@@ -340,7 +340,7 @@
         </div>
     </div>
 
-    <!-- Line 363: PILL TAB 3: POI (POINTS OF INTEREST) PANEL -->
+    <!-- Line 363: PILL TAB 3: POI (POINTS OF INTEREST & DISCOVER FLORA) PANEL -->
     <div id="pill-panel-poi" class="portal-tab-panel">
         <section class="section3-split-layout">
             <div class="section3-container-grid">
@@ -440,7 +440,7 @@
         <div style="border-top:1px solid #333; padding-top:15px; margin-top: 20px;">
             <p id="footer-copy-target">&copy; 2026 Flora Community Portal. All rights reserved.</p>
             <p id="footer-build-version-stamp">
-                <strong>System Build Version:</strong> v1.4.0 | <strong>Active Version:</strong> 2026-10-06_17:05
+                <strong>System Build Version:</strong> v1.5.0 | <strong>Active Version:</strong> 2026-10-10_18:40 EDT
             </p>
         </div>
     </footer>
@@ -471,6 +471,11 @@
                 var activePanel = document.getElementById(targetPanelId);
                 if (activePanel) {
                     activePanel.classList.add('active');
+                    // Scroll comfortably towards panel top if switched from another panel
+                    window.scrollTo({
+                        top: document.querySelector('.portal-pill-tabs-wrapper').offsetTop - 60,
+                        behavior: 'smooth'
+                    });
                 }
             };
         });
