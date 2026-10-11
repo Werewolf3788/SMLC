@@ -1,24 +1,25 @@
 /* ==========================================================================
-   Active Version: v1.8.0
+   Active Version: v2.0.0
    File: universaltown.js
    Project: SMLC County Portal Semantic Master Script
    Description: Complete multi-town engine connecting to Firebase RTDB.
                 - Universal multi-town support (Home, Flora, Louisville, Clay City, Xenia, Sailor Springs)
+                - Live NWS Weather Alert Bar (Strict 'hasActiveAlert: true' visibility gate)
+                - Town-specific & countywide Sports Scoreboard Engine
                 - Strict town-isolated news matching (no cross-town bleeding)
+                - Automatic suppression & scrubbing of WNOI copyrights & links
                 - AdBlock-immune naming for community partners
-                - Robust multi-tab hydration for Flora 2-Pill layout
                 - Smooth touch/hover-pausing partner & photo carousels
                 - Dual individual & global Google/iCal calendar hooks
                 - Zero "TBA" strings (defaults to "All Day Event")
-                - Automatic suppression & scrubbing of WNOI copyrights & links
                 - Turn-by-turn navigation (Apple Maps on iOS, Google Maps on Android/PC)
                 - Dynamic plain-text URL linkification in modals
                 - Deep GA4 engagement, impression, outbound, & contact event tracking
                 - Dynamic DOM translation re-triggering for Google Translate
-   Timestamp: 2026-10-10 20:42 EDT (New York)
+   Timestamp: 2026-10-10 21:38 EDT (New York)
    ========================================================================== */
 
-// Line 23: Google Translate Global Callback & Dynamic Mutation Scanner
+// Line 25: Google Translate Global Callback & Dynamic Mutation Scanner
 window.googleTranslateElementInit = function() {
     try {
         if (window.google && window.google.translate) {
@@ -47,7 +48,7 @@ function triggerGoogleTranslateUpdate(targetNode) {
     }
 }
 
-// Line 52: Master Town Alias & Keyword Filter Definitions (Preserves All Towns)
+// Line 54: Master Town Alias & Keyword Filter Definitions (Preserves All Towns)
 const TOWN_ALIAS_MAP = {
     "HOME": { 
         primaryName: "Clay County", 
@@ -152,7 +153,7 @@ const TOWN_ALIAS_MAP = {
     }
 };
 
-// Line 148: Active Town Config Resolver
+// Line 150: Active Town Config Resolver
 function getActiveTownConfig() {
     try {
         const hashRoute = (window.location.hash || "").replace("#/", "").replace("#", "").replace(/-/g, " ").toUpperCase();
@@ -202,6 +203,8 @@ let activeFbRefMenu = null;
 let activeFbRefFooter = null;
 let activeFbRefPartnersTown = null;
 let activeFbRefPartnersGlobal = null;
+let activeFbRefWeather = null;
+let activeFbRefSports = null;
 
 window.calendarCachedEvents = [];
 window.historyCachedTimeline = [];
@@ -209,7 +212,7 @@ window.newsCacheBlock = [];
 window.townPartnersPool = [];
 window.globalPartnersPool = [];
 
-// Line 208: Reset Intervals
+// Line 214: Reset Intervals
 function resetAllActiveTimers() {
     if (globalSlideshowTicker) { clearInterval(globalSlideshowTicker); globalSlideshowTicker = null; }
     if (gasMonitorRotator) { clearInterval(gasMonitorRotator); gasMonitorRotator = null; }
@@ -620,6 +623,133 @@ window.closeMobileMenu = function() {
     if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
 };
 
+// ============================================================================
+// WEATHER ALERTS ENGINE (Strict 'hasActiveAlert: true' Visibility Gate)
+// Listens to: /master_county_data/weather_alerts
+// ============================================================================
+function bindFirebaseWeatherAlertsEngine(db) {
+    if (!db) return;
+    const alertBar = document.getElementById('county-weather-alert-bar');
+    const alertHeadline = document.getElementById('weather-alert-headline');
+    const alertInstruction = document.getElementById('weather-alert-instruction');
+
+    if (!alertBar) return;
+
+    try {
+        if (activeFbRefWeather) activeFbRefWeather.off();
+        activeFbRefWeather = db.ref('master_county_data/weather_alerts');
+
+        activeFbRefWeather.on('value', (snapshot) => {
+            const data = snapshot.val();
+
+            if (data && (data.hasActiveAlert === true || data.hasActiveAlert === 'true')) {
+                const severity = (data.severity || 'WARNING').toUpperCase();
+                const headlineText = data.headline || 'Active Weather Alert for Clay County';
+                const instructionText = data.instruction || '';
+
+                if (alertHeadline) alertHeadline.innerText = headlineText;
+                if (alertInstruction) {
+                    alertInstruction.innerText = instructionText;
+                    alertInstruction.style.display = instructionText ? 'block' : 'none';
+                }
+
+                if (severity.includes('EXTREME') || severity.includes('TORNADO')) {
+                    alertBar.style.backgroundColor = '#d32f2f';
+                } else if (severity.includes('SEVERE')) {
+                    alertBar.style.backgroundColor = '#e65100';
+                } else {
+                    alertBar.style.backgroundColor = '#f57f17';
+                }
+
+                alertBar.style.display = 'block';
+                triggerGoogleTranslateUpdate(alertBar);
+            } else {
+                alertBar.style.display = 'none';
+            }
+        });
+    } catch (err) {
+        console.warn("Weather alert engine notice:", err.message);
+    }
+}
+
+// ============================================================================
+// SPORTS SCOREBOARD ENGINE (Town-Isolated Multi-Level Feeder)
+// Listens to: /master_county_data/sports
+// ============================================================================
+function bindFirebaseSportsEngine(db) {
+    if (!db) return;
+    const sportsContainer = document.getElementById('town-sports-scoreboard-target');
+    if (!sportsContainer) return;
+
+    try {
+        if (activeFbRefSports) activeFbRefSports.off();
+        activeFbRefSports = db.ref('master_county_data/sports');
+
+        activeFbRefSports.on('value', (snapshot) => {
+            const sports = snapshot.val();
+            if (!sports) {
+                sportsContainer.style.display = 'none';
+                return;
+            }
+
+            const activeTownKey = (ACTIVE_TOWN.jsonKey || ACTIVE_TOWN.primaryName || "").toLowerCase().replace(/\s+/g, '_');
+            let displayHtml = '';
+
+            const formatGameCard = (game, label) => {
+                if (!game || !game.homeTeam) return '';
+                const isFinal = (game.status || '').toUpperCase() === 'FINAL';
+                const badgeColor = isFinal ? '#2e7d32' : 'var(--flora-orange)';
+
+                return `
+                    <div class="sports-score-card" style="background:#111; border:1px solid #333; border-radius:6px; padding:12px; margin-bottom:10px; color:#fff;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <span style="font-size:11px; font-weight:bold; text-transform:uppercase; color:#bbb;">${label} &bull; ${game.sport || 'Athletics'}</span>
+                            <span style="background:${badgeColor}; font-size:10px; font-weight:bold; padding:2px 8px; border-radius:3px; text-transform:uppercase;">${game.status || 'UPCOMING'}</span>
+                        </div>
+                        <div style="font-size:15px; font-weight:bold; margin-bottom:4px;">
+                            ${game.homeTeam} ${isFinal ? `(${game.homeScore})` : ''} vs ${game.awayTeam} ${isFinal ? `(${game.awayScore})` : ''}
+                        </div>
+                        <div style="font-size:12px; color:#ddd; font-style:italic;">
+                            ${game.summary || ''}
+                        </div>
+                    </div>
+                `;
+            };
+
+            if (ACTIVE_TOWN.isHome) {
+                let allCards = '';
+                if (sports.flora) {
+                    allCards += formatGameCard(sports.flora.high_school, 'Flora HS');
+                    allCards += formatGameCard(sports.flora.junior_high, 'Floyd Henson JH');
+                }
+                if (sports.louisville) {
+                    allCards += formatGameCard(sports.louisville.high_school, 'North Clay HS');
+                    allCards += formatGameCard(sports.louisville.junior_high, 'North Clay JH');
+                }
+                if (sports.clay_city) {
+                    allCards += formatGameCard(sports.clay_city.high_school, 'Clay City HS');
+                    allCards += formatGameCard(sports.clay_city.junior_high, 'Clay City JH');
+                }
+                displayHtml = allCards;
+            } else if (sports[activeTownKey]) {
+                const townData = sports[activeTownKey];
+                displayHtml += formatGameCard(townData.high_school, `${ACTIVE_TOWN.primaryName} High School`);
+                displayHtml += formatGameCard(townData.junior_high, `${ACTIVE_TOWN.primaryName} Junior High`);
+            }
+
+            if (displayHtml.trim() !== '') {
+                sportsContainer.innerHTML = displayHtml;
+                sportsContainer.style.display = 'block';
+                triggerGoogleTranslateUpdate(sportsContainer);
+            } else {
+                sportsContainer.style.display = 'none';
+            }
+        });
+    } catch (err) {
+        console.warn("Sports engine notice:", err.message);
+    }
+}
+
 // === FIREBASE DATABASE INITIALIZATION ===
 function bindFirebaseServices() {
     const firebaseConfig = {
@@ -643,6 +773,8 @@ function bindFirebaseServices() {
         bindFirebaseLocalLinksEngine(db);
         bindFirebaseSemanticSectionsEngine(db);
         bindFirebasePartnersEngine(db);
+        bindFirebaseWeatherAlertsEngine(db);
+        bindFirebaseSportsEngine(db);
     } catch(e) {
         console.warn("Firebase initialization notice:", e.message);
     }
@@ -1314,25 +1446,21 @@ async function loadLocalNewsDispatches() {
                 window.newsCacheBlock = newsArray.filter(item => {
                     const textContent = ((item.title || '') + ' ' + (item.full_story || '') + ' ' + (item.description || '') + ' ' + (item.location || '')).toUpperCase();
                     
-                    // 1. Countywide Global Matches (Allowed everywhere)
                     const isCountyGlobal = 
                         textContent.includes("CLAY COUNTY") || 
                         textContent.includes("CLAY COUNTY HOSPITAL") || 
                         textContent.includes("CLAY COUNTY COURTHOUSE") ||
                         textContent.includes("COUNTY BOARD");
 
-                    // 2. County / Home Page displays everything
                     if (ACTIVE_TOWN.isHome) {
                         return true;
                     }
 
-                    // 3. Positive match against the specific active town keywords
                     const matchesCurrentTown = ACTIVE_TOWN.keywords.some(kw => {
                         const regex = new RegExp(`\\b${kw.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
                         return regex.test(textContent);
                     });
 
-                    // 4. Strict Pass-Through: Only include if explicitly for this town or a county alert
                     if (matchesCurrentTown || isCountyGlobal) {
                         return true;
                     }
@@ -1387,7 +1515,7 @@ function hydrateTownHeroUI() {
 }
 
 function updateNavigationActiveState() {
-    const currentHash = (window.location.hash || "").toLowerCase();
+    const currentHash = (window.location.hash || "#/flora").toLowerCase();
     document.querySelectorAll('#dynamic-menu-links a, .menu-links a').forEach(link => {
         const href = (link.getAttribute("href") || "").toLowerCase();
         if (currentHash && href === currentHash) {
