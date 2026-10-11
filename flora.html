@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Line 2: Town identifier attribute set to FLORA -->
-<!-- Timestamp: 2026-10-10 18:40 EDT (New York) | Version: v1.5.0 -->
+<!-- Timestamp: 2026-10-10 19:33 EDT (New York) | Version: v1.6.0 -->
 <html lang="en-US" data-town="FLORA">
 <head>
     <!-- Line 6: Document Charset & Compatibility Meta -->
@@ -116,17 +116,14 @@
         </section>
     </div>
 
-    <!-- Line 122: THREE INTERACTIVE PILL TABS CONTAINER -->
+    <!-- Line 122: TWO INTERACTIVE PILL TABS CONTAINER -->
     <div class="portal-pill-tabs-wrapper">
         <nav class="portal-pill-tabs-nav" aria-label="Portal Category Filter">
             <button type="button" class="portal-pill-btn active" data-tab-target="pill-panel-news-events" onclick="window.switchPortalPill(this, 'pill-panel-news-events');">
                 Overview &amp; News
             </button>
-            <button type="button" class="portal-pill-btn" data-tab-target="pill-panel-history" onclick="window.switchPortalPill(this, 'pill-panel-history');">
-                History
-            </button>
-            <button type="button" class="portal-pill-btn" data-tab-target="pill-panel-poi" onclick="window.switchPortalPill(this, 'pill-panel-poi');">
-                Discover Flora (POI)
+            <button type="button" class="portal-pill-btn" data-tab-target="pill-panel-discover" onclick="window.switchPortalPill(this, 'pill-panel-discover');">
+                Discover Flora
             </button>
         </nav>
     </div>
@@ -140,7 +137,7 @@
         </section>
     </div>
 
-    <!-- Line 146: PILL TAB 1: OVERVIEW & MAIN PAGE CONTENT -->
+    <!-- Line 146: PILL TAB 1: OVERVIEW & NEWS PANEL (MAIN PAGE) -->
     <div id="pill-panel-news-events" class="portal-tab-panel active">
         <!-- THREE-COLUMN PORTAL CHASSIS: Events, Newsroom Cards, Facebook & Local Directory -->
         <section class="smlc-three-column-portal-wrapper" id="adaptive-time-portal-chassis">
@@ -254,8 +251,8 @@
             </div>
         </section>
 
-        <!-- SECTION 4: FEATURED ARTICLE & SIDEBAR (Spotlight + Fuel Index) -->
-        <div class="section4-two-box-wrapper">
+        <!-- SECTION 4: FEATURED ARTICLE -->
+        <div class="main-container section4-single-article-chassis">
             <div class="section4-left-article-box">
                 <header class="section4-centered-article-header">
                     <div class="category-tag" id="sec4-category-tag">Commerce &amp; Heritage</div>
@@ -270,7 +267,7 @@
 
                     <figure class="article-media-frame">
                         <img id="sec-4-1-article-img" 
-                             src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" 
+                             src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" 
                              alt="" 
                              class="lightbox-triggerable-element" />
                         <figcaption id="sec4-img-caption">Downtown Flora — Flora, IL</figcaption>
@@ -286,8 +283,12 @@
                     <span>Issue No. 1 | Page 1</span>
                 </div>
             </div>
+        </div>
 
-            <aside class="section4-right-widgets-stack">
+        <!-- SIDE-BY-SIDE GRID: BUSINESS SPOTLIGHT + FLORA FUEL INDEX MONITOR -->
+        <div class="main-container spotlight-gas-duo-wrapper">
+            <div class="spotlight-gas-duo-grid">
+                <!-- Business Spotlight Box -->
                 <div class="clay-county-news-box spotlight-clipping">
                     <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
                     <div class="spotlight-image-wrap">
@@ -299,6 +300,7 @@
                     <a href="#" id="spotlight-asset-link" target="_blank" rel="noopener" class="spotlight-btn" data-ga-label="spotlight_btn">Visit Business &rarr;</a>
                 </div>
 
+                <!-- Fuel Index Monitor Box -->
                 <div id="fuel-monitor-target-box" class="fuel-monitor-billboard-card">
                     <div class="sidebar-widget-title">FLORA FUEL INDEX MONITOR</div>
                     <div class="fuel-station-header">
@@ -319,29 +321,13 @@
                     </div>
                     <div class="sync-timestamp-label">Syncing Real-Time Prices...</div>
                 </div>
-            </aside>
+            </div>
         </div>
     </div>
 
-    <!-- Line 345: PILL TAB 2: HISTORY PANEL -->
-    <div id="pill-panel-history" class="portal-tab-panel">
-        <div class="main-container">
-            <section class="historical-timeline-chassis-wrapper">
-                <div class="timeline-inner-bounds">
-                    <div class="timeline-row-1-header">
-                        <span class="main-timeline-center-title-node">Historical Timeline</span>
-                        <p class="main-timeline-sub-caption-node">Journey through key historical milestones that have shaped Flora, IL.</p>
-                    </div>
-                    <div id="history-row-target" class="timeline-row-2-cards">
-                        <div class="feed-loading-placeholder">Parsing landmark records ledger database tracking layers...</div>
-                    </div>
-                </div>
-            </section>
-        </div>
-    </div>
-
-    <!-- Line 363: PILL TAB 3: POI (POINTS OF INTEREST & DISCOVER FLORA) PANEL -->
-    <div id="pill-panel-poi" class="portal-tab-panel">
+    <!-- Line 345: PILL TAB 2: DISCOVER FLORA (COMBINED POI & HISTORY TIMELINE) -->
+    <div id="pill-panel-discover" class="portal-tab-panel">
+        <!-- POI Section: Slideshow, About & Landmark Details -->
         <section class="section3-split-layout">
             <div class="section3-container-grid">
                 <div class="section3-row-1">
@@ -385,6 +371,21 @@
                 </div>
             </div>
         </section>
+
+        <!-- Historical Timeline Section Embedded in Discover Flora -->
+        <div class="main-container" style="padding-top: 24px;">
+            <section class="historical-timeline-chassis-wrapper">
+                <div class="timeline-inner-bounds">
+                    <div class="timeline-row-1-header">
+                        <span class="main-timeline-center-title-node">Historical Timeline</span>
+                        <p class="main-timeline-sub-caption-node">Journey through key historical milestones that have shaped Flora, IL.</p>
+                    </div>
+                    <div id="history-row-target" class="timeline-row-2-cards">
+                        <div class="feed-loading-placeholder">Parsing landmark records ledger database tracking layers...</div>
+                    </div>
+                </div>
+            </section>
+        </div>
     </div>
 
     <!-- Line 412: SECTION 9 & 10: PROCLAMATION CARD & S&K VENTURE SIGNS CONTACT -->
@@ -425,22 +426,12 @@
         </div>
     </div>
 
-    <!-- Line 455: GLOBAL SITE FOOTER (Physical Address Column Removed) -->
+    <!-- Line 455: SIMPLIFIED GLOBAL SITE FOOTER (Address, Phone & Email Removed) -->
     <footer id="global-footer-container" class="site-global-footer-matrix">
-        <div class="footer-columns-grid" style="justify-content: center; gap: 48px;">
-            <div>
-                <span class="footer-col-header">Phone Numbers:</span>
-                <div id="footer-phone-target">618-662-8341</div>
-            </div>
-            <div>
-                <span class="footer-col-header">Electronic Mail:</span>
-                <a id="footer-email-target" href="mailto:Scott.Robinson@skventuresigns.com" data-ga-label="footer_email">Scott.Robinson@skventuresigns.com</a>
-            </div>
-        </div>
-        <div style="border-top:1px solid #333; padding-top:15px; margin-top: 20px;">
+        <div class="footer-simple-inner">
             <p id="footer-copy-target">&copy; 2026 Flora Community Portal. All rights reserved.</p>
             <p id="footer-build-version-stamp">
-                <strong>System Build Version:</strong> v1.5.0 | <strong>Active Version:</strong> 2026-10-10_18:40 EDT
+                <strong>System Build Version:</strong> v1.6.0 | <strong>Active Version:</strong> 2026-10-10_19:33 EDT
             </p>
         </div>
     </footer>
@@ -448,7 +439,7 @@
     <!-- Line 477: RETURN TO TOP ANCHOR -->
     <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top">↑</button>
 
-    <!-- Line 480: TAB SWITCHING CONTROLLER SCRIPT -->
+    <!-- Line 480: TWO-PILL TAB SWITCHING CONTROLLER SCRIPT -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             window.switchPortalPill = function(btnElement, targetPanelId) {
@@ -471,7 +462,6 @@
                 var activePanel = document.getElementById(targetPanelId);
                 if (activePanel) {
                     activePanel.classList.add('active');
-                    // Scroll comfortably towards panel top if switched from another panel
                     window.scrollTo({
                         top: document.querySelector('.portal-pill-tabs-wrapper').offsetTop - 60,
                         behavior: 'smooth'
