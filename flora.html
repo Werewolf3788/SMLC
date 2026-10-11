@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Line 2: Town identifier attribute set to FLORA -->
-<!-- Timestamp: 2026-10-10 19:33 EDT (New York) | Version: v1.6.0 -->
+<!-- Timestamp: 2026-10-10 20:15 EDT (New York) | Version: v1.7.0 -->
 <html lang="en-US" data-town="FLORA">
 <head>
     <!-- Line 6: Document Charset & Compatibility Meta -->
@@ -120,7 +120,7 @@
     <div class="portal-pill-tabs-wrapper">
         <nav class="portal-pill-tabs-nav" aria-label="Portal Category Filter">
             <button type="button" class="portal-pill-btn active" data-tab-target="pill-panel-news-events" onclick="window.switchPortalPill(this, 'pill-panel-news-events');">
-                Overview &amp; News
+                Local Events &amp; News
             </button>
             <button type="button" class="portal-pill-btn" data-tab-target="pill-panel-discover" onclick="window.switchPortalPill(this, 'pill-panel-discover');">
                 Discover Flora
@@ -128,7 +128,7 @@
         </nav>
     </div>
 
-    <!-- Line 137: REGIONAL PARTNERS STRIP (Persistent Across All Pill Views) -->
+    <!-- Line 137: REGIONAL PARTNERS STRIP (Persistent Across All Views) -->
     <div class="widescreen-strip-container section8-town-images-strip hero-adjacent-strip">
         <section class="showcase-widget full-bleed-widget">
             <div class="partners-horizontal-strip" id="partners-grid-bottom">
@@ -137,12 +137,12 @@
         </section>
     </div>
 
-    <!-- Line 146: PILL TAB 1: OVERVIEW & NEWS PANEL (MAIN PAGE) -->
+    <!-- Line 146: PILL TAB 1: LOCAL EVENTS & NEWS (STRICT SPECIFICATION) -->
     <div id="pill-panel-news-events" class="portal-tab-panel active">
-        <!-- THREE-COLUMN PORTAL CHASSIS: Events, Newsroom Cards, Facebook & Local Directory -->
+        <!-- THREE-COLUMN PORTAL CHASSIS: Calendar, News, Directory & Facebook -->
         <section class="smlc-three-column-portal-wrapper" id="adaptive-time-portal-chassis">
             <div class="portal-grid-layout-fixed">
-                <!-- Left Column: Community Calendar & Events -->
+                <!-- Left Column: Community Calendar & Submit Event -->
                 <div class="portal-column-cell-box left-cell-stack">
                     <div class="clay-county-news-box event-clipping">
                         <div class="clipping-tag">Community Bulletin</div>
@@ -175,7 +175,7 @@
                     </div>
                 </div>
 
-                <!-- Center Column: Local News Formatted As Individual Cards -->
+                <!-- Center Column: Local News Formatted As Individual Cards & Directory -->
                 <div class="portal-column-cell-box center-cell-stack">
                     <div class="card-module-wrapper">
                         <h2 class="et_pb_module_heading">Flora News</h2>
@@ -184,7 +184,6 @@
                                 <span class="black-tag">SMLC Newsroom</span>
                                 <p class="clipping-tagline">Flora Local Dispatches</p>
                             </div>
-                            <!-- News cards render individually inside this container using .history-card architecture -->
                             <div id="news-matrix-target" class="news-cards-feed-chassis">
                                 <div class="feed-loading-placeholder">Reconstructing localized newsroom dispatches...</div>
                             </div>
@@ -204,7 +203,7 @@
                     </div>
                 </div>
 
-                <!-- Right Column: SMLC Facebook Voice & Town Directory Links -->
+                <!-- Right Column: SMLC Facebook & Town Local Links -->
                 <div class="portal-column-cell-box right-cell-stack">
                     <div class="card-module-wrapper">
                         <h2 class="et_pb_module_heading">SMLC Facebook</h2>
@@ -251,40 +250,6 @@
             </div>
         </section>
 
-        <!-- SECTION 4: FEATURED ARTICLE -->
-        <div class="main-container section4-single-article-chassis">
-            <div class="section4-left-article-box">
-                <header class="section4-centered-article-header">
-                    <div class="category-tag" id="sec4-category-tag">Commerce &amp; Heritage</div>
-                    <h1 class="article-stacked-title" id="sec4-article-title">Flora's Railroad &amp; Industrial Roots</h1>
-                    <p class="article-stacked-deck" id="sec4-article-deck">Connecting transportation, industry, and community life in Clay County.</p>
-                </header>
-
-                <article class="article-body-content" id="sec4-article-body">
-                    <p>
-                        Flora, Illinois, located at the intersection of major transportation routes, has long been a commercial powerhouse for Clay County.
-                    </p>
-
-                    <figure class="article-media-frame">
-                        <img id="sec-4-1-article-img" 
-                             src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" 
-                             alt="" 
-                             class="lightbox-triggerable-element" />
-                        <figcaption id="sec4-img-caption">Downtown Flora — Flora, IL</figcaption>
-                    </figure>
-
-                    <p>
-                        From annual community traditions to thriving local businesses, Flora represents steady growth and neighbors working together.
-                    </p>
-                </article>
-
-                <div class="article-footer">
-                    <span>Flora Dispatches | Jan 2026</span>
-                    <span>Issue No. 1 | Page 1</span>
-                </div>
-            </div>
-        </div>
-
         <!-- SIDE-BY-SIDE GRID: BUSINESS SPOTLIGHT + FLORA FUEL INDEX MONITOR -->
         <div class="main-container spotlight-gas-duo-wrapper">
             <div class="spotlight-gas-duo-grid">
@@ -325,9 +290,9 @@
         </div>
     </div>
 
-    <!-- Line 345: PILL TAB 2: DISCOVER FLORA (COMBINED POI & HISTORY TIMELINE) -->
+    <!-- Line 345: PILL TAB 2: DISCOVER FLORA (POI, COMMERCE & HERITAGE ARTICLE, TIMELINE) -->
     <div id="pill-panel-discover" class="portal-tab-panel">
-        <!-- POI Section: Slideshow, About & Landmark Details -->
+        <!-- 1. POI SPLIT: SLIDESHOW, ABOUT FLORA & HISTORIC LANDMARKS -->
         <section class="section3-split-layout">
             <div class="section3-container-grid">
                 <div class="section3-row-1">
@@ -372,8 +337,42 @@
             </div>
         </section>
 
-        <!-- Historical Timeline Section Embedded in Discover Flora -->
-        <div class="main-container" style="padding-top: 24px;">
+        <!-- 2. COMMERCE & HERITAGE (MOVED DIRECTLY INSIDE DISCOVER FLORA) -->
+        <div class="main-container section4-single-article-chassis">
+            <div class="section4-left-article-box">
+                <header class="section4-centered-article-header">
+                    <div class="category-tag" id="sec4-category-tag">Commerce &amp; Heritage</div>
+                    <h1 class="article-stacked-title" id="sec4-article-title">Flora's Railroad &amp; Industrial Roots</h1>
+                    <p class="article-stacked-deck" id="sec4-article-deck">Connecting transportation, industry, and community life in Clay County.</p>
+                </header>
+
+                <article class="article-body-content" id="sec4-article-body">
+                    <p>
+                        Flora, Illinois, located at the intersection of major transportation routes, has long been a commercial powerhouse for Clay County.
+                    </p>
+
+                    <figure class="article-media-frame">
+                        <img id="sec-4-1-article-img" 
+                             src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" 
+                             alt="" 
+                             class="lightbox-triggerable-element" />
+                        <figcaption id="sec4-img-caption">Downtown Flora — Flora, IL</figcaption>
+                    </figure>
+
+                    <p>
+                        From annual community traditions to thriving local businesses, Flora represents steady growth and neighbors working together.
+                    </p>
+                </article>
+
+                <div class="article-footer">
+                    <span>Flora Dispatches | Jan 2026</span>
+                    <span>Issue No. 1 | Page 1</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. HISTORICAL TIMELINE SECTION -->
+        <div class="main-container" style="padding-top: 10px;">
             <section class="historical-timeline-chassis-wrapper">
                 <div class="timeline-inner-bounds">
                     <div class="timeline-row-1-header">
@@ -426,12 +425,12 @@
         </div>
     </div>
 
-    <!-- Line 455: SIMPLIFIED GLOBAL SITE FOOTER (Address, Phone & Email Removed) -->
+    <!-- Line 455: SLIM GLOBAL FOOTER -->
     <footer id="global-footer-container" class="site-global-footer-matrix">
         <div class="footer-simple-inner">
             <p id="footer-copy-target">&copy; 2026 Flora Community Portal. All rights reserved.</p>
             <p id="footer-build-version-stamp">
-                <strong>System Build Version:</strong> v1.6.0 | <strong>Active Version:</strong> 2026-10-10_19:33 EDT
+                <strong>System Build Version:</strong> v1.7.0 | <strong>Active Version:</strong> 2026-10-10_20:15 EDT
             </p>
         </div>
     </footer>
@@ -439,25 +438,25 @@
     <!-- Line 477: RETURN TO TOP ANCHOR -->
     <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top">↑</button>
 
-    <!-- Line 480: TWO-PILL TAB SWITCHING CONTROLLER SCRIPT -->
+    <!-- Line 480: TWO-PILL CONTROLLER SCRIPT -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             window.switchPortalPill = function(btnElement, targetPanelId) {
                 if (!btnElement || !targetPanelId) return;
 
-                // Deactivate all pills
+                // Deactivate all pill buttons
                 var allPills = document.querySelectorAll('.portal-pill-btn');
                 allPills.forEach(function(btn) {
                     btn.classList.remove('active');
                 });
 
-                // Deactivate all tab panels
+                // Deactivate all panels
                 var allPanels = document.querySelectorAll('.portal-tab-panel');
                 allPanels.forEach(function(panel) {
                     panel.classList.remove('active');
                 });
 
-                // Activate selected pill and target panel
+                // Activate selected tab & target panel
                 btnElement.classList.add('active');
                 var activePanel = document.getElementById(targetPanelId);
                 if (activePanel) {
