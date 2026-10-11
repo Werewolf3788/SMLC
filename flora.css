@@ -1,12 +1,12 @@
 /* ==========================================================================
    FLORA, IL - SMLC DIGITAL TOWN SQUARE PORTAL STYLESHEET
-   Active Version: v1.6.0
-   Date/Time Stamp: 2026-10-10 19:33 EDT (New York)
+   Active Version: v1.7.0
+   Date/Time Stamp: 2026-10-10 20:15 EDT (New York)
    Description: Complete Flora identity stylesheet (Royal Blue & Wolf Orange).
                 Includes 48x48px sandwich button mobile drawer menu (<1024px),
                 centered desktop horizontal menu, Google Translate styling,
                 prefers-color-scheme dark mode, AdBlock-immune partner cards,
-                interactive 2-pill tab system (Overview / Discover Flora),
+                interactive 2-pill layout (Local Events & News / Discover Flora),
                 side-by-side spotlight & gas monitor layout, and slim footer.
    ========================================================================== */
 
@@ -21,7 +21,7 @@
     --flora-blue: #0258A3;
     --flora-black: #000000;
     --flora-orange: #FE4E02;
-    --cc-gold: #FE4E02; /* Primary accent detail mapped to Wolf Orange */
+    --cc-gold: #FE4E02;
     
     --primary: #0258A3;
     --secondary: #000000;
@@ -31,7 +31,7 @@
     --dynamic-text: #FFFFFF;
     --link-bright-blue: #3182CE;
 
-    /* Dynamic Card Tokens (Light Mode Defaults) */
+    /* Dynamic Card Tokens */
     --card-surface-bg: #fffdf5;
     --card-article-bg: #ffffff;
     --card-text-primary: #1a1a1a;
@@ -39,7 +39,7 @@
     --card-border-color: #222222;
     --card-shadow-color: #000000;
 
-    /* High-Contrast Granite Background Tokens (Flora Navy/Slate Tones) */
+    /* High-Contrast Granite Background Tokens */
     --granite-blue: #041b30;
     --granite-dark: #1c1c1e;
     --granite-mid: #2c2c2e;
@@ -155,7 +155,7 @@ a {
 }
 
 /* ==========================================================================
-   Line 150: BRAND HEADER & STICKY NAVIGATION BAR (FLORA ROYAL BLUE)
+   Line 150: BRAND HEADER & STICKY NAVIGATION BAR
    ========================================================================== */
 .site-brand-header { 
     width: 100% !important; 
@@ -182,7 +182,6 @@ a {
     vertical-align: bottom !important; 
 }
 
-/* Sticky Header Bar */
 .menu-bar { 
     width: 100% !important; 
     background: var(--flora-blue) !important; 
@@ -204,7 +203,6 @@ a {
     padding: 0 12px; 
 }
 
-/* Mobile Sandwich Button (Hidden by default on Desktop 1024px+) */
 .mobile-nav-toggle-btn {
     display: none;
     align-items: center;
@@ -242,7 +240,6 @@ a {
     letter-spacing: 1px;
 }
 
-/* Desktop Horizontal View */
 .navigation-drawer-panel {
     display: flex;
     align-items: center;
@@ -270,7 +267,7 @@ a {
     display: inline-flex; 
     align-items: center; 
     gap: 8px; 
-    min-height: 48px; /* 48px touch target */
+    min-height: 48px; 
     transition: all 0.2s ease; 
 }
 
@@ -302,7 +299,6 @@ a {
     cursor: pointer; 
 }
 
-/* Google Translate Header Dropdown */
 .translate-box-header {
     display: inline-flex;
     align-items: center;
@@ -333,13 +329,12 @@ a {
 
 /* ==========================================================================
    Line 307: MOBILE & TABLET DRAWER OVERRIDES (< 1024px)
-   ========================================================================= */
+   ========================================================================== */
 @media (max-width: 1023px) {
     .menu-inner {
         justify-content: space-between !important;
     }
 
-    /* Show the Sandwich button on Mobile/Tablet */
     .mobile-nav-toggle-btn {
         display: inline-flex !important;
     }
@@ -348,7 +343,6 @@ a {
         position: static !important;
     }
 
-    /* Completely hide navigation bar until the sandwich button is tapped */
     .navigation-drawer-panel {
         display: none !important;
         position: absolute !important;
@@ -362,7 +356,6 @@ a {
         z-index: 9999 !important;
     }
 
-    /* Reveal only when .drawer-open is toggled */
     .navigation-drawer-panel.drawer-open {
         display: block !important;
     }
@@ -390,7 +383,7 @@ a {
 }
 
 /* ==========================================================================
-   Line 365: TOWN HERO BANNER (FLORA NAVY & BLUE GRADIENT)
+   Line 365: TOWN HERO BANNER
    ========================================================================== */
 .main-container { 
     width: var(--container-width); 
@@ -556,7 +549,7 @@ a {
 }
 
 /* ==========================================================================
-   Line 522: PARTNER SHOWCASE STRIPS & BALANCED CARD SIZING
+   Line 522: PARTNER SHOWCASE STRIPS
    ========================================================================== */
 .widescreen-strip-container,
 .section8-town-images-strip { 
@@ -596,7 +589,6 @@ a {
     padding-bottom: 8px !important; 
 }
 
-/* Card Container Sizing */
 .community-partner-card { 
     flex: 0 1 230px !important; 
     width: 230px !important;
@@ -682,7 +674,6 @@ a {
     color: #ffffff !important;
 }
 
-/* Dedicated Mobile & Tablet Single-Column Container (<768px) */
 @media (max-width: 767px) {
     .partners-horizontal-strip { 
         display: flex !important; 
@@ -718,7 +709,7 @@ a {
 }
 
 /* ==========================================================================
-   Line 674: THREE-COLUMN PORTAL CHASSIS (FLORA NAVY BACKGROUND)
+   Line 674: THREE-COLUMN PORTAL CHASSIS
    ========================================================================== */
 .smlc-three-column-portal-wrapper { 
     width: 100%; 
@@ -1113,7 +1104,7 @@ a {
    Line 1034: SECTION 4: SINGLE FEATURED ARTICLE
    ========================================================================== */
 .section4-single-article-chassis {
-    padding-top: 40px !important;
+    padding-top: 30px !important;
     padding-bottom: 20px !important;
 }
 
@@ -1237,7 +1228,7 @@ a {
    Line 1150: SIDE-BY-SIDE SPOTLIGHT & GAS PRICES GRID
    ========================================================================== */
 .spotlight-gas-duo-wrapper {
-    padding-top: 10px !important;
+    padding-top: 24px !important;
     padding-bottom: 40px !important;
 }
 
@@ -1591,7 +1582,7 @@ a {
 }
 
 /* ==========================================================================
-   Line 1475: SECTION 3: POI SPLIT LAYOUT (DISCOVER FLORA)
+   Line 1475: SECTION 3: POI SPLIT LAYOUT
    ========================================================================== */
 .section3-split-layout { 
     width: 100%; 
@@ -1848,7 +1839,7 @@ a {
 }
 
 /* ==========================================================================
-   Line 1705: SIMPLIFIED GLOBAL FOOTER MATRIX
+   Line 1705: SLIM GLOBAL FOOTER
    ========================================================================== */
 .site-global-footer-matrix { 
     width: 100% !important; 
