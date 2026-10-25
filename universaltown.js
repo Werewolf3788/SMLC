@@ -49,18 +49,7 @@
     }
 })();
 
-window.googleTranslateElementInit = function() {
-    try {
-        if (window.google && window.google.translate) {
-            new window.google.translate.TranslateElement({
-                pageLanguage: 'en',
-                layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE
-            }, 'google_translate_element');
-        }
-    } catch(e) {
-        console.warn("Google Translate initialization notice:", e.message);
-    }
-};
+// Google Translate setup (auto-detect by phone language) lives in the page HTML.
 
 function triggerGoogleTranslateUpdate(targetNode) {
     if (!targetNode) return;
@@ -639,15 +628,28 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = ""
     const titleEl = document.getElementById('lightbox-target-title');
     if (titleEl) titleEl.innerText = cleanTitle || '';
 
-    const parsedBody = linkifyRawUrls(cleanBody || '');
+    const bodyAsPlain = String(cleanBody || '').replace(/^#+\s*/gm, '').replace(/[*_`]/g, '').trim();
+    const parsedBody = (bodyAsPlain && bodyAsPlain === cleanAlt.trim()) ? '' : linkifyRawUrls(cleanBody || '');
     const parsedAlt = linkifyRawUrls(cleanAlt || '');
 
-    const displayStory = (cleanAlt && cleanAlt !== cleanTitle)
-        ? `<div style="font-style:italic; font-size:14px; color:#444; margin-bottom:12px; border-left:3px solid var(--primary); padding-left:10px;">Details: ${parsedAlt}</div>${parsedBody}`
-        : parsedBody;
+    const showAlt = !!cleanAlt.trim() && cleanAlt.trim() !== cleanTitle.trim() && cleanAlt.trim() !== bodyAsPlain;
 
     const storyEl = document.getElementById('lightbox-target-story');
-    if (storyEl) storyEl.innerHTML = displayStory;
+    const altEl = document.getElementById('lightbox-target-alt');
+    if (altEl) {
+        // Newer lightbox markup: description and alt details are separate blocks
+        if (storyEl) {
+            storyEl.innerHTML = parsedBody;
+            storyEl.style.display = parsedBody ? 'block' : 'none';
+        }
+        altEl.innerHTML = showAlt ? `<strong>Details:</strong> ${parsedAlt}` : '';
+        altEl.style.display = showAlt ? 'block' : 'none';
+    } else if (storyEl) {
+        // Older markup fallback: one combined block
+        storyEl.innerHTML = showAlt
+            ? `<div style="font-style:italic; font-size:14px; margin-bottom:12px; border-left:3px solid var(--primary); padding-left:10px;">Details: ${parsedAlt}</div>${parsedBody}`
+            : parsedBody;
+    }
 
     if (cleanTargetUrl && actionLink && actionRow) {
         actionLink.href = attachUtmParameters(cleanTargetUrl);
@@ -1070,7 +1072,7 @@ function bindFirebaseMenuEngine(db) {
                 const itemNameUpper = name.toUpperCase();
                 const isActive = (activeTownName === itemNameUpper || (ACTIVE_TOWN.isHome && itemNameUpper === "HOME") || (window.location.hash || "").toUpperCase().includes(itemNameUpper.replace(/\s+/g, '-'))) ? 'class="active"' : '';
 
-                const imgTag = normImageUrl ? `<img src="${normImageUrl}" alt="" class="menu-thumb-icon" onclick="event.preventDefault(); event.stopPropagation(); fireLightbox('${escapeJsString(normImageUrl)}', '${escapeJsString(name)}', 'MENU ASSET', '${escapeJsString(altText)}', '${escapeJsString(targetUrl)}', '${escapeJsString(altText)}')" onerror="this.style.display='none';" />` : '';
+                const imgTag = normImageUrl ? `<img src="${normImageUrl}" alt="" class="menu-thumb-icon" onclick="event.preventDefault(); event.stopPropagation(); fireLightbox('${escapeJsString(normImageUrl)}', '${escapeJsString(name)}', 'MENU ASSET', '', '${escapeJsString(targetUrl)}', '${escapeJsString(altText)}')" onerror="this.style.display='none';" />` : '';
 
                 return `
                     <li>
@@ -1190,10 +1192,10 @@ function bindFirebaseSemanticSectionsEngine(db) {
             const alt1Text = poi.alt1 || poi.header1 || poi.title || "Point of Interest";
             if (i1 && img1Url) {
                 i1.src = img1Url;
-                i1.alt = alt1Text;
+                i1.alt = '';
                 i1.style.display = "block";
                 if (f1) f1.style.display = "block";
-                i1.onclick = () => fireLightbox(img1Url, poi.header1 || poi.title || 'Point of Interest', 'POINT OF INTEREST', alt1Text, '', alt1Text);
+                i1.onclick = () => fireLightbox(img1Url, poi.header1 || poi.title || 'Point of Interest', 'POINT OF INTEREST', poi.landmark_description || poi.about_text || '', '', alt1Text);
             } else if (i1 && !img1Url) {
                 i1.style.display = "none";
                 if (f1) f1.style.display = "none";
@@ -1207,10 +1209,10 @@ function bindFirebaseSemanticSectionsEngine(db) {
             const alt2Text = poi.alt2 || poi.header2 || "Landmark 2";
             if (i2 && img2Url) {
                 i2.src = img2Url;
-                i2.alt = alt2Text;
+                i2.alt = '';
                 i2.style.display = "block";
                 if (f2) f2.style.display = "block";
-                i2.onclick = () => fireLightbox(img2Url, poi.header2 || 'Landmark 2', 'HISTORIC LANDMARK', alt2Text, '', alt2Text);
+                i2.onclick = () => fireLightbox(img2Url, poi.header2 || 'Landmark 2', 'HISTORIC LANDMARK', poi.landmark_description || poi.about_text || '', '', alt2Text);
             } else if (i2 && !img2Url) {
                 i2.style.display = "none";
                 if (f2) f2.style.display = "none";
@@ -1224,8 +1226,6 @@ function bindFirebaseSemanticSectionsEngine(db) {
             const artDeckEl = document.getElementById('article-deck');
             const artBodyEl = document.getElementById('article-body');
             const artCapEl = document.getElementById('article-img-caption');
-            let artImgEl = document.getElementById('article-img');
-            let artFigure = document.getElementById('article-figure-frame');
 
             if (artTitleEl && art.title) artTitleEl.innerText = art.title;
             if (artCatEl && art.category) artCatEl.innerText = art.category;
@@ -1233,6 +1233,11 @@ function bindFirebaseSemanticSectionsEngine(db) {
             if (artBodyEl && art.body) {
                 artBodyEl.innerHTML = `<p style="margin-bottom:1.5em; text-align:justify; line-height:1.8;">${linkifyRawUrls(art.body)}</p>`;
             }
+
+            // Look these up AFTER the body rewrite above, because rewriting #article-body
+            // destroys any image that was sitting inside it
+            let artImgEl = document.getElementById('article-img');
+            let artFigure = document.getElementById('article-figure-frame');
 
             const rawArtUrl = String(art.imageUrl || art.image || art.image1 || '').trim();
             const artImgUrl = normalizeImageUrl(rawArtUrl);
@@ -1252,13 +1257,18 @@ function bindFirebaseSemanticSectionsEngine(db) {
 
             if (artImgEl) {
                 if (artImgUrl) {
-                    artImgEl.onerror = () => console.warn('[article image] FAILED to load:', artImgUrl);
+                    artImgEl.onerror = () => {
+                        console.warn('[article image] FAILED to load:', artImgUrl);
+                        artImgEl.style.display = 'none';
+                        if (artFigure) artFigure.style.display = 'none';
+                    };
                     artImgEl.src = artImgUrl;
-                    artImgEl.alt = artAltText;
+                    artImgEl.alt = '';
                     artImgEl.style.cssText = 'display:block; width:100%; height:auto; max-height:420px; object-fit:cover; border-radius:6px; cursor:pointer;';
                     if (artFigure) artFigure.style.display = 'block';
-                    artImgEl.onclick = () => fireLightbox(artImgUrl, art.title || 'Feature', art.category || 'Commerce & Heritage', artAltText, '', artAltText);
-                    if (artCapEl) artCapEl.innerText = artAltText;
+                    // Alt text is for the lightbox only, so the main-screen caption stays empty
+                    if (artCapEl) artCapEl.innerText = '';
+                    artImgEl.onclick = () => fireLightbox(artImgUrl, art.title || 'Feature', art.category || '', art.deck || art.body || '', '', artAltText);
                 } else {
                     artImgEl.style.display = 'none';
                     if (artFigure) artFigure.style.display = 'none';
@@ -1289,7 +1299,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
 
                     return `
                         <div class="slider-slide ${idx === 0 ? 'active' : ''}" style="position: absolute; inset: 0; opacity: ${idx === 0 ? 1 : 0}; transition: opacity 0.8s ease-in-out; z-index: ${idx === 0 ? 2 : 1};">
-                            <img src="${imgUrl}" alt="" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'COMMUNITY VIEW', '${safeAlt}', '${safeWeb}', '${safeAlt}')" style="width:100%; height:100%; object-fit:contain; background-color:#0a0a0a; cursor:pointer;" onerror="this.parentElement.style.display='none';">
+                            <img src="${imgUrl}" alt="" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'COMMUNITY VIEW', '', '${safeWeb}', '${safeAlt}')" style="width:100%; height:100%; object-fit:contain; background-color:#0a0a0a; cursor:pointer;" onerror="this.parentElement.style.display='none';">
                             ${captionTitle ? `<div class="slider-caption">${captionTitle}</div>` : ''}
                         </div>
                     `;
@@ -1338,7 +1348,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
             const spotAltText = spot.alt || spot.name || "Business Spotlight";
             if (spotImgEl && spotImgUrl) {
                 spotImgEl.src = spotImgUrl;
-                spotImgEl.alt = spotAltText;
+                spotImgEl.alt = '';
                 spotImgEl.style.display = "block";
                 spotImgEl.onclick = () => fireLightbox(spotImgUrl, spot.name || 'Merchant', ACTIVE_TOWN.primaryName + ', IL', spot.description || '', spot.website || '', spotAltText);
             } else if (spotImgEl && !spotImgUrl) {
@@ -1372,7 +1382,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
                             <h3>${evt.title || 'Historical Landmark'}</h3>
                             <p>${displayDesc}</p>
                             ${isLong ? `<span class="read-more-trigger">Read Details &rarr;</span>` : ''}
-                            ${imgUrl ? `<div class="history-img-box"><img src="${imgUrl}" alt="${escapeHtml(evt.alt || evt.title || '')}" onerror="this.parentElement.style.display='none';"></div>` : ''}
+                            ${imgUrl ? `<div class="history-img-box"><img src="${imgUrl}" alt="" onerror="this.parentElement.style.display='none';"></div>` : ''}
                         </div>
                     `;
                 }).join('');
