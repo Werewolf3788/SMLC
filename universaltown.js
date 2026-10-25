@@ -1,13 +1,19 @@
 /* ==========================================================================
-   Active Version: v2.0.0
+   Active Version: v2.3.0
    File: universaltown.js
    Project: SMLC County Portal Semantic Master Script
    Description: Complete multi-town engine connecting to Firebase RTDB.
                 - Universal multi-town support (Home, Flora, Louisville, Clay City, Xenia, Sailor Springs)
-                - Live NWS Weather Alert Bar (Strict 'hasActiveAlert: true' visibility gate)
+                - Dynamic GA4 Tag Injection (G-FHJNXDB9BB) with SPA Hash Route Pageview Tracking
+                - Streamlined Tag & Town News Routing (Consumes pre-filtered scraper arrays)
+                - WNOI Copyright & Link suppression fully removed (original sources preserved)
+                - Global news isolated to dispatches tagged strictly with "Clay County" (no town tags)
+                - News dispatches with town tags isolate directly to corresponding town portals
+                - Dedicated town branding (hero title displays clean active town name)
+                - Live NWS Weather Alert Bar & Urgent Dismissible Popup Modal Card
+                - CDT/CST (America/Chicago) Timezone Conversion for Alert & Weather Telemetry
+                - Global Current Weather Widget & 5-Day Forecast Lightbox Modal Engine
                 - Town-specific & countywide Sports Scoreboard Engine
-                - Strict town-isolated news matching (no cross-town bleeding)
-                - Automatic suppression & scrubbing of WNOI copyrights & links
                 - AdBlock-immune naming for community partners
                 - Smooth touch/hover-pausing partner & photo carousels
                 - Dual individual & global Google/iCal calendar hooks
@@ -16,10 +22,34 @@
                 - Dynamic plain-text URL linkification in modals
                 - Deep GA4 engagement, impression, outbound, & contact event tracking
                 - Dynamic DOM translation re-triggering for Google Translate
-   Timestamp: 2026-10-10 21:38 EDT (New York)
+                - Persistent 24-hour New York timestamp & version in footer
+   Timestamp: 2026-10-25 04:36 EDT (New York)
    ========================================================================== */
 
-// Line 25: Google Translate Global Callback & Dynamic Mutation Scanner
+// Line 29: Dynamic Google Analytics 4 Injection & Initialization Engine
+(function initDynamicGa4Engine() {
+    const GA4_MEASUREMENT_ID = 'G-FHJNXDB9BB';
+    
+    if (!document.querySelector(`script[src*="googletagmanager.com/gtag/js?id=${GA4_MEASUREMENT_ID}"]`)) {
+        const gaScript = document.createElement('script');
+        gaScript.async = true;
+        gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${GA4_MEASUREMENT_ID}`;
+        document.head.appendChild(gaScript);
+    }
+
+    window.dataLayer = window.dataLayer || [];
+    if (typeof window.gtag !== 'function') {
+        window.gtag = function() {
+            window.dataLayer.push(arguments);
+        };
+        window.gtag('js', new Date());
+        window.gtag('config', GA4_MEASUREMENT_ID, {
+            send_page_view: false
+        });
+    }
+})();
+
+// Line 52: Google Translate Global Callback & Dynamic Mutation Scanner
 window.googleTranslateElementInit = function() {
     try {
         if (window.google && window.google.translate) {
@@ -48,7 +78,7 @@ function triggerGoogleTranslateUpdate(targetNode) {
     }
 }
 
-// Line 54: Master Town Alias & Keyword Filter Definitions (Preserves All Towns)
+// Line 81: Master Town Alias & Keyword Filter Definitions (Preserves All Original Keywords)
 const TOWN_ALIAS_MAP = {
     "HOME": { 
         primaryName: "Clay County", 
@@ -153,7 +183,7 @@ const TOWN_ALIAS_MAP = {
     }
 };
 
-// Line 150: Active Town Config Resolver
+// Line 177: Active Town Config Resolver
 function getActiveTownConfig() {
     try {
         const hashRoute = (window.location.hash || "").replace("#/", "").replace("#", "").replace(/-/g, " ").toUpperCase();
@@ -204,6 +234,7 @@ let activeFbRefFooter = null;
 let activeFbRefPartnersTown = null;
 let activeFbRefPartnersGlobal = null;
 let activeFbRefWeather = null;
+let activeFbRefForecast = null;
 let activeFbRefSports = null;
 
 window.calendarCachedEvents = [];
@@ -211,8 +242,9 @@ window.historyCachedTimeline = [];
 window.newsCacheBlock = [];
 window.townPartnersPool = [];
 window.globalPartnersPool = [];
+window.fiveDayForecastCache = [];
 
-// Line 214: Reset Intervals
+// Line 240: Reset Intervals
 function resetAllActiveTimers() {
     if (globalSlideshowTicker) { clearInterval(globalSlideshowTicker); globalSlideshowTicker = null; }
     if (gasMonitorRotator) { clearInterval(gasMonitorRotator); gasMonitorRotator = null; }
@@ -284,15 +316,25 @@ function linkifyRawUrls(text) {
     });
 }
 
-// WNOI Text & Link Sanitizer
-function sanitizeWnoiContent(rawText) {
-    if (!rawText) return "";
-    return String(rawText)
-        .replace(/©\s*wnoi(\.com)?/gi, '')
-        .replace(/copyright\s*wnoi(\.com)?/gi, '')
-        .replace(/\bwnoi(\.com)?\b/gi, 'SMLC Wire')
-        .replace(/\s{2,}/g, ' ')
-        .trim();
+// Convert UTC or EDT timestamps to Central Time (America/Chicago)
+function formatToCentralTime(rawTimestamp) {
+    if (!rawTimestamp) return "Live Update";
+    try {
+        const d = new Date(rawTimestamp);
+        if (isNaN(d.getTime())) return String(rawTimestamp);
+        return new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/Chicago',
+            timeZoneName: 'short',
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        }).format(d);
+    } catch(e) {
+        return String(rawTimestamp);
+    }
 }
 
 function applyHighDensityScrollLimits(containerElement, itemCount, maxHeightPx = 480) {
@@ -308,7 +350,7 @@ function applyHighDensityScrollLimits(containerElement, itemCount, maxHeightPx =
     }
 }
 
-// GA4 Event Tracking Wrappers
+// GA4 Event Tracking Wrappers (Bound directly to G-FHJNXDB9BB)
 function trackGa4Event(eventName, eventParams = {}) {
     try {
         if (typeof window.gtag === 'function') {
@@ -436,17 +478,18 @@ function closeLightbox(event) {
     }
 }
 
+// Lightbox with WNOI Suppression Completely Removed
 function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = "") {
     const overlay = document.getElementById('portal-global-lightbox');
     const targetImg = document.getElementById('lightbox-target-img');
     const actionRow = document.getElementById('lightbox-action-row');
     const actionLink = document.getElementById('lightbox-target-link');
 
-    const cleanTitle = sanitizeWnoiContent(title);
-    const cleanDate = sanitizeWnoiContent(dateText);
-    const cleanBody = sanitizeWnoiContent(bodyText);
-    const cleanAlt = sanitizeWnoiContent(altText);
-    const cleanTargetUrl = (targetUrl && !targetUrl.toLowerCase().includes('wnoi')) ? targetUrl : '';
+    const cleanTitle = title || '';
+    const cleanDate = dateText || '';
+    const cleanBody = bodyText || '';
+    const cleanAlt = altText || '';
+    const cleanTargetUrl = targetUrl || '';
 
     if (imgSrc && targetImg) {
         safeSetImageSource(targetImg, imgSrc, null, cleanAlt || cleanTitle);
@@ -519,19 +562,18 @@ function openCalendarLightboxModal(idx) {
     fireLightbox(finalEventImg, title, metaHeader, rawDetails, '', title);
 }
 
+// Open News Lightbox Modal (Preserves Original URLs and Content)
 function openNewsLightboxModal(idx) {
     const story = window.newsCacheBlock[idx];
     if (!story) return;
 
-    const cleanLink = (story.link && !story.link.toLowerCase().includes('wnoi')) ? story.link : '';
-
     fireLightbox(
         story.image || '',
-        sanitizeWnoiContent(story.title || 'Local News Dispatch'),
+        story.title || 'Local News Dispatch',
         cleanCalendarDate(story.date || story.pubDate) + (story.location ? ` | ${story.location}` : ''),
-        sanitizeWnoiContent(story.full_story || story.description || ''),
-        cleanLink,
-        sanitizeWnoiContent(story.title || 'Local News Dispatch')
+        story.full_story || story.excerpt || story.description || '',
+        story.link || '',
+        story.title || 'Local News Dispatch'
     );
 }
 
@@ -624,7 +666,7 @@ window.closeMobileMenu = function() {
 };
 
 // ============================================================================
-// WEATHER ALERTS ENGINE (Strict 'hasActiveAlert: true' Visibility Gate)
+// WEATHER ALERTS ENGINE: Alert Bar & Urgent Dismissible Popup Modal Card
 // Listens to: /master_county_data/weather_alerts
 // ============================================================================
 function bindFirebaseWeatherAlertsEngine(db) {
@@ -632,8 +674,6 @@ function bindFirebaseWeatherAlertsEngine(db) {
     const alertBar = document.getElementById('county-weather-alert-bar');
     const alertHeadline = document.getElementById('weather-alert-headline');
     const alertInstruction = document.getElementById('weather-alert-instruction');
-
-    if (!alertBar) return;
 
     try {
         if (activeFbRefWeather) activeFbRefWeather.off();
@@ -646,31 +686,178 @@ function bindFirebaseWeatherAlertsEngine(db) {
                 const severity = (data.severity || 'WARNING').toUpperCase();
                 const headlineText = data.headline || 'Active Weather Alert for Clay County';
                 const instructionText = data.instruction || '';
+                const updatedCdt = formatToCentralTime(data.updatedAt);
 
-                if (alertHeadline) alertHeadline.innerText = headlineText;
-                if (alertInstruction) {
-                    alertInstruction.innerText = instructionText;
-                    alertInstruction.style.display = instructionText ? 'block' : 'none';
-                }
-
+                let themeColor = '#f57f17';
                 if (severity.includes('EXTREME') || severity.includes('TORNADO')) {
-                    alertBar.style.backgroundColor = '#d32f2f';
+                    themeColor = '#d32f2f';
                 } else if (severity.includes('SEVERE')) {
-                    alertBar.style.backgroundColor = '#e65100';
-                } else {
-                    alertBar.style.backgroundColor = '#f57f17';
+                    themeColor = '#e65100';
                 }
 
-                alertBar.style.display = 'block';
-                triggerGoogleTranslateUpdate(alertBar);
+                // 1. Persistent Top Weather Alert Bar
+                if (alertBar) {
+                    if (alertHeadline) alertHeadline.innerText = headlineText;
+                    if (alertInstruction) {
+                        alertInstruction.innerText = instructionText ? `${instructionText} (Updated: ${updatedCdt})` : `Updated: ${updatedCdt}`;
+                        alertInstruction.style.display = 'block';
+                    }
+                    alertBar.style.backgroundColor = themeColor;
+                    alertBar.style.display = 'block';
+                    triggerGoogleTranslateUpdate(alertBar);
+                }
+
+                // 2. Urgent Center Popup Modal Card (Injected dynamically)
+                showWeatherAlertModalPopup(headlineText, instructionText, severity, updatedCdt, themeColor);
             } else {
-                alertBar.style.display = 'none';
+                if (alertBar) alertBar.style.display = 'none';
+                hideWeatherAlertModalPopup();
             }
         });
     } catch (err) {
         console.warn("Weather alert engine notice:", err.message);
     }
 }
+
+function showWeatherAlertModalPopup(headline, instruction, severity, updatedCdt, themeColor) {
+    let popupOverlay = document.getElementById('weather-alert-popup-modal');
+    if (!popupOverlay) {
+        popupOverlay = document.createElement('div');
+        popupOverlay.id = 'weather-alert-popup-modal';
+        popupOverlay.style.cssText = "position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; padding:16px;";
+        document.body.appendChild(popupOverlay);
+    }
+
+    popupOverlay.innerHTML = `
+        <div style="background:#fff; border-top:6px solid ${themeColor}; border-radius:8px; max-width:550px; width:100%; box-shadow:0 12px 32px rgba(0,0,0,0.4); overflow:hidden; font-family:sans-serif; text-align:left;">
+            <div style="background:#f8f9fa; padding:14px 20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:12px; font-weight:bold; color:${themeColor}; text-transform:uppercase; letter-spacing:0.5px;">EMERGENCY BULLETIN &bull; ${severity}</span>
+                <button type="button" onclick="hideWeatherAlertModalPopup()" style="background:none; border:none; font-size:22px; line-height:1; cursor:pointer; color:#666;">&times;</button>
+            </div>
+            <div style="padding:20px; max-height:65vh; overflow-y:auto;">
+                <h3 style="margin:0 0 10px 0; font-size:18px; color:#111; font-weight:bold;">${headline}</h3>
+                <div style="font-size:11px; color:#777; margin-bottom:12px; font-weight:bold;">Issued: ${updatedCdt}</div>
+                <div style="font-size:14px; line-height:1.6; color:#333; white-space:pre-line;">${linkifyRawUrls(instruction || 'Please monitor local emergency weather dispatches and take safety precautions.')}</div>
+            </div>
+            <div style="background:#f1f3f5; padding:12px 20px; text-align:right;">
+                <button type="button" onclick="hideWeatherAlertModalPopup()" style="background:${themeColor}; color:#fff; border:none; padding:8px 18px; border-radius:4px; font-weight:bold; font-size:13px; cursor:pointer;">Acknowledge & Close</button>
+            </div>
+        </div>
+    `;
+    popupOverlay.style.display = 'flex';
+    triggerGoogleTranslateUpdate(popupOverlay);
+}
+
+window.hideWeatherAlertModalPopup = function() {
+    const popupOverlay = document.getElementById('weather-alert-popup-modal');
+    if (popupOverlay) popupOverlay.style.display = 'none';
+};
+
+// ============================================================================
+// GLOBAL WEATHER FORECAST ENGINE: Current Telemetry & 5-Day Lightbox Modal
+// Listens to: /master_county_data/weather_forecast
+// ============================================================================
+function bindFirebaseWeatherForecastEngine(db) {
+    if (!db) return;
+    try {
+        if (activeFbRefForecast) activeFbRefForecast.off();
+        activeFbRefForecast = db.ref('master_county_data/weather_forecast');
+
+        activeFbRefForecast.on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+
+            const current = data.current || {};
+            const rawFiveDay = data.fiveDay || [];
+            window.fiveDayForecastCache = Array.isArray(rawFiveDay) ? rawFiveDay : Object.values(rawFiveDay);
+
+            renderCurrentWeatherWidget(current);
+        });
+    } catch(err) {
+        console.warn("Weather forecast engine notice:", err.message);
+    }
+}
+
+function renderCurrentWeatherWidget(current) {
+    let widgetEl = document.getElementById('portal-weather-current-badge');
+    if (!widgetEl) {
+        const headerContainer = document.querySelector('.site-header, header, .nav-container') || document.body;
+        widgetEl = document.createElement('div');
+        widgetEl.id = 'portal-weather-current-badge';
+        widgetEl.style.cssText = "display:inline-flex; align-items:center; gap:8px; cursor:pointer; background:#111; color:#fff; padding:6px 14px; border-radius:20px; border:1px solid #333; margin:8px; font-size:13px; font-weight:bold;";
+        widgetEl.onclick = openFiveDayForecastModal;
+        headerContainer.appendChild(widgetEl);
+    }
+
+    const temp = current.temp ? `${Math.round(current.temp)}°F` : '--°F';
+    const condition = current.condition || 'Clear';
+    const iconUrl = normalizeImageUrl(current.icon);
+    const updatedCdt = formatToCentralTime(current.updatedAt);
+
+    widgetEl.innerHTML = `
+        ${iconUrl ? `<img src="${iconUrl}" alt="" style="width:26px; height:26px; object-fit:contain; display:block;" onerror="this.style.display='none';">` : ''}
+        <span>Clay County: ${temp} &bull; ${condition}</span>
+        <span style="font-size:10px; color:#bbb; text-decoration:underline;">5-Day &rarr;</span>
+    `;
+    widgetEl.title = `Current Weather | Updated: ${updatedCdt} | Click to view 5-day forecast`;
+    triggerGoogleTranslateUpdate(widgetEl);
+}
+
+window.openFiveDayForecastModal = function() {
+    let modalEl = document.getElementById('weather-fiveday-forecast-modal');
+    if (!modalEl) {
+        modalEl = document.createElement('div');
+        modalEl.id = 'weather-fiveday-forecast-modal';
+        modalEl.style.cssText = "position:fixed; inset:0; z-index:99998; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; padding:16px;";
+        modalEl.onclick = (e) => {
+            if (e.target === modalEl) modalEl.style.display = 'none';
+        };
+        document.body.appendChild(modalEl);
+    }
+
+    const forecastDays = window.fiveDayForecastCache || [];
+    const cardsHtml = forecastDays.map(day => {
+        if (!day) return '';
+        const dayName = day.dayOfWeek || cleanCalendarDate(day.date);
+        const iconUrl = normalizeImageUrl(day.icon);
+        const condition = day.condition || 'Variable';
+        const high = day.high !== undefined ? `${Math.round(day.high)}°` : '--°';
+        const low = day.low !== undefined ? `${Math.round(day.low)}°` : '--°';
+        const precipChance = day.precipProbability !== undefined ? `${day.precipProbability}%` : '0%';
+        const precipInches = day.precipExpectedInches ? `${day.precipExpectedInches}"` : '0"';
+
+        return `
+            <div style="flex:1 1 120px; min-width:120px; background:#1e1e1e; border:1px solid #333; border-radius:8px; padding:12px; text-align:center; color:#fff;">
+                <div style="font-size:12px; font-weight:bold; text-transform:uppercase; color:#bbb; margin-bottom:6px;">${dayName}</div>
+                ${iconUrl ? `<img src="${iconUrl}" alt="" style="width:38px; height:38px; margin:0 auto 6px auto; display:block;" onerror="this.style.display='none';">` : ''}
+                <div style="font-size:12px; color:#ddd; font-weight:bold; min-height:30px; display:flex; align-items:center; justify-content:center;">${condition}</div>
+                <div style="font-size:15px; font-weight:bold; margin:6px 0;">
+                    <span style="color:#ff8a65;">${high}</span> / <span style="color:#90caf9;">${low}</span>
+                </div>
+                <div style="font-size:11px; color:#aaa; border-top:1px dashed #333; padding-top:6px; margin-top:6px;">
+                    Rain: ${precipChance} (${precipInches})
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    modalEl.innerHTML = `
+        <div style="background:#141414; border:1px solid #333; border-radius:10px; max-width:760px; width:100%; box-shadow:0 12px 32px rgba(0,0,0,0.5); overflow:hidden; font-family:sans-serif;">
+            <div style="background:#222; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333;">
+                <span style="font-size:14px; font-weight:bold; color:#fff; text-transform:uppercase; letter-spacing:0.5px;">Clay County 5-Day Extended Weather Outlook</span>
+                <button type="button" onclick="document.getElementById('weather-fiveday-forecast-modal').style.display='none';" style="background:none; border:none; font-size:24px; color:#aaa; cursor:pointer;">&times;</button>
+            </div>
+            <div style="padding:20px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center; max-height:75vh; overflow-y:auto;">
+                ${cardsHtml || '<div style="color:#aaa; padding:20px;">No forecast telemetry available.</div>'}
+            </div>
+            <div style="background:#1c1c1c; padding:10px 20px; text-align:right;">
+                <button type="button" onclick="document.getElementById('weather-fiveday-forecast-modal').style.display='none';" style="background:#0258A3; color:#fff; border:none; padding:6px 16px; border-radius:4px; font-weight:bold; font-size:12px; cursor:pointer;">Close</button>
+            </div>
+        </div>
+    `;
+    modalEl.style.display = 'flex';
+    triggerGoogleTranslateUpdate(modalEl);
+};
 
 // ============================================================================
 // SPORTS SCOREBOARD ENGINE (Town-Isolated Multi-Level Feeder)
@@ -760,7 +947,7 @@ function bindFirebaseServices() {
         storageBucket: "smlc-fuel-monitor.firebasestorage.app",
         messagingSenderId: "22397440085",
         appId: "1:22397440085:web:c00e716858ed58895bc4dc",
-        measurementId: "G-687D605K75"
+        measurementId: "G-FHJNXDB9BB"
     };
 
     try {
@@ -774,6 +961,7 @@ function bindFirebaseServices() {
         bindFirebaseSemanticSectionsEngine(db);
         bindFirebasePartnersEngine(db);
         bindFirebaseWeatherAlertsEngine(db);
+        bindFirebaseWeatherForecastEngine(db);
         bindFirebaseSportsEngine(db);
     } catch(e) {
         console.warn("Firebase initialization notice:", e.message);
@@ -1432,7 +1620,9 @@ async function loadCommunityBulletinFeed() {
     }
 }
 
-// === LOCAL NEWS DISPATCHES (STRICT TOWN ISOLATION ENGINE) ===
+// ============================================================================
+// LOCAL NEWS DISPATCHES (Consumes Ingested Arrays Directly Without Suppression)
+// ============================================================================
 async function loadLocalNewsDispatches() {
     const targetGrid = document.getElementById('news-matrix-target');
     if (!targetGrid) return;
@@ -1444,42 +1634,44 @@ async function loadLocalNewsDispatches() {
             const newsArray = await res.json();
             if (Array.isArray(newsArray)) {
                 window.newsCacheBlock = newsArray.filter(item => {
-                    const textContent = ((item.title || '') + ' ' + (item.full_story || '') + ' ' + (item.description || '') + ' ' + (item.location || '')).toUpperCase();
-                    
-                    const isCountyGlobal = 
-                        textContent.includes("CLAY COUNTY") || 
-                        textContent.includes("CLAY COUNTY HOSPITAL") || 
-                        textContent.includes("CLAY COUNTY COURTHOUSE") ||
-                        textContent.includes("COUNTY BOARD");
+                    if (!item) return false;
 
-                    if (ACTIVE_TOWN.isHome) {
+                    // 1. Home portal aggregates all network dispatches
+                    if (ACTIVE_TOWN.isHome) return true;
+
+                    // 2. Extract towns directly from pre-filtered scraper arrays
+                    let itemTowns = [];
+                    if (Array.isArray(item.towns) && item.towns.length > 0) {
+                        itemTowns = item.towns;
+                    } else if (Array.isArray(item.tags)) {
+                        itemTowns = item.tags.filter(t => typeof t === 'string' && t.trim().toUpperCase() !== "CLAY COUNTY");
+                    }
+
+                    // 3. County-Wide Global Dispatch: Only "Clay County" tagged (zero town tags)
+                    if (itemTowns.length === 0) {
                         return true;
                     }
 
-                    const matchesCurrentTown = ACTIVE_TOWN.keywords.some(kw => {
-                        const regex = new RegExp(`\\b${kw.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
-                        return regex.test(textContent);
+                    // 4. Specific Town Dispatch: Matches this portal's primary name or established keywords
+                    const currentTownUpper = ACTIVE_TOWN.primaryName.toUpperCase();
+                    return itemTowns.some(town => {
+                        const cleanTownUpper = String(town).trim().toUpperCase();
+                        return cleanTownUpper === currentTownUpper || (ACTIVE_TOWN.keywords && ACTIVE_TOWN.keywords.includes(cleanTownUpper));
                     });
-
-                    if (matchesCurrentTown || isCountyGlobal) {
-                        return true;
-                    }
-
-                    return false;
                 });
 
                 if (window.newsCacheBlock.length > 0) {
                     applyHighDensityScrollLimits(targetGrid, window.newsCacheBlock.length, 520);
                     targetGrid.innerHTML = window.newsCacheBlock.map((story, idx) => {
-                        const cleanRawStory = sanitizeWnoiContent(story.full_story || story.description || '');
-                        const isLong = cleanRawStory.length > 150;
-                        const displayStory = isLong ? cleanRawStory.substring(0, 140) + "..." : cleanRawStory;
-                        const cleanTitle = sanitizeWnoiContent(story.title || 'Local News Dispatch');
+                        const rawStory = story.full_story || story.excerpt || story.description || '';
+                        const isLong = rawStory.length > 150;
+                        const displayStory = isLong ? rawStory.substring(0, 140) + "..." : rawStory;
+                        const cleanTitle = story.title || 'Local News Dispatch';
                         const imgUrl = normalizeImageUrl(story.image);
 
                         return `
                             <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
-                                ${imgUrl ? `<img src="${imgUrl}" alt="" style="width:100\%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})" onerror="this.style.display='none';">` : ''}
+                                ${imgUrl ? `<img src="${imgUrl}" alt="" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})" onerror="this.style.display='none';">` : ''}
                                 <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-top:10px;">${cleanCalendarDate(story.date)}</div>
                                 <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${cleanTitle}</div>
                                 <div style="font-size:14px; color:#444;">${linkifyRawUrls(displayStory)}</div>
@@ -1498,6 +1690,7 @@ async function loadLocalNewsDispatches() {
     }
 }
 
+// === TOWN HERO UI ENGINE (Clean Town Names Without Appending County) ===
 function hydrateTownHeroUI() {
     const badgeEl = document.getElementById('hero-seat-badge');
     const titleEl = document.getElementById('hero-town-title');
@@ -1505,7 +1698,7 @@ function hydrateTownHeroUI() {
     const marqueeEl = document.getElementById('hero-river-marquee');
 
     if (badgeEl && ACTIVE_TOWN.seatBadge) badgeEl.innerText = ACTIVE_TOWN.seatBadge;
-    if (titleEl) titleEl.innerText = `${ACTIVE_TOWN.primaryName}, Illinois`;
+    if (titleEl) titleEl.innerText = ACTIVE_TOWN.primaryName;
     if (metaEl && ACTIVE_TOWN.estMeta) metaEl.innerText = ACTIVE_TOWN.estMeta;
     if (marqueeEl && ACTIVE_TOWN.riverMarquee) marqueeEl.innerText = ACTIVE_TOWN.riverMarquee;
 
@@ -1537,6 +1730,14 @@ function handleSPAHashNavigation() {
 
     hydrateTownHeroUI();
     updateNavigationActiveState();
+
+    if (typeof window.gtag === 'function') {
+        window.gtag('event', 'page_view', {
+            page_title: ACTIVE_TOWN.primaryName,
+            page_location: window.location.href,
+            page_path: window.location.pathname + (window.location.hash || '')
+        });
+    }
 
     bindFirebaseServices();
     loadCommunityBulletinFeed();
