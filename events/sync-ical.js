@@ -2,18 +2,18 @@
  * PROJECT: Support My Local Community / Ourflora - Clay County, IL
  * PURPOSE: Parse public Google Calendar .ics feed & sync active 720-hr events to Firestore
  * LEAD DEVELOPER: Werewolf3788
- * VERSION: v1.3.1 (Fixed Typo on Line 39)
+ * VERSION: v1.4.0 (Clean descriptions, extracted links, maps URL, event image)
  */
 
 /* === SECTION: File Header & Config === */
-// Active Version: v1.3.1 | Timestamp: 2026-07-29_17:28:00
-// CSS / JS Imports: ?v=20260729_172800
+// Active Version: v1.4.0 | Timestamp: 2026-10-25
 
 const ical = require('node-ical');
 const admin = require('firebase-admin');
 
 const ICAL_URL = "https://calendar.google.com/calendar/ical/09907fc6fff214b9dad96172ef13e7b80d62ea80cf22b504d096a47f277a9d2b%40group.calendar.google.com/public/basic.ics";
 const TARGET_TIMEZONE = "America/Chicago";
+const SHORT_DESC_LENGTH = 140;   // used for the compact card on the main screen
 
 /* === SECTION: Firebase Auth Construction === */
 const keyId = process.env.FIREBASE_KEY_ID;
@@ -48,6 +48,121 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
+/* === SECTION: Text Cleaning Helpers === */
+// BEGIN_HELPERS
+
+const IMAGE_URL_RE = /\.(jpe?g|png|gif|webp)(\?|#|$)/i;
+
+// node-ical sometimes returns { val, params } instead of a plain string
+function asText(v) {
+  if (v === null || v === undefined) return "";
+  if (typeof v === 'object') return String(v.val ?? v.value ?? "");
+  return String(v);
+}
+
+function decodeEntities(s) {
+  return s
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0*39;|&apos;/gi, "'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&amp;/gi, '&');
+}
+
+function trimUrl(u) {
+  return u.replace(/[.,;:!?]+$/, '');
+}
+
+/**
+ * Takes raw calendar text (may contain HTML, <a> tags, bare URLs, leftover
+ * attribute junk) and returns { text, urls }:
+ *   text = plain readable text with all links removed
+ *   urls = every unique http(s) link that was in it
+ */
+function parseRichText(raw) {
+  let s = decodeEntities(asText(raw));
+
+  const urls = [];
+  const addUrl = (u) => {
+    const clean = trimUrl(u);
+    if (clean && !urls.includes(clean)) urls.push(clean);
+  };
+
+  // 1. Links inside <a href="...">
+  for (const m of s.matchAll(/href\s*=\s*["']([^"']+)["']/gi)) addUrl(m[1]);
+
+  // 2. Line breaks / paragraphs -> newlines, then strip all remaining tags
+  s = s.replace(/<\s*br\s*\/?>/gi, '\n')
+       .replace(/<\/(p|div|li)>/gi, '\n')
+       .replace(/<[^>]+>/g, ' ');
+
+  // 3. Leftover attribute junk from earlier mangled HTML (target="_blank" etc.)
+  s = s.replace(/\b(?:target|rel|style|href|class)\s*=\s*"[^"]*"/gi, ' ')
+       .replace(/["'\[\]]+>/g, ' ')
+       .replace(/(?:\s|^)["'\[\]>\\]+(?=\s|$)/g, ' ');
+
+  // 4. Bare URLs in the text
+  for (const m of s.matchAll(/https?:\/\/[^\s<>"')\]]+/gi)) addUrl(m[0]);
+
+  // 5. Remove URLs from the readable text
+  s = s.replace(/https?:\/\/[^\s<>"')\]]+/gi, ' ')
+       .replace(/\bwww\.\S+/gi, ' ');
+
+  // 6. Tidy whitespace
+  s = s.replace(/[ \t\u00a0]+/g, ' ')
+       .replace(/ *\n */g, '\n')
+       .replace(/\n{3,}/g, '\n\n')
+       .trim();
+
+  return { text: s, urls };
+}
+
+function isImageUrl(u) {
+  return IMAGE_URL_RE.test(u);
+}
+
+// Google Drive share links aren't directly embeddable; convert to a thumbnail URL
+function normalizeImageUrl(u) {
+  const drive = u.match(/drive\.google\.com\/(?:open\?id=|file\/d\/|uc\?id=|thumbnail\?id=)([\w-]+)/i);
+  if (drive) return `https://drive.google.com/thumbnail?id=${drive[1]}&sz=w1000`;
+  return u;
+}
+
+// Image from the calendar event's attachments, if any
+function imageFromAttach(att) {
+  const list = Array.isArray(att) ? att : (att ? [att] : []);
+  for (const a of list) {
+    const url = typeof a === 'string' ? a : asText(a);
+    const type = (a && a.params && a.params.FMTTYPE) || '';
+    if (/^https?:/i.test(url) && (/^image\//i.test(type) || isImageUrl(url))) {
+      return normalizeImageUrl(url);
+    }
+  }
+  return "";
+}
+
+// Friendly button label for an extracted link
+function labelForUrl(u) {
+  let host = "";
+  try { host = new URL(u).hostname.replace(/^www\./, ''); } catch { return "Link"; }
+  if (/facebook\.com|fb\.me|fb\.watch/i.test(host)) return "View on Facebook";
+  if (/instagram\.com/i.test(host)) return "View on Instagram";
+  if (/forms\.gle|docs\.google\.com\/forms/i.test(u)) return "Sign-up Form";
+  if (/eventbrite\./i.test(host)) return "Get Tickets";
+  if (/youtube\.com|youtu\.be/i.test(host)) return "Watch on YouTube";
+  if (/google\.[a-z.]+\/maps|maps\.app\.goo\.gl/i.test(u)) return "Map";
+  return host;
+}
+
+function shorten(text, max) {
+  if (text.length <= max) return text;
+  return text.slice(0, max).replace(/\s+\S*$/, '') + "…";
+}
+
+// END_HELPERS
+
 /* === SECTION: Core Sync Logic === */
 async function syncICalToFirestore() {
   console.log("Fetching live .ics feed from Google Calendar...");
@@ -55,7 +170,7 @@ async function syncICalToFirestore() {
   try {
     const rawData = await ical.async.fromURL(ICAL_URL);
     const now = new Date();
-    
+
     // 720 Hours in milliseconds (30 days)
     const MS_720_HOURS = 30 * 24 * 60 * 60 * 1000;
     const future720Hours = new Date(now.getTime() + MS_720_HOURS);
@@ -75,7 +190,7 @@ async function syncICalToFirestore() {
         const startsWithin720Hours = start && start.getTime() <= future720Hours.getTime();
 
         if (isStillActive && startsWithin720Hours) {
-          const title = ev.summary || "Untitled Event";
+          const title = parseRichText(ev.summary).text || "Untitled Event";
           const uppercaseTitle = title.toUpperCase();
           const isAllDay = ev.datetype === 'date';
 
@@ -87,12 +202,30 @@ async function syncICalToFirestore() {
           if (uppercaseTitle.includes("BLOOD DRIVE") || uppercaseTitle.includes("FUNDRAISER")) color = "#ff0000";
 
           // Format human-readable date string
-          const dateOptions = isAllDay 
+          const dateOptions = isAllDay
             ? { weekday: 'short', month: 'short', day: 'numeric', timeZone: TARGET_TIMEZONE }
             : { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: TARGET_TIMEZONE };
-          
+
           let displayDate = start.toLocaleDateString('en-US', dateOptions);
           if (isAllDay) displayDate += " (All Day)";
+
+          // ---- Description: plain text + extracted links + image ----
+          const descParsed = parseRichText(ev.description);
+          const imageUrls = descParsed.urls.filter(isImageUrl).map(normalizeImageUrl);
+          const linkUrls = descParsed.urls.filter(u => !isImageUrl(u));
+
+          const links = linkUrls.map(u => ({ url: u, label: labelForUrl(u) }));
+          const image = imageFromAttach(ev.attach) || imageUrls[0] || "";
+
+          const desc = descParsed.text || "Visit ourflora.com for more details.";
+
+          // ---- Location: plain text address + a clean Google Maps directions URL ----
+          const locParsed = parseRichText(ev.location);
+          const addr = locParsed.text || "Clay County, IL";
+          const existingMapsUrl = locParsed.urls.find(u => /google\.[a-z.]+\/maps|maps\.app\.goo\.gl/i.test(u));
+          const mapsUrl = locParsed.text
+            ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(locParsed.text)}`
+            : (existingMapsUrl || "");
 
           const publicCalId = encodeURIComponent("09907fc6fff214b9dad96172ef13e7b80d62ea80cf22b504d096a47f277a9d2b@group.calendar.google.com");
 
@@ -103,8 +236,12 @@ async function syncICalToFirestore() {
             isAllDay: isAllDay,
             displayDate: displayDate,
             color: color,
-            desc: ev.description || "Visit ourflora.com for more details.",
-            addr: ev.location || "Clay County, IL",
+            desc: desc,                                   // full plain-text description (no links, no HTML)
+            descShort: shorten(desc, SHORT_DESC_LENGTH),  // compact version for the main screen
+            links: links,                                 // [{ url, label }] -> show as buttons
+            image: image,                                 // "" if none
+            addr: addr,                                   // plain text address
+            mapsUrl: mapsUrl,                             // ready-to-use directions link
             subscribeGoogle: `https://calendar.google.com/calendar/r?cid=${publicCalId}`,
             subscribeICal: ICAL_URL
           });
@@ -122,7 +259,7 @@ async function syncICalToFirestore() {
     const existingDocs = await collectionRef.get();
 
     const batch = db.batch();
-    
+
     // Step 1: Delete stale entries
     existingDocs.forEach(doc => {
       batch.delete(doc.ref);
