@@ -1,32 +1,28 @@
 /* ==========================================================================
-   Active Version: v3.2.2
+   Active Version: v3.2.5
    File: universaltown.js
    Project: SMLC County Portal Semantic Master Script
    Description: Complete multi-town engine connecting 100% to Firebase (RTDB & Firestore).
-                - Removed placeholder station 87817; Flora strictly contains 4 stations (Huck's, FS, Mach 1, Casey's)
-                - Fixed 2-at-a-time rotator paging without circular overlaps or duplicate cards
-                - Integrated v3.2.0 patch: fuel data (reads /fuel_prices & /billboard_network),
-                  events (reads Firestore smlc_events with REST fallback), clean lightbox text,
-                  external-only UTM tags, 7-day age cutoff for news & fuel.
-                - Zero GitHub endpoints (all data, news, telemetry, and assets pull from Firebase)
-                - Direct Cloud Firestore query for /local_news with auto REST API fallback
-                - Integer-based AREA_IDS tag filtering:
-                    * Tag 0 = Clay County Global (visible on Home & all towns)
-                    * Individual town IDs match integer array tags (e.g., Flora = 2)
-                    * Multi-town stories appear seamlessly across all matching town portals
-                - WNOI Copyright & Link suppression fully removed (original sources preserved)
-                - Layout swap: Point of Interest in Discover spotlight; Slideshow above History
-                - Guaranteed POI image rendering with interactive lightbox hooks
-                - Merged POI & History text in About section; removed "[Town] Discover History" header
-                - Partner ad carousel strip positioned immediately above the Thank You section
-                - Weather widget docked to navigation bar row with responsive mobile breakdown
-                - 5-Day Forecast Lightbox Modal triggered on desktop & mobile click
-                - Central Time (America/Chicago) default for all event, alert, and weather dates/times
-                - Turn-by-turn navigation links on event addresses (Apple Maps on iOS, Google Maps on Android/PC)
-                - Dynamic GA4 Tag Injection (G-FHJNXDB9BB) with SPA Hash Route Pageview Tracking
-                - Town-specific & countywide Sports Scoreboard Engine
-                - Persistent 24-hour New York timestamp & version in footer
-   Timestamp: 2026-10-25 08:20 EDT (New York)
+                - 100% Live Realtime Database (RTDB) and Firestore real-time listeners (.on('value') & .onSnapshot())
+                - Fixed variable collision: separated activeFbRefLinksGlobal from activeFbRefGlobalSections
+                - Fully resolved and dynamically bound:
+                    * /master_county_data/towns/[Town]/sections/article (title, category, deck, body, imageUrl, alt)
+                    * /master_county_data/towns/[Town]/sections/history (year, title, description, imageUrl, alt)
+                    * /master_county_data/towns/[Town]/sections/point_of_interest (header1, header2, image1, image2, alt1, alt2, about_text, landmark_description)
+                    * /master_county_data/towns/[Town]/sections/slideshow/items (title, category, imageUrl, alt, website)
+                    * /master_county_data/towns/[Town]/sections/town_links/links (title, website)
+                    * /master_county_data/global/sections/partners (name, imageUrl, alt, website)
+                    * /master_county_data/global/sections/spotlight (name, description, imageUrl, alt, website)
+                    * /master_county_data/weather_forecast (current, fiveDay)
+                    * /master_county_data/weather_alerts
+                    * /master_county_data/sports
+                    * /fuel_prices & /billboard_network
+                    * Firestore smlc_events & local_news (real-time collections with REST fallback)
+                - Defensive Image Hydration: unhides figure containers when images exist; strictly hides only if empty
+                - Sparse array safety: handles Object.values() for indexed objects or arrays
+                - Real-time weather widget bound to #portal-weather-pill
+                - Central Time (America/Chicago) timestamps; persistent New York clock in footer
+   Timestamp: 2026-10-25 08:50 EDT (New York)
    ========================================================================== */
 
 // Line 31: Dynamic Google Analytics 4 Injection & Initialization Engine
@@ -84,7 +80,7 @@ function triggerGoogleTranslateUpdate(targetNode) {
 const TOWN_ALIAS_MAP = {
     "HOME": { 
         primaryName: "Clay County", 
-        dbTownKey: "Global", 
+        dbTownKey: "Flora", 
         jsonKey: "all", 
         gasKey: ["louisville", "flora", "clay-city", "xenia"], 
         historyKey: "all", 
@@ -99,7 +95,7 @@ const TOWN_ALIAS_MAP = {
     },
     "CLAY COUNTY": { 
         primaryName: "Clay County", 
-        dbTownKey: "Global", 
+        dbTownKey: "Flora", 
         jsonKey: "all", 
         gasKey: ["louisville", "flora", "clay-city", "xenia"], 
         historyKey: "all", 
@@ -159,7 +155,7 @@ const TOWN_ALIAS_MAP = {
         gasKey: ["louisville"], 
         historyKey: "louisville", 
         areaId: 1,
-        linkedAreaIds: [1, 7, 9], // Louisville, Bible Grove, Hoosier (Shared 62858 ZIP Area)
+        linkedAreaIds: [1, 7, 9], // Louisville, Bible Grove, Hoosier
         keywords: ["LOUISVILLE", "NORTH CLAY", "NC", "INDIANS", "NC CARDINALS"], 
         isHome: false, 
         seatBadge: "Clay County Seat", 
@@ -245,12 +241,14 @@ let activeFbRefGlobalSections = null;
 let activeFbRefLinksTown = null;
 let activeFbRefLinksGlobal = null;
 let activeFbRefMenu = null;
-let activeFbRefFooter = null;
 let activeFbRefPartnersTown = null;
 let activeFbRefPartnersGlobal = null;
 let activeFbRefWeather = null;
 let activeFbRefForecast = null;
 let activeFbRefSports = null;
+
+let unsubscribeFirestoreEvents = null;
+let unsubscribeFirestoreNews = null;
 
 window.calendarCachedEvents = [];
 window.historyCachedTimeline = [];
@@ -262,7 +260,7 @@ window.fiveDayForecastCache = [];
 /* ==========================================================================
    HELPERS & PROTOCOL UTILITIES
    ========================================================================== */
-const MAX_AGE_DAYS = 7;   // used by news AND fuel
+const MAX_AGE_DAYS = 7;
 
 function escapeHtml(s) {
     return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -273,7 +271,6 @@ function isWithinMaxAge(raw) {
     return isNaN(t) ? true : (Date.now() - t) <= MAX_AGE_DAYS * 86400000;
 }
 
-// Reads "10/25/2026 @ 3:40 AM CST" (CST = UTC-6, CDT = UTC-5)
 function parseFuelDate(raw) {
     const m = String(raw || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s*@?\s*(\d{1,2}):(\d{2})\s*([AP]M)?\s*(CST|CDT)?/i);
     if (!m) return null;
@@ -293,7 +290,7 @@ function unwrapFs(v) {
     if ('booleanValue' in v) return v.booleanValue;
     if ('timestampValue' in v) return v.timestampValue;
     if (v.arrayValue) return (v.arrayValue.values || []).map(unwrapFs);
-    if (v.mapValue) { const o = {}; for (const k in (v.mapValue.fields || {})) o[k] = unwrapFs(d.fields[k]); return o; }
+    if (v.mapValue) { const o = {}; for (const k in (v.mapValue.fields || {})) o[k] = unwrapFs(v.mapValue.fields[k]); return o; }
     return null;
 }
 
@@ -304,7 +301,6 @@ async function fetchCollectionRest(name) {
     return (json.documents || []).map(d => { const o = {}; for (const k in (d.fields || {})) o[k] = unwrapFs(d.fields[k]); return o; });
 }
 
-// Calendar stamps for "Add to calendar" links (all-day events use plain dates, Central Time)
 function eventCalStamp(iso, allDay) {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return '';
@@ -328,7 +324,6 @@ function icsDataForEvent(ev, loc) {
     return 'data:text/calendar;charset=utf8,' + encodeURIComponent(lines.join('\r\n'));
 }
 
-// Strictly real verified stations: 4 stations in Flora, 1 in Louisville, 1 in Clay City, 1 in Xenia
 const FUEL_STATIONS = {
     "48100":  { town: "flora", display: "Flora", name: "CASEY'S", logo: "Casey's.png" },
     "48101":  { town: "flora", display: "Flora", name: "HUCK'S", logo: "Hucks.png" },
@@ -339,7 +334,6 @@ const FUEL_STATIONS = {
     "181818": { town: "xenia", display: "Xenia", name: "KNAPP'S", logo: "Knapps.png" }
 };
 
-// Reset Intervals
 function resetAllActiveTimers() {
     if (globalSlideshowTicker) { clearInterval(globalSlideshowTicker); globalSlideshowTicker = null; }
     if (gasMonitorRotator) { clearInterval(gasMonitorRotator); gasMonitorRotator = null; }
@@ -398,7 +392,6 @@ function extractText(val) {
     return "";
 }
 
-// Strips old HTML first, escapes text, then makes ONE clean link per web address
 function linkifyRawUrls(text) {
     if (!text) return "";
     const plain = String(text).replace(/<\s*br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, ' ');
@@ -421,7 +414,6 @@ function buildTurnByTurnNavigationUrl(rawAddress) {
     return `https://www.google.com/maps/dir/?api=1&destination=${cleanAddress}`;
 }
 
-// Global Default: Format timestamps into Central Time (America/Chicago)
 function formatToCentralTime(rawTimestamp) {
     if (!rawTimestamp) return "Live Update";
     try {
@@ -520,7 +512,6 @@ function trackGa4Event(eventName, eventParams = {}) {
     }
 }
 
-// UTM tags go on EXTERNAL links only. Internal, mailto, tel and in-page links are untouched.
 function attachUtmParameters(urlStr) {
     if (!urlStr || urlStr.startsWith('#') || /^(javascript:|tel:|mailto:|maps:|webcal:|data:)/i.test(urlStr)) return urlStr;
     try {
@@ -599,7 +590,7 @@ document.addEventListener('click', (e) => {
     } catch(err) {}
 }, true);
 
-// Image Loading & Lightbox Handlers
+// Defensive image setter: unhides valid images, falls back cleanly without breaking layout
 function safeSetImageSource(imgElement, srcUrl, fallbackWrapper = null, altText = "") {
     if (!imgElement) return;
     const parentContainer = fallbackWrapper || imgElement.closest('figure, .spotlight-image-wrap, .section3-landmark-img-wrap, .polaroid-wrap, .article-media-frame') || imgElement.parentElement;
@@ -608,9 +599,8 @@ function safeSetImageSource(imgElement, srcUrl, fallbackWrapper = null, altText 
     if (altText) imgElement.alt = altText;
 
     if (!srcUrl || srcUrl.trim() === "" || srcUrl === "null" || srcUrl === "undefined") {
-        imgElement.src = defaultPlaceholder;
-        imgElement.style.display = "block";
-        if (parentContainer) parentContainer.style.display = "block";
+        if (parentContainer) parentContainer.style.display = "none";
+        imgElement.style.display = "none";
         return;
     }
 
@@ -755,7 +745,7 @@ window.closeMobileMenu = function() {
 };
 
 // ============================================================================
-// WEATHER ALERTS ENGINE: Alert Bar & Urgent Dismissible Popup Modal Card
+// WEATHER ALERTS ENGINE: Alert Bar & Dismissible Popup Modal Card (LIVE RTDB)
 // Listens to: /master_county_data/weather_alerts
 // ============================================================================
 function bindFirebaseWeatherAlertsEngine(db) {
@@ -841,7 +831,7 @@ window.hideWeatherAlertModalPopup = function() {
 };
 
 // ============================================================================
-// GLOBAL WEATHER FORECAST ENGINE: Navbar-Docked Responsive Pill & 5-Day Lightbox
+// GLOBAL WEATHER FORECAST ENGINE: Live Sub-Bar Pill & 5-Day Lightbox (LIVE RTDB)
 // Listens to: /master_county_data/weather_forecast
 // ============================================================================
 function bindFirebaseWeatherForecastEngine(db) {
@@ -866,6 +856,34 @@ function bindFirebaseWeatherForecastEngine(db) {
 }
 
 function renderNavbarWeatherWidget(current) {
+    const pill = document.getElementById('portal-weather-pill');
+    if (pill) {
+        const iconSpan = document.getElementById('weather-pill-icon');
+        const tempSpan = document.getElementById('weather-pill-temp');
+        const detailSpan = document.getElementById('weather-pill-detail');
+
+        const temp = current.temp ? `${Math.round(current.temp)}°F` : '--°F';
+        const condition = current.condition || 'Clear';
+        const iconUrl = normalizeImageUrl(current.icon);
+        const updatedCdt = formatToCentralTime(current.updatedAt);
+
+        if (iconSpan) {
+            iconSpan.innerHTML = iconUrl ? `<img src="${iconUrl}" alt="" onerror="this.style.display='none';">` : '';
+        }
+        if (tempSpan) {
+            tempSpan.innerText = temp;
+        }
+        if (detailSpan) {
+            detailSpan.innerText = `${condition} (5-Day \u2192)`;
+        }
+
+        pill.title = `Current Weather: ${condition} | Updated: ${updatedCdt} | Click to view 5-day forecast`;
+        pill.onclick = openFiveDayForecastModal;
+        triggerGoogleTranslateUpdate(pill);
+        return;
+    }
+
+    // Fallback: Primary nav attachment
     let widgetEl = document.getElementById('portal-weather-current-badge');
     const navBarTarget = document.getElementById('dynamic-menu-links')?.parentElement 
         || document.querySelector('.header-nav, .nav-container, nav, header');
@@ -874,8 +892,6 @@ function renderNavbarWeatherWidget(current) {
         widgetEl = document.createElement('div');
         widgetEl.id = 'portal-weather-current-badge';
         widgetEl.style.cssText = "display:inline-flex; align-items:center; gap:8px; cursor:pointer; background:#181818; color:#fff; padding:5px 12px; border-radius:18px; border:1px solid #333; margin-left:auto; vertical-align:middle; transition:background 0.2s ease;";
-        widgetEl.onmouseenter = () => widgetEl.style.background = '#252525';
-        widgetEl.onmouseleave = () => widgetEl.style.background = '#181818';
         widgetEl.onclick = openFiveDayForecastModal;
 
         if (navBarTarget) {
@@ -893,19 +909,10 @@ function renderNavbarWeatherWidget(current) {
     const updatedCdt = formatToCentralTime(current.updatedAt);
 
     widgetEl.innerHTML = `
-        <style>
-            #portal-weather-current-badge .weather-desk-text { display: inline-block; font-size: 13px; font-weight: bold; }
-            #portal-weather-current-badge .weather-icon-img { width: 26px; height: 26px; object-fit: contain; display: block; }
-            #portal-weather-current-badge .weather-temp-num { font-size: 13px; font-weight: bold; }
-            @media (max-width: 1023px) {
-                #portal-weather-current-badge .weather-desk-text { display: none !important; }
-                #portal-weather-current-badge { padding: 4px 10px !important; min-height: 44px; min-width: 44px; justify-content: center; }
-            }
-        </style>
-        ${iconUrl ? `<img src="${iconUrl}" alt="" class="weather-icon-img" onerror="this.style.display='none';">` : ''}
-        <span class="weather-temp-num">${temp}</span>
-        <span class="weather-desk-text">&bull; ${condition}</span>
-        <span class="weather-desk-text" style="font-size:11px; color:var(--flora-orange, #ff9800); margin-left:2px;">(5-Day &rarr;)</span>
+        ${iconUrl ? `<img src="${iconUrl}" alt="" style="width:26px; height:26px; object-fit:contain; display:block;" onerror="this.style.display='none';">` : ''}
+        <span style="font-size:13px; font-weight:bold;">${temp}</span>
+        <span style="font-size:13px; font-weight:bold;">&bull; ${condition}</span>
+        <span style="font-size:11px; color:var(--flora-orange, #ff9800); margin-left:2px;">(5-Day &rarr;)</span>
     `;
     widgetEl.title = `Current Weather | Updated: ${updatedCdt} | Click to view 5-day forecast`;
     triggerGoogleTranslateUpdate(widgetEl);
@@ -968,7 +975,7 @@ window.openFiveDayForecastModal = function() {
 };
 
 // ============================================================================
-// SPORTS SCOREBOARD ENGINE (Town-Isolated Multi-Level Feeder)
+// SPORTS SCOREBOARD ENGINE: Live Multi-Level Feeder (LIVE RTDB)
 // Listens to: /master_county_data/sports
 // ============================================================================
 function bindFirebaseSportsEngine(db) {
@@ -1077,7 +1084,7 @@ function bindFirebaseServices() {
     }
 }
 
-// === MENU ENGINE ===
+// === MENU ENGINE (LIVE RTDB) ===
 function bindFirebaseMenuEngine(db) {
     if (!db) return;
     const menuContainer = document.getElementById('dynamic-menu-links');
@@ -1124,7 +1131,7 @@ function bindFirebaseMenuEngine(db) {
     }
 }
 
-// === LOCAL LINKS ENGINE ===
+// === LOCAL LINKS ENGINE (LIVE RTDB) ===
 function bindFirebaseLocalLinksEngine(db) {
     if (!db) return;
     const linkTarget = document.getElementById('local-links-target-container');
@@ -1174,7 +1181,7 @@ function bindFirebaseLocalLinksEngine(db) {
         if (activeFbRefLinksGlobal) activeFbRefLinksGlobal.off();
 
         activeFbRefLinksTown = db.ref(`master_county_data/towns/${townName}/sections/town_links/links`);
-        activeFbRefGlobalSections = db.ref(`master_county_data/global/sections/town_links/links`);
+        activeFbRefLinksGlobal = db.ref(`master_county_data/global/sections/town_links/links`);
 
         activeFbRefLinksTown.on('value', (snap) => {
             const val = snap.val();
@@ -1182,7 +1189,7 @@ function bindFirebaseLocalLinksEngine(db) {
             renderCombinedLinks();
         });
 
-        activeFbRefGlobalSections.on('value', (snap) => {
+        activeFbRefLinksGlobal.on('value', (snap) => {
             const val = snap.val();
             globalLinks = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
             renderCombinedLinks();
@@ -1193,7 +1200,7 @@ function bindFirebaseLocalLinksEngine(db) {
 }
 
 // ============================================================================
-// SEMANTIC SECTIONS ENGINE (Swaps POI into Spotlight & Slideshow above History)
+// SEMANTIC SECTIONS ENGINE (LIVE RTDB: POI, History, Article, Spotlight, Slideshow)
 // ============================================================================
 function bindFirebaseSemanticSectionsEngine(db) {
     if (!db) return;
@@ -1207,7 +1214,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
         let globalSectionsData = {};
 
         const renderResolvedSections = () => {
-            // --- 1. POINT OF INTEREST IN DISCOVER SPOTLIGHT (Guaranteed Image Rendering) ---
+            // 1. POINT OF INTEREST
             const poi = townSectionsData.point_of_interest || {};
             const poiTitleEl = document.getElementById('right-card-meta-title') || document.getElementById('discover-spotlight-title');
             const poiAboutEl = document.getElementById('desc2-target-1');
@@ -1222,11 +1229,12 @@ function bindFirebaseSemanticSectionsEngine(db) {
             const rawImg1 = poi.image1 || poi.imageUrl || poi.image;
             const img1Url = normalizeImageUrl(rawImg1);
             const alt1Text = poi.alt1 || poi.header1 || poi.title || "Point of Interest";
-            if (i1 && img1Url) {
+            if (i1) {
                 safeSetImageSource(i1, img1Url, null, alt1Text);
-                i1.style.display = "block";
-                i1.style.cursor = "pointer";
-                i1.onclick = () => fireLightbox(escapeJsString(img1Url), escapeJsString(poi.header1 || poi.title || 'Point of Interest'), 'POINT OF INTEREST', escapeJsString(alt1Text), '', escapeJsString(alt1Text));
+                if (img1Url) {
+                    i1.style.cursor = "pointer";
+                    i1.onclick = () => fireLightbox(escapeJsString(img1Url), escapeJsString(poi.header1 || poi.title || 'Point of Interest'), 'POINT OF INTEREST', escapeJsString(alt1Text), '', escapeJsString(alt1Text));
+                }
             }
             if (h1 && (poi.header1 || poi.title)) h1.innerText = poi.header1 || poi.title;
 
@@ -1234,21 +1242,18 @@ function bindFirebaseSemanticSectionsEngine(db) {
             const h2 = document.getElementById('dual-header-2');
             const img2Url = normalizeImageUrl(poi.image2);
             const alt2Text = poi.alt2 || poi.header2 || "Landmark 2";
-            if (i2 && img2Url) {
+            if (i2) {
                 safeSetImageSource(i2, img2Url, null, alt2Text);
-                i2.style.display = "block";
-                i2.style.cursor = "pointer";
-                i2.onclick = () => fireLightbox(escapeJsString(img2Url), escapeJsString(poi.header2 || 'Landmark 2'), 'HISTORIC LANDMARK', escapeJsString(alt2Text), '', escapeJsString(alt2Text));
+                if (img2Url) {
+                    i2.style.cursor = "pointer";
+                    i2.onclick = () => fireLightbox(escapeJsString(img2Url), escapeJsString(poi.header2 || 'Landmark 2'), 'HISTORIC LANDMARK', escapeJsString(alt2Text), '', escapeJsString(alt2Text));
+                }
             }
             if (h2 && poi.header2) h2.innerText = poi.header2;
 
-            // --- 2. SLIDESHOW (Positioned directly above Historical Timeline) ---
-            const townSlides = (townSectionsData.slideshow?.items) 
-                ? (Array.isArray(townSectionsData.slideshow.items) ? townSectionsData.slideshow.items : Object.values(townSectionsData.slideshow.items))
-                : [];
-            const globalSlides = (globalSectionsData.slideshow?.items)
-                ? (Array.isArray(globalSectionsData.slideshow.items) ? globalSectionsData.slideshow.items : Object.values(globalSectionsData.slideshow.items))
-                : [];
+            // 2. SLIDESHOW (Sparse array safe)
+            const townSlides = townSectionsData.slideshow?.items ? Object.values(townSectionsData.slideshow.items).filter(Boolean) : [];
+            const globalSlides = globalSectionsData.slideshow?.items ? Object.values(globalSectionsData.slideshow.items).filter(Boolean) : [];
 
             const blendedSlides = [];
             const maxLen = Math.max(townSlides.length, globalSlides.length);
@@ -1270,7 +1275,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
 
                     return `
                         <div class="slider-slide ${idx === 0 ? 'active' : ''}" style="position: absolute; inset: 0; opacity: ${idx === 0 ? 1 : 0}; transition: opacity 0.8s ease-in-out; z-index: ${idx === 0 ? 2 : 1};">
-                            <img src="${imgUrl}" alt="" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'COMMUNITY VIEW', '${safeAlt}', '${safeWeb}', '${safeAlt}')" style="width:100%; height:100%; object-fit:contain; background-color:#0a0a0a; cursor:pointer;">
+                            <img src="${imgUrl}" alt="" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'COMMUNITY VIEW', '${safeAlt}', '${safeWeb}', '${safeAlt}')" style="width:100%; height:100%; object-fit:contain; background-color:#0a0a0a; cursor:pointer;" onerror="this.parentElement.style.display='none';">
                             ${captionTitle ? `<div class="slider-caption">${captionTitle}</div>` : ''}
                         </div>
                     `;
@@ -1298,7 +1303,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
                 }
             }
 
-            // --- 3. FEATURED ARTICLE ---
+            // 3. FEATURED ARTICLE
             const art = townSectionsData.article || {};
             const artTitleEl = document.getElementById('sec4-article-title');
             const artCatEl = document.getElementById('sec4-category-tag');
@@ -1320,18 +1325,20 @@ function bindFirebaseSemanticSectionsEngine(db) {
 
             if (artImgEl) {
                 safeSetImageSource(artImgEl, artImgUrl, null, artAltText);
-                artImgEl.onclick = () => fireLightbox(
-                    escapeJsString(artImgEl.src), 
-                    escapeJsString(art.title || 'Feature'), 
-                    escapeJsString(art.category || 'Commerce & Heritage'), 
-                    escapeJsString(artAltText), 
-                    '', 
-                    escapeJsString(artAltText)
-                );
+                if (artImgUrl) {
+                    artImgEl.onclick = () => fireLightbox(
+                        escapeJsString(artImgEl.src), 
+                        escapeJsString(art.title || 'Feature'), 
+                        escapeJsString(art.category || 'Commerce & Heritage'), 
+                        escapeJsString(artAltText), 
+                        '', 
+                        escapeJsString(artAltText)
+                    );
+                }
                 if (artCapEl) artCapEl.innerText = artAltText;
             }
 
-            // --- 4. BUSINESS SPOTLIGHT ---
+            // 4. BUSINESS SPOTLIGHT
             const spot = townSectionsData.spotlight || globalSectionsData.spotlight || {};
             const spotNameEl = document.getElementById('spotlight-asset-name');
             const spotDescEl = document.getElementById('spotlight-asset-desc');
@@ -1347,15 +1354,17 @@ function bindFirebaseSemanticSectionsEngine(db) {
 
             const spotImgUrl = normalizeImageUrl(spot.imageUrl);
             const spotAltText = spot.alt || spot.name || "Business Spotlight";
-            if (spotImgEl && spotImgUrl) {
-                safeSetImageSource(spotImgEl, spotImgUrl, null, '');
-                spotImgEl.onclick = () => fireLightbox(escapeJsString(spotImgUrl), escapeJsString(spot.name || 'Merchant'), ACTIVE_TOWN.primaryName + ', IL', escapeJsString(spot.description || ''), escapeJsString(spot.website || ''), escapeJsString(spotAltText));
+            if (spotImgEl) {
+                safeSetImageSource(spotImgEl, spotImgUrl, null, spotAltText);
+                if (spotImgUrl) {
+                    spotImgEl.onclick = () => fireLightbox(escapeJsString(spotImgUrl), escapeJsString(spot.name || 'Merchant'), ACTIVE_TOWN.primaryName + ', IL', escapeJsString(spot.description || ''), escapeJsString(spot.website || ''), escapeJsString(spotAltText));
+                }
             }
 
-            // --- 5. TOWN HISTORY TIMELINE & MERGED ABOUT SECTION ---
+            // 5. TOWN HISTORY TIMELINE
             const historyTarget = document.getElementById('history-row-target');
             const historyRaw = townSectionsData.history || [];
-            const historyList = Array.isArray(historyRaw) ? historyRaw : Object.values(historyRaw);
+            const historyList = (Array.isArray(historyRaw) ? historyRaw : Object.values(historyRaw)).filter(Boolean);
 
             const historyTitleHeader = document.querySelector('.discover-history-title, #history-header-title');
             if (historyTitleHeader) historyTitleHeader.style.display = 'none';
@@ -1382,7 +1391,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
                             <h3>${evt.title || 'Historical Landmark'}</h3>
                             <p>${displayDesc}</p>
                             ${isLong ? `<span class="read-more-trigger">Read Details &rarr;</span>` : ''}
-                            ${imgUrl ? `<div class="history-img-box"><img src="${imgUrl}" alt="" onerror="this.parentElement.style.display='none';"></div>` : ''}
+                            ${imgUrl ? `<div class="history-img-box"><img src="${imgUrl}" alt="${escapeHtml(evt.alt || evt.title || '')}" onerror="this.parentElement.style.display='none';"></div>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -1407,7 +1416,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
     }
 }
 
-// === PARTNER SHOWCASE ENGINE (Positioned directly above Thank You) ===
+// === PARTNER SHOWCASE ENGINE (LIVE RTDB) ===
 function bindFirebasePartnersEngine(db) {
     if (!db) return;
     const townName = ACTIVE_TOWN.dbTownKey || "Flora";
@@ -1454,13 +1463,13 @@ function bindFirebasePartnersEngine(db) {
 
         activeFbRefPartnersTown.on('value', (snap) => {
             const val = snap.val();
-            window.townPartnersPool = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
+            window.townPartnersPool = val ? (Array.isArray(val) ? val : Object.values(val)).filter(Boolean) : [];
             renderCombinedPartners();
         });
 
         activeFbRefPartnersGlobal.on('value', (snap) => {
             const val = snap.val();
-            window.globalPartnersPool = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
+            window.globalPartnersPool = val ? (Array.isArray(val) ? val : Object.values(val)).filter(Boolean) : [];
             renderCombinedPartners();
         });
     } catch(err) {
@@ -1584,7 +1593,7 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
     if (stripKey === 'bottom_strip') bottomCarouselInterval = intervalId;
 }
 
-// === FUEL MONITOR BILLBOARD ===
+// === FUEL MONITOR BILLBOARD (LIVE RTDB) ===
 function initializeFirebaseGasMonitor(db) {
     const box = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
     if (!box || !db) return;
@@ -1605,7 +1614,6 @@ function initializeFirebaseGasMonitor(db) {
     }
 }
 
-// Shows 2 stations at a time; if an odd station remains, displays that 1 station clean
 function startGasRotator(data, stationConfigs, stationIds, container) {
     if (gasMonitorRotator) { clearInterval(gasMonitorRotator); gasMonitorRotator = null; }
     const updateUrl = cleanRawUrl(DEFAULT_APP_CONFIG.regional_endpoints.gas_widget);
@@ -1656,18 +1664,17 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
     if (live.length > 2) gasMonitorRotator = setInterval(draw, 6000);
 }
 
-// === COMMUNITY BULLETIN ===
-async function loadCommunityBulletinFeed() {
+// === COMMUNITY BULLETIN (LIVE FIRESTORE onSnapshot) ===
+function loadCommunityBulletinFeed() {
     const scroller = document.getElementById('bulletin-scroller-target');
     if (!scroller) return;
-    try {
-        let events = [];
-        if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
-            const snap = await firebase.firestore().collection('smlc_events').get();
-            snap.forEach(d => events.push(d.data()));
-        }
-        if (!events.length) events = await fetchCollectionRest('smlc_events');
 
+    if (unsubscribeFirestoreEvents) {
+        unsubscribeFirestoreEvents();
+        unsubscribeFirestoreEvents = null;
+    }
+
+    const renderEvents = (events) => {
         const now = Date.now();
         window.calendarCachedEvents = events
             .filter(e => e && e.title && (!e.end || new Date(e.end).getTime() > now))
@@ -1711,120 +1718,129 @@ async function loadCommunityBulletinFeed() {
 
         scroller.innerHTML = banner('Subscribe to Full County Calendar') + items + banner('County-Wide Calendar Subscriptions');
         triggerGoogleTranslateUpdate(scroller);
+    };
+
+    try {
+        if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+            unsubscribeFirestoreEvents = firebase.firestore().collection('smlc_events').onSnapshot((snap) => {
+                const events = [];
+                snap.forEach(d => events.push(d.data()));
+                renderEvents(events);
+            }, async (err) => {
+                console.warn('Firestore real-time events failed, using REST fallback:', err.message);
+                const restEvents = await fetchCollectionRest('smlc_events');
+                renderEvents(restEvents);
+            });
+        } else {
+            fetchCollectionRest('smlc_events').then(renderEvents);
+        }
     } catch (err) {
         console.warn('Bulletin feed notice:', err.message);
     }
 }
 
 // ============================================================================
-// LOCAL NEWS DISPATCHES: Direct Live Cloud Firestore Ingestion
+// LOCAL NEWS DISPATCHES: Direct Realtime Listener (LIVE FIRESTORE onSnapshot)
 // Strict Integer Matching via AREA_IDS tags (Tag 0 = Global, Tag 2 = Flora, etc.)
 // ============================================================================
-async function loadLocalNewsDispatches() {
+function loadLocalNewsDispatches() {
     const targetGrid = document.getElementById('news-matrix-target');
     if (!targetGrid) return;
 
-    try {
-        let rawNewsList = [];
+    if (unsubscribeFirestoreNews) {
+        unsubscribeFirestoreNews();
+        unsubscribeFirestoreNews = null;
+    }
 
-        // 1. Primary: Native Firestore SDK Connection
-        if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
-            const firestoreDb = firebase.firestore();
-            const snap = await firestoreDb.collection("local_news").get();
-            snap.forEach(docSnap => {
-                rawNewsList.push(docSnap.data());
-            });
+    const renderNews = (rawNewsList) => {
+        if (!Array.isArray(rawNewsList) || rawNewsList.length === 0) {
+            targetGrid.innerHTML = `<div style="text-align:center; padding:20px; font-style:italic; color:#666;">No localized dispatches found for ${ACTIVE_TOWN.primaryName}.</div>`;
+            return;
         }
 
-        // 2. Fallback: Direct Firestore REST API (Runs if client lacks firestore.js)
-        if (rawNewsList.length === 0) {
-            const restUrl = "https://firestore.googleapis.com/v1/projects/smlc-fuel-monitor/databases/(default)/documents/local_news";
-            const res = await fetch(restUrl);
-            if (res.ok) {
-                const restData = await res.json();
-                if (restData.documents && Array.isArray(restData.documents)) {
-                    rawNewsList = restData.documents.map(d => {
-                        const f = d.fields || {};
-                        const unwrapVal = (v) => {
-                            if (!v) return null;
-                            if (v.stringValue !== undefined) return v.stringValue;
-                            if (v.integerValue !== undefined) return parseInt(v.integerValue, 10);
-                            if (v.booleanValue !== undefined) return v.booleanValue;
-                            if (v.arrayValue && v.arrayValue.values) {
-                                return v.arrayValue.values.map(unwrapVal);
-                            }
-                            return null;
-                        };
+        window.newsCacheBlock = rawNewsList.filter(item => {
+            if (!item) return false;
+            if (ACTIVE_TOWN.isHome) return true;
 
-                        return {
-                            title: unwrapVal(f.title) || '',
-                            date: unwrapVal(f.date) || '',
-                            excerpt: unwrapVal(f.excerpt) || '',
-                            full_story: unwrapVal(f.full_story) || '',
-                            image: unwrapVal(f.image) || '',
-                            link: unwrapVal(f.link) || '',
-                            location: unwrapVal(f.location) || '',
-                            source_name: unwrapVal(f.source_name) || '',
-                            source_url: unwrapVal(f.source_url) || '',
-                            tags: unwrapVal(f.tags) || [],
-                            tagNames: unwrapVal(f.tagNames) || [],
-                            towns: unwrapVal(f.towns) || []
-                        };
-                    });
-                }
-            }
-        }
+            const itemNumericTags = Array.isArray(item.tags)
+                ? item.tags.map(t => Number(t)).filter(n => !isNaN(n))
+                : [];
 
-        if (Array.isArray(rawNewsList) && rawNewsList.length > 0) {
-            window.newsCacheBlock = rawNewsList.filter(item => {
-                if (!item) return false;
+            if (itemNumericTags.includes(0)) return true;
 
-                // 1. Home portal displays all county dispatches
-                if (ACTIVE_TOWN.isHome) return true;
+            const allowedAreaIds = ACTIVE_TOWN.linkedAreaIds || [ACTIVE_TOWN.areaId];
+            return itemNumericTags.some(id => allowedAreaIds.includes(id));
+        });
 
-                // 2. Normalize tags to strict integers
-                const itemNumericTags = Array.isArray(item.tags)
-                    ? item.tags.map(t => Number(t)).filter(n => !isNaN(n))
-                    : [];
+        window.newsCacheBlock = window.newsCacheBlock
+            .filter(s => isWithinMaxAge(s.date))
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-                // 3. Global County News: Tagged with 0 (Clay County)
-                if (itemNumericTags.includes(0)) return true;
+        if (window.newsCacheBlock.length > 0) {
+            applyHighDensityScrollLimits(targetGrid, window.newsCacheBlock.length, 520);
+            targetGrid.innerHTML = window.newsCacheBlock.map((story, idx) => {
+                const rawStory = story.full_story || story.excerpt || story.description || '';
+                const isLong = rawStory.length > 150;
+                const displayStory = isLong ? rawStory.substring(0, 140) + "..." : rawStory;
+                const cleanTitle = story.title || 'Local News Dispatch';
+                const imgUrl = normalizeImageUrl(story.image);
 
-                // 4. Multi-Town and Town-Specific News: Check if active town ID is in tags array
-                const allowedAreaIds = ACTIVE_TOWN.linkedAreaIds || [ACTIVE_TOWN.areaId];
-                return itemNumericTags.some(id => allowedAreaIds.includes(id));
-            });
-
-            // 7-day age cutoff and date sort
-            window.newsCacheBlock = window.newsCacheBlock
-                .filter(s => isWithinMaxAge(s.date))
-                .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-            if (window.newsCacheBlock.length > 0) {
-                applyHighDensityScrollLimits(targetGrid, window.newsCacheBlock.length, 520);
-                targetGrid.innerHTML = window.newsCacheBlock.map((story, idx) => {
-                    const rawStory = story.full_story || story.excerpt || story.description || '';
-                    const isLong = rawStory.length > 150;
-                    const displayStory = isLong ? rawStory.substring(0, 140) + "..." : rawStory;
-                    const cleanTitle = story.title || 'Local News Dispatch';
-                    const imgUrl = normalizeImageUrl(story.image);
-
-                    return `
-                        <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
-                            ${imgUrl ? `<img src="${imgUrl}" alt="" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})" onerror="this.style.display='none';">` : ''}
-                            <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-top:10px;">${cleanCalendarDate(story.date)}${story.source_name ? ' • ' + escapeHtml(story.source_name) : ''}</div>
-                            <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${escapeHtml(cleanTitle)}</div>
-                            <div style="font-size:14px; color:#444;">${linkifyRawUrls(displayStory)}</div>
-                            ${isLong ? `<div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: var(--primary); font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>` : ''}
-                        </div>
-                    `;
-                }).join('');
-                triggerGoogleTranslateUpdate(targetGrid);
-            } else {
-                targetGrid.innerHTML = `<div style="text-align:center; padding:20px; font-style:italic; color:#666;">No localized dispatches found for ${ACTIVE_TOWN.primaryName}.</div>`;
-            }
+                return `
+                    <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
+                        ${imgUrl ? `<img src="${imgUrl}" alt="" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})" onerror="this.style.display='none';">` : ''}
+                        <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-top:10px;">${cleanCalendarDate(story.date)}${story.source_name ? ' • ' + escapeHtml(story.source_name) : ''}</div>
+                        <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${escapeHtml(cleanTitle)}</div>
+                        <div style="font-size:14px; color:#444;">${linkifyRawUrls(displayStory)}</div>
+                        ${isLong ? `<div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: var(--primary); font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+            triggerGoogleTranslateUpdate(targetGrid);
         } else {
             targetGrid.innerHTML = `<div style="text-align:center; padding:20px; font-style:italic; color:#666;">No localized dispatches found for ${ACTIVE_TOWN.primaryName}.</div>`;
+        }
+    };
+
+    const runRestFallback = async () => {
+        const restUrl = "https://firestore.googleapis.com/v1/projects/smlc-fuel-monitor/databases/(default)/documents/local_news";
+        const res = await fetch(restUrl);
+        if (res.ok) {
+            const restData = await res.json();
+            if (restData.documents && Array.isArray(restData.documents)) {
+                const rawList = restData.documents.map(d => {
+                    const f = d.fields || {};
+                    return {
+                        title: unwrapFs(f.title) || '',
+                        date: unwrapFs(f.date) || '',
+                        excerpt: unwrapFs(f.excerpt) || '',
+                        full_story: unwrapFs(f.full_story) || '',
+                        image: unwrapFs(f.image) || '',
+                        link: unwrapFs(f.link) || '',
+                        location: unwrapFs(f.location) || '',
+                        source_name: unwrapFs(f.source_name) || '',
+                        source_url: unwrapFs(f.source_url) || '',
+                        tags: unwrapFs(f.tags) || [],
+                        tagNames: unwrapFs(f.tagNames) || [],
+                        towns: unwrapFs(f.towns) || []
+                    };
+                });
+                renderNews(rawList);
+            }
+        }
+    };
+
+    try {
+        if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+            unsubscribeFirestoreNews = firebase.firestore().collection("local_news").onSnapshot((snap) => {
+                const news = [];
+                snap.forEach(d => news.push(d.data()));
+                renderNews(news);
+            }, (err) => {
+                console.warn("Firestore real-time news failed, using REST fallback:", err.message);
+                runRestFallback();
+            });
+        } else {
+            runRestFallback();
         }
     } catch(e) { 
         console.warn("Firestore live news notice:", e.message); 
