@@ -94,7 +94,11 @@ function googleTranslateElementInit() {
   <nav class="portal-pill-tabs-nav" aria-label="Portal categories">
     <button type="button" class="portal-pill-btn active" onclick="window.switchPortalPill(this,'pill-panel-news-events');">Local Events &amp; News</button>
     <button type="button" class="portal-pill-btn" onclick="window.switchPortalPill(this,'pill-panel-discover');">Discover Flora</button>
-    <button type="button" class="portal-pill-btn" onclick="window.switchPortalPill(this,'pill-panel-weather');">Weather</button>
+    <button type="button" id="portal-weather-pill" class="weather-pill" onclick="window.openFiveDayForecastModal && window.openFiveDayForecastModal();" aria-label="Current weather. Open 5-day forecast">
+      <span id="weather-pill-icon" class="weather-pill-icon"></span>
+      <span id="weather-pill-temp" class="weather-pill-temp">Weather</span>
+      <span id="weather-pill-detail" class="weather-pill-detail">5-Day Forecast</span>
+    </button>
   </nav>
 </div>
 
@@ -194,6 +198,20 @@ function googleTranslateElementInit() {
       </div>
     </div>
   </div>
+
+<!-- SECTION: Partner strip (second), directly above Thank You -->
+<div class="widescreen-strip-container strip-above-thanks">
+  <div class="partners-horizontal-strip" id="partners-grid-top"></div>
+</div>
+
+<!-- SECTION: Thank You / S&K contact -->
+<div class="main-container section10-message-chassis">
+  <section class="section10-proclamation-card-box">
+    <p class="proclamation-body-text">We are very thankful and blessed for our customers who allow us to advertise their business to the community. We hope to be of service, not only to large corporations, but also to the small businesses in the area. A large corporation once started out as a small business, so our hope is to help those small businesses we serve reach the fullest potential they desire. You will never know what we are able to do for your business unless you ask. I hope to hear from you.</p>
+    <p class="proclamation-contact-text">For questions or comments about this site please email <a href="mailto:Scott.Robinson@skventuresigns.com" data-ga-label="proclamation_email">Scott.Robinson@skventuresigns.com</a></p>
+  </section>
+</div>
+
 </div>
 
 <!-- ========== PILL 2: DISCOVER FLORA (title, POI, History, Article) ========== -->
@@ -222,13 +240,26 @@ function googleTranslateElementInit() {
             <p id="right-card-meta-desc1" class="section3-landmark-desc">Loading landmark details...</p>
           </div>
         </div>
-        <!-- Side slot: slideshow moved here -->
+        <!-- Side slot: article card (swapped with slideshow) -->
         <div class="section3-right-col">
-          <div id="flora-town-slideshow-matrix" class="section3-slideshow-box">
-            <div id="flora-slideshow" class="slider-viewport">
-              <div class="slider-slide active"><img src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="" class="lightbox-triggerable-element" data-title="Flora Town Square"><div class="slider-caption">Flora Town Square</div></div>
-            </div>
-          </div>
+  <div class="section4-single-article-chassis side-article">
+    <div class="section4-left-article-box">
+      <header class="section4-centered-article-header">
+        <div class="category-tag" id="sec4-category-tag">Commerce &amp; Heritage</div>
+        <h2 class="article-stacked-title" id="sec4-article-title">Flora's Railroad &amp; Industrial Roots</h2>
+        <p class="article-stacked-deck" id="sec4-article-deck">Connecting transportation, industry, and community life in Clay County.</p>
+      </header>
+      <article class="article-body-content" id="sec4-article-body">
+        <p>Flora, Illinois, at the crossing of major transportation routes, has long been a commercial center for Clay County.</p>
+        <figure class="article-media-frame">
+          <img id="sec-4-1-article-img" src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="" class="lightbox-triggerable-element" data-title="Downtown Flora" loading="lazy">
+          <figcaption id="sec4-img-caption">Downtown Flora, IL</figcaption>
+        </figure>
+        <p>From annual community traditions to thriving local businesses, Flora shows steady growth and neighbors working together.</p>
+      </article>
+    </div>
+  </div>
+
         </div>
       </div>
     </div>
@@ -246,50 +277,16 @@ function googleTranslateElementInit() {
   </div>
 
   <!-- Article (no issue/page footer) -->
-  <div class="main-container section4-single-article-chassis">
-    <div class="section4-left-article-box">
-      <header class="section4-centered-article-header">
-        <div class="category-tag" id="sec4-category-tag">Commerce &amp; Heritage</div>
-        <h2 class="article-stacked-title" id="sec4-article-title">Flora's Railroad &amp; Industrial Roots</h2>
-        <p class="article-stacked-deck" id="sec4-article-deck">Connecting transportation, industry, and community life in Clay County.</p>
-      </header>
-      <article class="article-body-content" id="sec4-article-body">
-        <p>Flora, Illinois, at the crossing of major transportation routes, has long been a commercial center for Clay County.</p>
-        <figure class="article-media-frame">
-          <img id="sec-4-1-article-img" src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="" class="lightbox-triggerable-element" data-title="Downtown Flora" loading="lazy">
-          <figcaption id="sec4-img-caption">Downtown Flora, IL</figcaption>
-        </figure>
-        <p>From annual community traditions to thriving local businesses, Flora shows steady growth and neighbors working together.</p>
-      </article>
-    </div>
+  <div class="main-container slideshow-wrap">
+          <div id="flora-town-slideshow-matrix" class="section3-slideshow-box">
+            <div id="flora-slideshow" class="slider-viewport">
+              <div class="slider-slide active"><img src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="" class="lightbox-triggerable-element" data-title="Flora Town Square"><div class="slider-caption">Flora Town Square</div></div>
+            </div>
+          </div>
   </div>
 </div>
 
-<!-- ========== PILL 3: WEATHER (filled by universaltown.js) ========== -->
-<div id="pill-panel-weather" class="portal-tab-panel">
-  <section class="weather-panel-wrap main-container">
-    <h2 class="et_pb_module_heading">Clay County Weather</h2>
-    <div class="weather-panel-card">
-      <div id="weather-panel-current-target" class="weather-panel-current">Loading current conditions...</div>
-      <div id="weather-panel-fiveday-target" class="weather-panel-days"></div>
-      <button type="button" class="weather-open-btn" onclick="window.openFiveDayForecastModal && window.openFiveDayForecastModal();">Open 5-Day Forecast</button>
-    </div>
-  </section>
-</div>
 </main>
-
-<!-- SECTION: Partner strip (second), directly above Thank You -->
-<div class="widescreen-strip-container strip-above-thanks">
-  <div class="partners-horizontal-strip" id="partners-grid-top"></div>
-</div>
-
-<!-- SECTION: Thank You / S&K contact -->
-<div class="main-container section10-message-chassis">
-  <section class="section10-proclamation-card-box">
-    <p class="proclamation-body-text">We are very thankful and blessed for our customers who allow us to advertise their business to the community. We hope to be of service, not only to large corporations, but also to the small businesses in the area. A large corporation once started out as a small business, so our hope is to help those small businesses we serve reach the fullest potential they desire. You will never know what we are able to do for your business unless you ask. I hope to hear from you.</p>
-    <p class="proclamation-contact-text">For questions or comments about this site please email <a href="mailto:Scott.Robinson@skventuresigns.com" data-ga-label="proclamation_email">Scott.Robinson@skventuresigns.com</a></p>
-  </section>
-</div>
 
 <!-- SECTION: Global lightbox (alt text, description and link are shown here) -->
 <div id="portal-global-lightbox" class="lightbox-overlay-mask" onclick="closeLightbox(event)">
