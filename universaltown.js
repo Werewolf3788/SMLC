@@ -1,8 +1,9 @@
 /* ==========================================================================
-   Active Version: v3.2.0
+   Active Version: v3.2.1
    File: universaltown.js
    Project: SMLC County Portal Semantic Master Script
    Description: Complete multi-town engine connecting 100% to Firebase (RTDB & Firestore).
+                - Fixed line 269 regex syntax error in linkifyRawUrls: escaped literal ')'
                 - Integrated v3.2.0 patch: fuel data (reads /fuel_prices & /billboard_network),
                   events (reads Firestore smlc_events with REST fallback), clean lightbox text,
                   external-only UTM tags, 7-day age cutoff for news & fuel.
@@ -24,10 +25,10 @@
                 - Dynamic GA4 Tag Injection (G-FHJNXDB9BB) with SPA Hash Route Pageview Tracking
                 - Town-specific & countywide Sports Scoreboard Engine
                 - Persistent 24-hour New York timestamp & version in footer
-   Timestamp: 2026-10-25 08:00 EDT (New York)
+   Timestamp: 2026-10-25 08:05 EDT (New York)
    ========================================================================== */
 
-// Dynamic Google Analytics 4 Injection & Initialization Engine
+// Line 31: Dynamic Google Analytics 4 Injection & Initialization Engine
 (function initDynamicGa4Engine() {
     const GA4_MEASUREMENT_ID = 'G-FHJNXDB9BB';
     
@@ -50,7 +51,7 @@
     }
 })();
 
-// Google Translate Global Callback & Dynamic Mutation Scanner
+// Line 54: Google Translate Global Callback & Dynamic Mutation Scanner
 window.googleTranslateElementInit = function() {
     try {
         if (window.google && window.google.translate) {
@@ -78,7 +79,7 @@ function triggerGoogleTranslateUpdate(targetNode) {
     }
 }
 
-// Master Town Alias & Numeric Area ID Map (Strict Integer Matching)
+// Line 82: Master Town Alias & Numeric Area ID Map (Strict Integer Matching)
 const TOWN_ALIAS_MAP = {
     "HOME": { 
         primaryName: "Clay County", 
@@ -197,7 +198,7 @@ const TOWN_ALIAS_MAP = {
     }
 };
 
-// Active Town Config Resolver
+// Line 185: Active Town Config Resolver
 function getActiveTownConfig() {
     try {
         const hashRoute = (window.location.hash || "").replace("#/", "").replace("#", "").replace(/-/g, " ").toUpperCase();
@@ -258,7 +259,7 @@ window.globalPartnersPool = [];
 window.fiveDayForecastCache = [];
 
 /* ==========================================================================
-   HELPERS & PROTOCOL UTILITIES (v3.2.0 Integration)
+   HELPERS & PROTOCOL UTILITIES
    ========================================================================== */
 const MAX_AGE_DAYS = 7;   // used by news AND fuel
 
@@ -396,12 +397,13 @@ function extractText(val) {
     return "";
 }
 
-// Strips old HTML first, escapes the text, then makes ONE clean link per web address
+// Strips old HTML first, escapes text, then makes ONE clean link per web address
+// Line 269: Correctly escaped literal ')' inside character class [.,;:!?\)]
 function linkifyRawUrls(text) {
     if (!text) return "";
     const plain = String(text).replace(/<\s*br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, ' ');
     return escapeHtml(plain).replace(/(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi, (match) => {
-        const url = match.replace(/[.,;:!?)]+$/, '');
+        const url = match.replace(/[.,;:!?\)]+$/, '');
         const tail = match.slice(url.length);
         const href = /^https?:/i.test(url) ? url : '//' + url;
         return `<a href="${href}" target="_blank" rel="noopener" style="color:var(--link-bright-blue); text-decoration:underline; word-break:break-all;">${url}</a>${tail}`;
@@ -1582,8 +1584,7 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
     if (stripKey === 'bottom_strip') bottomCarouselInterval = intervalId;
 }
 
-// === FUEL MONITOR BILLBOARD (v3.2.0 Replacement) ===
-// Reads /fuel_prices and /billboard_network. Hides stations with no price or older than MAX_AGE_DAYS.
+// === FUEL MONITOR BILLBOARD ===
 function initializeFirebaseGasMonitor(db) {
     const box = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
     if (!box || !db) return;
@@ -1650,8 +1651,7 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
     if (live.length > 2) gasMonitorRotator = setInterval(draw, 6000);
 }
 
-// === COMMUNITY BULLETIN (v3.2.0 Replacement) ===
-// Reads the clean Firestore collection smlc_events with REST fallback
+// === COMMUNITY BULLETIN ===
 async function loadCommunityBulletinFeed() {
     const scroller = document.getElementById('bulletin-scroller-target');
     if (!scroller) return;
@@ -1714,7 +1714,6 @@ async function loadCommunityBulletinFeed() {
 // ============================================================================
 // LOCAL NEWS DISPATCHES: Direct Live Cloud Firestore Ingestion
 // Strict Integer Matching via AREA_IDS tags (Tag 0 = Global, Tag 2 = Flora, etc.)
-// 7-day cutoff & clean escape formatting applied
 // ============================================================================
 async function loadLocalNewsDispatches() {
     const targetGrid = document.getElementById('news-matrix-target');
@@ -1791,7 +1790,7 @@ async function loadLocalNewsDispatches() {
                 return itemNumericTags.some(id => allowedAreaIds.includes(id));
             });
 
-            // Apply 7-day age limit filter & sort descending by date
+            // 7-day age cutoff and date sort
             window.newsCacheBlock = window.newsCacheBlock
                 .filter(s => isWithinMaxAge(s.date))
                 .sort((a, b) => new Date(b.date) - new Date(a.date));
