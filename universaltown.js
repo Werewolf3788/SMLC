@@ -3,33 +3,24 @@
    File: universaltown.js
    Project: SMLC County Portal Semantic Master Script
    Description: Complete multi-town engine connecting 100% to Firebase (RTDB & Firestore).
-                - Direct binding to Firebase nodes:
-                    * /master_county_data/towns/[Town]/sections/article (title, category, deck, body, imageUrl, alt)
-                    * /master_county_data/towns/[Town]/sections/history (year, title, description, imageUrl, alt)
-                    * /master_county_data/towns/[Town]/sections/point_of_interest (header1, header2, image1, image2, alt1, alt2, about_text, landmark_description)
-                    * /master_county_data/towns/[Town]/sections/slideshow/items (title, category, imageUrl, alt, website)
-                    * /master_county_data/towns/[Town]/sections/town_links/links (title, website)
-                    * /master_county_data/global/sections/partners (name, imageUrl, alt, website)
-                    * /master_county_data/global/sections/spotlight (name, description, imageUrl, alt, website)
-                    * /master_county_data/weather_forecast (current, fiveDay)
-                    * /master_county_data/weather_alerts
-                    * /master_county_data/sports
-                    * /fuel_prices & /billboard_network (includes real station 87817, 48100, 48101, 120226, 128128, etc.)
-                    * Firestore smlc_events & local_news
-                - Never hides elements when Firebase has live data
-                - Preserves side-by-side Spotlight & Gas monitor on desktop
-                - Live weather pill injection
-                - Central Time timestamps; persistent New York clock in footer
-   Changes in v3.4.1:
-                - normalizeImageUrl now handles =IMAGE() formulas, Drive, GitHub, Dropbox links
-                - Article image block rebuilt (creates <img> if missing, logs to console)
-                - parseFuelDate uses the real Central offset (CST/CDT) instead of the label
-                - Removed escapeJsString from direct (non-inline) lightbox handlers
+                - Automated DOM town name syncing: updates all .town-name-target elements
+                - Automated navigation tab active state matching current town
+                - 100% Live Realtime Database (RTDB) and Firestore real-time listeners (.on('value') & .onSnapshot())
+                - Direct node binding without sec-X-X artifacts:
+                    * article (title, category, deck, body, imageUrl, alt)
+                    * history (year, title, description, imageUrl, alt)
+                    * point_of_interest (header1, header2, image1, image2, alt1, alt2, about_text, landmark_description)
+                    * slideshow (items)
+                    * town_links (links)
+                    * partners & spotlight
+                - Keeps alt text in lightbox only, never visible on main screen
+                - Side-by-side Spotlight & Fuel monitor maintained on desktop
+   Timestamp: 2026-10-25 16:55 EDT (New York)
    ========================================================================== */
 
 (function initDynamicGa4Engine() {
     const GA4_MEASUREMENT_ID = 'G-FHJNXDB9BB';
-
+    
     if (!document.querySelector(`script[src*="googletagmanager.com/gtag/js?id=${GA4_MEASUREMENT_ID}"]`)) {
         const gaScript = document.createElement('script');
         gaScript.async = true;
@@ -49,7 +40,18 @@
     }
 })();
 
-// Google Translate setup (auto-detect by phone language) lives in the page HTML.
+window.googleTranslateElementInit = function() {
+    try {
+        if (window.google && window.google.translate) {
+            new window.google.translate.TranslateElement({
+                pageLanguage: 'en',
+                layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE
+            }, 'google_translate_element');
+        }
+    } catch(e) {
+        console.warn("Google Translate initialization notice:", e.message);
+    }
+};
 
 function triggerGoogleTranslateUpdate(targetNode) {
     if (!targetNode) return;
@@ -64,120 +66,120 @@ function triggerGoogleTranslateUpdate(targetNode) {
 }
 
 const TOWN_ALIAS_MAP = {
-    "HOME": {
-        primaryName: "Clay County",
-        dbTownKey: "Flora",
-        jsonKey: "all",
-        gasKey: ["louisville", "flora", "clay-city", "xenia"],
-        historyKey: "all",
+    "HOME": { 
+        primaryName: "Clay County", 
+        dbTownKey: "Flora", 
+        jsonKey: "all", 
+        gasKey: ["louisville", "flora", "clay-city", "xenia"], 
+        historyKey: "all", 
         areaId: 0,
         linkedAreaIds: [0],
-        keywords: ["CLAY COUNTY", "CLAY COUNTY HOSPITAL", "CLAY COUNTY COURTHOUSE"],
-        isHome: true,
-        seatBadge: "Clay County Seat",
-        estMeta: "Est. 1824 | Zip Code 62824",
-        riverMarquee: "COMMUNITY DIGITAL NETWORK MAP",
-        themeAccent: "#0258A3"
+        keywords: ["CLAY COUNTY", "CLAY COUNTY HOSPITAL", "CLAY COUNTY COURTHOUSE"], 
+        isHome: true, 
+        seatBadge: "Clay County Seat", 
+        estMeta: "Est. 1824 | Zip Code 62824", 
+        riverMarquee: "COMMUNITY DIGITAL NETWORK MAP", 
+        themeAccent: "#0258A3" 
     },
-    "CLAY COUNTY": {
-        primaryName: "Clay County",
-        dbTownKey: "Flora",
-        jsonKey: "all",
-        gasKey: ["louisville", "flora", "clay-city", "xenia"],
-        historyKey: "all",
+    "CLAY COUNTY": { 
+        primaryName: "Clay County", 
+        dbTownKey: "Flora", 
+        jsonKey: "all", 
+        gasKey: ["louisville", "flora", "clay-city", "xenia"], 
+        historyKey: "all", 
         areaId: 0,
         linkedAreaIds: [0],
-        keywords: ["CLAY COUNTY", "CLAY COUNTY HOSPITAL", "CLAY COUNTY COURTHOUSE"],
-        isHome: true,
-        seatBadge: "Clay County Seat",
-        estMeta: "Est. 1824 | Zip Code 62824",
-        riverMarquee: "COMMUNITY DIGITAL NETWORK MAP",
-        themeAccent: "#0258A3"
+        keywords: ["CLAY COUNTY", "CLAY COUNTY HOSPITAL", "CLAY COUNTY COURTHOUSE"], 
+        isHome: true, 
+        seatBadge: "Clay County Seat", 
+        estMeta: "Est. 1824 | Zip Code 62824", 
+        riverMarquee: "COMMUNITY DIGITAL NETWORK MAP", 
+        themeAccent: "#0258A3" 
     },
-    "CLAY CITY": {
-        primaryName: "Clay City",
-        dbTownKey: "Clay City",
-        jsonKey: "clay_city",
-        gasKey: ["clay-city"],
-        historyKey: "clay_city",
+    "CLAY CITY": { 
+        primaryName: "Clay City", 
+        dbTownKey: "Clay City", 
+        jsonKey: "clay_city", 
+        gasKey: ["clay-city"], 
+        historyKey: "clay_city", 
         areaId: 3,
         linkedAreaIds: [3],
-        keywords: ["CLAY CITY", "CC", "CUBIES", "BULLDOGS"],
-        isHome: false,
-        seatBadge: "Clay County Hub",
-        estMeta: "Est. 1868 | Zip Code 62824",
-        riverMarquee: "HOME OF THE CLAY CITY BULLDOGS & CUBIES",
-        themeAccent: "#4A154B"
+        keywords: ["CLAY CITY", "CC", "CUBIES", "BULLDOGS"], 
+        isHome: false, 
+        seatBadge: "Clay County Hub", 
+        estMeta: "Est. 1868 | Zip Code 62824", 
+        riverMarquee: "HOME OF THE CLAY CITY BULLDOGS & CUBIES", 
+        themeAccent: "#4A154B" 
     },
-    "FLORA": {
-        primaryName: "Flora",
-        dbTownKey: "Flora",
-        jsonKey: "flora",
-        gasKey: ["flora"],
-        historyKey: "flora",
+    "FLORA": { 
+        primaryName: "Flora", 
+        dbTownKey: "Flora", 
+        jsonKey: "flora", 
+        gasKey: ["flora"], 
+        historyKey: "flora", 
         areaId: 2,
         linkedAreaIds: [2],
         keywords: [
-            "FLORA",
-            "WOLVES",
-            "FLORA WOLVES",
-            "WOLVES FOOTBALL",
-            "WOLF PUP",
-            "FLOYD HENSON",
-            "FLOYD HENSON JR HIGH",
-            "FHJH",
+            "FLORA", 
+            "WOLVES", 
+            "FLORA WOLVES", 
+            "WOLVES FOOTBALL", 
+            "WOLF PUP", 
+            "FLOYD HENSON", 
+            "FLOYD HENSON JR HIGH", 
+            "FHJH", 
             "FLO"
-        ],
-        isHome: false,
-        seatBadge: "Clay County Commerce Center",
-        estMeta: "Est. 1854 | Zip Code 62839",
-        riverMarquee: "HOME OF THE FLORA WOLVES • COMMERCE CENTER",
-        themeAccent: "#0258A3"
+        ], 
+        isHome: false, 
+        seatBadge: "Clay County Commerce Center", 
+        estMeta: "Est. 1854 | Zip Code 62839", 
+        riverMarquee: "HOME OF THE FLORA WOLVES • COMMERCE CENTER", 
+        themeAccent: "#0258A3" 
     },
-    "LOUISVILLE": {
-        primaryName: "Louisville",
-        dbTownKey: "Louisville",
-        jsonKey: "louisville",
-        gasKey: ["louisville"],
-        historyKey: "louisville",
+    "LOUISVILLE": { 
+        primaryName: "Louisville", 
+        dbTownKey: "Louisville", 
+        jsonKey: "louisville", 
+        gasKey: ["louisville"], 
+        historyKey: "louisville", 
         areaId: 1,
         linkedAreaIds: [1, 7, 9],
-        keywords: ["LOUISVILLE", "NORTH CLAY", "NC", "INDIANS", "NC CARDINALS"],
-        isHome: false,
-        seatBadge: "Clay County Seat",
-        estMeta: "Est. 1836 | Zip Code 62858",
-        riverMarquee: "HOME OF THE NORTH CLAY CARDINALS",
-        themeAccent: "#EB1C24"
+        keywords: ["LOUISVILLE", "NORTH CLAY", "NC", "INDIANS", "NC CARDINALS"], 
+        isHome: false, 
+        seatBadge: "Clay County Seat", 
+        estMeta: "Est. 1836 | Zip Code 62858", 
+        riverMarquee: "HOME OF THE NORTH CLAY CARDINALS", 
+        themeAccent: "#EB1C24" 
     },
-    "XENIA": {
-        primaryName: "Xenia",
-        dbTownKey: "Xenia",
-        jsonKey: "xenia",
-        gasKey: ["xenia"],
-        historyKey: "xenia",
+    "XENIA": { 
+        primaryName: "Xenia", 
+        dbTownKey: "Xenia", 
+        jsonKey: "xenia", 
+        gasKey: ["xenia"], 
+        historyKey: "xenia", 
         areaId: 4,
         linkedAreaIds: [4],
-        keywords: ["XENIA"],
-        isHome: false,
-        seatBadge: "Clay County Gateway",
-        estMeta: "Est. 1834 | Zip Code 62899",
-        riverMarquee: "HISTORIC PRIDE & RURAL HERITAGE",
-        themeAccent: "#1C5640"
+        keywords: ["XENIA"], 
+        isHome: false, 
+        seatBadge: "Clay County Gateway", 
+        estMeta: "Est. 1834 | Zip Code 62899", 
+        riverMarquee: "HISTORIC PRIDE & RURAL HERITAGE", 
+        themeAccent: "#1C5640" 
     },
-    "SAILOR SPRINGS": {
-        primaryName: "Sailor Springs",
-        dbTownKey: "Sailor Springs",
-        jsonKey: "sailor_springs",
-        gasKey: ["louisville", "clay-city"],
-        historyKey: "sailor_springs",
+    "SAILOR SPRINGS": { 
+        primaryName: "Sailor Springs", 
+        dbTownKey: "Sailor Springs", 
+        jsonKey: "sailor_springs", 
+        gasKey: ["louisville", "clay-city"], 
+        historyKey: "sailor_springs", 
         areaId: 5,
         linkedAreaIds: [5],
-        keywords: ["SAILOR SPRINGS"],
-        isHome: false,
-        seatBadge: "Clay County Village",
-        estMeta: "Est. 1879 | Zip Code 62879",
-        riverMarquee: "HISTORIC MINERAL SPRINGS HAVEN",
-        themeAccent: "#00695C"
+        keywords: ["SAILOR SPRINGS"], 
+        isHome: false, 
+        seatBadge: "Clay County Village", 
+        estMeta: "Est. 1879 | Zip Code 62879", 
+        riverMarquee: "HISTORIC MINERAL SPRINGS HAVEN", 
+        themeAccent: "#00695C" 
     }
 };
 
@@ -186,11 +188,6 @@ function getActiveTownConfig() {
         const hashRoute = (window.location.hash || "").replace("#/", "").replace("#", "").replace(/-/g, " ").toUpperCase();
         if (hashRoute && TOWN_ALIAS_MAP[hashRoute]) return TOWN_ALIAS_MAP[hashRoute];
 
-        const pageTitle = (document.title || "").toUpperCase();
-        for (const key in TOWN_ALIAS_MAP) {
-            if (pageTitle.includes(key)) return TOWN_ALIAS_MAP[key];
-        }
-
         const htmlTownAttr = (document.documentElement.getAttribute('data-town') || document.body?.getAttribute('data-town') || "").toUpperCase();
         if (htmlTownAttr) {
             for (const key in TOWN_ALIAS_MAP) {
@@ -198,6 +195,11 @@ function getActiveTownConfig() {
                     return TOWN_ALIAS_MAP[key];
                 }
             }
+        }
+
+        const pageTitle = (document.title || "").toUpperCase();
+        for (const key in TOWN_ALIAS_MAP) {
+            if (pageTitle.includes(key)) return TOWN_ALIAS_MAP[key];
         }
     } catch(e) {
         console.warn("Town resolution notice:", e.message);
@@ -252,24 +254,15 @@ function isWithinMaxAge(raw) {
     return isNaN(t) ? true : (Date.now() - t) <= MAX_AGE_DAYS * 86400000;
 }
 
-// Parses "10/25/2026 @ 3:38 AM CST" as Central time. The CST/CDT label is ignored
-// and the real America/Chicago offset for that date is used instead.
 function parseFuelDate(raw) {
-    const m = String(raw || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s*@?\s*(\d{1,2}):(\d{2})\s*([AP]M)?/i);
+    const m = String(raw || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s*@?\s*(\d{1,2}):(\d{2})\s*([AP]M)?\s*(CST|CDT)?/i);
     if (!m) return null;
     let h = +m[4];
     const ap = (m[6] || '').toUpperCase();
     if (ap === 'PM' && h < 12) h += 12;
     if (ap === 'AM' && h === 12) h = 0;
-    const asUtc = Date.UTC(+m[3], +m[1] - 1, +m[2], h, +m[5]);
-    let offsetHours = -6;
-    try {
-        const tzPart = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', timeZoneName: 'shortOffset' })
-            .formatToParts(new Date(asUtc)).find(p => p.type === 'timeZoneName');
-        const parsed = parseInt((tzPart ? tzPart.value : 'GMT-6').replace('GMT', ''), 10);
-        if (!isNaN(parsed)) offsetHours = parsed;
-    } catch (e) {}
-    return new Date(asUtc - offsetHours * 3600000);
+    const offset = /CDT/i.test(m[7] || '') ? 5 : 6;
+    return new Date(Date.UTC(+m[3], +m[1] - 1, +m[2], h + offset, +m[5]));
 }
 
 function unwrapFs(v) {
@@ -340,33 +333,20 @@ function cleanRawUrl(urlStr) {
         .replace("/edit/", "/");
 }
 
-// Cleans whatever the Google Sheet sync sends into a displayable image URL.
 function normalizeImageUrl(rawUrl) {
     if (!rawUrl || typeof rawUrl !== 'string') return null;
-    let url = rawUrl.trim()
-        .replace(/^=IMAGE\(\s*/i, '').replace(/\s*\)\s*$/, '')   // =IMAGE("...") formula
-        .replace(/^["']+|["']+$/g, '')                            // stray quotes
-        .trim();
+    let url = rawUrl.trim();
     if (!url || url === 'null' || url === 'undefined') return null;
 
-    // Google Drive -> thumbnail endpoint (works for "Anyone with the link" files)
-    if (url.includes('drive.google.com') || url.includes('docs.google.com')) {
-        const m = url.match(/\/file\/d\/([^\/?#]+)/) || url.match(/[?&]id=([^&#]+)/) || url.match(/\/d\/([^\/?#]+)/);
-        if (m && m[1]) return `//drive.google.com/thumbnail?id=${m[1]}&sz=w1600`;
-    }
-    // lh3 Drive links pass through as-is
-    // GitHub page link -> raw image
-    if (/^(https?:)?\/\/github\.com\//i.test(url)) {
-        url = url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
-    }
-    // Dropbox share link -> direct
-    if (/dropbox\.com/i.test(url)) {
-        url = url.replace(/www\.dropbox\.com/i, 'dl.dropboxusercontent.com').replace(/[?&]dl=0/i, '');
+    if (url.includes('drive.google.com')) {
+        const fileIdMatch = url.match(/\/file\/d\/([^\/]+)/) || url.match(/[?&]id=([^&]+)/);
+        if (fileIdMatch && fileIdMatch[1]) {
+            return `//lh3.googleusercontent.com/d/${fileIdMatch[1]}`;
+        }
     }
     return url.replace(/^https?:/, '');
 }
 
-// Only for values placed inside inline onclick="..." HTML strings.
 function escapeJsString(str) {
     if (!str && str !== 0) return "";
     return String(str)
@@ -622,33 +602,23 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = ""
         targetImg.parentElement.style.display = 'none';
     }
 
-    const dateEl = document.getElementById('lightbox-target-date');
+    const dateEl = document.getElementById('lightbox-target-date'); 
     if (dateEl) dateEl.innerHTML = cleanDate || '';
 
-    const titleEl = document.getElementById('lightbox-target-title');
+    const titleEl = document.getElementById('lightbox-target-title'); 
     if (titleEl) titleEl.innerText = cleanTitle || '';
 
-    const bodyAsPlain = String(cleanBody || '').replace(/^#+\s*/gm, '').replace(/[*_`]/g, '').trim();
-    const parsedBody = (bodyAsPlain && bodyAsPlain === cleanAlt.trim()) ? '' : linkifyRawUrls(cleanBody || '');
-    const parsedAlt = linkifyRawUrls(cleanAlt || '');
+    const storyEl = document.getElementById('lightbox-target-story'); 
+    if (storyEl) storyEl.innerHTML = linkifyRawUrls(cleanBody || '');
 
-    const showAlt = !!cleanAlt.trim() && cleanAlt.trim() !== cleanTitle.trim() && cleanAlt.trim() !== bodyAsPlain;
-
-    const storyEl = document.getElementById('lightbox-target-story');
     const altEl = document.getElementById('lightbox-target-alt');
     if (altEl) {
-        // Newer lightbox markup: description and alt details are separate blocks
-        if (storyEl) {
-            storyEl.innerHTML = parsedBody;
-            storyEl.style.display = parsedBody ? 'block' : 'none';
+        if (cleanAlt && cleanAlt !== cleanTitle) {
+            altEl.innerHTML = `<strong>Details:</strong> ${linkifyRawUrls(cleanAlt)}`;
+            altEl.style.display = 'block';
+        } else {
+            altEl.style.display = 'none';
         }
-        altEl.innerHTML = showAlt ? `<strong>Details:</strong> ${parsedAlt}` : '';
-        altEl.style.display = showAlt ? 'block' : 'none';
-    } else if (storyEl) {
-        // Older markup fallback: one combined block
-        storyEl.innerHTML = showAlt
-            ? `<div style="font-style:italic; font-size:14px; margin-bottom:12px; border-left:3px solid var(--primary); padding-left:10px;">Details: ${parsedAlt}</div>${parsedBody}`
-            : parsedBody;
     }
 
     if (cleanTargetUrl && actionLink && actionRow) {
@@ -675,7 +645,7 @@ function openHistoryLightboxModal(idx) {
     if (!item) return;
 
     fireLightbox(
-        normalizeImageUrl(item.imageUrl || item.image || '') || '',
+        item.imageUrl || item.image || '',
         item.title || 'Historical Landmark',
         `YEAR ${item.year}`,
         item.description || '',
@@ -702,7 +672,7 @@ function openNewsLightboxModal(idx) {
     if (!story) return;
 
     fireLightbox(
-        normalizeImageUrl(story.image || '') || '',
+        story.image || '',
         story.title || 'Local News Dispatch',
         cleanCalendarDate(story.date || story.pubDate) + (story.location ? ` | ${story.location}` : ''),
         story.full_story || story.excerpt || story.description || '',
@@ -734,8 +704,7 @@ window.closeMobileMenu = function() {
 };
 
 // ============================================================================
-// WEATHER ALERTS ENGINE: Alert Bar & Dismissible Popup Modal Card (LIVE RTDB)
-// Listens to: /master_county_data/weather_alerts
+// WEATHER ALERTS ENGINE (LIVE RTDB)
 // ============================================================================
 function bindFirebaseWeatherAlertsEngine(db) {
     if (!db) return;
@@ -797,16 +766,16 @@ function showWeatherAlertModalPopup(headline, instruction, severity, updatedCdt,
     popupOverlay.innerHTML = `
         <div style="background:#fff; border-top:6px solid ${themeColor}; border-radius:8px; max-width:550px; width:100%; box-shadow:0 12px 32px rgba(0,0,0,0.4); overflow:hidden; font-family:sans-serif; text-align:left;">
             <div style="background:#f8f9fa; padding:14px 20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:12px; font-weight:bold; color:${themeColor}; text-transform:uppercase; letter-spacing:0.5px;">EMERGENCY BULLETIN &bull; ${escapeHtml(severity)}</span>
+                <span style="font-size:12px; font-weight:bold; color:${themeColor}; text-transform:uppercase; letter-spacing:0.5px;">EMERGENCY BULLETIN &bull; ${severity}</span>
                 <button type="button" onclick="hideWeatherAlertModalPopup()" style="background:none; border:none; font-size:22px; line-height:1; cursor:pointer; color:#666;">&times;</button>
             </div>
             <div style="padding:20px; max-height:65vh; overflow-y:auto;">
-                <h3 style="margin:0 0 10px 0; font-size:18px; color:#111; font-weight:bold;">${escapeHtml(headline)}</h3>
-                <div style="font-size:11px; color:#777; margin-bottom:12px; font-weight:bold;">Issued: ${escapeHtml(updatedCdt)}</div>
+                <h3 style="margin:0 0 10px 0; font-size:18px; color:#111; font-weight:bold;">${headline}</h3>
+                <div style="font-size:11px; color:#777; margin-bottom:12px; font-weight:bold;">Issued: ${updatedCdt}</div>
                 <div style="font-size:14px; line-height:1.6; color:#333; white-space:pre-line;">${linkifyRawUrls(instruction || 'Please monitor local emergency weather dispatches and take safety precautions.')}</div>
             </div>
             <div style="background:#f1f3f5; padding:12px 20px; text-align:right;">
-                <button type="button" onclick="hideWeatherAlertModalPopup()" style="background:${themeColor}; color:#fff; border:none; padding:8px 18px; border-radius:4px; font-weight:bold; font-size:13px; cursor:pointer;">Acknowledge &amp; Close</button>
+                <button type="button" onclick="hideWeatherAlertModalPopup()" style="background:${themeColor}; color:#fff; border:none; padding:8px 18px; border-radius:4px; font-weight:bold; font-size:13px; cursor:pointer;">Acknowledge & Close</button>
             </div>
         </div>
     `;
@@ -820,8 +789,7 @@ window.hideWeatherAlertModalPopup = function() {
 };
 
 // ============================================================================
-// GLOBAL WEATHER FORECAST ENGINE: Dynamic Update of Sub-Bar Pill
-// Listens to: /master_county_data/weather_forecast
+// GLOBAL WEATHER FORECAST ENGINE: Live Sub-Bar Pill & 5-Day Lightbox
 // ============================================================================
 function bindFirebaseWeatherForecastEngine(db) {
     if (!db) return;
@@ -835,7 +803,7 @@ function bindFirebaseWeatherForecastEngine(db) {
 
             const current = data.current || {};
             const rawFiveDay = data.fiveDay || [];
-            window.fiveDayForecastCache = (Array.isArray(rawFiveDay) ? rawFiveDay : Object.values(rawFiveDay)).filter(Boolean);
+            window.fiveDayForecastCache = Array.isArray(rawFiveDay) ? rawFiveDay : Object.values(rawFiveDay);
 
             renderNavbarWeatherWidget(current);
         });
@@ -852,8 +820,7 @@ function renderNavbarWeatherWidget(current) {
     const tempSpan = document.getElementById('weather-pill-temp');
     const detailSpan = document.getElementById('weather-pill-detail');
 
-    const tempNum = Number(current.temp);
-    const temp = (current.temp !== undefined && current.temp !== null && current.temp !== '' && !isNaN(tempNum)) ? `${Math.round(tempNum)}°F` : '--°F';
+    const temp = current.temp ? `${Math.round(current.temp)}°F` : '--°F';
     const condition = current.condition || 'Clear';
     const iconUrl = normalizeImageUrl(current.icon);
     const updatedCdt = formatToCentralTime(current.updatedAt);
@@ -934,8 +901,7 @@ window.openFiveDayForecastModal = function() {
 };
 
 // ============================================================================
-// SPORTS SCOREBOARD ENGINE: Live Multi-Level Feeder (LIVE RTDB)
-// Listens to: /master_county_data/sports
+// SPORTS SCOREBOARD ENGINE (LIVE RTDB)
 // ============================================================================
 function bindFirebaseSportsEngine(db) {
     if (!db) return;
@@ -1027,7 +993,7 @@ function bindFirebaseServices() {
     try {
         if (typeof firebase === 'undefined') return;
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-
+        
         const db = firebase.database();
 
         initializeFirebaseGasMonitor(db);
@@ -1084,6 +1050,7 @@ function bindFirebaseMenuEngine(db) {
                 `;
             }).join('');
             triggerGoogleTranslateUpdate(menuContainer);
+            updateNavigationActiveState();
         });
     } catch(err) {
         console.warn("Firebase Menu Engine error:", err.message);
@@ -1160,7 +1127,6 @@ function bindFirebaseLocalLinksEngine(db) {
 
 // ============================================================================
 // SEMANTIC SECTIONS ENGINE (LIVE RTDB: point_of_interest, article, history, slideshow)
-// Strictly displays content when data exists in Firebase
 // ============================================================================
 function bindFirebaseSemanticSectionsEngine(db) {
     if (!db) return;
@@ -1189,13 +1155,13 @@ function bindFirebaseSemanticSectionsEngine(db) {
             const f1 = document.getElementById('point-of-interest-figure-1');
             const rawImg1 = poi.image1 || poi.imageUrl || poi.image;
             const img1Url = normalizeImageUrl(rawImg1);
-            const alt1Text = poi.alt1 || poi.header1 || poi.title || "Point of Interest";
+            const alt1Text = poi.alt1 || poi.header1 || poi.title || "";
             if (i1 && img1Url) {
                 i1.src = img1Url;
-                i1.alt = '';
+                i1.alt = alt1Text;
                 i1.style.display = "block";
                 if (f1) f1.style.display = "block";
-                i1.onclick = () => fireLightbox(img1Url, poi.header1 || poi.title || 'Point of Interest', 'POINT OF INTEREST', poi.landmark_description || poi.about_text || '', '', alt1Text);
+                i1.onclick = () => fireLightbox(escapeJsString(img1Url), escapeJsString(poi.header1 || poi.title || 'Point of Interest'), 'POINT OF INTEREST', '', '', escapeJsString(alt1Text));
             } else if (i1 && !img1Url) {
                 i1.style.display = "none";
                 if (f1) f1.style.display = "none";
@@ -1206,26 +1172,28 @@ function bindFirebaseSemanticSectionsEngine(db) {
             const h2 = document.getElementById('point-of-interest-header-2');
             const f2 = document.getElementById('point-of-interest-figure-2');
             const img2Url = normalizeImageUrl(poi.image2);
-            const alt2Text = poi.alt2 || poi.header2 || "Landmark 2";
+            const alt2Text = poi.alt2 || poi.header2 || "";
             if (i2 && img2Url) {
                 i2.src = img2Url;
-                i2.alt = '';
+                i2.alt = alt2Text;
                 i2.style.display = "block";
                 if (f2) f2.style.display = "block";
-                i2.onclick = () => fireLightbox(img2Url, poi.header2 || 'Landmark 2', 'HISTORIC LANDMARK', poi.landmark_description || poi.about_text || '', '', alt2Text);
+                i2.onclick = () => fireLightbox(escapeJsString(img2Url), escapeJsString(poi.header2 || 'Landmark 2'), 'HISTORIC LANDMARK', '', '', escapeJsString(alt2Text));
             } else if (i2 && !img2Url) {
                 i2.style.display = "none";
                 if (f2) f2.style.display = "none";
             }
             if (h2 && poi.header2) h2.innerText = poi.header2;
 
-            // 2. ARTICLE: binds /sections/article/imageUrl from Firebase to <img id="article-img">
+            // 2. ARTICLE: Alt description strictly passed to lightbox, never placed on main screen
             const art = townSectionsData.article || {};
             const artTitleEl = document.getElementById('article-title');
             const artCatEl = document.getElementById('article-category');
             const artDeckEl = document.getElementById('article-deck');
             const artBodyEl = document.getElementById('article-body');
+            const artImgEl = document.getElementById('article-img');
             const artCapEl = document.getElementById('article-img-caption');
+            const artFigure = document.getElementById('article-figure-frame');
 
             if (artTitleEl && art.title) artTitleEl.innerText = art.title;
             if (artCatEl && art.category) artCatEl.innerText = art.category;
@@ -1234,44 +1202,30 @@ function bindFirebaseSemanticSectionsEngine(db) {
                 artBodyEl.innerHTML = `<p style="margin-bottom:1.5em; text-align:justify; line-height:1.8;">${linkifyRawUrls(art.body)}</p>`;
             }
 
-            // Look these up AFTER the body rewrite above, because rewriting #article-body
-            // destroys any image that was sitting inside it
-            let artImgEl = document.getElementById('article-img');
-            let artFigure = document.getElementById('article-figure-frame');
-
-            const rawArtUrl = String(art.imageUrl || art.image || art.image1 || '').trim();
+            const rawArtUrl = art.imageUrl || art.image || art.image1;
             const artImgUrl = normalizeImageUrl(rawArtUrl);
-            const artAltText = art.alt || art.title || "Featured Article Image";
-            console.log('[article image]', { town: townName, raw: rawArtUrl, resolved: artImgUrl, imgElementInHtml: !!artImgEl });
+            const artAltText = art.alt || art.title || "";
 
-            // If the HTML has no <img id="article-img">, build one above the article body
-            if (!artImgEl && artImgUrl && artBodyEl && artBodyEl.parentNode) {
-                artFigure = document.createElement('figure');
-                artFigure.id = 'article-figure-frame';
-                artFigure.style.cssText = 'margin:0 0 16px 0;';
-                artImgEl = document.createElement('img');
-                artImgEl.id = 'article-img';
-                artFigure.appendChild(artImgEl);
-                artBodyEl.parentNode.insertBefore(artFigure, artBodyEl);
-            }
+            // Figcaption on main screen is strictly empty
+            if (artCapEl) artCapEl.innerText = "";
 
             if (artImgEl) {
                 if (artImgUrl) {
-                    artImgEl.onerror = () => {
-                        console.warn('[article image] FAILED to load:', artImgUrl);
-                        artImgEl.style.display = 'none';
-                        if (artFigure) artFigure.style.display = 'none';
-                    };
                     artImgEl.src = artImgUrl;
-                    artImgEl.alt = '';
-                    artImgEl.style.cssText = 'display:block; width:100%; height:auto; max-height:420px; object-fit:cover; border-radius:6px; cursor:pointer;';
-                    if (artFigure) artFigure.style.display = 'block';
-                    // Alt text is for the lightbox only, so the main-screen caption stays empty
-                    if (artCapEl) artCapEl.innerText = '';
-                    artImgEl.onclick = () => fireLightbox(artImgUrl, art.title || 'Feature', art.category || '', art.deck || art.body || '', '', artAltText);
+                    artImgEl.alt = artAltText;
+                    artImgEl.style.display = "block";
+                    if (artFigure) artFigure.style.display = "block";
+                    artImgEl.onclick = () => fireLightbox(
+                        escapeJsString(artImgUrl), 
+                        escapeJsString(art.title || 'Feature'), 
+                        escapeJsString(art.category || 'Commerce & Heritage'), 
+                        escapeJsString(art.body || ''), 
+                        '', 
+                        escapeJsString(artAltText)
+                    );
                 } else {
-                    artImgEl.style.display = 'none';
-                    if (artFigure) artFigure.style.display = 'none';
+                    artImgEl.style.display = "none";
+                    if (artFigure) artFigure.style.display = "none";
                 }
             }
 
@@ -1291,7 +1245,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
                 viewport.innerHTML = blendedSlides.map((item, idx) => {
                     const imgUrl = normalizeImageUrl(item.imageUrl);
                     const captionTitle = extractText(item.title || 'Town View');
-                    const altText = item.alt || captionTitle;
+                    const altText = item.alt || "";
                     const safeImg = escapeJsString(imgUrl);
                     const safeCaption = escapeJsString(captionTitle);
                     const safeAlt = escapeJsString(altText);
@@ -1299,7 +1253,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
 
                     return `
                         <div class="slider-slide ${idx === 0 ? 'active' : ''}" style="position: absolute; inset: 0; opacity: ${idx === 0 ? 1 : 0}; transition: opacity 0.8s ease-in-out; z-index: ${idx === 0 ? 2 : 1};">
-                            <img src="${imgUrl}" alt="" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'COMMUNITY VIEW', '', '${safeWeb}', '${safeAlt}')" style="width:100%; height:100%; object-fit:contain; background-color:#0a0a0a; cursor:pointer;" onerror="this.parentElement.style.display='none';">
+                            <img src="${imgUrl}" alt="${safeAlt}" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'COMMUNITY VIEW', '', '${safeWeb}', '${safeAlt}')" style="width:100%; height:100%; object-fit:contain; background-color:#0a0a0a; cursor:pointer;" onerror="this.parentElement.style.display='none';">
                             ${captionTitle ? `<div class="slider-caption">${captionTitle}</div>` : ''}
                         </div>
                     `;
@@ -1308,19 +1262,16 @@ function bindFirebaseSemanticSectionsEngine(db) {
                 const slides = viewport.querySelectorAll('.slider-slide');
                 if (slides.length > 1) {
                     let currentSlideIdx = 0;
-                    viewport.__slidePaused = false;
+                    let isSlideshowPaused = false;
 
-                    if (!viewport.__slideListenersBound) {
-                        viewport.__slideListenersBound = true;
-                        viewport.addEventListener('mouseenter', () => { viewport.__slidePaused = true; });
-                        viewport.addEventListener('mouseleave', () => { viewport.__slidePaused = false; });
-                        viewport.addEventListener('touchstart', () => { viewport.__slidePaused = true; }, { passive: true });
-                        viewport.addEventListener('touchend', () => { viewport.__slidePaused = false; });
-                    }
+                    viewport.addEventListener('mouseenter', () => { isSlideshowPaused = true; });
+                    viewport.addEventListener('mouseleave', () => { isSlideshowPaused = false; });
+                    viewport.addEventListener('touchstart', () => { isSlideshowPaused = true; }, { passive: true });
+                    viewport.addEventListener('touchend', () => { isSlideshowPaused = false; });
 
                     if (globalSlideshowTicker) clearInterval(globalSlideshowTicker);
                     globalSlideshowTicker = setInterval(() => {
-                        if (viewport.__slidePaused) return;
+                        if (isSlideshowPaused) return;
                         slides[currentSlideIdx].style.opacity = "0";
                         slides[currentSlideIdx].style.zIndex = "1";
                         currentSlideIdx = (currentSlideIdx + 1) % slides.length;
@@ -1345,12 +1296,12 @@ function bindFirebaseSemanticSectionsEngine(db) {
             }
 
             const spotImgUrl = normalizeImageUrl(spot.imageUrl);
-            const spotAltText = spot.alt || spot.name || "Business Spotlight";
+            const spotAltText = spot.alt || "";
             if (spotImgEl && spotImgUrl) {
                 spotImgEl.src = spotImgUrl;
-                spotImgEl.alt = '';
+                spotImgEl.alt = spotAltText;
                 spotImgEl.style.display = "block";
-                spotImgEl.onclick = () => fireLightbox(spotImgUrl, spot.name || 'Merchant', ACTIVE_TOWN.primaryName + ', IL', spot.description || '', spot.website || '', spotAltText);
+                spotImgEl.onclick = () => fireLightbox(escapeJsString(spotImgUrl), escapeJsString(spot.name || 'Merchant'), ACTIVE_TOWN.primaryName + ', IL', escapeJsString(spot.description || ''), escapeJsString(spot.website || ''), escapeJsString(spotAltText));
             } else if (spotImgEl && !spotImgUrl) {
                 spotImgEl.style.display = "none";
             }
@@ -1382,7 +1333,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
                             <h3>${evt.title || 'Historical Landmark'}</h3>
                             <p>${displayDesc}</p>
                             ${isLong ? `<span class="read-more-trigger">Read Details &rarr;</span>` : ''}
-                            ${imgUrl ? `<div class="history-img-box"><img src="${imgUrl}" alt="" onerror="this.parentElement.style.display='none';"></div>` : ''}
+                            ${imgUrl ? `<div class="history-img-box"><img src="${imgUrl}" alt="${escapeHtml(evt.alt || evt.title || '')}" onerror="this.parentElement.style.display='none';"></div>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -1482,10 +1433,8 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
 
     const isMobileOrTablet = window.innerWidth < 1024;
     let poolIndex = seedOffset % partnerPool.length;
-
-    // Pause state lives on the element so re-renders don't stack listeners
-    containerElement.__carouselPaused = false;
-    containerElement.__hoverStartTime = 0;
+    let isCarouselPaused = false;
+    let hoverStartTime = 0;
 
     const createPartnerMarkup = (partner, slotIdx) => {
         const imgUrl = normalizeImageUrl(partner.imageUrl || partner.image1);
@@ -1493,12 +1442,12 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
         const rawUrl = partner.website || '#';
         const link = attachUtmParameters(rawUrl);
         const linkTargetAttr = resolveLinkTarget(rawUrl);
-        const altText = partner.alt || name;
+        const altText = partner.alt || "";
 
         return `
             <div class="community-partner-card" data-partner-name="${escapeJsString(name)}" style="transition: transform 0.35s ease, opacity 0.35s ease;">
                 <div class="partner-logo-container">
-                    <img class="partner-logo-asset" src="${imgUrl}" alt="" onclick="fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')" style="cursor:pointer;" onerror="this.closest('.community-partner-card').style.display='none';">
+                    <img class="partner-logo-asset" src="${imgUrl}" alt="${escapeJsString(altText)}" onclick="fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')" style="cursor:pointer;" onerror="this.closest('.community-partner-card').style.display='none';">
                 </div>
                 <h4 class="partner-title">${name}</h4>
                 <a class="directory-tile-link" href="${link}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} data-ga-label="partner_cta">Visit Partner &rarr;</a>
@@ -1514,35 +1463,31 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
     }
     containerElement.innerHTML = initialCards.join('');
 
-    if (!containerElement.__carouselListenersBound) {
-        containerElement.__carouselListenersBound = true;
+    const onPauseEnter = () => {
+        isCarouselPaused = true;
+        hoverStartTime = Date.now();
+    };
 
-        const onPauseEnter = () => {
-            containerElement.__carouselPaused = true;
-            containerElement.__hoverStartTime = Date.now();
-        };
-
-        const onPauseLeave = () => {
-            containerElement.__carouselPaused = false;
-            if (containerElement.__hoverStartTime > 0) {
-                const durationSec = Math.round((Date.now() - containerElement.__hoverStartTime) / 1000);
-                const activeCard = containerElement.querySelector('.community-partner-card');
-                const pName = activeCard ? activeCard.getAttribute('data-partner-name') : 'Unknown';
-                if (durationSec >= 1) {
-                    trackGa4Event('partner_engagement_time', {
-                        partner_name: pName,
-                        seconds_viewed: durationSec
-                    });
-                }
-                containerElement.__hoverStartTime = 0;
+    const onPauseLeave = () => {
+        isCarouselPaused = false;
+        if (hoverStartTime > 0) {
+            const durationSec = Math.round((Date.now() - hoverStartTime) / 1000);
+            const activeCard = containerElement.querySelector('.community-partner-card');
+            const pName = activeCard ? activeCard.getAttribute('data-partner-name') : 'Unknown';
+            if (durationSec >= 1) {
+                trackGa4Event('partner_engagement_time', {
+                    partner_name: pName,
+                    seconds_viewed: durationSec
+                });
             }
-        };
+            hoverStartTime = 0;
+        }
+    };
 
-        containerElement.addEventListener('mouseenter', onPauseEnter);
-        containerElement.addEventListener('mouseleave', onPauseLeave);
-        containerElement.addEventListener('touchstart', onPauseEnter, { passive: true });
-        containerElement.addEventListener('touchend', onPauseLeave);
-    }
+    containerElement.addEventListener('mouseenter', onPauseEnter);
+    containerElement.addEventListener('mouseleave', onPauseLeave);
+    containerElement.addEventListener('touchstart', onPauseEnter, { passive: true });
+    containerElement.addEventListener('touchend', onPauseLeave);
 
     containerElement.querySelectorAll('.community-partner-card').forEach(card => {
         const pName = card.getAttribute('data-partner-name');
@@ -1551,7 +1496,7 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
 
     const slideDuration = isMobileOrTablet ? 3800 : 5000;
     const intervalId = setInterval(() => {
-        if (containerElement.__carouselPaused) return;
+        if (isCarouselPaused) return;
 
         poolIndex = (poolIndex + 1) % partnerPool.length;
         const nextPartner = partnerPool[poolIndex];
@@ -1651,7 +1596,7 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
         const count = Math.min(2, live.length - start);
         const shown = live.slice(start, start + count);
         container.innerHTML = heading + shown.map(block).join('') + `<div class="sync-timestamp-label">Click to update prices</div>`;
-
+        
         start += 2;
         if (start >= live.length) {
             start = 0;
@@ -1838,12 +1783,12 @@ function loadLocalNewsDispatches() {
         } else {
             runRestFallback();
         }
-    } catch(e) {
-        console.warn("Firestore live news notice:", e.message);
+    } catch(e) { 
+        console.warn("Firestore live news notice:", e.message); 
     }
 }
 
-// === TOWN HERO UI ENGINE ===
+// === TOWN HERO & DYNAMIC TEXT ENGINE ===
 function hydrateTownHeroUI() {
     const badgeEl = document.getElementById('hero-seat-badge');
     const titleEl = document.getElementById('hero-town-title');
@@ -1858,15 +1803,31 @@ function hydrateTownHeroUI() {
     if (ACTIVE_TOWN.themeAccent) {
         document.documentElement.style.setProperty('--primary', ACTIVE_TOWN.themeAccent);
     }
+
+    // Dynamically updates all target spans across the page to match active town
+    document.querySelectorAll('.town-name-target').forEach(el => {
+        el.innerText = ACTIVE_TOWN.primaryName;
+    });
+
+    document.title = `${ACTIVE_TOWN.primaryName}, IL - SMLC Digital Town Square Portal`;
 }
 
+// Updates top navigation active state directly against current town
 function updateNavigationActiveState() {
-    const currentHash = (window.location.hash || "#/flora").toLowerCase();
+    const activeTownLower = (ACTIVE_TOWN.primaryName || "").toLowerCase().replace(/\s+/g, '-');
+    const currentHash = (window.location.hash || "").toLowerCase();
+
     document.querySelectorAll('#dynamic-menu-links a, .menu-links a').forEach(link => {
         const href = (link.getAttribute("href") || "").toLowerCase();
+        
+        let isMatch = false;
         if (currentHash && href === currentHash) {
-            link.classList.add("active");
-        } else if (!currentHash && href.includes(ACTIVE_TOWN.primaryName.toLowerCase().replace(/\s+/g, '-'))) {
+            isMatch = true;
+        } else if (href.includes(activeTownLower) || (ACTIVE_TOWN.isHome && href.includes('home'))) {
+            isMatch = true;
+        }
+
+        if (isMatch) {
             link.classList.add("active");
         } else {
             link.classList.remove("active");
@@ -1879,7 +1840,6 @@ function handleSPAHashNavigation() {
     window.closeMobileMenu();
     ACTIVE_TOWN = getActiveTownConfig();
     document.body.setAttribute("data-town", ACTIVE_TOWN.primaryName.toUpperCase());
-    document.title = `${ACTIVE_TOWN.primaryName}, IL - SMLC Digital Town Square Portal`;
 
     hydrateTownHeroUI();
     updateNavigationActiveState();
