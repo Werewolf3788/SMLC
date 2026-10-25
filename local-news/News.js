@@ -41,6 +41,9 @@ const rssParser = new Parser({
 const STORE_FULL_STORY = false;
 const EXCERPT_LENGTH = 400;
 
+// Stories older than this many days (counted back from today) are skipped
+const MAX_AGE_DAYS = 7;
+
 /* === SECTION: Area Rules === */
 // strong    = unique to Clay County, always counts
 // ambiguous = real place names elsewhere, ignored if another state is mentioned (without Illinois)
@@ -477,6 +480,8 @@ async function runScraper() {
     let duplicateCount = 0;
     let irrelevantCount = 0;
     let skippedCount = 0;
+    let tooOldCount = 0;
+    const cutoffTime = Date.now() - MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
 
     for (const item of articles) {
         const title = item.title;
@@ -487,6 +492,13 @@ async function runScraper() {
 
         if (!title || title.trim() === "" || link.endsWith('/feed/')) {
             skippedCount++;
+            continue;
+        }
+
+        // Date filter: skip anything older than MAX_AGE_DAYS
+        if (new Date(articleDate).getTime() < cutoffTime) {
+            console.log(`[DISCARDED - TOO OLD] "${title}" (${articleDate})`);
+            tooOldCount++;
             continue;
         }
 
@@ -548,7 +560,7 @@ async function runScraper() {
     }
 
     await Promise.all(writePromises);
-    console.log(`Pipeline complete! Saved: ${savedCount} | Out of Area Dropped: ${irrelevantCount} | Duplicates: ${duplicateCount} | Skipped: ${skippedCount}`);
+    console.log(`Pipeline complete! Saved: ${savedCount} | Out of Area Dropped: ${irrelevantCount} | Too Old Dropped: ${tooOldCount} | Duplicates: ${duplicateCount} | Skipped: ${skippedCount}`);
     process.exit(0);
 }
 
