@@ -1,6 +1,6 @@
 /* === SECTION: File Header & Config === */
-// Active Version: v1.9.0 | Timestamp: 2026-10-25
-// Description: Multi-Source Local News Scraper with Strict Clay County Town Filtering
+// Active Version: v1.9.1 | Timestamp: 2026-10-25
+// Description: Multi-Source Local News Scraper with Strict Clay County Town Filtering + Numeric Area IDs
 
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
@@ -179,6 +179,37 @@ const ZIP_AREAS = {
     "62434": ["Ingraham"]
 };
 
+// Numeric IDs saved in Firestore "tags". The website queries these numbers.
+// 0 = Clay County (county-wide news). To add a new town later, add it here
+// with the next unused number and give it a block in AREA_RULES. NEVER reuse
+// or change an existing number, or old stories will land on the wrong page.
+const AREA_IDS = {
+    "Clay County": 0,
+    "Louisville": 1,
+    "Flora": 2,
+    "Clay City": 3,
+    "Xenia": 4,
+    "Sailor Springs": 5,
+    "Iola": 6,
+    "Bible Grove": 7,
+    "Ingraham": 8,
+    "Hoosier": 9,
+    "Hord": 10,
+    "Oskaloosa": 11,
+    "Riffle": 12,
+    "Wendelin": 13,
+    "Camp Travis": 14,
+    "Greendale": 15,
+    "Bethel": 16,
+    "Jordon": 17,
+    "Blair": 18,
+    "Harter": 19,
+    "Larkinsburg": 20,
+    "Pixley": 21,
+    "Songer": 22,
+    "Stanford": 23
+};
+
 // Colleges: Clay County has none, so hide these unless a town matched
 const COLLEGE_REGEX = /\b(college|university|lake land|olney central|SIU|SIUE|EIU)\b/i;
 
@@ -225,9 +256,9 @@ function resolveStoryTags(title, summary) {
         }
     }
 
-    // 1. Towns win, and every local story also gets the county tag
+    // 1. Towns win. If a town is named, the story is tagged with the town(s) only (no county tag)
     const towns = [...hits].filter(a => a !== "Clay County");
-    if (towns.length > 0) return [...towns, "Clay County"];
+    if (towns.length > 0) return towns;
 
     // 2. Colleges hidden (no town matched)
     if (COLLEGE_REGEX.test(text)) return null;
@@ -477,6 +508,14 @@ async function runScraper() {
         }
 
         const towns = tags.filter(t => t !== "Clay County");
+        const tagIds = tags.map(t => AREA_IDS[t]);
+
+        // Safety check: every area must have a number in AREA_IDS
+        if (tagIds.some(id => id === undefined)) {
+            console.error(`[MISSING AREA ID] "${title}" has a tag with no number in AREA_IDS: ${tags.join(", ")}`);
+            skippedCount++;
+            continue;
+        }
         const displayLocation = towns.length ? towns.join(", ") : "Clay County"; // display only, never query this
 
         const docData = {
@@ -487,7 +526,8 @@ async function runScraper() {
             location: displayLocation,
             source_name: item.source_name || "Local News",
             source_url: item.source_url || link,
-            tags: tags,                                   // query with array-contains
+            tags: tagIds,                                 // NUMBERS, query with array-contains (0 = Clay County)
+            tagNames: tags,                               // readable names, for humans only
             towns: towns,
             title: title,
             updatedAt: new Date().toISOString()
