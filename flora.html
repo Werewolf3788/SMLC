@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Town: FLORA | Version: v1.8.0 | Build: 2026-10-25 05:25 EDT (New York) -->
+<!-- Town: FLORA | Version: v1.8.2 | Build: 2026-10-25 09:05 EDT (New York) -->
 <html lang="en-US" data-town="FLORA">
 <head>
 <!-- SECTION: Meta, brand assets, fonts (3 families only) -->
@@ -49,7 +49,7 @@ function googleTranslateElementInit() {
   </a>
 </div>
 
-<!-- SECTION: Sticky navigation (links are filled by universaltown.js; fallback links stay until Firebase answers) -->
+<!-- SECTION: Sticky navigation -->
 <header class="menu-bar">
   <div class="menu-inner">
     <button id="mobile-menu-toggle-btn" class="mobile-nav-toggle-btn" onclick="window.toggleMobileMenu();" aria-label="Toggle navigation menu" aria-expanded="false">
@@ -70,14 +70,14 @@ function googleTranslateElementInit() {
   </div>
 </header>
 
-<!-- SECTION: Weather alert bar (shown by JS only when an alert is active) -->
+<!-- SECTION: Weather alert bar -->
 <div id="county-weather-alert-bar" class="weather-alert-bar" role="alert" style="display:none;">
   <strong id="weather-alert-headline"></strong>
   <span id="weather-alert-instruction" style="display:none;"></span>
 </div>
 
 <main id="main-content">
-<!-- SECTION: Hero (the only h1 on the page) -->
+<!-- SECTION: Hero -->
 <div class="main-container hero-wrap">
   <section class="town-hero-banner">
     <div class="banner-content">
@@ -102,7 +102,7 @@ function googleTranslateElementInit() {
   </nav>
 </div>
 
-<!-- SECTION: Partner strip (top). No bottom margin or border: removes the empty band -->
+<!-- SECTION: Partner strip (top) -->
 <div class="widescreen-strip-container hero-adjacent-strip">
   <div class="partners-horizontal-strip" id="partners-grid-bottom">
     <div class="feed-loading-placeholder">Loading regional partners...</div>
@@ -181,7 +181,7 @@ function googleTranslateElementInit() {
     </div>
   </section>
 
-  <!-- Spotlight + Fuel: equal-height pair -->
+  <!-- Spotlight + Fuel: Strictly SIDE BY SIDE on Desktop -->
   <div class="main-container spotlight-gas-duo-wrapper">
     <div class="spotlight-gas-duo-grid">
       <div class="clay-county-news-box spotlight-clipping">
@@ -199,23 +199,23 @@ function googleTranslateElementInit() {
     </div>
   </div>
 
-<!-- SECTION: Partner strip (second), directly above Thank You -->
-<div class="widescreen-strip-container strip-above-thanks">
-  <div class="partners-horizontal-strip" id="partners-grid-top"></div>
+  <!-- SECTION: Partner strip (second), directly above Thank You -->
+  <div class="widescreen-strip-container strip-above-thanks">
+    <div class="partners-horizontal-strip" id="partners-grid-top"></div>
+  </div>
+
+  <!-- SECTION: Thank You / S&K contact -->
+  <div class="main-container section10-message-chassis">
+    <section class="section10-proclamation-card-box">
+      <p class="proclamation-body-text">We are very thankful and blessed for our customers who allow us to advertise their business to the community. We hope to be of service, not only to large corporations, but also to the small businesses in the area. A large corporation once started out as a small business, so our hope is to help those small businesses we serve reach the fullest potential they desire. You will never know what we are able to do for your business unless you ask. I hope to hear from you.</p>
+      <p class="proclamation-contact-text">For questions or comments about this site please email <a href="mailto:Scott.Robinson@skventuresigns.com" data-ga-label="proclamation_email">Scott.Robinson@skventuresigns.com</a></p>
+    </section>
+  </div>
 </div>
 
-<!-- SECTION: Thank You / S&K contact -->
-<div class="main-container section10-message-chassis">
-  <section class="section10-proclamation-card-box">
-    <p class="proclamation-body-text">We are very thankful and blessed for our customers who allow us to advertise their business to the community. We hope to be of service, not only to large corporations, but also to the small businesses in the area. A large corporation once started out as a small business, so our hope is to help those small businesses we serve reach the fullest potential they desire. You will never know what we are able to do for your business unless you ask. I hope to hear from you.</p>
-    <p class="proclamation-contact-text">For questions or comments about this site please email <a href="mailto:Scott.Robinson@skventuresigns.com" data-ga-label="proclamation_email">Scott.Robinson@skventuresigns.com</a></p>
-  </section>
-</div>
-
-</div>
-
-<!-- ========== PILL 2: DISCOVER FLORA (title, POI, History, Article) ========== -->
+<!-- ========== PILL 2: DISCOVER FLORA (ALL Discover Content Stays Here) ========== -->
 <div id="pill-panel-discover" class="portal-tab-panel">
+  <!-- Discover Section 3 Split Layout: POI & Article -->
   <section class="section3-split-layout">
     <div class="section3-container-grid">
       <div class="section3-row-1">
@@ -223,7 +223,7 @@ function googleTranslateElementInit() {
         <p class="section3-intro-text" id="sec3-intro-text">Local businesses, railroad history, and civic life in the heart of Clay County.</p>
       </div>
       <div class="section3-row-2">
-        <!-- Wide slot: Point of Interest (images always visible) -->
+        <!-- Wide slot: Point of Interest -->
         <div class="section3-left-col">
           <div class="section3-landmark-card">
             <h3 class="section3-landmark-title" id="right-card-meta-title">Historic Flora Depot &amp; Landmarks</h3>
@@ -240,32 +240,31 @@ function googleTranslateElementInit() {
             <p id="right-card-meta-desc1" class="section3-landmark-desc">Loading landmark details...</p>
           </div>
         </div>
-        <!-- Side slot: article card (swapped with slideshow) -->
+        <!-- Side slot: Article Card -->
         <div class="section3-right-col">
-  <div class="section4-single-article-chassis side-article">
-    <div class="section4-left-article-box">
-      <header class="section4-centered-article-header">
-        <div class="category-tag" id="sec4-category-tag">Commerce &amp; Heritage</div>
-        <h2 class="article-stacked-title" id="sec4-article-title">Flora's Railroad &amp; Industrial Roots</h2>
-        <p class="article-stacked-deck" id="sec4-article-deck">Connecting transportation, industry, and community life in Clay County.</p>
-      </header>
-      <article class="article-body-content" id="sec4-article-body">
-        <p>Flora, Illinois, at the crossing of major transportation routes, has long been a commercial center for Clay County.</p>
-        <figure class="article-media-frame">
-          <img id="sec-4-1-article-img" src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="" class="lightbox-triggerable-element" data-title="Downtown Flora" loading="lazy">
-          <figcaption id="sec4-img-caption">Downtown Flora, IL</figcaption>
-        </figure>
-        <p>From annual community traditions to thriving local businesses, Flora shows steady growth and neighbors working together.</p>
-      </article>
-    </div>
-  </div>
-
+          <div class="section4-single-article-chassis side-article">
+            <div class="section4-left-article-box">
+              <header class="section4-centered-article-header">
+                <div class="category-tag" id="sec4-category-tag">Commerce &amp; Heritage</div>
+                <h2 class="article-stacked-title" id="sec4-article-title">Flora's Railroad &amp; Industrial Roots</h2>
+                <p class="article-stacked-deck" id="sec4-article-deck">Connecting transportation, industry, and community life in Clay County.</p>
+              </header>
+              <article class="article-body-content" id="sec4-article-body">
+                <p>Flora, Illinois, at the crossing of major transportation routes, has long been a commercial center for Clay County.</p>
+                <figure class="article-media-frame">
+                  <img id="sec-4-1-article-img" src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="" class="lightbox-triggerable-element" data-title="Downtown Flora" loading="lazy">
+                  <figcaption id="sec4-img-caption">Downtown Flora, IL</figcaption>
+                </figure>
+                <p>From annual community traditions to thriving local businesses, Flora shows steady growth and neighbors working together.</p>
+              </article>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- History directly under POI -->
+  <!-- Historical Timeline (In Discover Pill) -->
   <div class="main-container timeline-wrap">
     <section class="historical-timeline-chassis-wrapper">
       <div class="timeline-row-1-header">
@@ -276,19 +275,19 @@ function googleTranslateElementInit() {
     </section>
   </div>
 
-  <!-- Article (no issue/page footer) -->
+  <!-- Town Slideshow (In Discover Pill) -->
   <div class="main-container slideshow-wrap">
-          <div id="flora-town-slideshow-matrix" class="section3-slideshow-box">
-            <div id="flora-slideshow" class="slider-viewport">
-              <div class="slider-slide active"><img src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="" class="lightbox-triggerable-element" data-title="Flora Town Square"><div class="slider-caption">Flora Town Square</div></div>
-            </div>
-          </div>
+    <div id="flora-town-slideshow-matrix" class="section3-slideshow-box">
+      <div id="flora-slideshow" class="slider-viewport">
+        <div class="slider-slide active"><img src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="" class="lightbox-triggerable-element" data-title="Flora Town Square"><div class="slider-caption">Flora Town Square</div></div>
+      </div>
+    </div>
   </div>
 </div>
 
 </main>
 
-<!-- SECTION: Global lightbox (alt text, description and link are shown here) -->
+<!-- SECTION: Global lightbox -->
 <div id="portal-global-lightbox" class="lightbox-overlay-mask" onclick="closeLightbox(event)">
   <div class="lightbox-modal-window">
     <div class="lightbox-header-bar">
@@ -312,12 +311,12 @@ function googleTranslateElementInit() {
 <footer id="global-footer-container" class="site-global-footer-matrix">
   <div class="footer-simple-inner">
     <p id="footer-copy-target">&copy; 2026 Flora Community Portal. All rights reserved.</p>
-    <p id="footer-build-version-stamp"><strong>Version:</strong> v1.8.0 | <strong>Build:</strong> 2026-10-25 05:25 EDT | <strong>New York:</strong> <span id="footer-ny-clock">--:--</span></p>
+    <p id="footer-build-version-stamp"><strong>Version:</strong> v1.8.2 | <strong>Build:</strong> 2026-10-25 09:05 EDT | <strong>New York:</strong> <span id="footer-ny-clock">--:--</span></p>
   </div>
 </footer>
 <button id="back-to-top-anchor" type="button" onclick="window.scrollTo({top:0,behavior:'smooth'});" aria-label="Return to top">&uarr;</button>
 
-<!-- SECTION: Page controller (pills, static-image lightbox, NY clock) -->
+<!-- SECTION: Page controller -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   window.switchPortalPill = function (btn, panelId) {
