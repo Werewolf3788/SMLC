@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Town: FLORA | Version: v1.9.0 | Build: 2026-10-25 14:35 EDT (New York) -->
+<!-- Town: FLORA -->
 <html lang="en-US" data-town="FLORA">
 <head>
     <meta charset="UTF-8">
@@ -22,15 +22,65 @@
     <script crossorigin="anonymous" src="//www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script crossorigin="anonymous" src="//www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <script crossorigin="anonymous" src="//www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+    <!-- AUTO LANGUAGE: reads the visitor's phone/browser language and tells Google Translate to use it.
+         This MUST run before the Google Translate script below. -->
     <script>
-        function googleTranslateElementInit() {
-            new google.translate.TranslateElement({ pageLanguage: 'en', layout: google.translate.TranslateElement.InlineLayout.SIMPLE }, 'google_translate_element');
+    (function () {
+        var MAP = { 'zh': 'zh-CN', 'zh-cn': 'zh-CN', 'zh-sg': 'zh-CN', 'zh-tw': 'zh-TW', 'zh-hk': 'zh-TW', 'zh-mo': 'zh-TW',
+                    'he': 'iw', 'fil': 'tl', 'nb': 'no', 'nn': 'no', 'jv': 'jw' };
+        function deviceLang() {
+            var raw = String((navigator.languages && navigator.languages[0]) || navigator.language || 'en').toLowerCase();
+            return MAP[raw] || MAP[raw.split('-')[0]] || raw.split('-')[0];
         }
+        function setCookie(v) {
+            document.cookie = 'googtrans=' + v + '; path=/';
+            try { document.cookie = 'googtrans=' + v + '; path=/; domain=' + location.hostname; } catch (e) {}
+        }
+        function clearCookie() {
+            var past = '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+            document.cookie = 'googtrans' + past;
+            try { document.cookie = 'googtrans' + past + '; domain=' + location.hostname; } catch (e) {}
+            try { document.cookie = 'googtrans' + past + '; domain=.' + location.hostname; } catch (e) {}
+        }
+        var lang = deviceLang();
+        var optOut = false;
+        try { optOut = localStorage.getItem('smlc_lang_optout') === '1'; } catch (e) {}
+
+        window.__smlcDeviceLang = lang;
+        window.__smlcAutoTranslated = false;
+
+        if (lang && lang !== 'en' && !optOut) {
+            setCookie('/en/' + lang);
+            window.__smlcAutoTranslated = true;
+        } else {
+            clearCookie();
+        }
+
+        // Footer link: lets a visitor switch back to English, or translate again
+        window.smlcToggleTranslation = function (e) {
+            if (e) e.preventDefault();
+            try {
+                if (window.__smlcAutoTranslated) { localStorage.setItem('smlc_lang_optout', '1'); }
+                else { localStorage.removeItem('smlc_lang_optout'); }
+            } catch (x) {}
+            location.reload();
+        };
+    })();
+
+    function googleTranslateElementInit() {
+        try {
+            new google.translate.TranslateElement({ pageLanguage: 'en', autoDisplay: false }, 'google_translate_element');
+        } catch (e) { console.warn('Google Translate notice:', e.message); }
+    }
     </script>
     <script defer src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </head>
 <body data-town="FLORA">
 <a class="skip-link" href="#main-content">Skip to content</a>
+
+<!-- Hidden Google Translate engine (no visible widget) -->
+<div id="google_translate_element" aria-hidden="true"></div>
 
 <div class="portal-floating-hud-track">
     <div id="hud-county-age-target" class="hud-floating-badge" style="display:none;"></div>
@@ -59,7 +109,6 @@
                 <li><a href="#/xenia" target="_self"><span>Xenia</span></a></li>
             </ul>
         </nav>
-        <div id="google_translate_element" class="translate-box-header"></div>
     </div>
 </header>
 
@@ -92,14 +141,16 @@
     </nav>
 </div>
 
-<div class="widescreen-strip-container hero-adjacent-strip">
-    <div class="partners-horizontal-strip" id="partners-grid-bottom">
-        <div class="feed-loading-placeholder">Loading regional partners...</div>
-    </div>
-</div>
-
 <!-- ========== PILL 1: LOCAL EVENTS & NEWS ========== -->
 <div id="pill-panel-news-events" class="portal-tab-panel active">
+
+    <!-- First partner strip (News tab only) -->
+    <div class="widescreen-strip-container hero-adjacent-strip">
+        <div class="partners-horizontal-strip" id="partners-grid-bottom">
+            <div class="feed-loading-placeholder">Loading regional partners...</div>
+        </div>
+    </div>
+
     <section class="smlc-three-column-portal-wrapper" id="adaptive-time-portal-chassis">
         <div class="portal-grid-layout-fixed">
             <div class="portal-column-cell-box">
@@ -183,29 +234,21 @@
             </div>
         </div>
     </div>
-
-    <div class="widescreen-strip-container strip-above-thanks">
-        <div class="partners-horizontal-strip" id="partners-grid-top"></div>
-    </div>
-
-    <div class="main-container proclamation-wrapper">
-        <section class="proclamation-card-box">
-            <p class="proclamation-body-text">We are very thankful and blessed for our customers who allow us to advertise their business to the community. We hope to be of service, not only to large corporations, but also to the small businesses in the area. A large corporation once started out as a small business, so our hope is to help those small businesses we serve reach the fullest potential they desire. You will never know what we are able to do for your business unless you ask. I hope to hear from you.</p>
-            <p class="proclamation-contact-text">For questions or comments about this site please email <a href="mailto:Scott.Robinson@skventuresigns.com" data-ga-label="proclamation_email">Scott.Robinson@skventuresigns.com</a></p>
-        </section>
-    </div>
 </div>
 
 <!-- ========== PILL 2: DISCOVER FLORA ========== -->
 <div id="pill-panel-discover" class="portal-tab-panel">
     <section class="discover-split-layout">
         <div class="discover-container-grid">
+
+            <!-- Title sits at the very top of the tab -->
             <div class="discover-header-block">
                 <h2 class="discover-main-title" id="point-of-interest-main-title">Discover Flora's Vibrant Community</h2>
                 <p class="discover-intro-text" id="point-of-interest-intro-text">Local businesses, railroad history, and civic life in the heart of Clay County.</p>
             </div>
+
+            <!-- Point of Interest + Article -->
             <div class="discover-dual-grid">
-                <!-- Point of Interest Slot -->
                 <div class="point-of-interest-col">
                     <div class="point-of-interest-card">
                         <h3 class="point-of-interest-card-title" id="point-of-interest-title">Historic Flora Depot &amp; Landmarks</h3>
@@ -223,7 +266,6 @@
                         <p id="point-of-interest-landmark-desc" class="point-of-interest-desc">Loading landmark details...</p>
                     </div>
                 </div>
-                <!-- Article Slot -->
                 <div class="article-col">
                     <div class="article-card-chassis">
                         <div class="article-inner-box">
@@ -232,31 +274,29 @@
                                 <h2 class="article-stacked-title" id="article-title">Flora's Railroad &amp; Industrial Roots</h2>
                                 <p class="article-stacked-deck" id="article-deck">Connecting transportation, industry, and community life in Clay County.</p>
                             </header>
+                            <!-- Image lives OUTSIDE #article-body, because the script rewrites #article-body's contents -->
+                            <figure class="article-media-frame" id="article-figure-frame" style="display:none;">
+                                <img id="article-img" src="" alt="" class="lightbox-triggerable-element" loading="lazy">
+                                <figcaption id="article-img-caption"></figcaption>
+                            </figure>
                             <article class="article-body-content" id="article-body">
                                 <p>Flora, Illinois, at the crossing of major transportation routes, has long been a commercial center for Clay County.</p>
-                                <figure class="article-media-frame" id="article-figure-frame" style="display:none;">
-                                    <img id="article-img" src="" alt="" class="lightbox-triggerable-element" loading="lazy">
-                                    <figcaption id="article-img-caption">Downtown Flora, IL</figcaption>
-                                </figure>
-                                <p>From annual community traditions to thriving local businesses, Flora shows steady growth and neighbors working together.</p>
                             </article>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Historical Timeline: directly under POI so the two read as one section -->
+            <div class="discover-history-block">
+                <div class="timeline-header-block">
+                    <h2 class="main-timeline-center-title-node" id="history-timeline-title">Historical Timeline</h2>
+                    <p class="main-timeline-sub-caption-node" id="history-timeline-subtitle">Key milestones that shaped Flora, IL.</p>
+                </div>
+                <div id="history-row-target" class="timeline-cards-grid"><div class="feed-loading-placeholder">Loading timeline...</div></div>
+            </div>
         </div>
     </section>
-
-    <!-- Historical Timeline -->
-    <div class="main-container timeline-wrap">
-        <section class="historical-timeline-chassis-wrapper">
-            <div class="timeline-header-block">
-                <h2 class="main-timeline-center-title-node" id="history-timeline-title">Historical Timeline</h2>
-                <p class="main-timeline-sub-caption-node" id="history-timeline-subtitle">Key milestones that shaped Flora, IL.</p>
-            </div>
-            <div id="history-row-target" class="timeline-cards-grid"><div class="feed-loading-placeholder">Loading timeline...</div></div>
-        </section>
-    </div>
 
     <!-- Slideshow -->
     <div class="main-container slideshow-wrap">
@@ -268,23 +308,37 @@
     </div>
 </div>
 
+<!-- ========== SHARED BOTTOM (both tabs): second partner strip directly above the Thank You box ========== -->
+<div class="widescreen-strip-container strip-above-thanks">
+    <div class="partners-horizontal-strip" id="partners-grid-top"></div>
+</div>
+
+<div class="main-container proclamation-wrapper">
+    <section class="proclamation-card-box">
+        <p class="proclamation-body-text">We are very thankful and blessed for our customers who allow us to advertise their business to the community. We hope to be of service, not only to large corporations, but also to the small businesses in the area. A large corporation once started out as a small business, so our hope is to help those small businesses we serve reach the fullest potential they desire. You will never know what we are able to do for your business unless you ask. I hope to hear from you.</p>
+        <p class="proclamation-contact-text">For questions or comments about this site please email <a href="mailto:Scott.Robinson@skventuresigns.com" data-ga-label="proclamation_email">Scott.Robinson@skventuresigns.com</a></p>
+    </section>
+</div>
+
 </main>
 
+<!-- ========== LIGHTBOX: name, image, description, alt details, link ========== -->
 <div id="portal-global-lightbox" class="lightbox-overlay-mask" onclick="closeLightbox(event)">
     <div class="lightbox-modal-window">
         <div class="lightbox-header-bar">
-            <span id="lightbox-label">SMLC Dispatches</span>
+            <span id="lightbox-label">SMLC Community Portal</span>
             <button type="button" class="lightbox-close-btn" aria-label="Close" onclick="document.getElementById('portal-global-lightbox').style.display='none'">&times;</button>
         </div>
         <div class="lightbox-body">
             <h3 id="lightbox-target-title">Title</h3>
             <div id="lightbox-target-date"></div>
-            <p id="lightbox-target-story"></p>
             <div id="lightbox-img-wrapper"><img id="lightbox-target-img" src="" alt=""></div>
+            <div id="lightbox-target-story"></div>
+            <div id="lightbox-target-alt" class="lightbox-alt-block" style="display:none;"></div>
+            <div id="lightbox-action-row" style="display:none;"><a id="lightbox-target-link" href="#" target="_blank" rel="noopener" data-ga-label="lightbox_open_source">Open link &rarr;</a></div>
         </div>
         <div class="lightbox-footer-bar">
             <span>SUPPORT MY LOCAL COMMUNITY NETWORK &copy; 2026</span>
-            <div id="lightbox-action-row" style="display:none;"><a id="lightbox-target-link" href="#" target="_blank" rel="noopener" data-ga-label="lightbox_open_source">Open link &rarr;</a></div>
         </div>
     </div>
 </div>
@@ -292,7 +346,7 @@
 <footer id="global-footer-container" class="site-global-footer-matrix">
     <div class="footer-simple-inner">
         <p id="footer-copy-target">&copy; 2026 Flora Community Portal. All rights reserved.</p>
-        <p id="footer-build-version-stamp"><strong>Version:</strong> v1.9.0 | <strong>Build:</strong> 2026-10-25 14:35 EDT | <strong>New York:</strong> <span id="footer-ny-clock">--:--</span></p>
+        <p id="translate-toggle-wrap" style="display:none;"><a href="#" id="translate-toggle-link" onclick="window.smlcToggleTranslation(event)"></a></p>
     </div>
 </footer>
 <button id="back-to-top-anchor" type="button" onclick="window.scrollTo({top:0,behavior:'smooth'});" aria-label="Return to top">&uarr;</button>
@@ -311,20 +365,25 @@ document.addEventListener('DOMContentLoaded', function () {
             if (wrap) window.scrollTo({ top: wrap.offsetTop - 60, behavior: 'smooth' });
         }
     };
+
+    // Static images (Facebook, Directory, etc.) open the lightbox from their data-* attributes.
+    // Images that universaltown.js already wires with its own click handler are skipped,
+    // otherwise this handler would run second and overwrite the real content with blanks.
     document.addEventListener('click', function (e) {
         var img = e.target.closest ? e.target.closest('img.lightbox-triggerable-element') : null;
         if (!img || typeof window.fireLightbox !== 'function') return;
+        if (img.onclick) return;
         var d = img.dataset || {};
-        window.fireLightbox(img.currentSrc || img.src, d.title || '', d.date || '', d.desc || '', d.link || '', d.alt || d.title || '');
+        window.fireLightbox(img.currentSrc || img.src, d.title || '', d.date || '', d.desc || '', d.link || '', d.alt || '');
     });
-    function tick() {
-        var el = document.getElementById('footer-ny-clock');
-        if (!el) return;
-        try {
-            el.textContent = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false, timeZoneName: 'short' }).format(new Date());
-        } catch (err) { console.warn('Clock notice:', err.message); }
+
+    // Footer translation link (only shown when the visitor's device language is not English)
+    var wrap = document.getElementById('translate-toggle-wrap');
+    var link = document.getElementById('translate-toggle-link');
+    if (wrap && link && window.__smlcDeviceLang && window.__smlcDeviceLang !== 'en') {
+        link.textContent = window.__smlcAutoTranslated ? 'View this page in English' : 'Translate this page';
+        wrap.style.display = 'block';
     }
-    tick(); setInterval(tick, 30000);
 });
 </script>
 <script src="./universaltown.js"></script>
