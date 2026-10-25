@@ -1,9 +1,10 @@
 /* ==========================================================================
-   Active Version: v3.2.1
+   Active Version: v3.2.2
    File: universaltown.js
    Project: SMLC County Portal Semantic Master Script
    Description: Complete multi-town engine connecting 100% to Firebase (RTDB & Firestore).
-                - Fixed line 269 regex syntax error in linkifyRawUrls: escaped literal ')'
+                - Removed placeholder station 87817; Flora strictly contains 4 stations (Huck's, FS, Mach 1, Casey's)
+                - Fixed 2-at-a-time rotator paging without circular overlaps or duplicate cards
                 - Integrated v3.2.0 patch: fuel data (reads /fuel_prices & /billboard_network),
                   events (reads Firestore smlc_events with REST fallback), clean lightbox text,
                   external-only UTM tags, 7-day age cutoff for news & fuel.
@@ -25,7 +26,7 @@
                 - Dynamic GA4 Tag Injection (G-FHJNXDB9BB) with SPA Hash Route Pageview Tracking
                 - Town-specific & countywide Sports Scoreboard Engine
                 - Persistent 24-hour New York timestamp & version in footer
-   Timestamp: 2026-10-25 08:05 EDT (New York)
+   Timestamp: 2026-10-25 08:20 EDT (New York)
    ========================================================================== */
 
 // Line 31: Dynamic Google Analytics 4 Injection & Initialization Engine
@@ -292,7 +293,7 @@ function unwrapFs(v) {
     if ('booleanValue' in v) return v.booleanValue;
     if ('timestampValue' in v) return v.timestampValue;
     if (v.arrayValue) return (v.arrayValue.values || []).map(unwrapFs);
-    if (v.mapValue) { const o = {}; for (const k in (v.mapValue.fields || {})) o[k] = unwrapFs(v.mapValue.fields[k]); return o; }
+    if (v.mapValue) { const o = {}; for (const k in (v.mapValue.fields || {})) o[k] = unwrapFs(d.fields[k]); return o; }
     return null;
 }
 
@@ -327,10 +328,10 @@ function icsDataForEvent(ev, loc) {
     return 'data:text/calendar;charset=utf8,' + encodeURIComponent(lines.join('\r\n'));
 }
 
+// Strictly real verified stations: 4 stations in Flora, 1 in Louisville, 1 in Clay City, 1 in Xenia
 const FUEL_STATIONS = {
     "48100":  { town: "flora", display: "Flora", name: "CASEY'S", logo: "Casey's.png" },
     "48101":  { town: "flora", display: "Flora", name: "HUCK'S", logo: "Hucks.png" },
-    "87817":  { town: "flora", display: "Flora", name: "FLORA STATION", logo: "smlc-default.png" },
     "120226": { town: "flora", display: "Flora", name: "FAST STOP", logo: "Fast stop.png" },
     "128128": { town: "flora", display: "Flora", name: "MACH 1", logo: "Mach 1.png" },
     "48026":  { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" },
@@ -398,7 +399,6 @@ function extractText(val) {
 }
 
 // Strips old HTML first, escapes text, then makes ONE clean link per web address
-// Line 269: Correctly escaped literal ')' inside character class [.,;:!?\)]
 function linkifyRawUrls(text) {
     if (!text) return "";
     const plain = String(text).replace(/<\s*br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, ' ');
@@ -1174,7 +1174,7 @@ function bindFirebaseLocalLinksEngine(db) {
         if (activeFbRefLinksGlobal) activeFbRefLinksGlobal.off();
 
         activeFbRefLinksTown = db.ref(`master_county_data/towns/${townName}/sections/town_links/links`);
-        activeFbRefLinksGlobal = db.ref(`master_county_data/global/sections/town_links/links`);
+        activeFbRefGlobalSections = db.ref(`master_county_data/global/sections/town_links/links`);
 
         activeFbRefLinksTown.on('value', (snap) => {
             const val = snap.val();
@@ -1182,7 +1182,7 @@ function bindFirebaseLocalLinksEngine(db) {
             renderCombinedLinks();
         });
 
-        activeFbRefLinksGlobal.on('value', (snap) => {
+        activeFbRefGlobalSections.on('value', (snap) => {
             const val = snap.val();
             globalLinks = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
             renderCombinedLinks();
@@ -1605,6 +1605,7 @@ function initializeFirebaseGasMonitor(db) {
     }
 }
 
+// Shows 2 stations at a time; if an odd station remains, displays that 1 station clean
 function startGasRotator(data, stationConfigs, stationIds, container) {
     if (gasMonitorRotator) { clearInterval(gasMonitorRotator); gasMonitorRotator = null; }
     const updateUrl = cleanRawUrl(DEFAULT_APP_CONFIG.regional_endpoints.gas_widget);
@@ -1642,10 +1643,14 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
 
     let start = 0;
     const draw = () => {
-        const shown = [];
-        for (let i = 0; i < Math.min(2, live.length); i++) shown.push(live[(start + i) % live.length]);
+        const count = Math.min(2, live.length - start);
+        const shown = live.slice(start, start + count);
         container.innerHTML = heading + shown.map(block).join('') + `<div class="sync-timestamp-label">Click to update prices</div>`;
-        start = (start + 2) % live.length;
+        
+        start += 2;
+        if (start >= live.length) {
+            start = 0;
+        }
     };
     draw();
     if (live.length > 2) gasMonitorRotator = setInterval(draw, 6000);
