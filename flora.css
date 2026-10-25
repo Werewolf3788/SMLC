@@ -1,332 +1,1911 @@
 /* ==========================================================================
-   FLORA, IL - SMLC DIGITAL TOWN SQUARE PORTAL STYLESHEET
-   Version: v1.8.0 | Build: 2026-10-25 05:25 EDT (New York)
-   Royal Blue + Wolf Orange kept. Fonts: Playfair Display, Oswald, Libre Baskerville.
-   SECTIONS: tokens, base, header/nav, hero, pills, partners, portal grid, cards,
-             calendar/news/fuel, discover, weather, lightbox, footer, responsive
+   Active Version: v3.2.5
+   File: universaltown.js
+   Project: SMLC County Portal Semantic Master Script
+   Description: Complete multi-town engine connecting 100% to Firebase (RTDB & Firestore).
+                - 100% Live Realtime Database (RTDB) and Firestore real-time listeners (.on('value') & .onSnapshot())
+                - Fixed variable collision: separated activeFbRefLinksGlobal from activeFbRefGlobalSections
+                - Fully resolved and dynamically bound:
+                    * /master_county_data/towns/[Town]/sections/article (title, category, deck, body, imageUrl, alt)
+                    * /master_county_data/towns/[Town]/sections/history (year, title, description, imageUrl, alt)
+                    * /master_county_data/towns/[Town]/sections/point_of_interest (header1, header2, image1, image2, alt1, alt2, about_text, landmark_description)
+                    * /master_county_data/towns/[Town]/sections/slideshow/items (title, category, imageUrl, alt, website)
+                    * /master_county_data/towns/[Town]/sections/town_links/links (title, website)
+                    * /master_county_data/global/sections/partners (name, imageUrl, alt, website)
+                    * /master_county_data/global/sections/spotlight (name, description, imageUrl, alt, website)
+                    * /master_county_data/weather_forecast (current, fiveDay)
+                    * /master_county_data/weather_alerts
+                    * /master_county_data/sports
+                    * /fuel_prices & /billboard_network
+                    * Firestore smlc_events & local_news (real-time collections with REST fallback)
+                - Defensive Image Hydration: unhides figure containers when images exist; strictly hides only if empty
+                - Sparse array safety: handles Object.values() for indexed objects or arrays
+                - Real-time weather widget bound to #portal-weather-pill
+                - Central Time (America/Chicago) timestamps; persistent New York clock in footer
+   Timestamp: 2026-10-25 08:50 EDT (New York)
    ========================================================================== */
 
-/* SECTION: Tokens */
-:root {
-  --flora-blue: #0258A3; --flora-orange: #FE4E02; --flora-black: #000;
-  --primary: #0258A3; --link-bright-blue: #3182CE;
-  --container-width: 96%; --content-max: 1680px;
-  --card-surface-bg: #fffdf5; --card-article-bg: #fff;
-  --card-text-primary: #1a1a1a; --card-text-secondary: #333; --card-muted: #555;
-  --card-border-color: #222; --card-shadow-color: #000;
-  --on-card-accent: #0258A3;               /* readable accent on cards (dates, times, links) */
-  --font-head: 'Playfair Display', Georgia, serif;
-  --font-label: 'Oswald', 'Arial Narrow', sans-serif;
-  --font-body: 'Libre Baskerville', 'Times New Roman', serif;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --card-surface-bg: #1c1c1e; --card-article-bg: #18181b;
-    --card-text-primary: #f4f4f5; --card-text-secondary: #d4d4d8; --card-muted: #c8c8d0;
-    --card-border-color: #3f3f46;
-    --on-card-accent: #9ccfff;             /* brighter blue: passes contrast on dark cards */
-  }
-}
+// Line 31: Dynamic Google Analytics 4 Injection & Initialization Engine
+(function initDynamicGa4Engine() {
+    const GA4_MEASUREMENT_ID = 'G-FHJNXDB9BB';
+    
+    if (!document.querySelector(`script[src*="googletagmanager.com/gtag/js?id=${GA4_MEASUREMENT_ID}"]`)) {
+        const gaScript = document.createElement('script');
+        gaScript.async = true;
+        gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${GA4_MEASUREMENT_ID}`;
+        document.head.appendChild(gaScript);
+    }
 
-/* SECTION: Base */
-*, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
-body {
-  margin: 0; min-height: 100vh; font-family: var(--font-body); font-size: 16px; color: #fff;
-  background: #0a0a0a linear-gradient(180deg, #041b30 0%, #082442 15%, #2c2c2e 38%, #1c1c1e 65%, #0a0a0a 90%, #000 100%) fixed no-repeat;
-  -webkit-font-smoothing: antialiased; overflow-x: hidden;
-}
-img { max-width: 100%; height: auto; }
-a { color: var(--link-bright-blue); text-decoration: none; }
-:focus-visible { outline: 3px solid var(--flora-orange); outline-offset: 2px; }
-.skip-link { position: absolute; left: -999px; top: 0; background: #000; color: #fff; padding: 10px 16px; z-index: 20000; }
-.skip-link:focus { left: 8px; top: 8px; }
-.feed-loading-placeholder { text-align: center; padding: 18px; font-style: italic; color: var(--card-muted); }
-.partners-horizontal-strip .feed-loading-placeholder { color: #fff; }
-.main-container { width: var(--container-width); max-width: var(--content-max); margin: 0 auto; padding: 32px clamp(12px, 3vw, 60px); }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+    window.dataLayer = window.dataLayer || [];
+    if (typeof window.gtag !== 'function') {
+        window.gtag = function() {
+            window.dataLayer.push(arguments);
+        };
+        window.gtag('js', new Date());
+        window.gtag('config', GA4_MEASUREMENT_ID, {
+            send_page_view: false
+        });
+    }
+})();
 
-/* SECTION: Brand header + sticky nav */
-.site-brand-header { width: 100%; background: linear-gradient(180deg, #0C71C3, #0a5da1); overflow: hidden; line-height: 0; }
-.site-brand-header img { width: 100%; display: block; }
-.menu-bar { position: sticky; top: 0; z-index: 1000; background: var(--flora-blue); padding: 8px 0; border-bottom: 4px solid var(--flora-orange); box-shadow: 0 6px 16px rgba(0,0,0,.85); }
-.menu-inner { width: var(--container-width); max-width: var(--content-max); margin: 0 auto; display: flex; justify-content: center; align-items: center; position: relative; padding: 0 12px; }
-.navigation-drawer-panel { display: flex; justify-content: center; }
-.menu-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 14px; list-style: none; margin: 0; padding: 0; }
-.menu-links a { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 8px 14px; color: #fff; font: 700 15px var(--font-label); text-transform: uppercase; letter-spacing: 1px; border: 2px solid transparent; border-radius: 8px; transition: .2s; }
-.menu-links a:hover, .menu-links a.active { color: var(--flora-orange); border-color: var(--flora-orange); background: rgba(0,0,0,.6); }
-.menu-thumb-icon { width: 24px; height: 24px; object-fit: contain; border-radius: 4px; background: rgba(255,255,255,.1); padding: 2px; border: 1px solid rgba(255,255,255,.3); }
-.mobile-nav-toggle-btn { display: none; align-items: center; gap: 8px; min-width: 48px; min-height: 48px; padding: 8px 14px; background: rgba(0,0,0,.45); border: 2px solid var(--flora-orange); border-radius: 6px; color: #fff; font: 700 14px var(--font-label); text-transform: uppercase; letter-spacing: 1px; cursor: pointer; }
-.hamburger-icon-group { display: flex; flex-direction: column; justify-content: space-between; width: 22px; height: 16px; }
-.hamburger-bar { height: 3px; background: #fff; border-radius: 2px; display: block; }
-.translate-box-header { position: absolute; right: 12px; display: inline-flex; align-items: center; background: rgba(0,0,0,.4); border: 1px solid var(--flora-orange); border-radius: 6px; padding: 4px 8px; }
-.goog-te-gadget-simple { background: transparent !important; border: 0 !important; font-size: 13px !important; padding: 0 !important; }
-.goog-te-gadget-simple span, .goog-te-gadget-simple a { color: #fff !important; }
-.goog-te-gadget-icon { display: none !important; }
+// Line 54: Google Translate Global Callback & Dynamic Mutation Scanner
+window.googleTranslateElementInit = function() {
+    try {
+        if (window.google && window.google.translate) {
+            new window.google.translate.TranslateElement({
+                pageLanguage: 'en',
+                layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE
+            }, 'google_translate_element');
+        }
+    } catch(e) {
+        console.warn("Google Translate initialization notice:", e.message);
+    }
+};
 
-/* SECTION: Weather alert bar + HUD */
-.weather-alert-bar { position: sticky; top: 72px; z-index: 900; padding: 10px 16px; background: #f57f17; color: #fff; text-align: center; font: 700 14px var(--font-label); letter-spacing: .5px; }
-.weather-alert-bar span { display: block; font: 400 13px var(--font-body); margin-top: 4px; }
-.portal-floating-hud-track { position: fixed; top: 80px; left: 8px; z-index: 900; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
-.hud-floating-badge { background: rgba(0,0,0,.8); border: 1px solid var(--flora-orange); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 12px; }
-
-/* SECTION: Hero */
-.hero-wrap { padding-bottom: 0; }
-.town-hero-banner { text-align: center; padding: clamp(32px, 5vh, 68px) 12px; margin-bottom: 24px; border-bottom: 4px solid var(--flora-orange); border-radius: 16px; position: relative; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,.8);
-  background: #021a30 radial-gradient(circle at 50% 30%, rgba(2,88,163,.65), rgba(0,0,0,.95) 75%); }
-.seat-badge { display: inline-block; padding: 8px 20px; background: var(--flora-orange); color: #fff; font: 700 14px var(--font-label); text-transform: uppercase; letter-spacing: 1px; border-radius: 6px; margin-bottom: 14px; }
-.town-title { margin: 0; font: 900 clamp(2.2rem, 6vw, 4.5rem)/1.1 var(--font-head); letter-spacing: 1px; }
-.outlined-headline { color: #fff; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 3px 3px 6px rgba(0,0,0,.9); }
-.town-established-meta { margin: 10px 0 0; font: 700 15px var(--font-label); letter-spacing: 2px; color: var(--flora-orange); }
-.river-marquee { display: block; max-width: 100%; width: fit-content; margin: 18px auto 0; padding: 8px 20px; font: 700 clamp(11px, 2.4vw, 14px) monospace; color: #fff; background: rgba(0,0,0,.75); border: 1px solid rgba(255,255,255,.2); border-radius: 22px; }
-
-/* SECTION: Pills (3) */
-.portal-pill-tabs-wrapper { width: var(--container-width); max-width: var(--content-max); margin: 0 auto 24px; display: flex; justify-content: center; position: relative; z-index: 20; }
-.portal-pill-tabs-nav { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 10px 16px; background: linear-gradient(180deg, #021a30, #041424); border: 2px solid var(--flora-orange); border-radius: 9999px; box-shadow: 0 8px 24px rgba(0,0,0,.9), 0 0 16px rgba(254,78,2,.25); }
-.portal-pill-btn { min-height: 48px; padding: 10px 28px; background: linear-gradient(180deg, #0a2d52, #02182c); color: #fff; border: 2px solid #0C71C3; border-radius: 9999px; font: 700 16px var(--font-label); text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; transition: .25s; }
-.portal-pill-btn:hover { border-color: var(--flora-orange); color: var(--flora-orange); }
-.portal-pill-btn.active { background: linear-gradient(180deg, #FE4E02, #cc3e00); color: #fff; border-color: #fff; box-shadow: 0 0 18px rgba(254,78,2,.9); }
-.portal-tab-panel { display: none; width: 100%; }
-.portal-tab-panel.active { display: block; animation: fadeInTab .35s ease-in-out; }
-@keyframes fadeInTab { from { opacity: 0; } to { opacity: 1; } }
-
-/* SECTION: Partner strips (no extra margin/border: removes the empty band) */
-.widescreen-strip-container { width: 100%; padding: 22px clamp(12px, 3vw, 40px); border-top: 3px solid var(--flora-orange); background: #02122b radial-gradient(ellipse at top, rgba(12,113,195,.35), rgba(2,18,43,.95) 70%); }
-.hero-adjacent-strip { margin: 0; border-bottom: 0; }
-.strip-above-thanks { border-bottom: 3px solid var(--flora-orange); margin-top: 24px; }
-.partners-horizontal-strip { display: flex; justify-content: center; align-items: stretch; gap: 16px; overflow-x: auto; padding-bottom: 6px; max-width: var(--content-max); margin: 0 auto; }
-.partners-horizontal-strip:empty { display: none; }
-.community-partner-card { flex: 0 1 230px; min-width: 170px; max-width: 240px; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; text-align: center; background: var(--card-surface-bg); color: var(--card-text-primary); border: 2px solid var(--card-border-color); border-radius: 8px; box-shadow: 4px 4px 0 var(--card-shadow-color); transition: transform .25s, opacity .25s; }
-.partner-logo-container { height: 85px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px; }
-.partner-logo-asset, .partner-logo-container img { max-width: 95%; max-height: 75px; width: auto; height: auto; object-fit: contain; cursor: pointer; }
-.partner-title { margin: 8px 0 6px; font: 700 15px/1.2 var(--font-head); color: var(--card-text-primary); }
-.directory-tile-link { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 12px; background: var(--flora-blue); color: #fff; border: 2px solid var(--flora-orange); border-radius: 6px; font: 700 13px var(--font-label); text-transform: uppercase; letter-spacing: .5px; }
-.directory-tile-link:hover { background: var(--flora-orange); }
-
-/* SECTION: Portal grid */
-.smlc-three-column-portal-wrapper { width: 100%; padding: clamp(28px, 5vh, 64px) clamp(12px, 4vw, 80px); border-top: 4px solid var(--flora-orange); border-bottom: 4px solid var(--flora-orange); background: #041b30 radial-gradient(circle at 50% 50%, rgba(2,88,163,.35), rgba(4,27,48,.98) 80%); }
-.portal-grid-layout-fixed { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(20px, 3vw, 56px); max-width: var(--content-max); margin: 0 auto; align-items: start; }
-.portal-column-cell-box { display: flex; flex-direction: column; gap: 32px; min-width: 0; }
-.card-module-wrapper { display: flex; flex-direction: column; }
-.et_pb_module_heading { margin: 0 0 14px; padding: 12px 16px; background: var(--flora-blue); color: #fff; font: 700 clamp(18px, 2.2vw, 24px) var(--font-head); text-align: center; border: 2px solid #000; border-radius: 4px; box-shadow: 4px 4px 0 #000; }
-
-/* SECTION: Cards (clippings) */
-.clay-county-news-box { position: relative; width: 100%; padding: 24px; background: var(--card-surface-bg); border: 2px solid var(--card-border-color); box-shadow: 6px 6px 0 var(--card-shadow-color); color: var(--card-text-primary); }
-.event-clipping { max-width: 480px; margin: 12px auto; }
-.clipping-tag { position: absolute; top: -12px; left: 15px; background: #000; color: var(--flora-orange); font: 700 11px var(--font-label); padding: 3px 10px; text-transform: uppercase; letter-spacing: 1px; }
-.event-clipping-header { text-align: center; padding: 14px 0; margin: 4px 0 18px; border-top: 4px double var(--card-border-color); border-bottom: 2px solid var(--card-border-color); }
-.event-clipping-header h2 { margin: 0; font: 900 clamp(22px, 2.6vw, 26px)/1.1 var(--font-head); text-transform: uppercase; color: var(--on-card-accent); }
-.event-clipping-sub { display: block; margin-top: 6px; font: 700 12px var(--font-label); letter-spacing: 2px; text-transform: uppercase; color: var(--card-text-secondary); }
-.event-clipping-text { margin: 0 0 18px; text-align: center; font-style: italic; line-height: 1.5; }
-.event-clipping-btn, .fb-action-btn, .spotlight-btn { display: flex; align-items: center; justify-content: center; min-height: 48px; padding: 12px; background: #222; color: #fff !important; border: 2px solid #222; font: 700 14px var(--font-label); text-transform: uppercase; letter-spacing: 1.5px; transition: .3s; }
-.event-clipping-btn:hover { background: var(--flora-blue); border-color: var(--flora-blue); }
-.fb-action-btn:hover, .spotlight-btn:hover { background: var(--flora-orange); border-color: #000; }
-.clipping-footer { display: block; text-align: center; margin-top: 14px; font: 500 11px var(--font-label); letter-spacing: 1px; text-transform: uppercase; color: var(--card-muted); }
-.news-clipping-wrapper, .newspaper-feed-chassis { padding: 24px; background: var(--card-surface-bg); color: var(--card-text-primary); border: 2px solid var(--card-border-color); box-shadow: 6px 6px 0 var(--card-shadow-color); border-radius: 6px; }
-.newspaper-feed-chassis { border-style: double; border-width: 3px; }
-.clipping-masthead { text-align: center; padding-bottom: 14px; margin-bottom: 20px; border-bottom: 4px double var(--card-border-color); }
-.black-tag { display: inline-block; padding: 6px 16px; background: #000; color: #fff; font: 700 clamp(16px, 2vw, 22px)/1 var(--font-label); text-transform: uppercase; letter-spacing: 1px; }
-.clipping-tagline { margin: 12px 0 0; font: 700 13px var(--font-label); letter-spacing: 1px; text-transform: uppercase; color: var(--card-muted); }
-#bulletin-scroller-target { max-height: 560px; overflow-y: auto; padding-right: 6px; }
-.divi-event-item { text-align: left; }
-.divi-event-date { color: var(--on-card-accent) !important; font-weight: 700; }   /* date + time match the primary color, readable on dark */
-.divi-event-title { color: var(--card-text-primary); }
-.event-info-text, .event-nav-link, .read-more-btn { color: var(--on-card-accent) !important; }
-.event-info-text { color: var(--card-text-secondary) !important; }
-.news-cards-feed-chassis { display: flex; flex-direction: column; gap: 20px; max-height: 640px; overflow-y: auto; padding: 6px 8px 6px 2px; }
-.news-matrix-card { background: var(--card-article-bg); color: var(--card-text-primary); border: 1px solid var(--card-border-color); border-radius: 6px; padding: 16px; }
-.news-matrix-card div { color: inherit; }
-.sports-scoreboard { margin-bottom: 18px; }
-.group-invitation-master { max-width: 400px; margin: 18px auto; text-align: center; border-style: double; border-width: 3px; font-family: var(--font-body); }
-.notice-tag-red { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: var(--flora-orange); color: #fff; font: 700 12px var(--font-label); padding: 4px 15px; text-transform: uppercase; border: 1px solid #222; box-shadow: 2px 2px 0 #222; white-space: nowrap; }
-.polaroid-wrap { background: #fff; padding: 10px 10px 24px; border: 1px solid #ccc; box-shadow: 3px 3px 8px rgba(0,0,0,.2); transform: rotate(-3deg); margin: 8px 0 20px; }
-.polaroid-wrap img { width: 100%; display: block; cursor: pointer; }
-.invitation-header-main { padding: 12px 0; margin-bottom: 14px; border-top: 4px double var(--card-border-color); border-bottom: 1px solid var(--card-border-color); }
-.invitation-header-main h3 { margin: 0 0 4px; font: 900 20px/1.1 var(--font-head); text-transform: uppercase; color: var(--card-text-primary); }
-.sub-header-text { display: block; font: 700 12px var(--font-label); letter-spacing: .5px; color: var(--card-muted); }
-.invitation-body-text { margin: 0 0 18px; font-style: italic; line-height: 1.5; color: var(--card-text-secondary); }
-.community-voice-footer { display: block; margin-top: 14px; font-size: 11px; letter-spacing: 1px; text-align: center; color: var(--card-muted); }
-.scrollable-directory-stream { max-height: 360px; overflow-y: auto; text-align: left; }
-.local-link-node a { color: var(--on-card-accent) !important; }
-.town-directory-container-s7 { display: flex; flex-direction: column; align-items: center; width: 100%; }
-.town-directory-banner-s7 { width: 100%; margin: 0 0 16px; background: #fff; border: 2px solid var(--card-border-color); box-shadow: 6px 6px 0 var(--card-shadow-color); border-radius: 6px; object-fit: contain; cursor: pointer; }
-.town-directory-interactive-btn-s7 { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 52px; padding: 12px 24px; background: #000; color: var(--flora-orange) !important; border: 2px solid var(--flora-orange); border-radius: 31px; font: 700 17px var(--font-label); text-align: center; transition: .3s; }
-.town-directory-interactive-btn-s7:hover { background: var(--flora-orange); color: #fff !important; }
-
-/* SECTION: Spotlight + fuel (equal height) */
-.spotlight-gas-duo-wrapper { padding-top: 24px; padding-bottom: 36px; }
-.spotlight-gas-duo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(20px, 3vw, 56px); align-items: stretch; }
-.spotlight-clipping, .fuel-monitor-billboard-card { display: flex; flex-direction: column; height: 100%; margin: 0; padding: 28px; border-radius: 6px; }
-.fuel-monitor-billboard-card { background: var(--card-surface-bg); color: var(--card-text-primary); border: 2px solid var(--card-border-color); box-shadow: 6px 6px 0 var(--card-shadow-color); cursor: pointer; }
-.sidebar-widget-title { margin: -28px -28px 20px; padding: 10px 14px; background: var(--flora-blue); color: #fff; font: 700 20px var(--font-label); text-transform: uppercase; text-align: center; border-bottom: 2px solid #000; }
-.spotlight-image-wrap { height: 220px; margin-bottom: 18px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #1a1a1a; border: 2px solid var(--card-border-color); }
-.spotlight-image-wrap img { width: 100%; height: 100%; object-fit: contain; cursor: pointer; }
-.biz-title { display: block; margin-bottom: 6px; text-align: center; font: 700 24px var(--font-head); color: var(--card-text-primary); }
-.biz-location { display: block; margin-bottom: 14px; text-align: center; font: 700 13px var(--font-label); letter-spacing: 2px; text-transform: uppercase; color: var(--flora-orange); }
-.biz-description { flex-grow: 1; margin: 0 0 20px; line-height: 1.6; color: var(--card-text-secondary); }
-.spotlight-btn { margin-top: auto; }
-.fuel-station-block { padding-bottom: 14px; margin-bottom: 14px; border-bottom: 2px solid var(--card-border-color); }
-.fuel-station-block:last-of-type { border-bottom: 0; }
-.fuel-station-header { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
-.station-logo-frame { width: 50px; height: 50px; flex-shrink: 0; overflow: hidden; border: 2px solid var(--card-border-color); border-radius: 6px; }
-.station-logo-frame img { width: 100%; height: 100%; object-fit: cover; }
-.station-meta-title { font: 700 18px var(--font-label); letter-spacing: 1px; color: var(--card-text-primary); }
-.fuel-pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.price-box { padding: 16px 8px; text-align: center; background: #000; border-radius: 6px; box-shadow: inset 0 0 10px rgba(0,0,0,.9); }
-.price-type-label { display: block; margin-bottom: 4px; font: 700 13px var(--font-label); color: #aaa; text-transform: uppercase; }
-.price-value-regular, .price-value-diesel { font: 900 clamp(26px, 3vw, 32px) var(--font-label); }
-.price-value-regular { color: #39ff14; text-shadow: 0 0 10px rgba(57,255,20,.7); }
-.price-value-diesel { color: #eb1c24; text-shadow: 0 0 10px rgba(235,28,36,.7); }
-.fuel-note, .sync-timestamp-label { margin-top: auto; padding-top: 12px; text-align: center; font-size: 13px; font-style: italic; color: var(--card-muted); }
-
-/* SECTION: Discover (POI wide, slideshow side, then History, Article) */
-.section3-split-layout { width: 100%; padding: clamp(28px, 5vh, 64px) clamp(12px, 3.5vw, 80px); border-top: 3px solid rgba(254,78,2,.4); border-bottom: 3px solid rgba(254,78,2,.4); background: #0b1a28 linear-gradient(135deg, rgba(2,88,163,.85), rgba(10,15,24,.95)); }
-.section3-container-grid { display: flex; flex-direction: column; gap: 32px; max-width: var(--content-max); margin: 0 auto; }
-.section3-row-1 { text-align: center; }
-.section3-main-title { margin: 0 0 14px; font: 900 clamp(1.8rem, 4vw, 3.2rem)/1.15 var(--font-head); color: var(--flora-orange); text-shadow: 2px 2px 5px rgba(0,0,0,.9); }
-.section3-intro-text { max-width: 1000px; margin: 0 auto; line-height: 1.6; font-size: clamp(1rem, 1.3vw, 1.2rem); color: #fff; }
-.section3-row-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: clamp(20px, 3.5vw, 56px); align-items: stretch; }
-.section3-left-col, .section3-right-col { display: flex; flex-direction: column; min-width: 0; }
-.section3-landmark-card { height: 100%; display: flex; flex-direction: column; padding: clamp(18px, 2.5vw, 32px); background: rgba(18,18,18,.92); border: 1px solid rgba(255,255,255,.2); border-top: 5px solid var(--flora-orange); border-radius: 8px; }
-.section3-landmark-title { margin: 0 0 18px; padding-bottom: 14px; font: 700 clamp(1.3rem, 2.2vw, 2rem)/1.2 var(--font-head); color: var(--flora-orange); border-bottom: 1px solid rgba(255,255,255,.2); }
-.section3-landmark-images { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.section3-landmark-img-wrap { margin: 0; }
-.section3-landmark-img-wrap img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border: 2px solid #333; border-radius: 6px; cursor: pointer; display: block; }
-.section3-landmark-caption { margin-top: 8px; text-align: center; font: 700 15px var(--font-label); color: #fff; }
-.section3-landmark-desc { flex-grow: 1; margin: 16px 0 0; padding-top: 14px; border-top: 1px dashed rgba(255,255,255,.2); line-height: 1.7; color: #ddd; }
-.section3-slideshow-box { height: 100%; padding: 16px; background: #111; border: 2px solid #333; border-radius: 8px; }
-.slider-viewport { position: relative; width: 100%; height: clamp(240px, 32vw, 420px); overflow: hidden; background: #000; border: 2px solid #222; }
-.slider-slide { position: absolute; inset: 0; opacity: 0; transition: opacity .8s ease-in-out; }
-.slider-slide.active { opacity: 1; }
-.slider-slide img { width: 100%; height: 100%; object-fit: contain; background: #0a0a0a; cursor: pointer; }
-.slider-caption { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px; background: rgba(0,0,0,.85); color: #fff; font: 700 1.1rem var(--font-head); text-align: center; }
-.timeline-wrap { padding-top: 24px; }
-.historical-timeline-chassis-wrapper { padding: clamp(28px, 5vh, 64px) clamp(14px, 3.5vw, 80px); border-radius: 12px; border-top: 4px solid var(--flora-orange); border-bottom: 4px solid var(--flora-orange); background: #021a30 linear-gradient(180deg, rgba(2,88,163,.9), rgba(4,27,48,.95)); }
-.timeline-row-1-header { text-align: center; margin-bottom: 32px; }
-.main-timeline-center-title-node { margin: 0 0 10px; font: 900 clamp(2rem, 4vw, 3.4rem) var(--font-head); color: var(--flora-orange); text-shadow: 2px 2px 8px #000; }
-.main-timeline-sub-caption-node { margin: 0; font-size: clamp(1rem, 1.3vw, 1.2rem); font-weight: 700; color: #fff; }
-.timeline-row-2-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: clamp(16px, 2.5vw, 36px); align-items: stretch; }
-.history-card { display: flex; flex-direction: column; height: 100%; padding: 24px; text-align: left; cursor: pointer; background: var(--card-surface-bg); color: var(--card-text-primary); border: 2px solid var(--card-border-color); border-radius: 6px; box-shadow: 6px 6px 0 var(--card-shadow-color); }
-.history-card h2 { margin: 0 0 10px; padding-bottom: 8px; font: 900 clamp(26px, 3vw, 32px)/1.1 var(--font-head); color: var(--on-card-accent); border-bottom: 2px solid var(--card-border-color); }
-.history-card h3 { margin: 0 0 10px; font: 700 20px/1.3 var(--font-head); color: var(--card-text-primary); }
-.history-card p { flex-grow: 1; margin: 0 0 14px; font-size: 15px; line-height: 1.55; color: var(--card-text-secondary); }
-.read-more-trigger { display: inline-block; margin-bottom: 14px; font: 700 13px var(--font-label); letter-spacing: 1px; text-transform: uppercase; text-decoration: underline; color: var(--flora-orange); }
-.history-img-box { height: 180px; margin-top: auto; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #1a1a1a; border: 2px solid var(--card-border-color); border-radius: 4px; }
-.history-img-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
-.section4-single-article-chassis { padding-top: 24px; }
-.section4-left-article-box { overflow: hidden; background: var(--card-article-bg); color: var(--card-text-primary); border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,.6); font-family: var(--font-body); }
-.section4-centered-article-header { padding: clamp(24px, 4vh, 48px) 20px; text-align: center; color: #fff; border-bottom: 8px solid var(--flora-orange); background: linear-gradient(180deg, var(--flora-blue), #1a1a1a); }
-.category-tag { display: inline-block; margin-bottom: 16px; padding: 6px 18px; background: var(--flora-orange); color: #fff; font: 700 .95rem var(--font-label); letter-spacing: 2px; text-transform: uppercase; }
-.article-stacked-title { margin: 0 auto 14px; font: 900 clamp(1.8rem, 4vw, 3.2rem)/1.15 var(--font-head); color: #fff; }
-.article-stacked-deck { max-width: 900px; margin: 0 auto; font-size: clamp(1rem, 1.6vw, 1.25rem); font-style: italic; color: #fff; }
-.article-body-content { padding: clamp(18px, 3.5vw, 48px); font-size: clamp(1rem, 1.4vw, 1.15rem); background: var(--card-article-bg); }
-.article-body-content p { margin: 0 0 1.4em; line-height: 1.8; color: var(--card-text-primary); max-width: 80ch; }
-.article-media-frame { margin: 22px 0; }
-.article-body-content img { display: block; width: 100%; max-height: 440px; margin: 0 auto; object-fit: contain; background: #111; border: 2px solid var(--card-border-color); border-radius: 6px; box-shadow: 4px 4px 0 var(--card-shadow-color); cursor: pointer; }
-.article-body-content figcaption { margin-top: 8px; text-align: center; font-size: .95rem; font-style: italic; color: var(--card-muted); }
-
-/* SECTION: Thank You */
-.section10-message-chassis { margin-top: 32px; margin-bottom: 32px; padding: 20px; background: #031222 linear-gradient(135deg, rgba(2,88,163,.8), rgba(10,10,10,.95)); border: 1px solid var(--flora-orange); border-radius: 8px; }
-.section10-proclamation-card-box { padding: clamp(18px, 3vw, 30px); text-align: center; background: var(--card-surface-bg); color: var(--card-text-primary); border: 2px solid var(--card-border-color); box-shadow: 6px 6px 0 var(--card-shadow-color); border-radius: 6px; }
-.proclamation-body-text { margin: 0 0 16px; font-size: clamp(15px, 1.6vw, 18px); font-weight: 700; line-height: 1.7; }
-.proclamation-contact-text { margin: 0; font: 700 16px var(--font-label); letter-spacing: 1px; text-transform: uppercase; word-break: break-word; }
-.proclamation-contact-text a { color: var(--on-card-accent); font-weight: 900; text-decoration: underline; }
-
-/* SECTION: Lightbox */
-.lightbox-overlay-mask { position: fixed; inset: 0; z-index: 10000; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,.88); backdrop-filter: blur(8px); cursor: pointer; }
-.lightbox-modal-window { display: flex; flex-direction: column; width: 100%; max-width: 56rem; max-height: 92vh; overflow: hidden; cursor: default; background: var(--card-surface-bg); color: var(--card-text-primary); border: 2px solid var(--card-border-color); box-shadow: 12px 12px 0 var(--card-shadow-color); border-radius: 6px; }
-.lightbox-header-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 2px solid var(--card-border-color); font: 700 18px var(--font-label); }
-.lightbox-close-btn { min-width: 44px; min-height: 44px; background: none; border: 0; font-size: 28px; color: inherit; cursor: pointer; }
-.lightbox-body { padding: 18px; overflow-y: auto; }
-.lightbox-body h3 { margin: 0; font: 700 clamp(20px, 3vw, 26px) var(--font-head); }
-#lightbox-target-date { margin: 6px 0 12px; font-size: 13px; font-weight: 700; color: var(--on-card-accent); }
-#lightbox-target-story { font-size: 16px; line-height: 1.6; }
-#lightbox-img-wrapper { margin-top: 14px; text-align: center; }
-#lightbox-target-img { max-width: 100%; max-height: 62vh; object-fit: contain; border-radius: 4px; }
-.lightbox-footer-bar { padding: 12px 16px; text-align: center; font-size: 12px; color: var(--card-muted); border-top: 1px solid var(--card-border-color); }
-#lightbox-target-link { display: inline-block; margin-top: 8px; padding: 10px 18px; background: var(--flora-blue); color: #fff !important; border-radius: 4px; font: 700 14px var(--font-label); }
-
-/* SECTION: Footer + back to top */
-.site-global-footer-matrix { padding: 28px 0 24px; text-align: center; background: #000; border-top: 4px solid var(--flora-orange); }
-.footer-simple-inner { max-width: 900px; margin: 0 auto; padding: 0 16px; }
-.site-global-footer-matrix p { margin: 6px 0; font-size: 15px; color: #fff; }
-#footer-build-version-stamp { font: 700 12px monospace; color: var(--flora-orange); }
-#back-to-top-anchor { position: fixed; right: 16px; bottom: 16px; z-index: 500; min-width: 44px; min-height: 44px; background: #222; color: #fff; border: 1px solid var(--flora-orange); border-radius: 4px; cursor: pointer; }
-
-/* SECTION: Responsive. Ultra-wide is capped by --content-max; tablets get 2 columns; phones 1 */
-@media (min-width: 2200px) { body { font-size: 18px; } :root { --content-max: 1900px; } }
-@media (max-width: 1199px) {
-  .portal-grid-layout-fixed { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .portal-column-cell-box:nth-child(3) { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
-}
-@media (max-width: 1023px) {
-  .menu-inner { justify-content: space-between; }
-  .mobile-nav-toggle-btn { display: inline-flex; }
-  .translate-box-header { position: static; }
-  .navigation-drawer-panel { display: none; position: absolute; top: 100%; left: 0; width: 100%; padding: 14px 0; background: #041b30; border-bottom: 4px solid var(--flora-orange); box-shadow: 0 14px 28px rgba(0,0,0,.95); z-index: 9999; }
-  .navigation-drawer-panel.drawer-open { display: block; }
-  .menu-links { flex-direction: column; gap: 8px; }
-  .menu-links li { width: 88%; margin: 0 auto; }
-  .menu-links a { width: 100%; padding: 12px 16px; background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.15); }
-  .section3-row-2 { grid-template-columns: 1fr; }
-  .weather-alert-bar { top: 64px; }
-}
-@media (max-width: 899px) { .spotlight-gas-duo-grid { grid-template-columns: 1fr; } }
-@media (max-width: 767px) {
-  .main-container { width: 100%; }
-  .portal-pill-tabs-nav { width: 100%; border-radius: 14px; }
-  .portal-pill-btn { flex: 1 1 100%; padding: 10px 16px; }
-  .portal-grid-layout-fixed, .portal-column-cell-box:nth-child(3) { grid-template-columns: 1fr; display: flex; flex-direction: column; }
-  .portal-grid-layout-fixed { display: grid; grid-template-columns: 1fr; }
-  .partners-horizontal-strip { overflow: hidden; }
-  .community-partner-card { flex: 0 0 88%; max-width: 340px; min-width: 240px; margin: 0 auto; padding: 16px 14px; }
-  .partner-logo-container { height: 105px; }
-  .section3-landmark-images { grid-template-columns: 1fr; }
-  .article-body-content p { text-align: left; }
-  .portal-floating-hud-track { display: none; }
-}
-@media (max-width: 479px) {
-  body { font-size: 15px; }
-  .clay-county-news-box, .news-clipping-wrapper, .newspaper-feed-chassis, .spotlight-clipping, .fuel-monitor-billboard-card { padding: 16px; }
-  .sidebar-widget-title { margin: -16px -16px 16px; font-size: 17px; }
-  .fuel-pricing-grid { gap: 8px; }
-  .river-marquee { border-radius: 12px; white-space: normal; text-align: center; }
-}
-@media (max-width: 359px) {
-  .town-title { font-size: 1.9rem; }
-  .fuel-pricing-grid { grid-template-columns: 1fr; }
-  .menu-links li { width: 96%; }
+function triggerGoogleTranslateUpdate(targetNode) {
+    if (!targetNode) return;
+    try {
+        if (window.google && window.google.translate && window.google.translate.TranslateElement) {
+            const fontTags = document.querySelectorAll('font[color]');
+            if (fontTags.length > 0) {
+                targetNode.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+    } catch(e) {
+        // Soft fail if translate script is still loading
+    }
 }
 
-/* SECTION: Weather pill (sits in the pill row; click opens the 5-day forecast) */
-.weather-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 6px 20px; background: linear-gradient(180deg, #0a2d52, #02182c); color: #fff; border: 2px solid #0C71C3; border-radius: 9999px; font: 700 15px var(--font-label); letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: .25s; }
-.weather-pill:hover { border-color: var(--flora-orange); box-shadow: 0 0 14px rgba(254,78,2,.5); }
-.weather-pill-icon img { width: 30px; height: 30px; display: block; object-fit: contain; }
-.weather-pill-temp { font-size: 17px; }
-.weather-pill-detail { font-size: 12px; font-weight: 500; letter-spacing: .5px; color: #cfe6ff; text-transform: none; }
-@media (max-width: 767px) { .weather-pill { flex: 1 1 100%; justify-content: center; flex-wrap: wrap; } }
+// Line 82: Master Town Alias & Numeric Area ID Map (Strict Integer Matching)
+const TOWN_ALIAS_MAP = {
+    "HOME": { 
+        primaryName: "Clay County", 
+        dbTownKey: "Flora", 
+        jsonKey: "all", 
+        gasKey: ["louisville", "flora", "clay-city", "xenia"], 
+        historyKey: "all", 
+        areaId: 0,
+        linkedAreaIds: [0],
+        keywords: ["CLAY COUNTY", "CLAY COUNTY HOSPITAL", "CLAY COUNTY COURTHOUSE"], 
+        isHome: true, 
+        seatBadge: "Clay County Seat", 
+        estMeta: "Est. 1824 | Zip Code 62824", 
+        riverMarquee: "COMMUNITY DIGITAL NETWORK MAP", 
+        themeAccent: "#0258A3" 
+    },
+    "CLAY COUNTY": { 
+        primaryName: "Clay County", 
+        dbTownKey: "Flora", 
+        jsonKey: "all", 
+        gasKey: ["louisville", "flora", "clay-city", "xenia"], 
+        historyKey: "all", 
+        areaId: 0,
+        linkedAreaIds: [0],
+        keywords: ["CLAY COUNTY", "CLAY COUNTY HOSPITAL", "CLAY COUNTY COURTHOUSE"], 
+        isHome: true, 
+        seatBadge: "Clay County Seat", 
+        estMeta: "Est. 1824 | Zip Code 62824", 
+        riverMarquee: "COMMUNITY DIGITAL NETWORK MAP", 
+        themeAccent: "#0258A3" 
+    },
+    "CLAY CITY": { 
+        primaryName: "Clay City", 
+        dbTownKey: "Clay City", 
+        jsonKey: "clay_city", 
+        gasKey: ["clay-city"], 
+        historyKey: "clay_city", 
+        areaId: 3,
+        linkedAreaIds: [3],
+        keywords: ["CLAY CITY", "CC", "CUBIES", "BULLDOGS"], 
+        isHome: false, 
+        seatBadge: "Clay County Hub", 
+        estMeta: "Est. 1868 | Zip Code 62824", 
+        riverMarquee: "HOME OF THE CLAY CITY BULLDOGS & CUBIES", 
+        themeAccent: "#4A154B" 
+    },
+    "FLORA": { 
+        primaryName: "Flora", 
+        dbTownKey: "Flora", 
+        jsonKey: "flora", 
+        gasKey: ["flora"], 
+        historyKey: "flora", 
+        areaId: 2,
+        linkedAreaIds: [2],
+        keywords: [
+            "FLORA", 
+            "WOLVES", 
+            "FLORA WOLVES", 
+            "WOLVES FOOTBALL", 
+            "WOLF PUP", 
+            "FLOYD HENSON", 
+            "FLOYD HENSON JR HIGH", 
+            "FHJH", 
+            "FLO"
+        ], 
+        isHome: false, 
+        seatBadge: "Clay County Commerce Center", 
+        estMeta: "Est. 1854 | Zip Code 62839", 
+        riverMarquee: "HOME OF THE FLORA WOLVES • COMMERCE CENTER", 
+        themeAccent: "#0258A3" 
+    },
+    "LOUISVILLE": { 
+        primaryName: "Louisville", 
+        dbTownKey: "Louisville", 
+        jsonKey: "louisville", 
+        gasKey: ["louisville"], 
+        historyKey: "louisville", 
+        areaId: 1,
+        linkedAreaIds: [1, 7, 9], // Louisville, Bible Grove, Hoosier
+        keywords: ["LOUISVILLE", "NORTH CLAY", "NC", "INDIANS", "NC CARDINALS"], 
+        isHome: false, 
+        seatBadge: "Clay County Seat", 
+        estMeta: "Est. 1836 | Zip Code 62858", 
+        riverMarquee: "HOME OF THE NORTH CLAY CARDINALS", 
+        themeAccent: "#EB1C24" 
+    },
+    "XENIA": { 
+        primaryName: "Xenia", 
+        dbTownKey: "Xenia", 
+        jsonKey: "xenia", 
+        gasKey: ["xenia"], 
+        historyKey: "xenia", 
+        areaId: 4,
+        linkedAreaIds: [4],
+        keywords: ["XENIA"], 
+        isHome: false, 
+        seatBadge: "Clay County Gateway", 
+        estMeta: "Est. 1834 | Zip Code 62899", 
+        riverMarquee: "HISTORIC PRIDE & RURAL HERITAGE", 
+        themeAccent: "#1C5640" 
+    },
+    "SAILOR SPRINGS": { 
+        primaryName: "Sailor Springs", 
+        dbTownKey: "Sailor Springs", 
+        jsonKey: "sailor_springs", 
+        gasKey: ["louisville", "clay-city"], 
+        historyKey: "sailor_springs", 
+        areaId: 5,
+        linkedAreaIds: [5],
+        keywords: ["SAILOR SPRINGS"], 
+        isHome: false, 
+        seatBadge: "Clay County Village", 
+        estMeta: "Est. 1879 | Zip Code 62879", 
+        riverMarquee: "HISTORIC MINERAL SPRINGS HAVEN", 
+        themeAccent: "#00695C" 
+    }
+};
 
-/* SECTION: Discover swap (article beside POI, slideshow where the article was) */
-.side-article { padding: 0 !important; width: 100%; height: 100%; }
-.side-article .section4-left-article-box { height: 100%; }
-.side-article .article-stacked-title { font-size: clamp(1.5rem, 2.4vw, 2.2rem); }
-.side-article .article-body-content { padding: 20px; }
-.slideshow-wrap { padding-top: 24px; }
-.slideshow-wrap .section3-slideshow-box { max-width: 1100px; margin: 0 auto; }
+// Line 185: Active Town Config Resolver
+function getActiveTownConfig() {
+    try {
+        const hashRoute = (window.location.hash || "").replace("#/", "").replace("#", "").replace(/-/g, " ").toUpperCase();
+        if (hashRoute && TOWN_ALIAS_MAP[hashRoute]) return TOWN_ALIAS_MAP[hashRoute];
 
-/* SECTION: Newspaper clippings (news cards) */
-.news-matrix-card { position: relative; padding: 20px 20px 16px !important; background: #f3ead4 linear-gradient(180deg, rgba(255,255,255,.35), rgba(120,90,30,.1)) !important; color: #1a1a1a !important; border: 1px solid #b9a982 !important; border-radius: 2px !important; box-shadow: 3px 4px 0 rgba(0,0,0,.5); outline: 1px dashed #8b7a50; outline-offset: -8px; font-family: var(--font-body); }
-.news-matrix-card:nth-child(odd) { transform: rotate(-.3deg); }
-.news-matrix-card:nth-child(even) { transform: rotate(.3deg); }
-.news-matrix-card img { filter: grayscale(.85) sepia(.25) contrast(1.05); border: 1px solid #8b7a50; border-radius: 0 !important; }
-.news-matrix-card div { color: #1a1a1a !important; }
-.news-matrix-card div:nth-of-type(1) { font: 700 11px var(--font-label) !important; letter-spacing: 2px; text-transform: uppercase; color: #7a1f1f !important; border-bottom: 1px solid #8b7a50; padding-bottom: 4px; }
-.news-matrix-card div:nth-of-type(2) { font: 900 clamp(19px, 2vw, 23px)/1.15 var(--font-head) !important; margin: 8px 0 !important; }
-.news-matrix-card div:nth-of-type(3) { font-size: 14px !important; line-height: 1.55; text-align: justify; hyphens: auto; }
-.news-matrix-card div:nth-of-type(3)::first-letter { float: left; font: 900 2.6em/.85 var(--font-head); padding: 3px 6px 0 0; }
-.news-matrix-card .read-more-btn { color: #7a1f1f !important; font: 700 12px var(--font-label) !important; letter-spacing: 1px; text-transform: uppercase; text-decoration: underline; }
-.news-matrix-card a { color: #0b4a8a !important; }
+        const pageTitle = (document.title || "").toUpperCase();
+        for (const key in TOWN_ALIAS_MAP) {
+            if (pageTitle.includes(key)) return TOWN_ALIAS_MAP[key];
+        }
 
-/* SECTION: Calendar readability (dates, times and gray detail text) */
-.divi-event-date { color: var(--on-card-accent) !important; font-size: 13px !important; letter-spacing: .3px; }
-.divi-event-item div[style*="color:#555"], .divi-event-item div[style*="color:#333"] { color: var(--card-text-secondary) !important; }
+        const htmlTownAttr = (document.documentElement.getAttribute('data-town') || document.body?.getAttribute('data-town') || "").toUpperCase();
+        if (htmlTownAttr) {
+            for (const key in TOWN_ALIAS_MAP) {
+                if (key === htmlTownAttr || TOWN_ALIAS_MAP[key].primaryName.toUpperCase() === htmlTownAttr) {
+                    return TOWN_ALIAS_MAP[key];
+                }
+            }
+        }
+    } catch(e) {
+        console.warn("Town resolution notice:", e.message);
+    }
+
+    return TOWN_ALIAS_MAP["FLORA"];
+}
+
+let ACTIVE_TOWN = getActiveTownConfig();
+
+const DEFAULT_APP_CONFIG = {
+    regional_endpoints: {
+        apps_script_bulletin_url: "//script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec",
+        gas_widget: "//werewolf3788.github.io/SMLC/update-gas.html"
+    }
+};
+
+// Global Timers and Subscriptions
+let globalSlideshowTicker = null;
+let gasMonitorRotator = null;
+let topCarouselInterval = null;
+let bottomCarouselInterval = null;
+
+let activeFbRefSections = null;
+let activeFbRefGlobalSections = null;
+let activeFbRefLinksTown = null;
+let activeFbRefLinksGlobal = null;
+let activeFbRefMenu = null;
+let activeFbRefPartnersTown = null;
+let activeFbRefPartnersGlobal = null;
+let activeFbRefWeather = null;
+let activeFbRefForecast = null;
+let activeFbRefSports = null;
+
+let unsubscribeFirestoreEvents = null;
+let unsubscribeFirestoreNews = null;
+
+window.calendarCachedEvents = [];
+window.historyCachedTimeline = [];
+window.newsCacheBlock = [];
+window.townPartnersPool = [];
+window.globalPartnersPool = [];
+window.fiveDayForecastCache = [];
+
+/* ==========================================================================
+   HELPERS & PROTOCOL UTILITIES
+   ========================================================================== */
+const MAX_AGE_DAYS = 7;
+
+function escapeHtml(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function isWithinMaxAge(raw) {
+    const t = new Date(raw).getTime();
+    return isNaN(t) ? true : (Date.now() - t) <= MAX_AGE_DAYS * 86400000;
+}
+
+function parseFuelDate(raw) {
+    const m = String(raw || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s*@?\s*(\d{1,2}):(\d{2})\s*([AP]M)?\s*(CST|CDT)?/i);
+    if (!m) return null;
+    let h = +m[4];
+    const ap = (m[6] || '').toUpperCase();
+    if (ap === 'PM' && h < 12) h += 12;
+    if (ap === 'AM' && h === 12) h = 0;
+    const offset = /CDT/i.test(m[7] || '') ? 5 : 6;
+    return new Date(Date.UTC(+m[3], +m[1] - 1, +m[2], h + offset, +m[5]));
+}
+
+function unwrapFs(v) {
+    if (!v) return null;
+    if ('stringValue' in v) return v.stringValue;
+    if ('integerValue' in v) return parseInt(v.integerValue, 10);
+    if ('doubleValue' in v) return v.doubleValue;
+    if ('booleanValue' in v) return v.booleanValue;
+    if ('timestampValue' in v) return v.timestampValue;
+    if (v.arrayValue) return (v.arrayValue.values || []).map(unwrapFs);
+    if (v.mapValue) { const o = {}; for (const k in (v.mapValue.fields || {})) o[k] = unwrapFs(v.mapValue.fields[k]); return o; }
+    return null;
+}
+
+async function fetchCollectionRest(name) {
+    const res = await fetch(`https://firestore.googleapis.com/v1/projects/smlc-fuel-monitor/databases/(default)/documents/${name}?pageSize=300`);
+    if (!res.ok) return [];
+    const json = await res.json();
+    return (json.documents || []).map(d => { const o = {}; for (const k in (d.fields || {})) o[k] = unwrapFs(d.fields[k]); return o; });
+}
+
+function eventCalStamp(iso, allDay) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    if (allDay) return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(d).replace(/-/g, '');
+    return d.toISOString().replace(/[-:]|\.\d{3}/g, '');
+}
+
+function googleCalUrlForEvent(ev, loc) {
+    const p = new URLSearchParams({ text: ev.title || 'Community Event', dates: `${eventCalStamp(ev.start, ev.isAllDay)}/${eventCalStamp(ev.end || ev.start, ev.isAllDay)}`, details: ev.desc || '', location: loc });
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&${p.toString()}`;
+}
+
+function icsDataForEvent(ev, loc) {
+    const s = eventCalStamp(ev.start, ev.isAllDay), e = eventCalStamp(ev.end || ev.start, ev.isAllDay);
+    const dt = ev.isAllDay ? ';VALUE=DATE' : '';
+    const esc = t => String(t || '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/[,;]/g, m => '\\' + m);
+    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//SMLC Community Network//EN', 'BEGIN:VEVENT',
+        `UID:${s}-${String(ev.title || '').replace(/[^a-z0-9]/gi, '').slice(0, 20)}@smlc`,
+        `DTSTAMP:${eventCalStamp(new Date().toISOString(), false)}`, `DTSTART${dt}:${s}`, `DTEND${dt}:${e}`,
+        `SUMMARY:${esc(ev.title)}`, `LOCATION:${esc(loc)}`, `DESCRIPTION:${esc(ev.desc)}`, 'END:VEVENT', 'END:VCALENDAR'];
+    return 'data:text/calendar;charset=utf8,' + encodeURIComponent(lines.join('\r\n'));
+}
+
+const FUEL_STATIONS = {
+    "48100":  { town: "flora", display: "Flora", name: "CASEY'S", logo: "Casey's.png" },
+    "48101":  { town: "flora", display: "Flora", name: "HUCK'S", logo: "Hucks.png" },
+    "120226": { town: "flora", display: "Flora", name: "FAST STOP", logo: "Fast stop.png" },
+    "128128": { town: "flora", display: "Flora", name: "MACH 1", logo: "Mach 1.png" },
+    "48026":  { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" },
+    "171711": { town: "clay-city", display: "Clay City", name: "CASEY'S", logo: "Casey's.png" },
+    "181818": { town: "xenia", display: "Xenia", name: "KNAPP'S", logo: "Knapps.png" }
+};
+
+function resetAllActiveTimers() {
+    if (globalSlideshowTicker) { clearInterval(globalSlideshowTicker); globalSlideshowTicker = null; }
+    if (gasMonitorRotator) { clearInterval(gasMonitorRotator); gasMonitorRotator = null; }
+    if (topCarouselInterval) { clearInterval(topCarouselInterval); topCarouselInterval = null; }
+    if (bottomCarouselInterval) { clearInterval(bottomCarouselInterval); bottomCarouselInterval = null; }
+}
+
+function cleanRawUrl(urlStr) {
+    if (!urlStr) return "";
+    return urlStr
+        .replace("github.com", "raw.githubusercontent.com")
+        .replace("/blob/", "/")
+        .replace("/edit/", "/");
+}
+
+function normalizeImageUrl(rawUrl) {
+    if (!rawUrl || typeof rawUrl !== 'string') return null;
+    let url = rawUrl.trim();
+    if (!url || url === 'null' || url === 'undefined') return null;
+
+    if (url.includes('drive.google.com')) {
+        const fileIdMatch = url.match(/\/file\/d\/([^\/]+)/) || url.match(/[?&]id=([^&]+)/);
+        if (fileIdMatch && fileIdMatch[1]) {
+            return `//lh3.googleusercontent.com/d/${fileIdMatch[1]}`;
+        }
+    }
+    return url.replace(/^https?:/, '');
+}
+
+function escapeJsString(str) {
+    if (!str && str !== 0) return "";
+    return String(str)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '&quot;')
+        .replace(/\n/g, ' ')
+        .replace(/\r/g, '');
+}
+
+function extractText(val) {
+    if (!val && val !== 0) return "";
+    if (typeof val === 'string') return val;
+    if (typeof val === 'number') return String(val);
+    if (typeof val === 'object') {
+        const inner = val.content || val.text || val.title || val.name || val.header1 || val.header2 || val.paragraph1 || val.paragraph2 || val.description || val.value || "";
+        if (typeof inner === 'object') return extractText(inner);
+        if (typeof inner === 'string' || typeof inner === 'number') return String(inner);
+        for (const k in val) {
+            if (typeof val[k] === 'string' && val[k].trim()) return val[k];
+            if (typeof val[k] === 'object') {
+                const res = extractText(val[k]);
+                if (res) return res;
+            }
+        }
+    }
+    return "";
+}
+
+function linkifyRawUrls(text) {
+    if (!text) return "";
+    const plain = String(text).replace(/<\s*br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, ' ');
+    return escapeHtml(plain).replace(/(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi, (match) => {
+        const url = match.replace(/[.,;:!?\)]+$/, '');
+        const tail = match.slice(url.length);
+        const href = /^https?:/i.test(url) ? url : '//' + url;
+        return `<a href="${href}" target="_blank" rel="noopener" style="color:var(--link-bright-blue); text-decoration:underline; word-break:break-all;">${url}</a>${tail}`;
+    }).replace(/\n/g, '<br>');
+}
+
+function buildTurnByTurnNavigationUrl(rawAddress) {
+    if (!rawAddress) return "#";
+    const cleanAddress = encodeURIComponent(rawAddress.trim());
+    const isAppleDevice = /iPad|iPhone|iPod|Macintosh/i.test(navigator.userAgent) && !window.MSStream;
+
+    if (isAppleDevice) {
+        return `maps://?daddr=${cleanAddress}`;
+    }
+    return `https://www.google.com/maps/dir/?api=1&destination=${cleanAddress}`;
+}
+
+function formatToCentralTime(rawTimestamp) {
+    if (!rawTimestamp) return "Live Update";
+    try {
+        const d = new Date(rawTimestamp);
+        if (isNaN(d.getTime())) return String(rawTimestamp);
+        return new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/Chicago',
+            timeZoneName: 'short',
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        }).format(d);
+    } catch(e) {
+        return String(rawTimestamp);
+    }
+}
+
+function cleanCalendarDate(rawDate) {
+    if (!rawDate || rawDate === "undefined" || rawDate === "null") return "Date to be Announced";
+    try {
+        const d = new Date(rawDate);
+        if (isNaN(d.getTime())) return String(rawDate);
+        return new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/Chicago',
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        }).format(d);
+    } catch(e) {
+        return String(rawDate);
+    }
+}
+
+function cleanCalendarTime(rawTime, rawDateFallback = null) {
+    if (!rawTime || typeof rawTime !== 'string') return "All Day Event";
+    const t = rawTime.trim().toUpperCase();
+    if (!t || t === "TBA" || t === "TIME TBA" || t === "00:00" || t === "NULL" || t === "UNDEFINED") {
+        return "All Day Event";
+    }
+
+    if (rawTime.includes('T') || rawTime.endsWith('Z')) {
+        try {
+            const d = new Date(rawTime);
+            if (!isNaN(d.getTime())) {
+                return new Intl.DateTimeFormat('en-US', {
+                    timeZone: 'America/Chicago',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                }).format(d);
+            }
+        } catch(e) {}
+    }
+
+    if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(rawTime.trim())) {
+        try {
+            const baseDate = rawDateFallback ? new Date(rawDateFallback) : new Date();
+            const [hours, minutes] = rawTime.trim().split(':');
+            baseDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0);
+            return new Intl.DateTimeFormat('en-US', {
+                timeZone: 'America/Chicago',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            }).format(baseDate);
+        } catch(e) {}
+    }
+
+    return rawTime.trim();
+}
+
+function applyHighDensityScrollLimits(containerElement, itemCount, maxHeightPx = 480) {
+    if (!containerElement) return;
+    if (itemCount > 5) {
+        containerElement.style.maxHeight = `${maxHeightPx}px`;
+        containerElement.style.overflowY = "auto";
+        containerElement.style.paddingRight = "6px";
+    } else {
+        containerElement.style.maxHeight = "none";
+        containerElement.style.overflowY = "visible";
+        containerElement.style.paddingRight = "0px";
+    }
+}
+
+function trackGa4Event(eventName, eventParams = {}) {
+    try {
+        if (typeof window.gtag === 'function') {
+            window.gtag('event', eventName, eventParams);
+        }
+    } catch(e) {
+        console.warn("GA4 event dispatch notice:", e.message);
+    }
+}
+
+function attachUtmParameters(urlStr) {
+    if (!urlStr || urlStr.startsWith('#') || /^(javascript:|tel:|mailto:|maps:|webcal:|data:)/i.test(urlStr)) return urlStr;
+    try {
+        const u = new URL(urlStr, window.location.href);
+        if (!/^https?:$/.test(u.protocol) || u.hostname === window.location.hostname) return urlStr;
+        if (u.searchParams.has('utm_source')) return u.toString();
+        u.searchParams.set('utm_source', 'smlc_portal');
+        u.searchParams.set('utm_medium', 'town_portal');
+        u.searchParams.set('utm_campaign', (document.title || 'smlc_portal').trim());
+        return u.toString();
+    } catch (e) {
+        return urlStr;
+    }
+}
+
+function resolveLinkTarget(urlStr) {
+    if (!urlStr || urlStr === "#" || urlStr.startsWith("javascript:") || urlStr.startsWith("#")) {
+        return '_self';
+    }
+    try {
+        const targetUrlObj = new URL(urlStr, window.location.origin);
+        return targetUrlObj.hostname === window.location.hostname ? '_self' : '_blank';
+    } catch(e) {
+        return '_blank';
+    }
+}
+
+// Global Outbound and Contact Click Tracking
+document.addEventListener('click', (e) => {
+    const anchor = e.target.closest('a');
+    if (!anchor || !anchor.href) return;
+
+    const href = anchor.href.toLowerCase();
+
+    if (href.startsWith('tel:')) {
+        trackGa4Event('contact_phone_click', {
+            phone_number: anchor.href.replace('tel:', ''),
+            page_location: window.location.href
+        });
+        return;
+    }
+
+    if (href.includes('wa.me') || href.includes('whatsapp.com')) {
+        trackGa4Event('contact_whatsapp_click', {
+            target_url: anchor.href,
+            page_location: window.location.href
+        });
+        return;
+    }
+
+    if (href.startsWith('mailto:')) {
+        trackGa4Event('contact_email_click', {
+            email_address: anchor.href.replace('mailto:', ''),
+            page_location: window.location.href
+        });
+        return;
+    }
+
+    if (href.includes('maps.google.com') || href.includes('maps.apple.com') || href.startsWith('maps:')) {
+        trackGa4Event('navigation_directions_click', {
+            map_service: (href.includes('apple.com') || href.startsWith('maps:')) ? 'apple_maps' : 'google_maps',
+            destination: anchor.href
+        });
+        return;
+    }
+
+    try {
+        const targetUrlObj = new URL(anchor.href, window.location.origin);
+        if (targetUrlObj.hostname !== window.location.hostname) {
+            trackGa4Event('outbound_click', {
+                destination_domain: targetUrlObj.hostname,
+                target_url: anchor.href,
+                link_text: (anchor.innerText || "").trim().substring(0, 100)
+            });
+        }
+    } catch(err) {}
+}, true);
+
+// Defensive image setter: unhides valid images, falls back cleanly without breaking layout
+function safeSetImageSource(imgElement, srcUrl, fallbackWrapper = null, altText = "") {
+    if (!imgElement) return;
+    const parentContainer = fallbackWrapper || imgElement.closest('figure, .spotlight-image-wrap, .section3-landmark-img-wrap, .polaroid-wrap, .article-media-frame') || imgElement.parentElement;
+    const defaultPlaceholder = '//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png';
+
+    if (altText) imgElement.alt = altText;
+
+    if (!srcUrl || srcUrl.trim() === "" || srcUrl === "null" || srcUrl === "undefined") {
+        if (parentContainer) parentContainer.style.display = "none";
+        imgElement.style.display = "none";
+        return;
+    }
+
+    imgElement.style.display = "block";
+    if (parentContainer) parentContainer.style.display = "block";
+
+    imgElement.onerror = () => {
+        if (imgElement.src.includes('smlc-web.png')) {
+            if (parentContainer) parentContainer.style.display = "none";
+            imgElement.style.display = "none";
+        } else {
+            imgElement.src = defaultPlaceholder;
+        }
+    };
+
+    imgElement.src = srcUrl;
+}
+
+function closeLightbox(event) {
+    const overlay = document.getElementById('portal-global-lightbox');
+    if (!overlay) return;
+    if (!event || event.target === overlay || event.target.classList.contains('lightbox-close-btn') || event.target.tagName === 'BUTTON') {
+        overlay.style.display = 'none';
+    }
+}
+
+function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = "") {
+    const overlay = document.getElementById('portal-global-lightbox');
+    const targetImg = document.getElementById('lightbox-target-img');
+    const actionRow = document.getElementById('lightbox-action-row');
+    const actionLink = document.getElementById('lightbox-target-link');
+
+    const cleanTitle = title || '';
+    const cleanDate = dateText || '';
+    const cleanBody = bodyText || '';
+    const cleanAlt = String(altText || '').replace(/^#+\s*/gm, '').replace(/[*_`]/g, '');
+    const cleanTargetUrl = targetUrl || '';
+
+    if (imgSrc && targetImg) {
+        safeSetImageSource(targetImg, imgSrc, null, cleanAlt || cleanTitle);
+        if (targetImg.parentElement) targetImg.parentElement.style.display = 'block';
+    } else if (targetImg && targetImg.parentElement) {
+        targetImg.parentElement.style.display = 'none';
+    }
+
+    const dateEl = document.getElementById('lightbox-target-date'); 
+    if (dateEl) dateEl.innerHTML = cleanDate || '';
+
+    const titleEl = document.getElementById('lightbox-target-title'); 
+    if (titleEl) titleEl.innerText = cleanTitle || '';
+
+    const parsedBody = linkifyRawUrls(cleanBody || '');
+    const parsedAlt = linkifyRawUrls(cleanAlt || '');
+
+    const displayStory = (cleanAlt && cleanAlt !== cleanTitle) 
+        ? `<div style="font-style:italic; font-size:14px; color:#444; margin-bottom:12px; border-left:3px solid var(--primary); padding-left:10px;">Details: ${parsedAlt}</div>${parsedBody}`
+        : parsedBody;
+
+    const storyEl = document.getElementById('lightbox-target-story'); 
+    if (storyEl) storyEl.innerHTML = displayStory;
+
+    if (cleanTargetUrl && actionLink && actionRow) {
+        actionLink.href = attachUtmParameters(cleanTargetUrl);
+        actionLink.target = resolveLinkTarget(cleanTargetUrl);
+        actionRow.style.display = 'block';
+    } else if (actionRow) {
+        actionRow.style.display = 'none';
+    }
+
+    if (overlay) {
+        overlay.style.display = 'flex';
+        overlay.onclick = closeLightbox;
+    }
+
+    trackGa4Event('modal_lightbox_open', {
+        title: cleanTitle || 'Asset Lightbox',
+        target_url: cleanTargetUrl || ''
+    });
+}
+
+function openHistoryLightboxModal(idx) {
+    const item = window.historyCachedTimeline[idx];
+    if (!item) return;
+
+    fireLightbox(
+        item.imageUrl || item.image || '',
+        item.title || 'Historical Landmark',
+        `YEAR ${item.year}`,
+        item.description || '',
+        item.link || '',
+        item.alt || item.title || ''
+    );
+}
+
+function openCalendarLightboxModal(idx) {
+    const ev = window.calendarCachedEvents[idx];
+    if (!ev) return;
+    const loc = ev.addr || ev.location || (ACTIVE_TOWN.primaryName + ', IL');
+    const nav = buildTurnByTurnNavigationUrl(loc);
+    const meta = `${escapeHtml(ev.displayDate || cleanCalendarDate(ev.start))}<br>Location: <a href="${escapeHtml(nav)}" target="_blank" rel="noopener" style="color:var(--on-card-accent); font-weight:bold; text-decoration:underline;">${escapeHtml(loc)} (Directions &rarr;)</a>`;
+    const links = Array.isArray(ev.links) ? ev.links.filter(l => l && l.url) : [];
+    const extra = links.slice(1).map(l => `${l.label || 'Link'}: ${l.url}`).join('\n');
+    fireLightbox(normalizeImageUrl(ev.image), ev.title, meta,
+        (ev.desc || 'No additional details provided.') + (extra ? '\n\n' + extra : ''),
+        links[0] ? links[0].url : '', ev.title);
+}
+
+function openNewsLightboxModal(idx) {
+    const story = window.newsCacheBlock[idx];
+    if (!story) return;
+
+    fireLightbox(
+        story.image || '',
+        story.title || 'Local News Dispatch',
+        cleanCalendarDate(story.date || story.pubDate) + (story.location ? ` | ${story.location}` : ''),
+        story.full_story || story.excerpt || story.description || '',
+        story.link || '',
+        story.title || 'Local News Dispatch'
+    );
+}
+
+window.toggleMobileMenu = function() {
+    const nav = document.getElementById('site-navigation-drawer');
+    const toggleBtn = document.getElementById('mobile-menu-toggle-btn');
+    if (!nav) return;
+
+    const isOpen = nav.classList.contains('drawer-open');
+    if (isOpen) {
+        nav.classList.remove('drawer-open');
+        if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
+    } else {
+        nav.classList.add('drawer-open');
+        if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'true');
+    }
+};
+
+window.closeMobileMenu = function() {
+    const nav = document.getElementById('site-navigation-drawer');
+    const toggleBtn = document.getElementById('mobile-menu-toggle-btn');
+    if (nav) nav.classList.remove('drawer-open');
+    if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
+};
+
+// ============================================================================
+// WEATHER ALERTS ENGINE: Alert Bar & Dismissible Popup Modal Card (LIVE RTDB)
+// Listens to: /master_county_data/weather_alerts
+// ============================================================================
+function bindFirebaseWeatherAlertsEngine(db) {
+    if (!db) return;
+    const alertBar = document.getElementById('county-weather-alert-bar');
+    const alertHeadline = document.getElementById('weather-alert-headline');
+    const alertInstruction = document.getElementById('weather-alert-instruction');
+
+    try {
+        if (activeFbRefWeather) activeFbRefWeather.off();
+        activeFbRefWeather = db.ref('master_county_data/weather_alerts');
+
+        activeFbRefWeather.on('value', (snapshot) => {
+            const data = snapshot.val();
+
+            if (data && (data.hasActiveAlert === true || data.hasActiveAlert === 'true')) {
+                const severity = (data.severity || 'WARNING').toUpperCase();
+                const headlineText = data.headline || 'Active Weather Alert for Clay County';
+                const instructionText = data.instruction || '';
+                const updatedCdt = formatToCentralTime(data.updatedAt);
+
+                let themeColor = '#f57f17';
+                if (severity.includes('EXTREME') || severity.includes('TORNADO')) {
+                    themeColor = '#d32f2f';
+                } else if (severity.includes('SEVERE')) {
+                    themeColor = '#e65100';
+                }
+
+                if (alertBar) {
+                    if (alertHeadline) alertHeadline.innerText = headlineText;
+                    if (alertInstruction) {
+                        alertInstruction.innerText = instructionText ? `${instructionText} (Updated: ${updatedCdt})` : `Updated: ${updatedCdt}`;
+                        alertInstruction.style.display = 'block';
+                    }
+                    alertBar.style.backgroundColor = themeColor;
+                    alertBar.style.display = 'block';
+                    triggerGoogleTranslateUpdate(alertBar);
+                }
+
+                showWeatherAlertModalPopup(headlineText, instructionText, severity, updatedCdt, themeColor);
+            } else {
+                if (alertBar) alertBar.style.display = 'none';
+                hideWeatherAlertModalPopup();
+            }
+        });
+    } catch (err) {
+        console.warn("Weather alert engine notice:", err.message);
+    }
+}
+
+function showWeatherAlertModalPopup(headline, instruction, severity, updatedCdt, themeColor) {
+    let popupOverlay = document.getElementById('weather-alert-popup-modal');
+    if (!popupOverlay) {
+        popupOverlay = document.createElement('div');
+        popupOverlay.id = 'weather-alert-popup-modal';
+        popupOverlay.style.cssText = "position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; padding:16px;";
+        document.body.appendChild(popupOverlay);
+    }
+
+    popupOverlay.innerHTML = `
+        <div style="background:#fff; border-top:6px solid ${themeColor}; border-radius:8px; max-width:550px; width:100%; box-shadow:0 12px 32px rgba(0,0,0,0.4); overflow:hidden; font-family:sans-serif; text-align:left;">
+            <div style="background:#f8f9fa; padding:14px 20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:12px; font-weight:bold; color:${themeColor}; text-transform:uppercase; letter-spacing:0.5px;">EMERGENCY BULLETIN &bull; ${severity}</span>
+                <button type="button" onclick="hideWeatherAlertModalPopup()" style="background:none; border:none; font-size:22px; line-height:1; cursor:pointer; color:#666;">&times;</button>
+            </div>
+            <div style="padding:20px; max-height:65vh; overflow-y:auto;">
+                <h3 style="margin:0 0 10px 0; font-size:18px; color:#111; font-weight:bold;">${headline}</h3>
+                <div style="font-size:11px; color:#777; margin-bottom:12px; font-weight:bold;">Issued: ${updatedCdt}</div>
+                <div style="font-size:14px; line-height:1.6; color:#333; white-space:pre-line;">${linkifyRawUrls(instruction || 'Please monitor local emergency weather dispatches and take safety precautions.')}</div>
+            </div>
+            <div style="background:#f1f3f5; padding:12px 20px; text-align:right;">
+                <button type="button" onclick="hideWeatherAlertModalPopup()" style="background:${themeColor}; color:#fff; border:none; padding:8px 18px; border-radius:4px; font-weight:bold; font-size:13px; cursor:pointer;">Acknowledge & Close</button>
+            </div>
+        </div>
+    `;
+    popupOverlay.style.display = 'flex';
+    triggerGoogleTranslateUpdate(popupOverlay);
+}
+
+window.hideWeatherAlertModalPopup = function() {
+    const popupOverlay = document.getElementById('weather-alert-popup-modal');
+    if (popupOverlay) popupOverlay.style.display = 'none';
+};
+
+// ============================================================================
+// GLOBAL WEATHER FORECAST ENGINE: Live Sub-Bar Pill & 5-Day Lightbox (LIVE RTDB)
+// Listens to: /master_county_data/weather_forecast
+// ============================================================================
+function bindFirebaseWeatherForecastEngine(db) {
+    if (!db) return;
+    try {
+        if (activeFbRefForecast) activeFbRefForecast.off();
+        activeFbRefForecast = db.ref('master_county_data/weather_forecast');
+
+        activeFbRefForecast.on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+
+            const current = data.current || {};
+            const rawFiveDay = data.fiveDay || [];
+            window.fiveDayForecastCache = Array.isArray(rawFiveDay) ? rawFiveDay : Object.values(rawFiveDay);
+
+            renderNavbarWeatherWidget(current);
+        });
+    } catch(err) {
+        console.warn("Weather forecast engine notice:", err.message);
+    }
+}
+
+function renderNavbarWeatherWidget(current) {
+    const pill = document.getElementById('portal-weather-pill');
+    if (pill) {
+        const iconSpan = document.getElementById('weather-pill-icon');
+        const tempSpan = document.getElementById('weather-pill-temp');
+        const detailSpan = document.getElementById('weather-pill-detail');
+
+        const temp = current.temp ? `${Math.round(current.temp)}°F` : '--°F';
+        const condition = current.condition || 'Clear';
+        const iconUrl = normalizeImageUrl(current.icon);
+        const updatedCdt = formatToCentralTime(current.updatedAt);
+
+        if (iconSpan) {
+            iconSpan.innerHTML = iconUrl ? `<img src="${iconUrl}" alt="" onerror="this.style.display='none';">` : '';
+        }
+        if (tempSpan) {
+            tempSpan.innerText = temp;
+        }
+        if (detailSpan) {
+            detailSpan.innerText = `${condition} (5-Day \u2192)`;
+        }
+
+        pill.title = `Current Weather: ${condition} | Updated: ${updatedCdt} | Click to view 5-day forecast`;
+        pill.onclick = openFiveDayForecastModal;
+        triggerGoogleTranslateUpdate(pill);
+        return;
+    }
+
+    // Fallback: Primary nav attachment
+    let widgetEl = document.getElementById('portal-weather-current-badge');
+    const navBarTarget = document.getElementById('dynamic-menu-links')?.parentElement 
+        || document.querySelector('.header-nav, .nav-container, nav, header');
+
+    if (!widgetEl) {
+        widgetEl = document.createElement('div');
+        widgetEl.id = 'portal-weather-current-badge';
+        widgetEl.style.cssText = "display:inline-flex; align-items:center; gap:8px; cursor:pointer; background:#181818; color:#fff; padding:5px 12px; border-radius:18px; border:1px solid #333; margin-left:auto; vertical-align:middle; transition:background 0.2s ease;";
+        widgetEl.onclick = openFiveDayForecastModal;
+
+        if (navBarTarget) {
+            navBarTarget.style.display = "flex";
+            navBarTarget.style.alignItems = "center";
+            navBarTarget.appendChild(widgetEl);
+        } else {
+            document.body.appendChild(widgetEl);
+        }
+    }
+
+    const temp = current.temp ? `${Math.round(current.temp)}°F` : '--°F';
+    const condition = current.condition || 'Clear';
+    const iconUrl = normalizeImageUrl(current.icon);
+    const updatedCdt = formatToCentralTime(current.updatedAt);
+
+    widgetEl.innerHTML = `
+        ${iconUrl ? `<img src="${iconUrl}" alt="" style="width:26px; height:26px; object-fit:contain; display:block;" onerror="this.style.display='none';">` : ''}
+        <span style="font-size:13px; font-weight:bold;">${temp}</span>
+        <span style="font-size:13px; font-weight:bold;">&bull; ${condition}</span>
+        <span style="font-size:11px; color:var(--flora-orange, #ff9800); margin-left:2px;">(5-Day &rarr;)</span>
+    `;
+    widgetEl.title = `Current Weather | Updated: ${updatedCdt} | Click to view 5-day forecast`;
+    triggerGoogleTranslateUpdate(widgetEl);
+}
+
+window.openFiveDayForecastModal = function() {
+    let modalEl = document.getElementById('weather-fiveday-forecast-modal');
+    if (!modalEl) {
+        modalEl = document.createElement('div');
+        modalEl.id = 'weather-fiveday-forecast-modal';
+        modalEl.style.cssText = "position:fixed; inset:0; z-index:99998; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; padding:16px;";
+        modalEl.onclick = (e) => {
+            if (e.target === modalEl) modalEl.style.display = 'none';
+        };
+        document.body.appendChild(modalEl);
+    }
+
+    const forecastDays = window.fiveDayForecastCache || [];
+    const cardsHtml = forecastDays.map(day => {
+        if (!day) return '';
+        const dayName = day.dayOfWeek || cleanCalendarDate(day.date);
+        const iconUrl = normalizeImageUrl(day.icon);
+        const condition = day.condition || 'Variable';
+        const high = day.high !== undefined ? `${Math.round(day.high)}°` : '--°';
+        const low = day.low !== undefined ? `${Math.round(day.low)}°` : '--°';
+        const precipChance = day.precipProbability !== undefined ? `${day.precipProbability}%` : '0%';
+        const precipInches = day.precipExpectedInches ? `${day.precipExpectedInches}"` : '0"';
+
+        return `
+            <div style="flex:1 1 120px; min-width:120px; background:#1e1e1e; border:1px solid #333; border-radius:8px; padding:12px; text-align:center; color:#fff;">
+                <div style="font-size:12px; font-weight:bold; text-transform:uppercase; color:#bbb; margin-bottom:6px;">${dayName}</div>
+                ${iconUrl ? `<img src="${iconUrl}" alt="" style="width:38px; height:38px; margin:0 auto 6px auto; display:block;" onerror="this.style.display='none';">` : ''}
+                <div style="font-size:12px; color:#ddd; font-weight:bold; min-height:30px; display:flex; align-items:center; justify-content:center;">${condition}</div>
+                <div style="font-size:15px; font-weight:bold; margin:6px 0;">
+                    <span style="color:#ff8a65;">${high}</span> / <span style="color:#90caf9;">${low}</span>
+                </div>
+                <div style="font-size:11px; color:#aaa; border-top:1px dashed #333; padding-top:6px; margin-top:6px;">
+                    Rain: ${precipChance} (${precipInches})
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    modalEl.innerHTML = `
+        <div style="background:#141414; border:1px solid #333; border-radius:10px; max-width:760px; width:100%; box-shadow:0 12px 32px rgba(0,0,0,0.5); overflow:hidden; font-family:sans-serif;">
+            <div style="background:#222; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333;">
+                <span style="font-size:14px; font-weight:bold; color:#fff; text-transform:uppercase; letter-spacing:0.5px;">Clay County 5-Day Extended Weather Outlook</span>
+                <button type="button" onclick="document.getElementById('weather-fiveday-forecast-modal').style.display='none';" style="background:none; border:none; font-size:24px; color:#aaa; cursor:pointer;">&times;</button>
+            </div>
+            <div style="padding:20px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center; max-height:75vh; overflow-y:auto;">
+                ${cardsHtml || '<div style="color:#aaa; padding:20px;">No forecast telemetry available.</div>'}
+            </div>
+            <div style="background:#1c1c1c; padding:10px 20px; text-align:right;">
+                <button type="button" onclick="document.getElementById('weather-fiveday-forecast-modal').style.display='none';" style="background:#0258A3; color:#fff; border:none; padding:6px 16px; border-radius:4px; font-weight:bold; font-size:12px; cursor:pointer;">Close</button>
+            </div>
+        </div>
+    `;
+    modalEl.style.display = 'flex';
+    triggerGoogleTranslateUpdate(modalEl);
+};
+
+// ============================================================================
+// SPORTS SCOREBOARD ENGINE: Live Multi-Level Feeder (LIVE RTDB)
+// Listens to: /master_county_data/sports
+// ============================================================================
+function bindFirebaseSportsEngine(db) {
+    if (!db) return;
+    const sportsContainer = document.getElementById('town-sports-scoreboard-target');
+    if (!sportsContainer) return;
+
+    try {
+        if (activeFbRefSports) activeFbRefSports.off();
+        activeFbRefSports = db.ref('master_county_data/sports');
+
+        activeFbRefSports.on('value', (snapshot) => {
+            const sports = snapshot.val();
+            if (!sports) {
+                sportsContainer.style.display = 'none';
+                return;
+            }
+
+            const activeTownKey = (ACTIVE_TOWN.jsonKey || ACTIVE_TOWN.primaryName || "").toLowerCase().replace(/\s+/g, '_');
+            let displayHtml = '';
+
+            const formatGameCard = (game, label) => {
+                if (!game || !game.homeTeam) return '';
+                const isFinal = (game.status || '').toUpperCase() === 'FINAL';
+                const badgeColor = isFinal ? '#2e7d32' : 'var(--flora-orange)';
+
+                return `
+                    <div class="sports-score-card" style="background:#111; border:1px solid #333; border-radius:6px; padding:12px; margin-bottom:10px; color:#fff;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <span style="font-size:11px; font-weight:bold; text-transform:uppercase; color:#bbb;">${label} &bull; ${game.sport || 'Athletics'}</span>
+                            <span style="background:${badgeColor}; font-size:10px; font-weight:bold; padding:2px 8px; border-radius:3px; text-transform:uppercase;">${game.status || 'UPCOMING'}</span>
+                        </div>
+                        <div style="font-size:15px; font-weight:bold; margin-bottom:4px;">
+                            ${game.homeTeam} ${isFinal ? `(${game.homeScore})` : ''} vs ${game.awayTeam} ${isFinal ? `(${game.awayScore})` : ''}
+                        </div>
+                        <div style="font-size:12px; color:#ddd; font-style:italic;">
+                            ${game.summary || ''}
+                        </div>
+                    </div>
+                `;
+            };
+
+            if (ACTIVE_TOWN.isHome) {
+                let allCards = '';
+                if (sports.flora) {
+                    allCards += formatGameCard(sports.flora.high_school, 'Flora HS');
+                    allCards += formatGameCard(sports.flora.junior_high, 'Floyd Henson JH');
+                }
+                if (sports.louisville) {
+                    allCards += formatGameCard(sports.louisville.high_school, 'North Clay HS');
+                    allCards += formatGameCard(sports.louisville.junior_high, 'North Clay JH');
+                }
+                if (sports.clay_city) {
+                    allCards += formatGameCard(sports.clay_city.high_school, 'Clay City HS');
+                    allCards += formatGameCard(sports.clay_city.junior_high, 'Clay City JH');
+                }
+                displayHtml = allCards;
+            } else if (sports[activeTownKey]) {
+                const townData = sports[activeTownKey];
+                displayHtml += formatGameCard(townData.high_school, `${ACTIVE_TOWN.primaryName} High School`);
+                displayHtml += formatGameCard(townData.junior_high, `${ACTIVE_TOWN.primaryName} Junior High`);
+            }
+
+            if (displayHtml.trim() !== '') {
+                sportsContainer.innerHTML = displayHtml;
+                sportsContainer.style.display = 'block';
+                triggerGoogleTranslateUpdate(sportsContainer);
+            } else {
+                sportsContainer.style.display = 'none';
+            }
+        });
+    } catch (err) {
+        console.warn("Sports engine notice:", err.message);
+    }
+}
+
+// === FIREBASE DATABASE INITIALIZATION ===
+function bindFirebaseServices() {
+    const firebaseConfig = {
+        apiKey: "AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg",
+        authDomain: "smlc-fuel-monitor.firebaseapp.com",
+        databaseURL: "https://smlc-fuel-monitor-default-rtdb.firebaseio.com",
+        projectId: "smlc-fuel-monitor",
+        storageBucket: "smlc-fuel-monitor.firebasestorage.app",
+        messagingSenderId: "22397440085",
+        appId: "1:22397440085:web:c00e716858ed58895bc4dc",
+        measurementId: "G-FHJNXDB9BB"
+    };
+
+    try {
+        if (typeof firebase === 'undefined') return;
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        
+        const db = firebase.database();
+
+        initializeFirebaseGasMonitor(db);
+        bindFirebaseMenuEngine(db);
+        bindFirebaseLocalLinksEngine(db);
+        bindFirebaseSemanticSectionsEngine(db);
+        bindFirebasePartnersEngine(db);
+        bindFirebaseWeatherAlertsEngine(db);
+        bindFirebaseWeatherForecastEngine(db);
+        bindFirebaseSportsEngine(db);
+    } catch(e) {
+        console.warn("Firebase initialization notice:", e.message);
+    }
+}
+
+// === MENU ENGINE (LIVE RTDB) ===
+function bindFirebaseMenuEngine(db) {
+    if (!db) return;
+    const menuContainer = document.getElementById('dynamic-menu-links');
+    if (!menuContainer) return;
+
+    try {
+        if (activeFbRefMenu) activeFbRefMenu.off();
+        activeFbRefMenu = db.ref(`master_county_data/global/menu`);
+
+        activeFbRefMenu.on('value', (snapshot) => {
+            const val = snapshot.val();
+            if (!val) return;
+
+            const rawItems = Array.isArray(val) ? val : Object.values(val);
+            if (rawItems.length === 0) return;
+
+            menuContainer.innerHTML = rawItems.map(item => {
+                if (!item) return '';
+                const name = item.name || 'Link';
+                const targetUrl = attachUtmParameters(item.website || '#');
+                const normImageUrl = normalizeImageUrl(item.imageUrl);
+                const altText = item.alt || name;
+                const linkTarget = resolveLinkTarget(item.website);
+
+                const activeTownName = (ACTIVE_TOWN.primaryName || "").toUpperCase();
+                const itemNameUpper = name.toUpperCase();
+                const isActive = (activeTownName === itemNameUpper || (ACTIVE_TOWN.isHome && itemNameUpper === "HOME") || (window.location.hash || "").toUpperCase().includes(itemNameUpper.replace(/\s+/g, '-'))) ? 'class="active"' : '';
+
+                const imgTag = normImageUrl ? `<img src="${normImageUrl}" alt="" class="menu-thumb-icon" onclick="event.preventDefault(); event.stopPropagation(); fireLightbox('${escapeJsString(normImageUrl)}', '${escapeJsString(name)}', 'MENU ASSET', '${escapeJsString(altText)}', '${escapeJsString(targetUrl)}', '${escapeJsString(altText)}')" onerror="this.style.display='none';" />` : '';
+
+                return `
+                    <li>
+                        <a href="${targetUrl}" ${isActive} data-ga-label="Nav_${name.replace(/\s+/g, '')}" target="${linkTarget}" onclick="window.closeMobileMenu();">
+                            ${imgTag}
+                            <span>${name}</span>
+                        </a>
+                    </li>
+                `;
+            }).join('');
+            triggerGoogleTranslateUpdate(menuContainer);
+        });
+    } catch(err) {
+        console.warn("Firebase Menu Engine error:", err.message);
+    }
+}
+
+// === LOCAL LINKS ENGINE (LIVE RTDB) ===
+function bindFirebaseLocalLinksEngine(db) {
+    if (!db) return;
+    const linkTarget = document.getElementById('local-links-target-container');
+    if (!linkTarget) return;
+
+    const townName = ACTIVE_TOWN.dbTownKey || "Flora";
+    let townLinks = [];
+    let globalLinks = [];
+
+    const renderCombinedLinks = () => {
+        try {
+            const rawCombined = [...townLinks, ...globalLinks];
+            const filteredLinks = rawCombined.filter(item => {
+                if (!item) return false;
+                const title = extractText(item.title || item.name);
+                const url = item.website || item.url || "";
+                return (title && url && !url.toLowerCase().startsWith('mailto:'));
+            });
+
+            if (filteredLinks.length > 0) {
+                applyHighDensityScrollLimits(linkTarget, filteredLinks.length, 360);
+                linkTarget.innerHTML = filteredLinks.map(link => {
+                    const name = extractText(link.title || link.name) || "Local Resource";
+                    const rawUrl = link.website || link.url || "#";
+                    const targetUrl = attachUtmParameters(rawUrl);
+                    const linkTargetAttr = resolveLinkTarget(rawUrl);
+                    const displayLoc = link.location || link.town || ACTIVE_TOWN.primaryName;
+
+                    return `
+                        <div class="local-link-node" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #ddd; text-align: left;">
+                            <a href="${targetUrl}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} class="local-link-title-anchor" data-ga-label="local_link" style="font-weight: bold; font-size: 15px; color: var(--link-bright-blue); text-decoration: underline;">
+                                ${name}
+                            </a>
+                            <span style="font-size: 11px; color: #666; margin-left: 6px;">(${displayLoc})</span>
+                        </div>
+                    `;
+                }).join('');
+                triggerGoogleTranslateUpdate(linkTarget);
+            }
+        } catch(e) {
+            console.warn("Render combined links notice:", e.message);
+        }
+    };
+
+    try {
+        if (activeFbRefLinksTown) activeFbRefLinksTown.off();
+        if (activeFbRefLinksGlobal) activeFbRefLinksGlobal.off();
+
+        activeFbRefLinksTown = db.ref(`master_county_data/towns/${townName}/sections/town_links/links`);
+        activeFbRefLinksGlobal = db.ref(`master_county_data/global/sections/town_links/links`);
+
+        activeFbRefLinksTown.on('value', (snap) => {
+            const val = snap.val();
+            townLinks = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
+            renderCombinedLinks();
+        });
+
+        activeFbRefLinksGlobal.on('value', (snap) => {
+            const val = snap.val();
+            globalLinks = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
+            renderCombinedLinks();
+        });
+    } catch(e) {
+        console.warn("Local links subscription notice:", e.message);
+    }
+}
+
+// ============================================================================
+// SEMANTIC SECTIONS ENGINE (LIVE RTDB: POI, History, Article, Spotlight, Slideshow)
+// ============================================================================
+function bindFirebaseSemanticSectionsEngine(db) {
+    if (!db) return;
+    const townName = ACTIVE_TOWN.dbTownKey || "Flora";
+
+    try {
+        if (activeFbRefSections) activeFbRefSections.off();
+        if (activeFbRefGlobalSections) activeFbRefGlobalSections.off();
+
+        let townSectionsData = {};
+        let globalSectionsData = {};
+
+        const renderResolvedSections = () => {
+            // 1. POINT OF INTEREST
+            const poi = townSectionsData.point_of_interest || {};
+            const poiTitleEl = document.getElementById('right-card-meta-title') || document.getElementById('discover-spotlight-title');
+            const poiAboutEl = document.getElementById('desc2-target-1');
+            const poiDescEl = document.getElementById('right-card-meta-desc1');
+
+            if (poiTitleEl && poi.title) poiTitleEl.innerText = poi.title;
+            if (poiAboutEl && poi.about_text) poiAboutEl.innerText = poi.about_text;
+            if (poiDescEl && poi.landmark_description) poiDescEl.innerHTML = linkifyRawUrls(poi.landmark_description);
+
+            const i1 = document.getElementById('dual-img-1');
+            const h1 = document.getElementById('dual-header-1');
+            const rawImg1 = poi.image1 || poi.imageUrl || poi.image;
+            const img1Url = normalizeImageUrl(rawImg1);
+            const alt1Text = poi.alt1 || poi.header1 || poi.title || "Point of Interest";
+            if (i1) {
+                safeSetImageSource(i1, img1Url, null, alt1Text);
+                if (img1Url) {
+                    i1.style.cursor = "pointer";
+                    i1.onclick = () => fireLightbox(escapeJsString(img1Url), escapeJsString(poi.header1 || poi.title || 'Point of Interest'), 'POINT OF INTEREST', escapeJsString(alt1Text), '', escapeJsString(alt1Text));
+                }
+            }
+            if (h1 && (poi.header1 || poi.title)) h1.innerText = poi.header1 || poi.title;
+
+            const i2 = document.getElementById('dual-img-2');
+            const h2 = document.getElementById('dual-header-2');
+            const img2Url = normalizeImageUrl(poi.image2);
+            const alt2Text = poi.alt2 || poi.header2 || "Landmark 2";
+            if (i2) {
+                safeSetImageSource(i2, img2Url, null, alt2Text);
+                if (img2Url) {
+                    i2.style.cursor = "pointer";
+                    i2.onclick = () => fireLightbox(escapeJsString(img2Url), escapeJsString(poi.header2 || 'Landmark 2'), 'HISTORIC LANDMARK', escapeJsString(alt2Text), '', escapeJsString(alt2Text));
+                }
+            }
+            if (h2 && poi.header2) h2.innerText = poi.header2;
+
+            // 2. SLIDESHOW (Sparse array safe)
+            const townSlides = townSectionsData.slideshow?.items ? Object.values(townSectionsData.slideshow.items).filter(Boolean) : [];
+            const globalSlides = globalSectionsData.slideshow?.items ? Object.values(globalSectionsData.slideshow.items).filter(Boolean) : [];
+
+            const blendedSlides = [];
+            const maxLen = Math.max(townSlides.length, globalSlides.length);
+            for (let i = 0; i < maxLen; i++) {
+                if (townSlides[i]) blendedSlides.push(townSlides[i]);
+                if (globalSlides[i]) blendedSlides.push(globalSlides[i]);
+            }
+
+            const viewport = document.getElementById('flora-slideshow') || document.getElementById('xenia-slideshow') || document.querySelector('.slider-viewport');
+            if (viewport && blendedSlides.length > 0) {
+                viewport.innerHTML = blendedSlides.map((item, idx) => {
+                    const imgUrl = normalizeImageUrl(item.imageUrl);
+                    const captionTitle = extractText(item.title || 'Town View');
+                    const altText = item.alt || captionTitle;
+                    const safeImg = escapeJsString(imgUrl);
+                    const safeCaption = escapeJsString(captionTitle);
+                    const safeAlt = escapeJsString(altText);
+                    const safeWeb = escapeJsString(item.website || '');
+
+                    return `
+                        <div class="slider-slide ${idx === 0 ? 'active' : ''}" style="position: absolute; inset: 0; opacity: ${idx === 0 ? 1 : 0}; transition: opacity 0.8s ease-in-out; z-index: ${idx === 0 ? 2 : 1};">
+                            <img src="${imgUrl}" alt="" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'COMMUNITY VIEW', '${safeAlt}', '${safeWeb}', '${safeAlt}')" style="width:100%; height:100%; object-fit:contain; background-color:#0a0a0a; cursor:pointer;" onerror="this.parentElement.style.display='none';">
+                            ${captionTitle ? `<div class="slider-caption">${captionTitle}</div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+
+                const slides = viewport.querySelectorAll('.slider-slide');
+                if (slides.length > 1) {
+                    let currentSlideIdx = 0;
+                    let isSlideshowPaused = false;
+
+                    viewport.addEventListener('mouseenter', () => { isSlideshowPaused = true; });
+                    viewport.addEventListener('mouseleave', () => { isSlideshowPaused = false; });
+                    viewport.addEventListener('touchstart', () => { isSlideshowPaused = true; }, { passive: true });
+                    viewport.addEventListener('touchend', () => { isSlideshowPaused = false; });
+
+                    if (globalSlideshowTicker) clearInterval(globalSlideshowTicker);
+                    globalSlideshowTicker = setInterval(() => {
+                        if (isSlideshowPaused) return;
+                        slides[currentSlideIdx].style.opacity = "0";
+                        slides[currentSlideIdx].style.zIndex = "1";
+                        currentSlideIdx = (currentSlideIdx + 1) % slides.length;
+                        slides[currentSlideIdx].style.opacity = "1";
+                        slides[currentSlideIdx].style.zIndex = "2";
+                    }, 4000);
+                }
+            }
+
+            // 3. FEATURED ARTICLE
+            const art = townSectionsData.article || {};
+            const artTitleEl = document.getElementById('sec4-article-title');
+            const artCatEl = document.getElementById('sec4-category-tag');
+            const artDeckEl = document.getElementById('sec4-article-deck');
+            const artBodyEl = document.getElementById('sec4-article-body');
+            const artImgEl = document.getElementById('sec-4-1-article-img');
+            const artCapEl = document.getElementById('sec4-img-caption');
+
+            if (artTitleEl && art.title) artTitleEl.innerText = art.title;
+            if (artCatEl && art.category) artCatEl.innerText = art.category;
+            if (artDeckEl && art.deck) artDeckEl.innerText = art.deck;
+            if (artBodyEl && art.body) {
+                artBodyEl.innerHTML = `<p style="margin-bottom:1.5em; text-align:justify; line-height:1.8;">${linkifyRawUrls(art.body)}</p>`;
+            }
+
+            const rawArtUrl = art.imageUrl || art.image || art.image1;
+            const artImgUrl = normalizeImageUrl(rawArtUrl);
+            const artAltText = art.alt || art.title || "Featured Article Image";
+
+            if (artImgEl) {
+                safeSetImageSource(artImgEl, artImgUrl, null, artAltText);
+                if (artImgUrl) {
+                    artImgEl.onclick = () => fireLightbox(
+                        escapeJsString(artImgEl.src), 
+                        escapeJsString(art.title || 'Feature'), 
+                        escapeJsString(art.category || 'Commerce & Heritage'), 
+                        escapeJsString(artAltText), 
+                        '', 
+                        escapeJsString(artAltText)
+                    );
+                }
+                if (artCapEl) artCapEl.innerText = artAltText;
+            }
+
+            // 4. BUSINESS SPOTLIGHT
+            const spot = townSectionsData.spotlight || globalSectionsData.spotlight || {};
+            const spotNameEl = document.getElementById('spotlight-asset-name');
+            const spotDescEl = document.getElementById('spotlight-asset-desc');
+            const spotLinkEl = document.getElementById('spotlight-asset-link');
+            const spotImgEl = document.getElementById('spotlight-asset-img');
+
+            if (spotNameEl && spot.name) spotNameEl.innerText = spot.name;
+            if (spotDescEl && spot.description) spotDescEl.innerText = `"${spot.description}"`;
+            if (spotLinkEl && spot.website) {
+                spotLinkEl.href = attachUtmParameters(spot.website);
+                spotLinkEl.target = resolveLinkTarget(spot.website);
+            }
+
+            const spotImgUrl = normalizeImageUrl(spot.imageUrl);
+            const spotAltText = spot.alt || spot.name || "Business Spotlight";
+            if (spotImgEl) {
+                safeSetImageSource(spotImgEl, spotImgUrl, null, spotAltText);
+                if (spotImgUrl) {
+                    spotImgEl.onclick = () => fireLightbox(escapeJsString(spotImgUrl), escapeJsString(spot.name || 'Merchant'), ACTIVE_TOWN.primaryName + ', IL', escapeJsString(spot.description || ''), escapeJsString(spot.website || ''), escapeJsString(spotAltText));
+                }
+            }
+
+            // 5. TOWN HISTORY TIMELINE
+            const historyTarget = document.getElementById('history-row-target');
+            const historyRaw = townSectionsData.history || [];
+            const historyList = (Array.isArray(historyRaw) ? historyRaw : Object.values(historyRaw)).filter(Boolean);
+
+            const historyTitleHeader = document.querySelector('.discover-history-title, #history-header-title');
+            if (historyTitleHeader) historyTitleHeader.style.display = 'none';
+
+            if (historyTarget && historyList.length > 0) {
+                historyList.sort((a, b) => {
+                    const numA = parseInt(String(a.year).replace(/[^\d]/g, '')) || 0;
+                    const numB = parseInt(String(b.year).replace(/[^\d]/g, '')) || 0;
+                    return numA - numB;
+                });
+
+                window.historyCachedTimeline = historyList;
+                applyHighDensityScrollLimits(historyTarget, historyList.length, 520);
+
+                historyTarget.innerHTML = historyList.map((evt, idx) => {
+                    const desc = evt.description || "";
+                    const isLong = desc.length > 150;
+                    const displayDesc = isLong ? desc.substring(0, 140) + "..." : desc;
+                    const imgUrl = normalizeImageUrl(evt.imageUrl);
+
+                    return `
+                        <div class="history-card" onclick="openHistoryLightboxModal(${idx})">
+                            <h2>${evt.year || '----'}</h2>
+                            <h3>${evt.title || 'Historical Landmark'}</h3>
+                            <p>${displayDesc}</p>
+                            ${isLong ? `<span class="read-more-trigger">Read Details &rarr;</span>` : ''}
+                            ${imgUrl ? `<div class="history-img-box"><img src="${imgUrl}" alt="${escapeHtml(evt.alt || evt.title || '')}" onerror="this.parentElement.style.display='none';"></div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+            }
+            triggerGoogleTranslateUpdate(document.getElementById('adaptive-time-portal-chassis'));
+        };
+
+        activeFbRefSections = db.ref(`master_county_data/towns/${townName}/sections`);
+        activeFbRefGlobalSections = db.ref(`master_county_data/global/sections`);
+
+        activeFbRefSections.on('value', (snap) => {
+            townSectionsData = snap.val() || {};
+            renderResolvedSections();
+        });
+
+        activeFbRefGlobalSections.on('value', (snap) => {
+            globalSectionsData = snap.val() || {};
+            renderResolvedSections();
+        });
+    } catch(err) {
+        console.warn("Semantic sections engine error:", err.message);
+    }
+}
+
+// === PARTNER SHOWCASE ENGINE (LIVE RTDB) ===
+function bindFirebasePartnersEngine(db) {
+    if (!db) return;
+    const townName = ACTIVE_TOWN.dbTownKey || "Flora";
+
+    try {
+        if (activeFbRefPartnersTown) activeFbRefPartnersTown.off();
+        if (activeFbRefPartnersGlobal) activeFbRefPartnersGlobal.off();
+
+        const topGrid = document.getElementById('partners-grid-bottom');
+        const bottomGrid = document.getElementById('partners-grid-top');
+
+        const renderCombinedPartners = () => {
+            const rawPool = [...window.townPartnersPool, ...window.globalPartnersPool];
+            const uniquePartners = [];
+            const seenNames = new Set();
+
+            rawPool.forEach(p => {
+                if (p && (p.name || p.imageUrl || p.image1)) {
+                    const key = (p.name || '').trim().toLowerCase();
+                    if (!seenNames.has(key)) {
+                        seenNames.add(key);
+                        uniquePartners.push(p);
+                    }
+                }
+            });
+
+            if (uniquePartners.length === 0) return;
+
+            const upperPool = [...uniquePartners];
+            const lowerPool = [...uniquePartners].reverse();
+            if (lowerPool.length > 2) {
+                const shiftCount = Math.floor(lowerPool.length / 2);
+                for (let i = 0; i < shiftCount; i++) {
+                    lowerPool.push(lowerPool.shift());
+                }
+            }
+
+            if (topGrid) renderCarouselPartnerRotator(topGrid, upperPool, 'top_strip', 0);
+            if (bottomGrid) renderCarouselPartnerRotator(bottomGrid, lowerPool, 'bottom_strip', 2);
+        };
+
+        activeFbRefPartnersTown = db.ref(`master_county_data/towns/${townName}/sections/partners`);
+        activeFbRefPartnersGlobal = db.ref(`master_county_data/global/sections/partners`);
+
+        activeFbRefPartnersTown.on('value', (snap) => {
+            const val = snap.val();
+            window.townPartnersPool = val ? (Array.isArray(val) ? val : Object.values(val)).filter(Boolean) : [];
+            renderCombinedPartners();
+        });
+
+        activeFbRefPartnersGlobal.on('value', (snap) => {
+            const val = snap.val();
+            window.globalPartnersPool = val ? (Array.isArray(val) ? val : Object.values(val)).filter(Boolean) : [];
+            renderCombinedPartners();
+        });
+    } catch(err) {
+        console.warn("Partners engine error:", err.message);
+    }
+}
+
+function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, seedOffset = 0) {
+    if (!containerElement || !partnerPool.length) return;
+
+    if (stripKey === 'top_strip' && topCarouselInterval) {
+        clearInterval(topCarouselInterval);
+        topCarouselInterval = null;
+    }
+    if (stripKey === 'bottom_strip' && bottomCarouselInterval) {
+        clearInterval(bottomCarouselInterval);
+        bottomCarouselInterval = null;
+    }
+
+    const isMobileOrTablet = window.innerWidth < 1024;
+    let poolIndex = seedOffset % partnerPool.length;
+    let isCarouselPaused = false;
+    let hoverStartTime = 0;
+
+    const createPartnerMarkup = (partner, slotIdx) => {
+        const imgUrl = normalizeImageUrl(partner.imageUrl || partner.image1);
+        const name = partner.name || 'Local Community Partner';
+        const rawUrl = partner.website || '#';
+        const link = attachUtmParameters(rawUrl);
+        const linkTargetAttr = resolveLinkTarget(rawUrl);
+        const altText = partner.alt || name;
+
+        return `
+            <div class="community-partner-card" data-partner-name="${escapeJsString(name)}" style="transition: transform 0.35s ease, opacity 0.35s ease;">
+                <div class="partner-logo-container">
+                    <img class="partner-logo-asset" src="${imgUrl}" alt="" onclick="fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')" style="cursor:pointer;" onerror="this.closest('.community-partner-card').style.display='none';">
+                </div>
+                <h4 class="partner-title">${name}</h4>
+                <a class="directory-tile-link" href="${link}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} data-ga-label="partner_cta">Visit Partner &rarr;</a>
+            </div>
+        `;
+    };
+
+    const visibleCount = isMobileOrTablet ? 1 : Math.min(5, partnerPool.length);
+    const initialCards = [];
+    for (let i = 0; i < visibleCount; i++) {
+        const p = partnerPool[(poolIndex + i) % partnerPool.length];
+        initialCards.push(createPartnerMarkup(p, i));
+    }
+    containerElement.innerHTML = initialCards.join('');
+
+    const onPauseEnter = () => {
+        isCarouselPaused = true;
+        hoverStartTime = Date.now();
+    };
+
+    const onPauseLeave = () => {
+        isCarouselPaused = false;
+        if (hoverStartTime > 0) {
+            const durationSec = Math.round((Date.now() - hoverStartTime) / 1000);
+            const activeCard = containerElement.querySelector('.community-partner-card');
+            const pName = activeCard ? activeCard.getAttribute('data-partner-name') : 'Unknown';
+            if (durationSec >= 1) {
+                trackGa4Event('partner_engagement_time', {
+                    partner_name: pName,
+                    seconds_viewed: durationSec
+                });
+            }
+            hoverStartTime = 0;
+        }
+    };
+
+    containerElement.addEventListener('mouseenter', onPauseEnter);
+    containerElement.addEventListener('mouseleave', onPauseLeave);
+    containerElement.addEventListener('touchstart', onPauseEnter, { passive: true });
+    containerElement.addEventListener('touchend', onPauseLeave);
+
+    containerElement.querySelectorAll('.community-partner-card').forEach(card => {
+        const pName = card.getAttribute('data-partner-name');
+        trackGa4Event('partner_card_impression', { partner_name: pName, strip: stripKey });
+    });
+
+    const slideDuration = isMobileOrTablet ? 3800 : 5000;
+    const intervalId = setInterval(() => {
+        if (isCarouselPaused) return;
+
+        poolIndex = (poolIndex + 1) % partnerPool.length;
+        const nextPartner = partnerPool[poolIndex];
+
+        const cards = containerElement.querySelectorAll('.community-partner-card');
+        if (cards.length > 0) {
+            cards.forEach(c => {
+                c.style.opacity = '0.3';
+                c.style.transform = 'scale(0.96)';
+            });
+
+            setTimeout(() => {
+                if (isMobileOrTablet) {
+                    containerElement.innerHTML = createPartnerMarkup(nextPartner, 0);
+                } else {
+                    const newCards = [];
+                    for (let i = 0; i < visibleCount; i++) {
+                        const p = partnerPool[(poolIndex + i) % partnerPool.length];
+                        newCards.push(createPartnerMarkup(p, i));
+                    }
+                    containerElement.innerHTML = newCards.join('');
+                }
+
+                const updatedCards = containerElement.querySelectorAll('.community-partner-card');
+                updatedCards.forEach(c => {
+                    c.style.opacity = '1';
+                    c.style.transform = 'scale(1)';
+                    const pName = c.getAttribute('data-partner-name');
+                    trackGa4Event('partner_card_impression', { partner_name: pName, strip: stripKey });
+                });
+            }, 300);
+        }
+    }, slideDuration);
+
+    if (stripKey === 'top_strip') topCarouselInterval = intervalId;
+    if (stripKey === 'bottom_strip') bottomCarouselInterval = intervalId;
+}
+
+// === FUEL MONITOR BILLBOARD (LIVE RTDB) ===
+function initializeFirebaseGasMonitor(db) {
+    const box = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
+    if (!box || !db) return;
+    const targetTowns = ACTIVE_TOWN.gasKey || ["flora"];
+    const ids = Object.keys(FUEL_STATIONS).filter(id => targetTowns.includes(FUEL_STATIONS[id].town));
+    if (!ids.length) return;
+
+    let prices = {}, network = {};
+    const refresh = () => startGasRotator(Object.assign({}, network, prices), FUEL_STATIONS, ids, box);
+    try {
+        if (window.__fuelRefs) window.__fuelRefs.forEach(r => r.off());
+        const r1 = db.ref('fuel_prices'), r2 = db.ref('billboard_network');
+        window.__fuelRefs = [r1, r2];
+        r1.on('value', s => { prices = s.val() || {}; refresh(); });
+        r2.on('value', s => { network = s.val() || {}; refresh(); });
+    } catch (e) {
+        console.warn('Gas monitor notice:', e.message);
+    }
+}
+
+function startGasRotator(data, stationConfigs, stationIds, container) {
+    if (gasMonitorRotator) { clearInterval(gasMonitorRotator); gasMonitorRotator = null; }
+    const updateUrl = cleanRawUrl(DEFAULT_APP_CONFIG.regional_endpoints.gas_widget);
+    container.style.cursor = 'pointer';
+    container.onclick = () => window.open(attachUtmParameters(updateUrl), '_blank', 'noopener');
+
+    const money = v => { const n = parseFloat(String(v === undefined || v === null ? '' : v).replace(/[^0-9.]/g, '')); return n > 0 ? `$${n.toFixed(2)}` : null; };
+    const live = stationIds.map(id => {
+        const info = data[id] || {};
+        const reg = money(info.reg !== undefined ? info.reg : (info.regular !== undefined ? info.regular : info.price));
+        const dsl = money(info.dsl !== undefined ? info.dsl : info.diesel);
+        const when = parseFuelDate(info.date || info.updated);
+        const fresh = !when || (Date.now() - when.getTime()) <= MAX_AGE_DAYS * 86400000;
+        return (reg || dsl) && fresh ? { cfg: stationConfigs[id], info: info, reg: reg, dsl: dsl, when: when } : null;
+    }).filter(Boolean);
+
+    const heading = `<div class="sidebar-widget-title">${escapeHtml(ACTIVE_TOWN.isHome ? 'CLAY COUNTY' : ACTIVE_TOWN.primaryName.toUpperCase())} FUEL INDEX MONITOR</div>`;
+    if (!live.length) {
+        container.innerHTML = heading + `<div class="fuel-note">To show prices, update.<br>Click here to open the price update page.</div>`;
+        return;
+    }
+
+    const block = s => `
+        <div class="fuel-station-block">
+            <div class="fuel-station-header">
+                <div class="station-logo-frame"><img src="//raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/${encodeURIComponent(s.cfg.logo)}" alt="" onerror="this.onerror=null; this.src='//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png';"></div>
+                <div class="station-meta-title">${escapeHtml(s.info.name || s.cfg.name)} (${escapeHtml(s.cfg.display)})</div>
+            </div>
+            <div class="fuel-pricing-grid">
+                <div class="price-box"><span class="price-type-label">REGULAR</span><span class="price-value-regular">${s.reg || '---'}</span></div>
+                <div class="price-box"><span class="price-type-label">DIESEL</span><span class="price-value-diesel">${s.dsl || '---'}</span></div>
+            </div>
+            <div class="sync-timestamp-label">Updated: ${escapeHtml(s.when ? formatToCentralTime(s.when.toISOString()) : (s.info.date || 'Live'))}</div>
+        </div>`;
+
+    let start = 0;
+    const draw = () => {
+        const count = Math.min(2, live.length - start);
+        const shown = live.slice(start, start + count);
+        container.innerHTML = heading + shown.map(block).join('') + `<div class="sync-timestamp-label">Click to update prices</div>`;
+        
+        start += 2;
+        if (start >= live.length) {
+            start = 0;
+        }
+    };
+    draw();
+    if (live.length > 2) gasMonitorRotator = setInterval(draw, 6000);
+}
+
+// === COMMUNITY BULLETIN (LIVE FIRESTORE onSnapshot) ===
+function loadCommunityBulletinFeed() {
+    const scroller = document.getElementById('bulletin-scroller-target');
+    if (!scroller) return;
+
+    if (unsubscribeFirestoreEvents) {
+        unsubscribeFirestoreEvents();
+        unsubscribeFirestoreEvents = null;
+    }
+
+    const renderEvents = (events) => {
+        const now = Date.now();
+        window.calendarCachedEvents = events
+            .filter(e => e && e.title && (!e.end || new Date(e.end).getTime() > now))
+            .sort((a, b) => new Date(a.start) - new Date(b.start));
+        const list = window.calendarCachedEvents;
+        if (!list.length) { scroller.innerHTML = '<div class="feed-loading-placeholder">No upcoming events right now.</div>'; return; }
+
+        applyHighDensityScrollLimits(scroller, list.length, 500);
+        const subG = list[0].subscribeGoogle || '';
+        const subI = (list[0].subscribeICal || '').replace(/^https?:/i, 'webcal:');
+        const banner = (txt) => (!subG && !subI) ? '' : `
+            <div style="background:#f8f9fa; border:1px solid #e2e8f0; padding:10px; border-radius:6px; margin:12px 0; text-align:center;">
+                <span style="font-size:12px; font-weight:bold; color:#222; display:block; margin-bottom:6px; text-transform:uppercase;">${txt}</span>
+                <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
+                    ${subG ? `<a href="${escapeHtml(subG)}" target="_blank" rel="noopener" style="font-size:11px; font-weight:bold; color:#fff !important; background:#1a73e8; padding:8px 12px; border-radius:4px; text-decoration:none;" data-ga-label="global_cal_google">Google Calendar</a>` : ''}
+                    ${subI ? `<a href="${escapeHtml(subI)}" style="font-size:11px; font-weight:bold; color:#fff !important; background:#1e7e34; padding:8px 12px; border-radius:4px; text-decoration:none;" data-ga-label="global_cal_ical">Apple / iCal</a>` : ''}
+                </div>
+            </div>`;
+
+        const items = list.map((ev, idx) => {
+            const loc = ev.addr || ev.location || (ACTIVE_TOWN.primaryName + ', IL');
+            const img = normalizeImageUrl(ev.image);
+            const nav = buildTurnByTurnNavigationUrl(loc);
+            const when = ev.displayDate || cleanCalendarDate(ev.start);
+            return `
+                <div class="divi-event-item" style="margin-bottom:15px; padding-bottom:12px; border-bottom:1px dashed #888; overflow:hidden;">
+                    ${img ? `<div style="float:right; margin:0 0 10px 12px;"><img src="${escapeHtml(img)}" alt="" onclick="openCalendarLightboxModal(${idx})" style="width:85px; height:85px; object-fit:cover; border-radius:6px; border:2px solid #222; cursor:pointer; display:block;" onerror="this.parentElement.style.display='none';"></div>` : ''}
+                    <div class="divi-event-date" style="font-weight:bold;">${escapeHtml(when)}</div>
+                    <div class="divi-event-title" style="font-size:16px; font-weight:bold; margin:4px 0;">${escapeHtml(ev.title)}</div>
+                    <div class="event-info-text" style="font-size:13px;"><strong>Where:</strong> <a href="${escapeHtml(nav)}" target="_blank" rel="noopener" class="event-nav-link" style="font-weight:bold; text-decoration:underline;">${escapeHtml(loc)} &rarr; Directions</a></div>
+                    <div style="font-size:13px; margin-top:4px;">${escapeHtml(ev.descShort || ev.desc || '')}</div>
+                    <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="font-weight:bold; cursor:pointer; font-size:12px; text-decoration:underline;">Read Details &rarr;</div>
+                        <span style="opacity:.5; font-size:11px;">|</span>
+                        <a href="${escapeHtml(googleCalUrlForEvent(ev, loc))}" target="_blank" rel="noopener" style="font-size:11px; color:#4f9df5 !important; font-weight:bold;" data-ga-label="single_cal_google">+ Google Cal</a>
+                        <span style="opacity:.5; font-size:11px;">|</span>
+                        <a href="${icsDataForEvent(ev, loc)}" download="${escapeHtml(String(ev.title).replace(/\s+/g, '_'))}.ics" style="font-size:11px; color:#5ac47a !important; font-weight:bold;" data-ga-label="single_cal_ical">+ iCal (.ics)</a>
+                    </div>
+                </div>`;
+        }).join('');
+
+        scroller.innerHTML = banner('Subscribe to Full County Calendar') + items + banner('County-Wide Calendar Subscriptions');
+        triggerGoogleTranslateUpdate(scroller);
+    };
+
+    try {
+        if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+            unsubscribeFirestoreEvents = firebase.firestore().collection('smlc_events').onSnapshot((snap) => {
+                const events = [];
+                snap.forEach(d => events.push(d.data()));
+                renderEvents(events);
+            }, async (err) => {
+                console.warn('Firestore real-time events failed, using REST fallback:', err.message);
+                const restEvents = await fetchCollectionRest('smlc_events');
+                renderEvents(restEvents);
+            });
+        } else {
+            fetchCollectionRest('smlc_events').then(renderEvents);
+        }
+    } catch (err) {
+        console.warn('Bulletin feed notice:', err.message);
+    }
+}
+
+// ============================================================================
+// LOCAL NEWS DISPATCHES: Direct Realtime Listener (LIVE FIRESTORE onSnapshot)
+// Strict Integer Matching via AREA_IDS tags (Tag 0 = Global, Tag 2 = Flora, etc.)
+// ============================================================================
+function loadLocalNewsDispatches() {
+    const targetGrid = document.getElementById('news-matrix-target');
+    if (!targetGrid) return;
+
+    if (unsubscribeFirestoreNews) {
+        unsubscribeFirestoreNews();
+        unsubscribeFirestoreNews = null;
+    }
+
+    const renderNews = (rawNewsList) => {
+        if (!Array.isArray(rawNewsList) || rawNewsList.length === 0) {
+            targetGrid.innerHTML = `<div style="text-align:center; padding:20px; font-style:italic; color:#666;">No localized dispatches found for ${ACTIVE_TOWN.primaryName}.</div>`;
+            return;
+        }
+
+        window.newsCacheBlock = rawNewsList.filter(item => {
+            if (!item) return false;
+            if (ACTIVE_TOWN.isHome) return true;
+
+            const itemNumericTags = Array.isArray(item.tags)
+                ? item.tags.map(t => Number(t)).filter(n => !isNaN(n))
+                : [];
+
+            if (itemNumericTags.includes(0)) return true;
+
+            const allowedAreaIds = ACTIVE_TOWN.linkedAreaIds || [ACTIVE_TOWN.areaId];
+            return itemNumericTags.some(id => allowedAreaIds.includes(id));
+        });
+
+        window.newsCacheBlock = window.newsCacheBlock
+            .filter(s => isWithinMaxAge(s.date))
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        if (window.newsCacheBlock.length > 0) {
+            applyHighDensityScrollLimits(targetGrid, window.newsCacheBlock.length, 520);
+            targetGrid.innerHTML = window.newsCacheBlock.map((story, idx) => {
+                const rawStory = story.full_story || story.excerpt || story.description || '';
+                const isLong = rawStory.length > 150;
+                const displayStory = isLong ? rawStory.substring(0, 140) + "..." : rawStory;
+                const cleanTitle = story.title || 'Local News Dispatch';
+                const imgUrl = normalizeImageUrl(story.image);
+
+                return `
+                    <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
+                        ${imgUrl ? `<img src="${imgUrl}" alt="" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})" onerror="this.style.display='none';">` : ''}
+                        <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-top:10px;">${cleanCalendarDate(story.date)}${story.source_name ? ' • ' + escapeHtml(story.source_name) : ''}</div>
+                        <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${escapeHtml(cleanTitle)}</div>
+                        <div style="font-size:14px; color:#444;">${linkifyRawUrls(displayStory)}</div>
+                        ${isLong ? `<div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: var(--primary); font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+            triggerGoogleTranslateUpdate(targetGrid);
+        } else {
+            targetGrid.innerHTML = `<div style="text-align:center; padding:20px; font-style:italic; color:#666;">No localized dispatches found for ${ACTIVE_TOWN.primaryName}.</div>`;
+        }
+    };
+
+    const runRestFallback = async () => {
+        const restUrl = "https://firestore.googleapis.com/v1/projects/smlc-fuel-monitor/databases/(default)/documents/local_news";
+        const res = await fetch(restUrl);
+        if (res.ok) {
+            const restData = await res.json();
+            if (restData.documents && Array.isArray(restData.documents)) {
+                const rawList = restData.documents.map(d => {
+                    const f = d.fields || {};
+                    return {
+                        title: unwrapFs(f.title) || '',
+                        date: unwrapFs(f.date) || '',
+                        excerpt: unwrapFs(f.excerpt) || '',
+                        full_story: unwrapFs(f.full_story) || '',
+                        image: unwrapFs(f.image) || '',
+                        link: unwrapFs(f.link) || '',
+                        location: unwrapFs(f.location) || '',
+                        source_name: unwrapFs(f.source_name) || '',
+                        source_url: unwrapFs(f.source_url) || '',
+                        tags: unwrapFs(f.tags) || [],
+                        tagNames: unwrapFs(f.tagNames) || [],
+                        towns: unwrapFs(f.towns) || []
+                    };
+                });
+                renderNews(rawList);
+            }
+        }
+    };
+
+    try {
+        if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+            unsubscribeFirestoreNews = firebase.firestore().collection("local_news").onSnapshot((snap) => {
+                const news = [];
+                snap.forEach(d => news.push(d.data()));
+                renderNews(news);
+            }, (err) => {
+                console.warn("Firestore real-time news failed, using REST fallback:", err.message);
+                runRestFallback();
+            });
+        } else {
+            runRestFallback();
+        }
+    } catch(e) { 
+        console.warn("Firestore live news notice:", e.message); 
+    }
+}
+
+// === TOWN HERO UI ENGINE ===
+function hydrateTownHeroUI() {
+    const badgeEl = document.getElementById('hero-seat-badge');
+    const titleEl = document.getElementById('hero-town-title');
+    const metaEl = document.getElementById('hero-established-meta');
+    const marqueeEl = document.getElementById('hero-river-marquee');
+
+    if (badgeEl && ACTIVE_TOWN.seatBadge) badgeEl.innerText = ACTIVE_TOWN.seatBadge;
+    if (titleEl) titleEl.innerText = `${ACTIVE_TOWN.primaryName}, Illinois`;
+    if (metaEl && ACTIVE_TOWN.estMeta) metaEl.innerText = ACTIVE_TOWN.estMeta;
+    if (marqueeEl && ACTIVE_TOWN.riverMarquee) marqueeEl.innerText = ACTIVE_TOWN.riverMarquee;
+
+    if (ACTIVE_TOWN.themeAccent) {
+        document.documentElement.style.setProperty('--primary', ACTIVE_TOWN.themeAccent);
+    }
+}
+
+function updateNavigationActiveState() {
+    const currentHash = (window.location.hash || "#/flora").toLowerCase();
+    document.querySelectorAll('#dynamic-menu-links a, .menu-links a').forEach(link => {
+        const href = (link.getAttribute("href") || "").toLowerCase();
+        if (currentHash && href === currentHash) {
+            link.classList.add("active");
+        } else if (!currentHash && href.includes(ACTIVE_TOWN.primaryName.toLowerCase().replace(/\s+/g, '-'))) {
+            link.classList.add("active");
+        } else {
+            link.classList.remove("active");
+        }
+    });
+}
+
+function handleSPAHashNavigation() {
+    resetAllActiveTimers();
+    window.closeMobileMenu();
+    ACTIVE_TOWN = getActiveTownConfig();
+    document.body.setAttribute("data-town", ACTIVE_TOWN.primaryName.toUpperCase());
+    document.title = `${ACTIVE_TOWN.primaryName}, IL - SMLC Digital Town Square Portal`;
+
+    hydrateTownHeroUI();
+    updateNavigationActiveState();
+
+    if (typeof window.gtag === 'function') {
+        window.gtag('event', 'page_view', {
+            page_title: ACTIVE_TOWN.primaryName,
+            page_location: window.location.href,
+            page_path: window.location.pathname + (window.location.hash || '')
+        });
+    }
+
+    bindFirebaseServices();
+    loadCommunityBulletinFeed();
+    loadLocalNewsDispatches();
+}
+
+// === DOM EVENT LISTENERS ===
+window.addEventListener('hashchange', () => {
+    handleSPAHashNavigation();
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+    handleSPAHashNavigation();
+});
