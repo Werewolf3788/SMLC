@@ -1,11 +1,9 @@
 /* ==========================================================================
-   Active Version: v3.2.5
+   Active Version: v3.4.0
    File: universaltown.js
    Project: SMLC County Portal Semantic Master Script
    Description: Complete multi-town engine connecting 100% to Firebase (RTDB & Firestore).
-                - 100% Live Realtime Database (RTDB) and Firestore real-time listeners (.on('value') & .onSnapshot())
-                - Fixed variable collision: separated activeFbRefLinksGlobal from activeFbRefGlobalSections
-                - Fully resolved and dynamically bound:
+                - Direct binding to Firebase nodes:
                     * /master_county_data/towns/[Town]/sections/article (title, category, deck, body, imageUrl, alt)
                     * /master_county_data/towns/[Town]/sections/history (year, title, description, imageUrl, alt)
                     * /master_county_data/towns/[Town]/sections/point_of_interest (header1, header2, image1, image2, alt1, alt2, about_text, landmark_description)
@@ -16,16 +14,15 @@
                     * /master_county_data/weather_forecast (current, fiveDay)
                     * /master_county_data/weather_alerts
                     * /master_county_data/sports
-                    * /fuel_prices & /billboard_network
-                    * Firestore smlc_events & local_news (real-time collections with REST fallback)
-                - Defensive Image Hydration: unhides figure containers when images exist; strictly hides only if empty
-                - Sparse array safety: handles Object.values() for indexed objects or arrays
-                - Real-time weather widget bound to #portal-weather-pill
-                - Central Time (America/Chicago) timestamps; persistent New York clock in footer
-   Timestamp: 2026-10-25 08:50 EDT (New York)
+                    * /fuel_prices & /billboard_network (includes real station 87817, 48100, 48101, 120226, 128128, etc.)
+                    * Firestore smlc_events & local_news
+                - Never hides elements when Firebase has live data
+                - Preserves side-by-side Spotlight & Gas monitor on desktop
+                - Live weather pill injection
+                - Central Time timestamps; persistent New York clock in footer
+   Timestamp: 2026-10-25 14:35 EDT (New York)
    ========================================================================== */
 
-// Line 31: Dynamic Google Analytics 4 Injection & Initialization Engine
 (function initDynamicGa4Engine() {
     const GA4_MEASUREMENT_ID = 'G-FHJNXDB9BB';
     
@@ -48,7 +45,6 @@
     }
 })();
 
-// Line 54: Google Translate Global Callback & Dynamic Mutation Scanner
 window.googleTranslateElementInit = function() {
     try {
         if (window.google && window.google.translate) {
@@ -71,12 +67,9 @@ function triggerGoogleTranslateUpdate(targetNode) {
                 targetNode.dispatchEvent(new Event('change', { bubbles: true }));
             }
         }
-    } catch(e) {
-        // Soft fail if translate script is still loading
-    }
+    } catch(e) {}
 }
 
-// Line 82: Master Town Alias & Numeric Area ID Map (Strict Integer Matching)
 const TOWN_ALIAS_MAP = {
     "HOME": { 
         primaryName: "Clay County", 
@@ -155,7 +148,7 @@ const TOWN_ALIAS_MAP = {
         gasKey: ["louisville"], 
         historyKey: "louisville", 
         areaId: 1,
-        linkedAreaIds: [1, 7, 9], // Louisville, Bible Grove, Hoosier
+        linkedAreaIds: [1, 7, 9],
         keywords: ["LOUISVILLE", "NORTH CLAY", "NC", "INDIANS", "NC CARDINALS"], 
         isHome: false, 
         seatBadge: "Clay County Seat", 
@@ -195,7 +188,6 @@ const TOWN_ALIAS_MAP = {
     }
 };
 
-// Line 185: Active Town Config Resolver
 function getActiveTownConfig() {
     try {
         const hashRoute = (window.location.hash || "").replace("#/", "").replace("#", "").replace(/-/g, " ").toUpperCase();
@@ -230,7 +222,6 @@ const DEFAULT_APP_CONFIG = {
     }
 };
 
-// Global Timers and Subscriptions
 let globalSlideshowTicker = null;
 let gasMonitorRotator = null;
 let topCarouselInterval = null;
@@ -257,9 +248,6 @@ window.townPartnersPool = [];
 window.globalPartnersPool = [];
 window.fiveDayForecastCache = [];
 
-/* ==========================================================================
-   HELPERS & PROTOCOL UTILITIES
-   ========================================================================== */
 const MAX_AGE_DAYS = 7;
 
 function escapeHtml(s) {
@@ -327,6 +315,7 @@ function icsDataForEvent(ev, loc) {
 const FUEL_STATIONS = {
     "48100":  { town: "flora", display: "Flora", name: "CASEY'S", logo: "Casey's.png" },
     "48101":  { town: "flora", display: "Flora", name: "HUCK'S", logo: "Hucks.png" },
+    "87817":  { town: "flora", display: "Flora", name: "FLORA STATION", logo: "smlc-default.png" },
     "120226": { town: "flora", display: "Flora", name: "FAST STOP", logo: "Fast stop.png" },
     "128128": { town: "flora", display: "Flora", name: "MACH 1", logo: "Mach 1.png" },
     "48026":  { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" },
@@ -539,7 +528,6 @@ function resolveLinkTarget(urlStr) {
     }
 }
 
-// Global Outbound and Contact Click Tracking
 document.addEventListener('click', (e) => {
     const anchor = e.target.closest('a');
     if (!anchor || !anchor.href) return;
@@ -590,35 +578,6 @@ document.addEventListener('click', (e) => {
     } catch(err) {}
 }, true);
 
-// Defensive image setter: unhides valid images, falls back cleanly without breaking layout
-function safeSetImageSource(imgElement, srcUrl, fallbackWrapper = null, altText = "") {
-    if (!imgElement) return;
-    const parentContainer = fallbackWrapper || imgElement.closest('figure, .spotlight-image-wrap, .section3-landmark-img-wrap, .polaroid-wrap, .article-media-frame') || imgElement.parentElement;
-    const defaultPlaceholder = '//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png';
-
-    if (altText) imgElement.alt = altText;
-
-    if (!srcUrl || srcUrl.trim() === "" || srcUrl === "null" || srcUrl === "undefined") {
-        if (parentContainer) parentContainer.style.display = "none";
-        imgElement.style.display = "none";
-        return;
-    }
-
-    imgElement.style.display = "block";
-    if (parentContainer) parentContainer.style.display = "block";
-
-    imgElement.onerror = () => {
-        if (imgElement.src.includes('smlc-web.png')) {
-            if (parentContainer) parentContainer.style.display = "none";
-            imgElement.style.display = "none";
-        } else {
-            imgElement.src = defaultPlaceholder;
-        }
-    };
-
-    imgElement.src = srcUrl;
-}
-
 function closeLightbox(event) {
     const overlay = document.getElementById('portal-global-lightbox');
     if (!overlay) return;
@@ -640,7 +599,9 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = ""
     const cleanTargetUrl = targetUrl || '';
 
     if (imgSrc && targetImg) {
-        safeSetImageSource(targetImg, imgSrc, null, cleanAlt || cleanTitle);
+        targetImg.src = imgSrc;
+        targetImg.alt = cleanAlt || cleanTitle;
+        targetImg.style.display = 'block';
         if (targetImg.parentElement) targetImg.parentElement.style.display = 'block';
     } else if (targetImg && targetImg.parentElement) {
         targetImg.parentElement.style.display = 'none';
@@ -831,7 +792,7 @@ window.hideWeatherAlertModalPopup = function() {
 };
 
 // ============================================================================
-// GLOBAL WEATHER FORECAST ENGINE: Live Sub-Bar Pill & 5-Day Lightbox (LIVE RTDB)
+// GLOBAL WEATHER FORECAST ENGINE: Dynamic Update of Sub-Bar Pill
 // Listens to: /master_county_data/weather_forecast
 // ============================================================================
 function bindFirebaseWeatherForecastEngine(db) {
@@ -857,65 +818,34 @@ function bindFirebaseWeatherForecastEngine(db) {
 
 function renderNavbarWeatherWidget(current) {
     const pill = document.getElementById('portal-weather-pill');
-    if (pill) {
-        const iconSpan = document.getElementById('weather-pill-icon');
-        const tempSpan = document.getElementById('weather-pill-temp');
-        const detailSpan = document.getElementById('weather-pill-detail');
+    if (!pill) return;
 
-        const temp = current.temp ? `${Math.round(current.temp)}°F` : '--°F';
-        const condition = current.condition || 'Clear';
-        const iconUrl = normalizeImageUrl(current.icon);
-        const updatedCdt = formatToCentralTime(current.updatedAt);
-
-        if (iconSpan) {
-            iconSpan.innerHTML = iconUrl ? `<img src="${iconUrl}" alt="" onerror="this.style.display='none';">` : '';
-        }
-        if (tempSpan) {
-            tempSpan.innerText = temp;
-        }
-        if (detailSpan) {
-            detailSpan.innerText = `${condition} (5-Day \u2192)`;
-        }
-
-        pill.title = `Current Weather: ${condition} | Updated: ${updatedCdt} | Click to view 5-day forecast`;
-        pill.onclick = openFiveDayForecastModal;
-        triggerGoogleTranslateUpdate(pill);
-        return;
-    }
-
-    // Fallback: Primary nav attachment
-    let widgetEl = document.getElementById('portal-weather-current-badge');
-    const navBarTarget = document.getElementById('dynamic-menu-links')?.parentElement 
-        || document.querySelector('.header-nav, .nav-container, nav, header');
-
-    if (!widgetEl) {
-        widgetEl = document.createElement('div');
-        widgetEl.id = 'portal-weather-current-badge';
-        widgetEl.style.cssText = "display:inline-flex; align-items:center; gap:8px; cursor:pointer; background:#181818; color:#fff; padding:5px 12px; border-radius:18px; border:1px solid #333; margin-left:auto; vertical-align:middle; transition:background 0.2s ease;";
-        widgetEl.onclick = openFiveDayForecastModal;
-
-        if (navBarTarget) {
-            navBarTarget.style.display = "flex";
-            navBarTarget.style.alignItems = "center";
-            navBarTarget.appendChild(widgetEl);
-        } else {
-            document.body.appendChild(widgetEl);
-        }
-    }
+    const iconSpan = document.getElementById('weather-pill-icon');
+    const tempSpan = document.getElementById('weather-pill-temp');
+    const detailSpan = document.getElementById('weather-pill-detail');
 
     const temp = current.temp ? `${Math.round(current.temp)}°F` : '--°F';
     const condition = current.condition || 'Clear';
     const iconUrl = normalizeImageUrl(current.icon);
     const updatedCdt = formatToCentralTime(current.updatedAt);
 
-    widgetEl.innerHTML = `
-        ${iconUrl ? `<img src="${iconUrl}" alt="" style="width:26px; height:26px; object-fit:contain; display:block;" onerror="this.style.display='none';">` : ''}
-        <span style="font-size:13px; font-weight:bold;">${temp}</span>
-        <span style="font-size:13px; font-weight:bold;">&bull; ${condition}</span>
-        <span style="font-size:11px; color:var(--flora-orange, #ff9800); margin-left:2px;">(5-Day &rarr;)</span>
-    `;
-    widgetEl.title = `Current Weather | Updated: ${updatedCdt} | Click to view 5-day forecast`;
-    triggerGoogleTranslateUpdate(widgetEl);
+    if (iconSpan) {
+        iconSpan.innerHTML = iconUrl ? `<img src="${iconUrl}" alt="" onerror="this.style.display='none';">` : '';
+    }
+    if (tempSpan) {
+        tempSpan.innerText = temp;
+    }
+    if (detailSpan) {
+        detailSpan.innerText = `${condition} • 5-Day Forecast`;
+    }
+
+    pill.title = `Current Weather: ${condition} | Updated: ${updatedCdt} | Click to view 5-day forecast`;
+    pill.onclick = () => {
+        if (typeof window.openFiveDayForecastModal === 'function') {
+            window.openFiveDayForecastModal();
+        }
+    };
+    triggerGoogleTranslateUpdate(pill);
 }
 
 window.openFiveDayForecastModal = function() {
@@ -1131,10 +1061,10 @@ function bindFirebaseMenuEngine(db) {
     }
 }
 
-// === LOCAL LINKS ENGINE (LIVE RTDB) ===
+// === LOCAL LINKS ENGINE (LIVE RTDB: /town_links/links) ===
 function bindFirebaseLocalLinksEngine(db) {
     if (!db) return;
-    const linkTarget = document.getElementById('local-links-target-container');
+    const linkTarget = document.getElementById('town-links-target-container');
     if (!linkTarget) return;
 
     const townName = ACTIVE_TOWN.dbTownKey || "Flora";
@@ -1200,7 +1130,8 @@ function bindFirebaseLocalLinksEngine(db) {
 }
 
 // ============================================================================
-// SEMANTIC SECTIONS ENGINE (LIVE RTDB: POI, History, Article, Spotlight, Slideshow)
+// SEMANTIC SECTIONS ENGINE (LIVE RTDB: point_of_interest, article, history, slideshow)
+// Strictly displays content when data exists in Firebase
 // ============================================================================
 function bindFirebaseSemanticSectionsEngine(db) {
     if (!db) return;
@@ -1216,42 +1147,92 @@ function bindFirebaseSemanticSectionsEngine(db) {
         const renderResolvedSections = () => {
             // 1. POINT OF INTEREST
             const poi = townSectionsData.point_of_interest || {};
-            const poiTitleEl = document.getElementById('right-card-meta-title') || document.getElementById('discover-spotlight-title');
-            const poiAboutEl = document.getElementById('desc2-target-1');
-            const poiDescEl = document.getElementById('right-card-meta-desc1');
+            const poiTitleEl = document.getElementById('point-of-interest-title');
+            const poiAboutEl = document.getElementById('point-of-interest-about');
+            const poiDescEl = document.getElementById('point-of-interest-landmark-desc');
 
             if (poiTitleEl && poi.title) poiTitleEl.innerText = poi.title;
             if (poiAboutEl && poi.about_text) poiAboutEl.innerText = poi.about_text;
             if (poiDescEl && poi.landmark_description) poiDescEl.innerHTML = linkifyRawUrls(poi.landmark_description);
 
-            const i1 = document.getElementById('dual-img-1');
-            const h1 = document.getElementById('dual-header-1');
+            const i1 = document.getElementById('point-of-interest-img-1');
+            const h1 = document.getElementById('point-of-interest-header-1');
+            const f1 = document.getElementById('point-of-interest-figure-1');
             const rawImg1 = poi.image1 || poi.imageUrl || poi.image;
             const img1Url = normalizeImageUrl(rawImg1);
             const alt1Text = poi.alt1 || poi.header1 || poi.title || "Point of Interest";
-            if (i1) {
-                safeSetImageSource(i1, img1Url, null, alt1Text);
-                if (img1Url) {
-                    i1.style.cursor = "pointer";
-                    i1.onclick = () => fireLightbox(escapeJsString(img1Url), escapeJsString(poi.header1 || poi.title || 'Point of Interest'), 'POINT OF INTEREST', escapeJsString(alt1Text), '', escapeJsString(alt1Text));
-                }
+            if (i1 && img1Url) {
+                i1.src = img1Url;
+                i1.alt = alt1Text;
+                i1.style.display = "block";
+                if (f1) f1.style.display = "block";
+                i1.onclick = () => fireLightbox(escapeJsString(img1Url), escapeJsString(poi.header1 || poi.title || 'Point of Interest'), 'POINT OF INTEREST', escapeJsString(alt1Text), '', escapeJsString(alt1Text));
+            } else if (i1 && !img1Url) {
+                i1.style.display = "none";
+                if (f1) f1.style.display = "none";
             }
             if (h1 && (poi.header1 || poi.title)) h1.innerText = poi.header1 || poi.title;
 
-            const i2 = document.getElementById('dual-img-2');
-            const h2 = document.getElementById('dual-header-2');
+            const i2 = document.getElementById('point-of-interest-img-2');
+            const h2 = document.getElementById('point-of-interest-header-2');
+            const f2 = document.getElementById('point-of-interest-figure-2');
             const img2Url = normalizeImageUrl(poi.image2);
             const alt2Text = poi.alt2 || poi.header2 || "Landmark 2";
-            if (i2) {
-                safeSetImageSource(i2, img2Url, null, alt2Text);
-                if (img2Url) {
-                    i2.style.cursor = "pointer";
-                    i2.onclick = () => fireLightbox(escapeJsString(img2Url), escapeJsString(poi.header2 || 'Landmark 2'), 'HISTORIC LANDMARK', escapeJsString(alt2Text), '', escapeJsString(alt2Text));
-                }
+            if (i2 && img2Url) {
+                i2.src = img2Url;
+                i2.alt = alt2Text;
+                i2.style.display = "block";
+                if (f2) f2.style.display = "block";
+                i2.onclick = () => fireLightbox(escapeJsString(img2Url), escapeJsString(poi.header2 || 'Landmark 2'), 'HISTORIC LANDMARK', escapeJsString(alt2Text), '', escapeJsString(alt2Text));
+            } else if (i2 && !img2Url) {
+                i2.style.display = "none";
+                if (f2) f2.style.display = "none";
             }
             if (h2 && poi.header2) h2.innerText = poi.header2;
 
-            // 2. SLIDESHOW (Sparse array safe)
+            // 2. ARTICLE: Directly binds /sections/article/imageUrl from Firebase
+            const art = townSectionsData.article || {};
+            const artTitleEl = document.getElementById('article-title');
+            const artCatEl = document.getElementById('article-category');
+            const artDeckEl = document.getElementById('article-deck');
+            const artBodyEl = document.getElementById('article-body');
+            const artImgEl = document.getElementById('article-img');
+            const artCapEl = document.getElementById('article-img-caption');
+            const artFigure = document.getElementById('article-figure-frame');
+
+            if (artTitleEl && art.title) artTitleEl.innerText = art.title;
+            if (artCatEl && art.category) artCatEl.innerText = art.category;
+            if (artDeckEl && art.deck) artDeckEl.innerText = art.deck;
+            if (artBodyEl && art.body) {
+                artBodyEl.innerHTML = `<p style="margin-bottom:1.5em; text-align:justify; line-height:1.8;">${linkifyRawUrls(art.body)}</p>`;
+            }
+
+            const rawArtUrl = art.imageUrl || art.image || art.image1;
+            const artImgUrl = normalizeImageUrl(rawArtUrl);
+            const artAltText = art.alt || art.title || "Featured Article Image";
+
+            if (artImgEl) {
+                if (artImgUrl) {
+                    artImgEl.src = artImgUrl;
+                    artImgEl.alt = artAltText;
+                    artImgEl.style.display = "block";
+                    if (artFigure) artFigure.style.display = "block";
+                    artImgEl.onclick = () => fireLightbox(
+                        escapeJsString(artImgUrl), 
+                        escapeJsString(art.title || 'Feature'), 
+                        escapeJsString(art.category || 'Commerce & Heritage'), 
+                        escapeJsString(artAltText), 
+                        '', 
+                        escapeJsString(artAltText)
+                    );
+                    if (artCapEl) artCapEl.innerText = artAltText;
+                } else {
+                    artImgEl.style.display = "none";
+                    if (artFigure) artFigure.style.display = "none";
+                }
+            }
+
+            // 3. SLIDESHOW
             const townSlides = townSectionsData.slideshow?.items ? Object.values(townSectionsData.slideshow.items).filter(Boolean) : [];
             const globalSlides = globalSectionsData.slideshow?.items ? Object.values(globalSectionsData.slideshow.items).filter(Boolean) : [];
 
@@ -1262,7 +1243,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
                 if (globalSlides[i]) blendedSlides.push(globalSlides[i]);
             }
 
-            const viewport = document.getElementById('flora-slideshow') || document.getElementById('xenia-slideshow') || document.querySelector('.slider-viewport');
+            const viewport = document.getElementById('slideshow-viewport');
             if (viewport && blendedSlides.length > 0) {
                 viewport.innerHTML = blendedSlides.map((item, idx) => {
                     const imgUrl = normalizeImageUrl(item.imageUrl);
@@ -1303,41 +1284,6 @@ function bindFirebaseSemanticSectionsEngine(db) {
                 }
             }
 
-            // 3. FEATURED ARTICLE
-            const art = townSectionsData.article || {};
-            const artTitleEl = document.getElementById('sec4-article-title');
-            const artCatEl = document.getElementById('sec4-category-tag');
-            const artDeckEl = document.getElementById('sec4-article-deck');
-            const artBodyEl = document.getElementById('sec4-article-body');
-            const artImgEl = document.getElementById('sec-4-1-article-img');
-            const artCapEl = document.getElementById('sec4-img-caption');
-
-            if (artTitleEl && art.title) artTitleEl.innerText = art.title;
-            if (artCatEl && art.category) artCatEl.innerText = art.category;
-            if (artDeckEl && art.deck) artDeckEl.innerText = art.deck;
-            if (artBodyEl && art.body) {
-                artBodyEl.innerHTML = `<p style="margin-bottom:1.5em; text-align:justify; line-height:1.8;">${linkifyRawUrls(art.body)}</p>`;
-            }
-
-            const rawArtUrl = art.imageUrl || art.image || art.image1;
-            const artImgUrl = normalizeImageUrl(rawArtUrl);
-            const artAltText = art.alt || art.title || "Featured Article Image";
-
-            if (artImgEl) {
-                safeSetImageSource(artImgEl, artImgUrl, null, artAltText);
-                if (artImgUrl) {
-                    artImgEl.onclick = () => fireLightbox(
-                        escapeJsString(artImgEl.src), 
-                        escapeJsString(art.title || 'Feature'), 
-                        escapeJsString(art.category || 'Commerce & Heritage'), 
-                        escapeJsString(artAltText), 
-                        '', 
-                        escapeJsString(artAltText)
-                    );
-                }
-                if (artCapEl) artCapEl.innerText = artAltText;
-            }
-
             // 4. BUSINESS SPOTLIGHT
             const spot = townSectionsData.spotlight || globalSectionsData.spotlight || {};
             const spotNameEl = document.getElementById('spotlight-asset-name');
@@ -1354,20 +1300,19 @@ function bindFirebaseSemanticSectionsEngine(db) {
 
             const spotImgUrl = normalizeImageUrl(spot.imageUrl);
             const spotAltText = spot.alt || spot.name || "Business Spotlight";
-            if (spotImgEl) {
-                safeSetImageSource(spotImgEl, spotImgUrl, null, spotAltText);
-                if (spotImgUrl) {
-                    spotImgEl.onclick = () => fireLightbox(escapeJsString(spotImgUrl), escapeJsString(spot.name || 'Merchant'), ACTIVE_TOWN.primaryName + ', IL', escapeJsString(spot.description || ''), escapeJsString(spot.website || ''), escapeJsString(spotAltText));
-                }
+            if (spotImgEl && spotImgUrl) {
+                spotImgEl.src = spotImgUrl;
+                spotImgEl.alt = spotAltText;
+                spotImgEl.style.display = "block";
+                spotImgEl.onclick = () => fireLightbox(escapeJsString(spotImgUrl), escapeJsString(spot.name || 'Merchant'), ACTIVE_TOWN.primaryName + ', IL', escapeJsString(spot.description || ''), escapeJsString(spot.website || ''), escapeJsString(spotAltText));
+            } else if (spotImgEl && !spotImgUrl) {
+                spotImgEl.style.display = "none";
             }
 
             // 5. TOWN HISTORY TIMELINE
             const historyTarget = document.getElementById('history-row-target');
             const historyRaw = townSectionsData.history || [];
             const historyList = (Array.isArray(historyRaw) ? historyRaw : Object.values(historyRaw)).filter(Boolean);
-
-            const historyTitleHeader = document.querySelector('.discover-history-title, #history-header-title');
-            if (historyTitleHeader) historyTitleHeader.style.display = 'none';
 
             if (historyTarget && historyList.length > 0) {
                 historyList.sort((a, b) => {
@@ -1741,7 +1686,6 @@ function loadCommunityBulletinFeed() {
 
 // ============================================================================
 // LOCAL NEWS DISPATCHES: Direct Realtime Listener (LIVE FIRESTORE onSnapshot)
-// Strict Integer Matching via AREA_IDS tags (Tag 0 = Global, Tag 2 = Flora, etc.)
 // ============================================================================
 function loadLocalNewsDispatches() {
     const targetGrid = document.getElementById('news-matrix-target');
@@ -1901,7 +1845,6 @@ function handleSPAHashNavigation() {
     loadLocalNewsDispatches();
 }
 
-// === DOM EVENT LISTENERS ===
 window.addEventListener('hashchange', () => {
     handleSPAHashNavigation();
 });
