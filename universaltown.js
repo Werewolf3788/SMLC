@@ -1,32 +1,32 @@
 /* ==========================================================================
-   Active Version: v2.3.0
+   Active Version: v2.5.0
    File: universaltown.js
    Project: SMLC County Portal Semantic Master Script
    Description: Complete multi-town engine connecting to Firebase RTDB.
                 - Universal multi-town support (Home, Flora, Louisville, Clay City, Xenia, Sailor Springs)
+                - Central Time (America/Chicago) default for all event, alert, and weather dates/times
+                - Human-readable event dates and times (ISO string cleaning to 12-hour AM/PM)
+                - Turn-by-turn navigation links on event addresses (Apple Maps on iOS, Google Maps on Android/PC)
                 - Dynamic GA4 Tag Injection (G-FHJNXDB9BB) with SPA Hash Route Pageview Tracking
-                - Streamlined Tag & Town News Routing (Consumes pre-filtered scraper arrays)
+                - Direct towns/tagNames news filtering matching updated Firestore structure
+                - Global news isolated to items where towns is empty & tagNames is strictly Clay County
+                - Town-specific news strictly isolated to matched portal
                 - WNOI Copyright & Link suppression fully removed (original sources preserved)
-                - Global news isolated to dispatches tagged strictly with "Clay County" (no town tags)
-                - News dispatches with town tags isolate directly to corresponding town portals
-                - Dedicated town branding (hero title displays clean active town name)
+                - Weather widget docked to navigation bar row with responsive mobile breakdown
+                - 5-Day Forecast Lightbox Modal triggered on desktop & mobile click
                 - Live NWS Weather Alert Bar & Urgent Dismissible Popup Modal Card
-                - CDT/CST (America/Chicago) Timezone Conversion for Alert & Weather Telemetry
-                - Global Current Weather Widget & 5-Day Forecast Lightbox Modal Engine
                 - Town-specific & countywide Sports Scoreboard Engine
                 - AdBlock-immune naming for community partners
                 - Smooth touch/hover-pausing partner & photo carousels
                 - Dual individual & global Google/iCal calendar hooks
-                - Zero "TBA" strings (defaults to "All Day Event")
-                - Turn-by-turn navigation (Apple Maps on iOS, Google Maps on Android/PC)
                 - Dynamic plain-text URL linkification in modals
                 - Deep GA4 engagement, impression, outbound, & contact event tracking
                 - Dynamic DOM translation re-triggering for Google Translate
                 - Persistent 24-hour New York timestamp & version in footer
-   Timestamp: 2026-10-25 04:36 EDT (New York)
+   Timestamp: 2026-10-25 05:03 EDT (New York)
    ========================================================================== */
 
-// Line 29: Dynamic Google Analytics 4 Injection & Initialization Engine
+// Line 31: Dynamic Google Analytics 4 Injection & Initialization Engine
 (function initDynamicGa4Engine() {
     const GA4_MEASUREMENT_ID = 'G-FHJNXDB9BB';
     
@@ -49,7 +49,7 @@
     }
 })();
 
-// Line 52: Google Translate Global Callback & Dynamic Mutation Scanner
+// Line 54: Google Translate Global Callback & Dynamic Mutation Scanner
 window.googleTranslateElementInit = function() {
     try {
         if (window.google && window.google.translate) {
@@ -78,7 +78,7 @@ function triggerGoogleTranslateUpdate(targetNode) {
     }
 }
 
-// Line 81: Master Town Alias & Keyword Filter Definitions (Preserves All Original Keywords)
+// Line 83: Master Town Alias & Keyword Filter Definitions
 const TOWN_ALIAS_MAP = {
     "HOME": { 
         primaryName: "Clay County", 
@@ -183,7 +183,7 @@ const TOWN_ALIAS_MAP = {
     }
 };
 
-// Line 177: Active Town Config Resolver
+// Line 179: Active Town Config Resolver
 function getActiveTownConfig() {
     try {
         const hashRoute = (window.location.hash || "").replace("#/", "").replace("#", "").replace(/-/g, " ").toUpperCase();
@@ -244,7 +244,7 @@ window.townPartnersPool = [];
 window.globalPartnersPool = [];
 window.fiveDayForecastCache = [];
 
-// Line 240: Reset Intervals
+// Line 242: Reset Intervals
 function resetAllActiveTimers() {
     if (globalSlideshowTicker) { clearInterval(globalSlideshowTicker); globalSlideshowTicker = null; }
     if (gasMonitorRotator) { clearInterval(gasMonitorRotator); gasMonitorRotator = null; }
@@ -316,7 +316,19 @@ function linkifyRawUrls(text) {
     });
 }
 
-// Convert UTC or EDT timestamps to Central Time (America/Chicago)
+// Turn-by-Turn Navigation URL Builder (Apple Maps on iOS, Google Maps on Android/PC)
+function buildTurnByTurnNavigationUrl(rawAddress) {
+    if (!rawAddress) return "#";
+    const cleanAddress = encodeURIComponent(rawAddress.trim());
+    const isAppleDevice = /iPad|iPhone|iPod|Macintosh/i.test(navigator.userAgent) && !window.MSStream;
+
+    if (isAppleDevice) {
+        return `maps://?daddr=${cleanAddress}`;
+    }
+    return `https://www.google.com/maps/dir/?api=1&destination=${cleanAddress}`;
+}
+
+// Global Default: Format timestamps into Central Time (America/Chicago)
 function formatToCentralTime(rawTimestamp) {
     if (!rawTimestamp) return "Live Update";
     try {
@@ -335,6 +347,65 @@ function formatToCentralTime(rawTimestamp) {
     } catch(e) {
         return String(rawTimestamp);
     }
+}
+
+// Line 356: Human-Readable Calendar Date (Central Timezone)
+function cleanCalendarDate(rawDate) {
+    if (!rawDate || rawDate === "undefined" || rawDate === "null") return "Date to be Announced";
+    try {
+        const d = new Date(rawDate);
+        if (isNaN(d.getTime())) return String(rawDate);
+        return new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/Chicago',
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        }).format(d);
+    } catch(e) {
+        return String(rawDate);
+    }
+}
+
+// Human-Readable Calendar Time (Converts raw ISO UTC/EDT to Central 12-hour AM/PM)
+function cleanCalendarTime(rawTime, rawDateFallback = null) {
+    if (!rawTime || typeof rawTime !== 'string') return "All Day Event";
+    const t = rawTime.trim().toUpperCase();
+    if (!t || t === "TBA" || t === "TIME TBA" || t === "00:00" || t === "NULL" || t === "UNDEFINED") {
+        return "All Day Event";
+    }
+
+    // Handle full ISO date-time strings (e.g. 2026-10-25T22:00:00.000Z)
+    if (rawTime.includes('T') || rawTime.endsWith('Z')) {
+        try {
+            const d = new Date(rawTime);
+            if (!isNaN(d.getTime())) {
+                return new Intl.DateTimeFormat('en-US', {
+                    timeZone: 'America/Chicago',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                }).format(d);
+            }
+        } catch(e) {}
+    }
+
+    // Handle partial time strings like "14:00" or "22:00:00"
+    if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(rawTime.trim())) {
+        try {
+            const baseDate = rawDateFallback ? new Date(rawDateFallback) : new Date();
+            const [hours, minutes] = rawTime.trim().split(':');
+            baseDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0);
+            return new Intl.DateTimeFormat('en-US', {
+                timeZone: 'America/Chicago',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            }).format(baseDate);
+        } catch(e) {}
+    }
+
+    return rawTime.trim();
 }
 
 function applyHighDensityScrollLimits(containerElement, itemCount, maxHeightPx = 480) {
@@ -420,9 +491,9 @@ document.addEventListener('click', (e) => {
         return;
     }
 
-    if (href.includes('maps.google.com') || href.includes('maps.apple.com')) {
+    if (href.includes('maps.google.com') || href.includes('maps.apple.com') || href.startsWith('maps:')) {
         trackGa4Event('navigation_directions_click', {
-            map_service: href.includes('apple.com') ? 'apple_maps' : 'google_maps',
+            map_service: (href.includes('apple.com') || href.startsWith('maps:')) ? 'apple_maps' : 'google_maps',
             destination: anchor.href
         });
         return;
@@ -553,11 +624,12 @@ function openCalendarLightboxModal(idx) {
 
     const title = targetItem.name || targetItem.title || "Community Event";
     const dateText = cleanCalendarDate(targetItem.date || targetItem.displayDate || targetItem.event_date);
-    const timeText = cleanCalendarTime(targetItem.time || targetItem.displayTime);
+    const timeText = cleanCalendarTime(targetItem.time || targetItem.displayTime, targetItem.date || targetItem.displayDate);
     const rawLoc = targetItem.location || ACTIVE_TOWN.primaryName + ", IL";
     const rawDetails = targetItem.details || targetItem.description || "No additional event details provided.";
     const finalEventImg = targetItem.imageUrl || targetItem.image || null;
-    const metaHeader = `${dateText} &bull; ${timeText}<br>Location: ${rawLoc}`;
+    const navUrl = buildTurnByTurnNavigationUrl(rawLoc);
+    const metaHeader = `${dateText} &bull; ${timeText}<br>Location: <a href="${navUrl}" target="_blank" rel="noopener" style="color:var(--primary); font-weight:bold; text-decoration:underline;">${rawLoc} (Directions &rarr;)</a>`;
 
     fireLightbox(finalEventImg, title, metaHeader, rawDetails, '', title);
 }
@@ -575,26 +647,6 @@ function openNewsLightboxModal(idx) {
         story.link || '',
         story.title || 'Local News Dispatch'
     );
-}
-
-function cleanCalendarTime(rawTime) {
-    if (!rawTime || typeof rawTime !== 'string') return "All Day Event";
-    const t = rawTime.trim().toUpperCase();
-    if (!t || t === "TBA" || t === "TIME TBA" || t === "00:00" || t === "NULL" || t === "UNDEFINED") {
-        return "All Day Event";
-    }
-    return rawTime.trim();
-}
-
-function cleanCalendarDate(rawDate) {
-    if (!rawDate || rawDate === "undefined" || rawDate === "null") return "Date to be Announced";
-    try {
-        const d = new Date(rawDate);
-        if (isNaN(d.getTime())) return String(rawDate);
-        return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-    } catch(e) {
-        return String(rawDate);
-    }
 }
 
 function formatIcalTimestamp(rawDate, rawTime) {
@@ -754,7 +806,7 @@ window.hideWeatherAlertModalPopup = function() {
 };
 
 // ============================================================================
-// GLOBAL WEATHER FORECAST ENGINE: Current Telemetry & 5-Day Lightbox Modal
+// GLOBAL WEATHER FORECAST ENGINE: Navbar-Docked Responsive Pill & 5-Day Lightbox
 // Listens to: /master_county_data/weather_forecast
 // ============================================================================
 function bindFirebaseWeatherForecastEngine(db) {
@@ -771,22 +823,36 @@ function bindFirebaseWeatherForecastEngine(db) {
             const rawFiveDay = data.fiveDay || [];
             window.fiveDayForecastCache = Array.isArray(rawFiveDay) ? rawFiveDay : Object.values(rawFiveDay);
 
-            renderCurrentWeatherWidget(current);
+            renderNavbarWeatherWidget(current);
         });
     } catch(err) {
         console.warn("Weather forecast engine notice:", err.message);
     }
 }
 
-function renderCurrentWeatherWidget(current) {
+// Injects responsive weather pill directly on same horizontal row as menu
+function renderNavbarWeatherWidget(current) {
     let widgetEl = document.getElementById('portal-weather-current-badge');
+    
+    // Find top menu or header navigation bar to dock on the same row
+    const navBarTarget = document.getElementById('dynamic-menu-links')?.parentElement 
+        || document.querySelector('.header-nav, .nav-container, nav, header');
+
     if (!widgetEl) {
-        const headerContainer = document.querySelector('.site-header, header, .nav-container') || document.body;
         widgetEl = document.createElement('div');
         widgetEl.id = 'portal-weather-current-badge';
-        widgetEl.style.cssText = "display:inline-flex; align-items:center; gap:8px; cursor:pointer; background:#111; color:#fff; padding:6px 14px; border-radius:20px; border:1px solid #333; margin:8px; font-size:13px; font-weight:bold;";
+        widgetEl.style.cssText = "display:inline-flex; align-items:center; gap:8px; cursor:pointer; background:#181818; color:#fff; padding:5px 12px; border-radius:18px; border:1px solid #333; margin-left:auto; vertical-align:middle; transition:background 0.2s ease;";
+        widgetEl.onmouseenter = () => widgetEl.style.background = '#252525';
+        widgetEl.onmouseleave = () => widgetEl.style.background = '#181818';
         widgetEl.onclick = openFiveDayForecastModal;
-        headerContainer.appendChild(widgetEl);
+
+        if (navBarTarget) {
+            navBarTarget.style.display = "flex";
+            navBarTarget.style.alignItems = "center";
+            navBarTarget.appendChild(widgetEl);
+        } else {
+            document.body.appendChild(widgetEl);
+        }
     }
 
     const temp = current.temp ? `${Math.round(current.temp)}°F` : '--°F';
@@ -794,10 +860,21 @@ function renderCurrentWeatherWidget(current) {
     const iconUrl = normalizeImageUrl(current.icon);
     const updatedCdt = formatToCentralTime(current.updatedAt);
 
+    // Responsive markup: text collapses on smaller screens via CSS class injection
     widgetEl.innerHTML = `
-        ${iconUrl ? `<img src="${iconUrl}" alt="" style="width:26px; height:26px; object-fit:contain; display:block;" onerror="this.style.display='none';">` : ''}
-        <span>Clay County: ${temp} &bull; ${condition}</span>
-        <span style="font-size:10px; color:#bbb; text-decoration:underline;">5-Day &rarr;</span>
+        <style>
+            #portal-weather-current-badge .weather-desk-text { display: inline-block; font-size: 13px; font-weight: bold; }
+            #portal-weather-current-badge .weather-icon-img { width: 26px; height: 26px; object-fit: contain; display: block; }
+            #portal-weather-current-badge .weather-temp-num { font-size: 13px; font-weight: bold; }
+            @media (max-width: 1023px) {
+                #portal-weather-current-badge .weather-desk-text { display: none !important; }
+                #portal-weather-current-badge { padding: 4px 10px !important; min-height: 44px; min-width: 44px; justify-content: center; }
+            }
+        </style>
+        ${iconUrl ? `<img src="${iconUrl}" alt="" class="weather-icon-img" onerror="this.style.display='none';">` : ''}
+        <span class="weather-temp-num">${temp}</span>
+        <span class="weather-desk-text">&bull; ${condition}</span>
+        <span class="weather-desk-text" style="font-size:11px; color:var(--flora-orange, #ff9800); margin-left:2px;">(5-Day &rarr;)</span>
     `;
     widgetEl.title = `Current Weather | Updated: ${updatedCdt} | Click to view 5-day forecast`;
     triggerGoogleTranslateUpdate(widgetEl);
@@ -1543,7 +1620,7 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
     }
 }
 
-// === COMMUNITY BULLETIN ===
+// === COMMUNITY BULLETIN (HUMAN-READABLE CENTRAL DATES & TURN-BY-TURN MAPS) ===
 async function loadCommunityBulletinFeed() {
     const scroller = document.getElementById('bulletin-scroller-target');
     if (!scroller) return;
@@ -1578,11 +1655,12 @@ async function loadCommunityBulletinFeed() {
                     const eventLoc = item.location || ACTIVE_TOWN.primaryName + ", IL";
                     const rawDetails = item.details || item.description || "";
                     const dateText = cleanCalendarDate(item.date || item.displayDate);
-                    const timeText = cleanCalendarTime(item.time || item.displayTime);
+                    const timeText = cleanCalendarTime(item.time || item.displayTime, item.date || item.displayDate);
                     const finalEventImg = normalizeImageUrl(item.imageUrl || item.image);
 
                     const singleGoogleUrl = generateGoogleCalendarEventUrl(eventTitle, item.date || item.displayDate, item.time || item.displayTime, eventLoc, rawDetails);
                     const singleIcalBlob = generateIcalDataBlob(eventTitle, item.date || item.displayDate, item.time || item.displayTime, eventLoc, rawDetails);
+                    const turnByTurnNavUrl = buildTurnByTurnNavigationUrl(eventLoc);
 
                     const thumbnailHtml = finalEventImg ? `
                         <div style="float: right; margin: 0 0 10px 12px;">
@@ -1596,7 +1674,10 @@ async function loadCommunityBulletinFeed() {
                             <div class="divi-event-date" style="font-size:12px; color:var(--primary); font-weight:bold;">${dateText} &bull; ${timeText}</div>
                             <div class="divi-event-title" style="font-size:16px; font-weight:bold; margin: 4px 0;">${eventTitle}</div>
                             <div class="event-info-text" style="font-size:13px; color:#333;">
-                                <strong>Where:</strong> ${eventLoc}
+                                <strong>Where:</strong> 
+                                <a href="${turnByTurnNavUrl}" target="_blank" rel="noopener" class="event-nav-link" style="color:var(--primary); font-weight:bold; text-decoration:underline;">
+                                    ${eventLoc} &rarr; Directions
+                                </a>
                             </div>
                             <div style="font-size:13px; color:#555; margin-top:4px;">${linkifyRawUrls(rawDetails.substring(0, 110))}...</div>
                             
@@ -1621,7 +1702,7 @@ async function loadCommunityBulletinFeed() {
 }
 
 // ============================================================================
-// LOCAL NEWS DISPATCHES (Consumes Ingested Arrays Directly Without Suppression)
+// LOCAL NEWS DISPATCHES: Direct Filtering on towns & tagNames Arrays
 // ============================================================================
 async function loadLocalNewsDispatches() {
     const targetGrid = document.getElementById('news-matrix-target');
@@ -1636,23 +1717,27 @@ async function loadLocalNewsDispatches() {
                 window.newsCacheBlock = newsArray.filter(item => {
                     if (!item) return false;
 
-                    // 1. Home portal aggregates all network dispatches
+                    // 1. Home portal displays all dispatches across the entire county
                     if (ACTIVE_TOWN.isHome) return true;
 
-                    // 2. Extract towns directly from pre-filtered scraper arrays
+                    // 2. Extract towns directly from the document's towns or tagNames array
                     let itemTowns = [];
                     if (Array.isArray(item.towns) && item.towns.length > 0) {
                         itemTowns = item.towns;
+                    } else if (Array.isArray(item.tagNames)) {
+                        itemTowns = item.tagNames.filter(t => typeof t === 'string' && t.trim().toUpperCase() !== "CLAY COUNTY");
                     } else if (Array.isArray(item.tags)) {
                         itemTowns = item.tags.filter(t => typeof t === 'string' && t.trim().toUpperCase() !== "CLAY COUNTY");
                     }
 
-                    // 3. County-Wide Global Dispatch: Only "Clay County" tagged (zero town tags)
+                    // 3. County-wide Global: towns array is empty AND tagNames has "Clay County"
                     if (itemTowns.length === 0) {
-                        return true;
+                        const hasCountyTag = (Array.isArray(item.tagNames) && item.tagNames.some(t => String(t).trim().toUpperCase() === "CLAY COUNTY"))
+                            || (Array.isArray(item.tags) && item.tags.some(t => String(t).trim().toUpperCase() === "CLAY COUNTY"));
+                        return hasCountyTag;
                     }
 
-                    // 4. Specific Town Dispatch: Matches this portal's primary name or established keywords
+                    // 4. Town-Specific: Strictly matches active town name or registered aliases
                     const currentTownUpper = ACTIVE_TOWN.primaryName.toUpperCase();
                     return itemTowns.some(town => {
                         const cleanTownUpper = String(town).trim().toUpperCase();
@@ -1690,7 +1775,7 @@ async function loadLocalNewsDispatches() {
     }
 }
 
-// === TOWN HERO UI ENGINE (Clean Town Names Without Appending County) ===
+// === TOWN HERO UI ENGINE ===
 function hydrateTownHeroUI() {
     const badgeEl = document.getElementById('hero-seat-badge');
     const titleEl = document.getElementById('hero-town-title');
@@ -1698,7 +1783,7 @@ function hydrateTownHeroUI() {
     const marqueeEl = document.getElementById('hero-river-marquee');
 
     if (badgeEl && ACTIVE_TOWN.seatBadge) badgeEl.innerText = ACTIVE_TOWN.seatBadge;
-    if (titleEl) titleEl.innerText = ACTIVE_TOWN.primaryName;
+    if (titleEl) titleEl.innerText = `${ACTIVE_TOWN.primaryName}, Illinois`;
     if (metaEl && ACTIVE_TOWN.estMeta) metaEl.innerText = ACTIVE_TOWN.estMeta;
     if (marqueeEl && ACTIVE_TOWN.riverMarquee) marqueeEl.innerText = ACTIVE_TOWN.riverMarquee;
 
