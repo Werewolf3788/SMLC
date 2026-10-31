@@ -3280,6 +3280,19 @@ document.addEventListener('keydown', e => {
                 border: 1px solid #222 !important;
             }
         }
+        /* Night mode: follows the device setting */
+        @media (prefers-color-scheme: dark) {
+            html body .menu-bar, html body .header .nav-bar, .site-brand-header, .site-brand-header .header-billboard-link { background: #1c1c1e !important; border-color: #555 !important; }
+            html body .menu-bar .menu-links a, html body .nav-links a, .smlc-more-toggle { color: #f4f4f5 !important; }
+            .smlc-more-toggle { border-color: #f4f4f5; }
+            .smlc-more-list { background: #1c1c1e; border-color: #555; box-shadow: 6px 6px 0 #000; }
+            html body .menu-bar .menu-links a:hover, html body .nav-links a:hover { color: #8fb8ff !important; background: rgba(255,255,255,.06) !important; }
+            html body .menu-bar .menu-links a.active, html body .nav-links a.active { color: var(--smlc-nav-secondary, #FFC10E) !important; }
+        }
+        @media (prefers-color-scheme: dark) and (max-width: 1023px) {
+            html body .menu-bar .navigation-drawer-panel, html body .header .nav-bar { background: #1c1c1e !important; }
+            html body .menu-bar .menu-links a:not(.active), html body .nav-links a:not(.active) { background: #2a2a2d !important; border-color: #555 !important; }
+        }
     `;
     (document.head || document.documentElement).appendChild(style);
     smlcApplyNavColors();

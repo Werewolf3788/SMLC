@@ -420,3 +420,49 @@ body {
     .nav-more { width: 100%; }
     .nav-more-list { position: static; box-shadow: none; margin: 8px auto 0; width: 90%; }
 }
+
+/* =========================================
+   NIGHT MODE: follows the device's light / dark setting (no switch)
+   ========================================= */
+@media (prefers-color-scheme: dark) {
+    body, .home-bg, .discover-clay-county-section, .thankful-section { background-color: #121212 !important; color: #e4e4e7; }
+    .header, .nav-bar, .nav-links { background-color: #1c1c1e !important; }
+    .nav-links a { color: #f4f4f5 !important; }
+    .nav-links a:hover { color: #8fb8ff !important; }
+    .nav-links a.active { color: var(--smlc-nav-secondary, #FFC10E) !important; }
+    .hamburger span { background-color: #f4f4f5; }
+    .nav-more-toggle { color: #f4f4f5; border-color: #f4f4f5; }
+    .nav-more-list { background: #1c1c1e; border-color: #555; box-shadow: 6px 6px 0 #000; }
+    .nav-links .menu-thumb-icon { border-color: #555; }
+
+    .index-heading-row h2, .courthouse-heading { color: #f4f4f5; }
+    .courthouse-img { border-color: #555; }
+
+    .clay-county-news-box { background-color: #1c1c1e !important; border-color: #555 !important; box-shadow: 10px 10px 0px #000 !important; color: #e4e4e7; }
+    .news-box-header, .group-header { border-color: #e4e4e7; }
+    .news-box-header h3, .group-header h3, .spotlight-name { color: #f4f4f5; }
+    .clay-county-news-box span[style], .clay-county-news-box p, .clay-county-news-box .biz-description,
+    .news-box-header span, .group-header span { color: #c8c8d0 !important; }
+    .clay-county-news-box a.footer-master-link { color: #f4f4f5 !important; }
+    .clay-county-news-box div[style*="border-top"] { border-color: #444 !important; }
+    .clipping-tag-black { background: #000; border: 1px solid #555; }
+    .clipping-btn { background-color: #000 !important; }
+    .spotlight-image-wrap { background: #111; border-color: #555; }
+    .spotlight-loc { color: #ff8a80 !important; }
+
+    .event-row { border-color: #444; }
+    .event-date, .event-links a { color: #ff6b6b; }
+    .event-title { color: #f4f4f5; }
+    .event-meta { color: #b4b4bb; }
+
+    .wf-label { color: #e4e4e7; border-color: #777; }
+    .wf-field-input { background: #2a2a2d; color: #fff; border-color: #777; }
+
+    .full-story-display { background-color: #1c1c1e !important; border-color: #555; box-shadow: 6px 6px 0px #000; }
+    .full-story-display h1 { color: #ff6b6b; border-color: #555; }
+    .story-body { color: #c8c8d0; }
+    .news-date { color: #a1a1aa; }
+
+    .thankful-content, .thankful-content p { color: #e4e4e7; }
+    .thankful-content a { color: #8fb8ff; }
+}

@@ -12,6 +12,10 @@
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <!-- Device language -> automatic translation (no language picker) -->
+    <script src="smlc-device-prefs.js"></script>
+    <script defer src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     <title>S & K Ventures Fuel Monitor & Management</title>
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-banner.png">
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-banner.png">
@@ -561,6 +565,17 @@
             100% { opacity: 1; transform: scale(1); }
         }
 
+        /* Follows the device's light / dark setting */
+        @media (prefers-color-scheme: dark) {
+            body { background: #121212 !important; color: #e4e4e7; }
+            #wp-custom-wrapper h2 { color: var(--brand-gold); }
+            #wp-custom-wrapper .admin-card { background: #1c1c1e; color: #e4e4e7; box-shadow: 0 4px 10px rgba(0,0,0,.6); }
+            #wp-custom-wrapper label.input-label { color: #b4b4bb; }
+            #wp-custom-wrapper input { background: #2a2a2d; color: #fff; border-color: #444; }
+            #wp-custom-wrapper input[readonly] { background: #232326 !important; color: #b4b4bb; }
+            #wp-custom-wrapper select { background: #2a2a2d; color: #fff; }
+        }
+
         /* Layout Breakpoints */
         @media (max-width: 850px) {
             .split-workspace {
@@ -586,6 +601,7 @@
     </style>
 </head>
 <body style="margin:0; background:transparent;">
+<div id="google_translate_element"></div>
 
 <header class="site-header">
     <div class="site-header-bar">
