@@ -2194,6 +2194,102 @@ async function smlcLoadFirestoreEvents() {
         .sort((a, b) => (new Date(a.start || a.date).getTime() || 0) - (new Date(b.start || b.date).getTime() || 0));
 }
 
+// ============================================================================
+// ADD-TO-CALENDAR (Google Calendar + Apple/Outlook .ics), built from the real
+// start/end times so the event lands at the right time in any time zone.
+// Attachments (flyers) are added to the event: as links in Google's details,
+// and as ATTACH lines + links in the .ics file.
+// ============================================================================
+const SMLC_PUBLIC_CALENDAR_ID = '09907fc6fff214b9dad96172ef13e7b80d62ea80cf22b504d096a47f277a9d2b@group.calendar.google.com';
+const SMLC_SUBSCRIBE_GOOGLE = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(SMLC_PUBLIC_CALENDAR_ID)}`;
+const SMLC_SUBSCRIBE_ICAL = `webcal://calendar.google.com/calendar/ical/${encodeURIComponent(SMLC_PUBLIC_CALENDAR_ID)}/public/basic.ics`;
+
+function smlcEventForCalendar(item) {
+    const win = getEventWindow(item);
+    if (!win) return null;
+    const attachments = toPlainArray(item.attachments).filter(a => a && a.fileUrl);
+    const title = item.name || item.title || 'Community Event';
+    const location = item.location || item.addr || `${ACTIVE_TOWN.primaryName}, IL`;
+    const plainDetails = String(item.details || item.description || item.desc || '').replace(/<[^>]+>/g, ' ').replace(/\s+\n/g, '\n').trim();
+    return { title, location, details: plainDetails, attachments, ...win };
+}
+
+function smlcUtcStamp(d) { return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''); }
+function smlcCentralDateStamp(d) {
+    const p = new Intl.DateTimeFormat('en-US', { timeZone: SMLC_TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(d);
+    const m = {}; p.forEach(x => { m[x.type] = x.value; });
+    return `${m.year}${m.month}${m.day}`;
+}
+
+function smlcAttachmentLines(ev) {
+    return ev.attachments.map(a => `${a.title || 'Attachment'}: ${String(a.fileUrl).startsWith('//') ? 'https:' + a.fileUrl : a.fileUrl}`);
+}
+
+function smlcGoogleCalendarUrl(ev) {
+    const dates = ev.allDay
+        ? `${smlcCentralDateStamp(ev.start)}/${smlcCentralDateStamp(ev.end)}`
+        : `${smlcUtcStamp(ev.start)}/${smlcUtcStamp(ev.end)}`;
+    const extra = smlcAttachmentLines(ev);
+    const details = [ev.details, extra.length ? 'Attachments:\n' + extra.join('\n') : '', 'From Support My Local Community: https://werewolf3788.github.io/SMLC/']
+        .filter(Boolean).join('\n\n').slice(0, 1800);
+    const params = new URLSearchParams({ action: 'TEMPLATE', text: ev.title, dates, details, location: ev.location, ctz: SMLC_TZ });
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+function smlcIcsEscape(t) { return String(t || '').replace(/\\/g, '\\\\').replace(/\r?\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;'); }
+function smlcIcsFold(line) {
+    const out = []; let rest = line;
+    while (rest.length > 74) { out.push(rest.slice(0, 74)); rest = ' ' + rest.slice(74); }
+    out.push(rest); return out.join('\r\n');
+}
+
+function smlcBuildIcs(ev) {
+    const uid = `${smlcUtcStamp(ev.start)}-${ev.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)}@supportmylocalcommunity`;
+    const extra = smlcAttachmentLines(ev);
+    const description = [ev.details, extra.length ? 'Attachments:\n' + extra.join('\n') : ''].filter(Boolean).join('\n\n');
+    const lines = [
+        'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Support My Local Community//Clay County IL//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+        'BEGIN:VEVENT',
+        `UID:${uid}`,
+        `DTSTAMP:${smlcUtcStamp(new Date())}`,
+        ev.allDay ? `DTSTART;VALUE=DATE:${smlcCentralDateStamp(ev.start)}` : `DTSTART:${smlcUtcStamp(ev.start)}`,
+        ev.allDay ? `DTEND;VALUE=DATE:${smlcCentralDateStamp(ev.end)}` : `DTEND:${smlcUtcStamp(ev.end)}`,
+        `SUMMARY:${smlcIcsEscape(ev.title)}`,
+        `LOCATION:${smlcIcsEscape(ev.location)}`,
+        `DESCRIPTION:${smlcIcsEscape(description)}`,
+        'URL:https://werewolf3788.github.io/SMLC/',
+        ...ev.attachments.map(a => `ATTACH${a.mimeType ? ';FMTTYPE=' + a.mimeType : ''}:${String(a.fileUrl).startsWith('//') ? 'https:' + a.fileUrl : a.fileUrl}`),
+        'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${smlcIcsEscape(ev.title)}`, 'TRIGGER:-PT1H', 'END:VALARM',
+        'END:VEVENT', 'END:VCALENDAR'
+    ];
+    return lines.map(smlcIcsFold).join('\r\n') + '\r\n';
+}
+
+/** Adds one event to Apple Calendar / Outlook / any calendar app (.ics). */
+window.smlcAddEventToIcs = function (idx) {
+    const item = (window.calendarCachedEvents || [])[idx];
+    const ev = item && smlcEventForCalendar(item);
+    if (!ev) return false;
+    const ics = smlcBuildIcs(ev);
+    const fileName = `${ev.title.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '_') || 'event'}.ics`;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    try {
+        if (isIOS) {
+            // iPhone/iPad: opening the calendar data shows the "Add to Calendar" screen
+            window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
+        } else {
+            const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = fileName; a.rel = 'noopener';
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 4000);
+        }
+        trackGa4Event('add_to_calendar', { method: 'ics', event_title: ev.title });
+    } catch (e) { console.warn('Add to calendar notice:', e.message); }
+    return false;
+};
+
 async function loadCommunityBulletinFeed() {
     const scroller = document.getElementById('bulletin-scroller-target');
     if (!scroller) return;
@@ -2212,15 +2308,15 @@ async function loadCommunityBulletinFeed() {
                 window.calendarCachedEvents = elements;
                 applyHighDensityScrollLimits(scroller, elements.length, 500);
 
-                const webcalFeedUrl = "script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec?feed=ics";
-                const googleSubUrl = `https://www.google.com/calendar/render?cid=webcal://${encodeURIComponent(webcalFeedUrl)}`;
+                const googleSubUrl = SMLC_SUBSCRIBE_GOOGLE;
+                const appleSubUrl = SMLC_SUBSCRIBE_ICAL;
 
                 const createGlobalSubscriptionBanner = (headerText) => `
                     <div style="background:#f8f9fa; border:1px solid #e2e8f0; padding:10px; border-radius:6px; margin: 12px 0; text-align:center;">
                         <span style="font-size:0.75rem; font-weight:bold; color:#222; display:block; margin-bottom:6px; text-transform:uppercase;">${headerText}</span>
                         <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
                             <a href="${googleSubUrl}" target="_blank" rel="noopener" style="font-size:0.6875rem; font-weight:bold; color:#ffffff !important; background:#1a73e8; padding:6px 12px; border-radius:4px; text-decoration:none; display:inline-block;" data-ga-label="global_cal_google">Google Calendar</a>
-                            <a href="webcal://${webcalFeedUrl}" style="font-size:0.6875rem; font-weight:bold; color:#ffffff !important; background:#1e7e34; padding:6px 12px; border-radius:4px; text-decoration:none; display:inline-block;" data-ga-label="global_cal_ical">Apple / iCal</a>
+                            <a href="${appleSubUrl}" style="font-size:0.6875rem; font-weight:bold; color:#ffffff !important; background:#1e7e34; padding:6px 12px; border-radius:4px; text-decoration:none; display:inline-block;" data-ga-label="global_cal_ical">Apple / iCal</a>
                         </div>
                     </div>
                 `;
@@ -2241,7 +2337,8 @@ async function loadCommunityBulletinFeed() {
                     const winAttrs = win ? `data-start="${win.start.getTime()}" data-end="${win.end.getTime()}" data-allday="${win.allDay ? 1 : 0}"` : '';
                     const finalEventImg = normalizeImageUrl(item.imageUrl || item.image);
 
-                    const singleGoogleUrl = item.googleLink || generateGoogleCalendarEventUrl(eventTitle, item.date || item.displayDate, item.time || item.displayTime, eventLoc, rawDetails);
+                    const calEv = smlcEventForCalendar(item);
+                    const singleGoogleUrl = calEv ? smlcGoogleCalendarUrl(calEv) : generateGoogleCalendarEventUrl(eventTitle, item.date || item.displayDate, item.time || item.displayTime, eventLoc, rawDetails);
                     const singleIcalBlob = item.icalData ? `data:text/calendar;charset=utf8;base64,${item.icalData}` : generateIcalDataBlob(eventTitle, item.date || item.displayDate, item.time || item.displayTime, eventLoc, rawDetails);
                     const fileAttachments = toPlainArray(item.attachments).filter(a => a && !a.isImage && a.fileUrl);
                     const attachmentChips = fileAttachments.length ? `<div class="smlc-event-attachments">${fileAttachments.map(a => `<a href="${escapeHtmlText(a.fileUrl)}" target="_blank" rel="noopener" class="smlc-attachment-chip" data-ga-label="event_attachment">&#128206; ${escapeHtmlText(a.title)}</a>`).join('')}</div>` : '';
@@ -2272,9 +2369,9 @@ async function loadCommunityBulletinFeed() {
                             <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
                                 <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:var(--primary); font-weight:bold; cursor:pointer; font-size:0.75rem; text-decoration:underline;">Read Details &rarr;</div>
                                 <span style="color:var(--card-muted, #999); font-size:0.6875rem;">|</span>
-                                <a href="${singleGoogleUrl}" target="_blank" rel="noopener" style="font-size:0.6875rem; color:#1a73e8; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_google">+ Google Cal</a>
+                                <a href="${singleGoogleUrl}" target="_blank" rel="noopener" style="font-size:0.6875rem; color:#1a73e8; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_google" aria-label="Add ${escapeHtmlText(eventTitle)} to Google Calendar">+ Google Cal</a>
                                 <span style="color:var(--card-muted, #999); font-size:0.6875rem;">|</span>
-                                <a href="${singleIcalBlob}" download="${eventTitle.replace(/\s+/g, '_')}.ics" style="font-size:0.6875rem; color:#1e7e34; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_ical">+ iCal (.ics)</a>
+                                <a href="#" role="button" onclick="return smlcAddEventToIcs(${idx});" style="font-size:0.6875rem; color:#1e7e34; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_ical" aria-label="Add ${escapeHtmlText(eventTitle)} to Apple or Outlook calendar">+ Apple / Outlook</a>
                             </div>
                         </div>
                     `;
