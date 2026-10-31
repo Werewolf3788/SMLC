@@ -945,6 +945,14 @@ function openCalendarLightboxModal(idx) {
     fireLightbox(finalEventImg, title, metaHeader, rawDetails, '', `${title} flyer`);
 }
 
+/** Small label for listings that aren't news: Jobs, For Rent, Real Estate, For Sale */
+function smlcNewsCategoryBadge(story) {
+    const c = String((story && story.category) || '').trim();
+    if (!c || /^news$/i.test(c)) return '';
+    const safe = c.replace(/[<>&"]/g, '');
+    return `<span class="news-category-badge" style="display:inline-block; background:var(--primary); color:#fff; border-radius:999px; padding:1px 8px; margin-right:6px; font-size:0.7rem; letter-spacing:.02em;">${safe}</span>`;
+}
+
 /** "Read the full story at wandtv.com ↗" - always shown when the story has a link */
 function smlcNewsSourceLink(story) {
     const raw = String((story && story.link) || '').trim();
@@ -2521,6 +2529,7 @@ async function loadLocalNewsDispatches() {
                             location: unwrapVal(f.location) || '',
                             source_name: unwrapVal(f.source_name) || '',
                             source_url: unwrapVal(f.source_url) || '',
+                            category: unwrapVal(f.category) || '',
                             tags: unwrapVal(f.tags) || [],
                             tagNames: unwrapVal(f.tagNames) || [],
                             towns: unwrapVal(f.towns) || [],
@@ -2548,7 +2557,7 @@ async function loadLocalNewsDispatches() {
                     return `
                         <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
                             ${imgUrl ? `<img src="${imgUrl}" alt="" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})">` : ''}
-                            <div style="font-size:0.75rem; color:var(--primary); font-weight:bold; margin-top:10px;">${cleanCalendarDate(story.date)}</div>
+                            <div style="font-size:0.75rem; color:var(--primary); font-weight:bold; margin-top:10px;">${smlcNewsCategoryBadge(story)}${cleanCalendarDate(story.date)}</div>
                             <div style="font-weight:bold; font-size:1rem; margin:6px 0; color:#1a1a1a;">${cleanTitle}</div>
                             <div style="font-size:0.875rem; color:var(--card-text-secondary, #444);">${linkifyRawUrls(displayStory)}</div>
                             ${isLong ? `<div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: var(--primary); font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>` : ''}

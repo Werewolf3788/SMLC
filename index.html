@@ -868,6 +868,7 @@
             const body = item.excerpt || item.full_story || "";
             return '<div class="full-story-display" data-location="' + esc(location) + '">' +
                 '<span class="location-badge">📍 ' + esc(location) + '</span>' +
+                (item.category && !/^news$/i.test(item.category) ? '<span class="location-badge news-category-badge">' + esc(item.category) + '</span>' : '') +
                 '<h1>' + esc(item.title) + '</h1>' +
                 '<p class="news-date">' + esc(fmtNewsDate(item.date)) + '</p>' +
                 (img ? '<img src="' + esc(img) + '" alt="" loading="lazy" onerror="this.remove()">' : '') +

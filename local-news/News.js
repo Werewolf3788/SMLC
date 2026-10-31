@@ -339,16 +339,42 @@ function stripLocaleParams(url) {
     }
 }
 
-// Sites Google Alerts picks up that are not news (personal info / classifieds)
+// People-search / personal-records sites: never shown (private people's addresses, phones, ages)
 const ALERT_BLOCKED_SITES = [
     "411.com", "whitepages.com", "spokeo.com", "beenverified.com", "truepeoplesearch.com",
     "fastpeoplesearch.com", "peoplefinders.com", "radaris.com", "mylife.com", "intelius.com",
     "instantcheckmate.com", "truthfinder.com", "zabasearch.com", "peekyou.com", "addresses.com",
     "anywho.com", "usphonebook.com", "clustrmaps.com", "nuwber.com", "thatsthem.com",
     "familytreenow.com", "searchpeoplefree.com", "peoplesearchnow.com", "cyberbackgroundchecks.com",
-    "ancientfaces.com", "zillow.com", "realtor.com", "trulia.com", "redfin.com", "homes.com",
-    "craigslist.org", "ebay.com", "amazon.com", "yelp.com", "mapquest.com", "manta.com", "bizapedia.com"
+    "ancientfaces.com", "bizapedia.com"
 ];
+
+// Listing types that ARE wanted alongside local news
+const ALERT_CATEGORY_RULES = [
+    { category: "Jobs", sites: ["indeed.com", "ziprecruiter.com", "glassdoor.com", "monster.com", "careerbuilder.com",
+        "simplyhired.com", "snagajob.com", "usajobs.gov", "illinoisjoblink.illinois.gov", "joblink.illinois.gov", "jobs.com", "talent.com", "jooble.org"],
+      paths: /\/(jobs?|careers?|hiring|employment)(\/|$)/, words: /\b(now hiring|hiring|job opening|jobs?|careers?|employment|apply now)\b/i },
+    { category: "For Rent", sites: ["apartments.com", "rent.com", "zumper.com", "hotpads.com", "rentals.com", "apartmentguide.com", "forrent.com"],
+      paths: /\/(rent|rentals?|apartments?)(\/|$)/, words: /\b(for rent|rental|apartments?|lease)\b/i },
+    { category: "Real Estate", sites: ["zillow.com", "realtor.com", "trulia.com", "redfin.com", "homes.com", "landwatch.com", "land.com", "loopnet.com", "movoto.com", "homesnap.com"],
+      paths: null, words: /\b(for sale|homes? for sale|real estate|acres?|mls)\b/i },
+    { category: "For Sale", sites: ["craigslist.org", "ebay.com", "offerup.com"],
+      paths: /^\/marketplace\//, words: /\b(for sale|marketplace|garage sale|yard sale|auction)\b/i }
+];
+
+function hostMatches(host, sites) {
+    return sites.some(site => host === site || host.endsWith("." + site));
+}
+
+/** "News", "Jobs", "For Rent", "Real Estate" or "For Sale" */
+function alertCategory(title, link) {
+    let host = "", path = "";
+    try { const u = new URL(link); host = u.hostname.toLowerCase().replace(/^www\./, ""); path = u.pathname.toLowerCase(); } catch (e) { return "News"; }
+    for (const rule of ALERT_CATEGORY_RULES) if (hostMatches(host, rule.sites)) return rule.category;
+    if (/facebook\.com$/.test(host) && /^\/marketplace\//.test(path)) return "For Sale";
+    for (const rule of ALERT_CATEGORY_RULES) if (rule.paths && rule.paths.test(path)) return rule.category;
+    return "News";
+}
 
 /** Returns why a Google Alert item should be skipped, or "" to keep it */
 function googleAlertJunkReason(title, link, rawLink = "") {
@@ -357,8 +383,8 @@ function googleAlertJunkReason(title, link, rawLink = "") {
     if (loc && loc[1].toLowerCase() !== "en") return "page in another language (" + loc[1] + ")";
     let host = "", path = "";
     try { const u = new URL(link); host = u.hostname.toLowerCase().replace(/^www\./, ""); path = u.pathname.toLowerCase(); } catch (e) { return "bad link"; }
-    if (ALERT_BLOCKED_SITES.some(site => host === site || host.endsWith("." + site))) return "people-search / listing site";
-    if (/facebook\.com$/.test(host) && /^\/(marketplace|groups\/[^/]+\/buy_sell|people|profile\.php)/.test(path)) return "Facebook Marketplace / profile";
+    if (hostMatches(host, ALERT_BLOCKED_SITES)) return "people-search site";
+    if (/facebook\.com$/.test(host) && /^\/(people|profile\.php)/.test(path)) return "Facebook personal profile";
     if (/person-search|people-search|\/person\/|\/people\//.test(path)) return "people-search page";
     if (/\|\s*(address|phone|age)\b|\bage\s*\d{2}\+/i.test(title)) return "personal-info listing";
     // Mostly non-English titles (letters outside basic Latin, or common foreign words)
@@ -537,6 +563,7 @@ async function fetchAllFeedItems() {
                     summary: itemSummary,
                     image: itemImage,
                     source_name: itemSourceName,
+                    category: isGoogleAlert ? alertCategory(itemTitle, itemLink) : "News",
                     source_url: source.url
                 });
             }
@@ -614,6 +641,7 @@ async function runScraper() {
             location: displayLocation,
             source_name: item.source_name || "Local News",
             source_url: item.source_url || link,
+            category: item.category || "News",   // News | Jobs | For Rent | Real Estate | For Sale
             tags: tagIds,         // Numeric array ([0] for Clay County, [0, 2] for Flora)
             tagNames: tags,       // Human-readable labels
             towns: towns,
