@@ -757,7 +757,7 @@ document.addEventListener('click', (e) => {
 // visible "Image isn't available right now" notice (never a broken-image icon).
 const SMLC_IMG_NOTICE_TEXT = "Image isn't available right now";
 // Tiny icons/logos: just hide them on failure (a text notice wouldn't fit).
-const SMLC_IMG_SKIP_SELECTOR = '.smlc-menu-logo img, .menu-thumb-icon, .weather-icon-img, .weather-pill-icon img, #weather-fiveday-forecast-modal img, .header-billboard-img, .station-logo-frame img';
+const SMLC_IMG_SKIP_SELECTOR = '.smlc-pill-town-icon, .smlc-menu-logo img, .menu-thumb-icon, .weather-icon-img, .weather-pill-icon img, #weather-fiveday-forecast-modal img, .header-billboard-img, .station-logo-frame img';
 
 (function injectImageNoticeStyles() {
     if (document.getElementById('smlc-img-notice-styles')) return;
@@ -1457,6 +1457,7 @@ function bindFirebaseMenuEngine(db) {
                 img: normalizeImageUrl(item.imageUrl) || ''
             }));
             renderBottomNav();
+            smlcApplyPillTownIcon();
             if (typeof window.smlcApplyBranding === 'function') window.smlcApplyBranding(rawItems);
             triggerGoogleTranslateUpdate(menuContainer);
         });
@@ -2606,6 +2607,7 @@ function handleSPAHashNavigation() {
     loadLocalNewsDispatches();
     if (typeof closeBottomNavSheets === 'function') closeBottomNavSheets();
     renderBottomNav();
+    smlcApplyPillTownIcon();
 }
 
 // ============================================================================
@@ -2885,6 +2887,25 @@ function ensureBottomNavShell() {
     document.addEventListener('click', (e) => {
         if (e.target.closest('.smlc-bn-sheet a')) closeBottomNavSheets();
     });
+}
+
+// The town's menu image also shows on the "Discover {Town}" pill
+function smlcApplyPillTownIcon() {
+    const pill = Array.from(document.querySelectorAll('.portal-pill-btn')).find(b => /pill-panel-discover/.test(b.getAttribute('onclick') || '') || /^\s*discover/i.test(b.textContent));
+    if (!pill || ACTIVE_TOWN.isHome) return;
+    const key = normalizeTownName(ACTIVE_TOWN.primaryName);
+    const item = (window.smlcMenuItems || []).find(it => it && it.img && normalizeTownName(it.town || it.name) === key);
+    let icon = pill.querySelector('.smlc-pill-town-icon');
+    if (!item) { if (icon) icon.remove(); return; }
+    if (!icon) {
+        icon = document.createElement('img');
+        icon.className = 'smlc-pill-town-icon';
+        icon.alt = '';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.onerror = () => icon.remove();
+        pill.insertBefore(icon, pill.firstChild);
+    }
+    if (icon.getAttribute('src') !== item.img) icon.src = item.img;
 }
 
 function renderBottomNav() {
@@ -3589,6 +3610,11 @@ document.addEventListener('keydown', e => {
         /* Full-width header image on every page */
         .site-brand-header, .site-brand-header .header-billboard-link { display: block; width: 100%; background: #fffdf6 !important; }
         .site-brand-header img.header-billboard-img { width: 100% !important; height: auto !important; max-height: none !important; display: block; object-fit: contain; }
+
+        /* Town menu image on the "Discover {Town}" pill */
+        .portal-pill-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
+        .smlc-pill-town-icon { width: 34px; height: 34px; object-fit: contain; flex-shrink: 0; background: #fff; border: 1px solid #222; border-radius: 6px; padding: 1px; }
+        @media (max-width: 767px) { .smlc-pill-town-icon { width: 30px; height: 30px; } }
 
         /* Header logo inside the menu bar after scrolling past the header image */
         .smlc-menu-logo { display: none; flex: 0 0 auto; align-items: center; margin-right: 12px; }
