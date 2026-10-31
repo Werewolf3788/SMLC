@@ -133,11 +133,11 @@ const TOWN_ALIAS_MAP = {
         historyKey: "clay_city", 
         areaId: 3,
         linkedAreaIds: [3],
-        keywords: ["CLAY CITY", "CC", "CUBIES", "BULLDOGS"], 
+        keywords: ["CLAY CITY", "CC", "WOLVES", "PUPS"], 
         isHome: false, 
         seatBadge: "Clay County Hub", 
         estMeta: "Est. 1868 | Zip Code 62824", 
-        riverMarquee: "HOME OF THE CLAY CITY BULLDOGS & CUBIES", 
+        riverMarquee: "HOME OF THE CLAY CITY WOLVES & PUPS", 
         themeAccent: "#0C2890" 
     },
     "FLORA": { 
@@ -757,7 +757,7 @@ document.addEventListener('click', (e) => {
 // visible "Image isn't available right now" notice (never a broken-image icon).
 const SMLC_IMG_NOTICE_TEXT = "Image isn't available right now";
 // Tiny icons/logos: just hide them on failure (a text notice wouldn't fit).
-const SMLC_IMG_SKIP_SELECTOR = '.menu-thumb-icon, .weather-icon-img, .weather-pill-icon img, #weather-fiveday-forecast-modal img, .header-billboard-img, .station-logo-frame img';
+const SMLC_IMG_SKIP_SELECTOR = '.smlc-pill-town-icon, .smlc-menu-logo img, .menu-thumb-icon, .weather-icon-img, .weather-pill-icon img, #weather-fiveday-forecast-modal img, .header-billboard-img, .station-logo-frame img';
 
 (function injectImageNoticeStyles() {
     if (document.getElementById('smlc-img-notice-styles')) return;
@@ -1397,22 +1397,24 @@ function bindFirebaseMenuEngine(db) {
             const val = snapshot.val();
             if (!val) return;
 
-            const rawItems = Array.isArray(val) ? val : Object.values(val);
+            // Drop blank rows from the sheet (they used to show up as "LINK")
+            const rawItems = (Array.isArray(val) ? val : Object.values(val))
+                .filter(item => item && (String(item.name || '').trim() || String(item.website || '').trim()));
             if (rawItems.length === 0) return;
 
-            menuContainer.innerHTML = rawItems.map(item => {
-                if (!item) return '';
-                const name = item.name || 'Link';
+            const isMoreItem = item => String(item.category || '').trim().toLowerCase() === 'more';
+            const buildMenuLink = (item) => {
+                const name = escapeHtmlText(item.name || item.alt || 'Link');
+                const rawName = String(item.name || item.alt || '');
                 const targetUrl = attachUtmParameters(item.website || '#');
                 const normImageUrl = normalizeImageUrl(item.imageUrl);
-                const altText = item.alt || name;
                 const linkTarget = resolveLinkTarget(item.website);
 
                 const activeTownName = (ACTIVE_TOWN.primaryName || "").toUpperCase();
-                const itemNameUpper = name.toUpperCase();
+                const itemNameUpper = String(item.town || rawName).toUpperCase();
                 const isActive = (activeTownName === itemNameUpper || (ACTIVE_TOWN.isHome && itemNameUpper === "HOME") || (window.location.hash || "").toUpperCase().includes(itemNameUpper.replace(/\s+/g, '-'))) ? 'class="active"' : '';
 
-                const imgTag = normImageUrl ? `<img src="${normImageUrl}" alt="" class="menu-thumb-icon" onclick="event.preventDefault(); event.stopPropagation(); fireLightbox('${escapeJsString(normImageUrl)}', '${escapeJsString(name)}', 'MENU ASSET', '${escapeJsString(altText)}', '${escapeJsString(targetUrl)}', '${escapeJsString(altText)}')" onerror="this.style.display='none';" />` : '';
+                const imgTag = normImageUrl ? `<img src="${normImageUrl}" alt="" class="menu-thumb-icon" onerror="this.style.display='none';" />` : '';
 
                 // A menu entry with sub-links (e.g. "More") becomes a dropdown
                 const kids = smlcMenuChildren(item);
@@ -1428,27 +1430,35 @@ function bindFirebaseMenuEngine(db) {
 
                 return `
                     <li>
-                        <a href="${targetUrl}" ${isActive} data-ga-label="Nav_${name.replace(/\s+/g, '')}" target="${linkTarget}" onclick="window.closeMobileMenu();">
+                        <a href="${targetUrl}" ${isActive} data-ga-label="Nav_${rawName.replace(/[^A-Za-z0-9]/g, '')}" target="${linkTarget}" ${linkTarget === '_blank' ? 'rel="noopener"' : ''} onclick="window.closeMobileMenu();">
                             ${imgTag}
                             <span>${name}</span>
                         </a>
                     </li>
                 `;
-            }).join('');
-            // Phone menu: sub-links of a dropdown (e.g. "More") are listed on their own
-            const flat = [];
-            rawItems.filter(Boolean).forEach(item => {
-                const kids = smlcMenuChildren(item);
-                if (kids.length) kids.forEach(k => flat.push(k));
-                else if (!(normalizeTownName(item.name) === 'more' && !item.website)) flat.push(item);
-            });
-            window.smlcMenuItems = flat.map(item => ({
-                name: item.name || 'Link',
+            };
+
+            const mainItems = rawItems.filter(item => !isMoreItem(item));
+            const moreItems = rawItems.filter(isMoreItem);
+            menuContainer.innerHTML = mainItems.map(buildMenuLink).join('') + (moreItems.length ? `
+                    <li class="smlc-more-menu">
+                        <button type="button" class="smlc-more-toggle" aria-expanded="false" aria-haspopup="true">
+                            <span>More</span><span class="smlc-more-caret" aria-hidden="true">&#9662;</span>
+                        </button>
+                        <ul class="smlc-more-list">${moreItems.map(buildMenuLink).join('')}</ul>
+                    </li>` : '');
+            smlcWireMoreMenu(menuContainer);
+            window.smlcMenuItems = rawItems.map(item => ({
+                name: item.name || item.alt || 'Link',
+                town: item.town || '',
+                category: item.category || '',
                 href: attachUtmParameters(item.website || '#'),
                 target: resolveLinkTarget(item.website),
                 img: normalizeImageUrl(item.imageUrl) || ''
             }));
             renderBottomNav();
+            smlcApplyPillTownIcon();
+            if (typeof window.smlcApplyBranding === 'function') window.smlcApplyBranding(rawItems);
             triggerGoogleTranslateUpdate(menuContainer);
         });
     } catch(err) {
@@ -1459,7 +1469,8 @@ function bindFirebaseMenuEngine(db) {
 // === LOCAL LINKS ENGINE ===
 function bindFirebaseLocalLinksEngine(db) {
     if (!db) return;
-    const linkTarget = document.getElementById('local-links-target-container');
+    // town pages use id="town-links-target-container"; older pages used local-links-target-container
+    const linkTarget = document.getElementById('town-links-target-container') || document.getElementById('local-links-target-container');
     if (!linkTarget) return;
 
     const townName = ACTIVE_TOWN.dbTownKey || "Flora";
@@ -1471,16 +1482,16 @@ function bindFirebaseLocalLinksEngine(db) {
             const rawCombined = [...townLinks, ...globalLinks];
             const filteredLinks = rawCombined.filter(item => {
                 if (!item) return false;
-                const title = extractText(item.title || item.name);
-                const url = item.website || item.url || "";
+                const title = extractText(item.title || item.name || item.label || item.alt);
+                const url = item.website || item.url || item.link || item.href || "";
                 return (title && url && !url.toLowerCase().startsWith('mailto:'));
             });
 
             if (filteredLinks.length > 0) {
                 applyHighDensityScrollLimits(linkTarget, filteredLinks.length, 360);
                 linkTarget.innerHTML = filteredLinks.map(link => {
-                    const name = extractText(link.title || link.name) || "Local Resource";
-                    const rawUrl = link.website || link.url || "#";
+                    const name = extractText(link.title || link.name || link.label || link.alt) || "Local Resource";
+                    const rawUrl = link.website || link.url || link.link || link.href || "#";
                     const targetUrl = attachUtmParameters(rawUrl);
                     const linkTargetAttr = resolveLinkTarget(rawUrl);
                     const displayLoc = link.location || link.town || ACTIVE_TOWN.primaryName;
@@ -1495,6 +1506,8 @@ function bindFirebaseLocalLinksEngine(db) {
                     `;
                 }).join('');
                 triggerGoogleTranslateUpdate(linkTarget);
+            } else {
+                linkTarget.innerHTML = '<div class="feed-loading-placeholder">No local links listed for this town yet.</div>';
             }
         } catch(e) {
             console.warn("Render combined links notice:", e.message);
@@ -1505,18 +1518,22 @@ function bindFirebaseLocalLinksEngine(db) {
         if (activeFbRefLinksTown) activeFbRefLinksTown.off();
         if (activeFbRefLinksGlobal) activeFbRefLinksGlobal.off();
 
-        activeFbRefLinksTown = db.ref(`master_county_data/towns/${townName}/sections/town_links/links`);
-        activeFbRefGlobalSections = db.ref(`master_county_data/global/sections/town_links/links`);
+        // Links live at .../sections/town_links (a list), or .../sections/town_links/links on older data
+        const readLinks = (val) => {
+            if (!val) return [];
+            if (val.links) return toPlainArray(val.links);
+            return toPlainArray(val).filter(x => x && typeof x === 'object');
+        };
+        activeFbRefLinksTown = db.ref(`master_county_data/towns/${townName}/sections/town_links`);
+        activeFbRefLinksGlobal = db.ref(`master_county_data/global/sections/town_links`);   // own slot (was sharing one and getting switched off)
 
         activeFbRefLinksTown.on('value', (snap) => {
-            const val = snap.val();
-            townLinks = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
+            townLinks = readLinks(snap.val());
             renderCombinedLinks();
         });
 
-        activeFbRefGlobalSections.on('value', (snap) => {
-            const val = snap.val();
-            globalLinks = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
+        activeFbRefLinksGlobal.on('value', (snap) => {
+            globalLinks = readLinks(snap.val());
             renderCombinedLinks();
         });
     } catch(e) {
@@ -2136,6 +2153,11 @@ function smlcCentralClock(iso) {
     return new Intl.DateTimeFormat('en-US', { timeZone: SMLC_TZ, hour: 'numeric', minute: '2-digit', hour12: true }).format(d);
 }
 
+// Old calendar syncs filled empty descriptions with this filler line: never show it
+function smlcCleanEventText(t) {
+    return String(t || '').replace(/^\s*Visit ourflora\.com for more details\.?\s*$/i, '');
+}
+
 function smlcNormalizeEventDoc(d) {
     if (!d || !(d.title || d.name)) return null;
     const attachments = toPlainArray(d.attachments).filter(a => a && (a.fileUrl || a.url)).map(a => ({
@@ -2148,7 +2170,9 @@ function smlcNormalizeEventDoc(d) {
         ...d,
         name: d.title || d.name,
         location: d.addr || d.location || '',
-        details: d.desc || d.details || d.description || '',
+        details: smlcCleanEventText(d.desc || d.details || d.description),
+        desc: smlcCleanEventText(d.desc),
+        description: smlcCleanEventText(d.description),
         imageUrl: d.imageUrl || d.image || (firstImage ? firstImage.fileUrl : ''),
         attachments,
         date: hasStart ? d.start : (d.date || d.displayDate),
@@ -2583,6 +2607,7 @@ function handleSPAHashNavigation() {
     loadLocalNewsDispatches();
     if (typeof closeBottomNavSheets === 'function') closeBottomNavSheets();
     renderBottomNav();
+    smlcApplyPillTownIcon();
 }
 
 // ============================================================================
@@ -2798,12 +2823,15 @@ function classifyNavItems(items) {
     items.forEach(it => {
         if (!it || !it.name) return;
         const key = normalizeTownName(it.name);
+        const townKey = it.town ? normalizeTownName(it.town) : key;
+        const isMore = String(it.category || '').trim().toLowerCase() === 'more';
         if (key === 'home') { if (!out.home) out.home = it; }
-        else if (townKeys.includes(key)) out.towns.push(it);
+        else if (!isMore && (it.town || townKeys.includes(townKey))) out.towns.push(it);
         else out.more.push(it);
     });
     // keep towns in the standard order
-    out.towns.sort((a, b) => townKeys.indexOf(normalizeTownName(a.name)) - townKeys.indexOf(normalizeTownName(b.name)));
+    const townOrder = it => { const i = townKeys.indexOf(normalizeTownName(it.town || it.name)); return i === -1 ? 999 : i; };
+    out.towns.sort((a, b) => townOrder(a) - townOrder(b));
     return out;
 }
 
@@ -2859,6 +2887,25 @@ function ensureBottomNavShell() {
     document.addEventListener('click', (e) => {
         if (e.target.closest('.smlc-bn-sheet a')) closeBottomNavSheets();
     });
+}
+
+// The town's menu image also shows on the "Discover {Town}" pill
+function smlcApplyPillTownIcon() {
+    const pill = Array.from(document.querySelectorAll('.portal-pill-btn')).find(b => /pill-panel-discover/.test(b.getAttribute('onclick') || '') || /^\s*discover/i.test(b.textContent));
+    if (!pill || ACTIVE_TOWN.isHome) return;
+    const key = normalizeTownName(ACTIVE_TOWN.primaryName);
+    const item = (window.smlcMenuItems || []).find(it => it && it.img && normalizeTownName(it.town || it.name) === key);
+    let icon = pill.querySelector('.smlc-pill-town-icon');
+    if (!item) { if (icon) icon.remove(); return; }
+    if (!icon) {
+        icon = document.createElement('img');
+        icon.className = 'smlc-pill-town-icon';
+        icon.alt = '';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.onerror = () => icon.remove();
+        pill.insertBefore(icon, pill.firstChild);
+    }
+    if (icon.getAttribute('src') !== item.img) icon.src = item.img;
 }
 
 function renderBottomNav() {
@@ -3439,6 +3486,251 @@ window.smlcWeatherChanged = function () {
     (document.head || document.documentElement).appendChild(style);
 })();
 
+// === SMLC SITE-WIDE BRANDING: header, tab icon & newspaper-style menu (2026-10-31) ===
+// - Header image on every page  = first item in /master_county_data/global/menu (menu/0) imageUrl
+// - Tab icon (favicon)          = menu/0 imageUrl on every page, EXCEPT Flora which uses Flora's menu image (menu/2)
+// - Menu font matches the SMLC home page (Times New Roman, bold, underlined) on a newspaper-cream bar
+// - Current page in the menu    = town's secondary color text on the town's primary color background
+const SMLC_NAV_COLORS = {
+    'CLAY COUNTY':    { primary: '#0258A3', secondary: '#FFC10E' },
+    'CLAY CITY':      { primary: '#0C2890', secondary: '#F2F2F2' },
+    'FLORA':          { primary: '#0258A3', secondary: '#FE4E02' },
+    'LOUISVILLE':     { primary: '#EB1C24', secondary: '#FFC10E' },
+    'XENIA':          { primary: '#1C5640', secondary: '#FFC10E' },
+    'SAILOR SPRINGS': { primary: '#4A154B', secondary: '#FFC10E' }
+};
+
+function smlcApplyNavColors() {
+    const key = ((ACTIVE_TOWN && ACTIVE_TOWN.primaryName) || 'Clay County').toUpperCase();
+    const c = SMLC_NAV_COLORS[key] || SMLC_NAV_COLORS['CLAY COUNTY'];
+    const root = document.documentElement;
+    root.style.setProperty('--smlc-nav-primary', c.primary);
+    root.style.setProperty('--smlc-nav-secondary', c.secondary);
+}
+
+function smlcSetFavicon(url) {
+    if (!url) return;
+    const head = document.head || document.documentElement;
+    ['icon', 'apple-touch-icon'].forEach(rel => {
+        let links = Array.from(document.querySelectorAll(`link[rel="${rel}"], link[rel="shortcut ${rel}"]`));
+        if (links.length === 0) {
+            const l = document.createElement('link');
+            l.rel = rel;
+            head.appendChild(l);
+            links = [l];
+        }
+        links.forEach(l => { l.href = url; if (rel === 'icon') l.removeAttribute('type'); });
+    });
+}
+
+window.smlcApplyBranding = function (items) {
+    try {
+        if (items) window.smlcLastMenuItems = items;
+        items = window.smlcLastMenuItems || [];
+        const list = items.filter(Boolean);
+        if (list.length === 0) return;
+
+        // Header image (menu/0) on every page
+        const headerUrl = normalizeImageUrl(list[0].imageUrl);
+        if (headerUrl) {
+            document.querySelectorAll('.header-billboard-img, .header-logo, .smlc-menu-logo img').forEach(img => {
+                if (img.getAttribute('src') !== headerUrl) img.src = headerUrl;
+                if (!img.alt) img.alt = list[0].alt || 'Support My Local Community';
+            });
+        }
+
+        // Tab icon: menu/0 everywhere, Flora's own menu image on the Flora page
+        let iconUrl = headerUrl;
+        if (ACTIVE_TOWN && ACTIVE_TOWN.primaryName === 'Flora') {
+            const floraItem = list.find(it => String(it.town || it.name || '').trim().toUpperCase() === 'FLORA') || items[2];
+            const floraUrl = floraItem && normalizeImageUrl(floraItem.imageUrl);
+            if (floraUrl) iconUrl = floraUrl;
+        }
+        smlcSetFavicon(iconUrl);
+        smlcApplyNavColors();
+    } catch (e) {
+        console.warn('Branding notice:', e.message);
+    }
+};
+
+// Header logo shows up inside the sticky menu bar once the big header image scrolls away
+function smlcSetupScrollLogo() {
+    const inner = document.querySelector('.menu-bar .menu-inner');
+    const banner = document.querySelector('.site-brand-header');
+    if (!inner || !banner || inner.querySelector('.smlc-menu-logo')) return;
+    const bannerImg = banner.querySelector('img');
+    const a = document.createElement('a');
+    a.className = 'smlc-menu-logo';
+    a.href = (document.querySelector('.header-billboard-link') || {}).getAttribute ? (document.querySelector('.header-billboard-link').getAttribute('href') || 'index.html') : 'index.html';
+    a.setAttribute('aria-label', 'Support My Local Community home');
+    a.setAttribute('tabindex', '-1');
+    a.innerHTML = `<img src="${bannerImg ? bannerImg.getAttribute('src') : ''}" alt="">`;
+    inner.insertBefore(a, inner.firstChild);
+    const set = (scrolled) => document.documentElement.classList.toggle('smlc-header-scrolled', scrolled);
+    if ('IntersectionObserver' in window) {
+        new IntersectionObserver(([entry]) => set(!entry.isIntersecting), { threshold: 0 }).observe(banner);
+    } else {
+        window.addEventListener('scroll', () => set(window.scrollY > banner.offsetHeight), { passive: true });
+    }
+}
+
+// "More" dropdown in the top menu (menu items with Category = More)
+function smlcWireMoreMenu(container) {
+    container.querySelectorAll('.smlc-more-toggle').forEach(btn => {
+        btn.addEventListener('click', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            const li = btn.closest('.smlc-more-menu');
+            const open = !li.classList.contains('is-open');
+            document.querySelectorAll('.smlc-more-menu.is-open').forEach(x => {
+                x.classList.remove('is-open');
+                x.querySelector('.smlc-more-toggle').setAttribute('aria-expanded', 'false');
+            });
+            if (open) { li.classList.add('is-open'); btn.setAttribute('aria-expanded', 'true'); }
+        });
+    });
+}
+document.addEventListener('click', e => {
+    if (e.target.closest && e.target.closest('.smlc-more-menu')) return;
+    document.querySelectorAll('.smlc-more-menu.is-open').forEach(x => {
+        x.classList.remove('is-open');
+        x.querySelector('.smlc-more-toggle').setAttribute('aria-expanded', 'false');
+    });
+});
+document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll('.smlc-more-menu.is-open').forEach(x => x.classList.remove('is-open'));
+});
+
+(function smlcInjectNewspaperMenuStyles() {
+    if (document.getElementById('smlc-newspaper-menu-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'smlc-newspaper-menu-styles';
+    style.textContent = `
+        /* Full-width header image on every page */
+        .site-brand-header, .site-brand-header .header-billboard-link { display: block; width: 100%; background: #fffdf6 !important; }
+        .site-brand-header img.header-billboard-img { width: 100% !important; height: auto !important; max-height: none !important; display: block; object-fit: contain; }
+
+        /* Town menu image on the "Discover {Town}" pill */
+        .portal-pill-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
+        .smlc-pill-town-icon { width: 34px; height: 34px; object-fit: contain; flex-shrink: 0; background: #fff; border: 1px solid #222; border-radius: 6px; padding: 1px; }
+        @media (max-width: 767px) { .smlc-pill-town-icon { width: 30px; height: 30px; } }
+
+        /* Header logo inside the menu bar after scrolling past the header image */
+        .smlc-menu-logo { display: none; flex: 0 0 auto; align-items: center; margin-right: 12px; }
+        .smlc-menu-logo img { height: 46px; width: auto; max-width: 220px; object-fit: contain; display: block; }
+        html.smlc-header-scrolled .smlc-menu-logo { display: inline-flex; animation: smlcLogoIn .25s ease-out; }
+        @keyframes smlcLogoIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+        @media (min-width: 1024px) { html.smlc-header-scrolled .menu-bar .menu-inner { justify-content: flex-start; } }
+        @media (max-width: 1023px) { .smlc-menu-logo img { height: 38px; max-width: 150px; } }
+
+        /* Menu bar: newspaper cream like the SMLC home page */
+        html body .menu-bar, html body .header .nav-bar {
+            background: #fffdf6 !important;
+            border-top: 3px solid #222 !important;
+            border-bottom: 3px double #222 !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,.25) !important;
+        }
+        html body .menu-bar .menu-links a,
+        html body .nav-links a {
+            font-family: "Times New Roman", Times, serif !important;
+            font-weight: bold !important;
+            font-size: 18px !important;
+            letter-spacing: 0 !important;
+            text-transform: capitalize !important;
+            text-decoration: underline !important;
+            text-underline-offset: 3px;
+            color: #222222 !important;
+            background: transparent !important;
+            border: 2px solid transparent !important;
+            border-radius: 6px !important;
+            gap: 8px;
+        }
+        html body .menu-bar .menu-links a:hover,
+        html body .nav-links a:hover {
+            color: var(--smlc-nav-primary, #1414fe) !important;
+            background: rgba(0,0,0,.04) !important;
+        }
+        /* The page you are on: secondary color text on primary color background */
+        html body .menu-bar .menu-links a.active,
+        html body .nav-links a.active {
+            color: var(--smlc-nav-secondary, #FFC10E) !important;
+            background: var(--smlc-nav-primary, #0258A3) !important;
+            border-color: var(--smlc-nav-primary, #0258A3) !important;
+            text-decoration: none !important;
+        }
+        /* Town images in the menu act as small icons */
+        html body .menu-bar .menu-thumb-icon,
+        html body .nav-links .menu-thumb-icon {
+            width: 34px !important; height: 34px !important; object-fit: contain !important;
+            background: #fff !important;
+            border: 1px solid #222 !important;
+            border-radius: 4px !important;
+            padding: 1px !important;
+            margin: 0 !important;
+        }
+        html body .menu-bar .mobile-nav-toggle-btn,
+        html body .header .hamburger {
+            background: var(--smlc-nav-primary, #222) !important;
+            border-color: #222 !important;
+            color: #fff !important;
+        }
+        /* "More" dropdown */
+        .smlc-more-menu { position: relative; list-style: none; }
+        .smlc-more-toggle {
+            display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 6px 12px; cursor: pointer;
+            font: bold 18px "Times New Roman", Times, serif; color: #222; background: transparent;
+            border: 2px solid #222; border-radius: 6px;
+        }
+        .smlc-more-toggle:hover, .smlc-more-menu.is-open .smlc-more-toggle { background: var(--smlc-nav-primary, #0258A3); color: var(--smlc-nav-secondary, #FFC10E); border-color: var(--smlc-nav-primary, #0258A3); }
+        .smlc-more-caret { font-size: 12px; transition: transform .2s; }
+        .smlc-more-menu.is-open .smlc-more-caret { transform: rotate(180deg); }
+        .smlc-more-list {
+            display: none; position: absolute; right: 0; top: calc(100% + 6px); z-index: 2000;
+            min-width: 230px; max-height: 70vh; overflow-y: auto; margin: 0; padding: 8px; list-style: none;
+            background: #fffdf6; border: 2px solid #222; box-shadow: 6px 6px 0 #222;
+        }
+        .smlc-more-menu.is-open .smlc-more-list { display: block; }
+        .smlc-more-list li { margin: 0 !important; width: 100% !important; }
+        html body .smlc-more-list a { display: flex !important; width: 100%; padding: 8px 10px !important; font-size: 16px !important; justify-content: flex-start !important; }
+        @media (max-width: 1023px) {
+            .smlc-more-menu { width: 88%; margin: 0 auto; }
+            .smlc-more-toggle { width: 100%; justify-content: space-between; }
+            .smlc-more-list { position: static; box-shadow: none; margin-top: 6px; max-height: none; }
+        }
+        @media (min-width: 1024px) and (max-width: 1439px) {
+            html body .menu-bar .menu-links a { font-size: 16px !important; padding: 6px 8px !important; }
+        }
+        @media (max-width: 1023px) {
+            html body .menu-bar .navigation-drawer-panel,
+            html body .header .nav-bar {
+                background: #fffdf6 !important;
+                border-bottom: 3px double #222 !important;
+            }
+            html body .menu-bar .menu-links a,
+            html body .nav-links a {
+                background: #fff !important;
+                border: 1px solid #222 !important;
+            }
+        }
+        /* Night mode: follows the device setting */
+        @media (prefers-color-scheme: dark) {
+            html body .menu-bar, html body .header .nav-bar, .site-brand-header, .site-brand-header .header-billboard-link { background: #1c1c1e !important; border-color: #555 !important; }
+            html body .menu-bar .menu-links a, html body .nav-links a, .smlc-more-toggle { color: #f4f4f5 !important; }
+            .smlc-more-toggle { border-color: #f4f4f5; }
+            .smlc-more-list { background: #1c1c1e; border-color: #555; box-shadow: 6px 6px 0 #000; }
+            html body .menu-bar .menu-links a:hover, html body .nav-links a:hover { color: #8fb8ff !important; background: rgba(255,255,255,.06) !important; }
+            html body .menu-bar .menu-links a.active, html body .nav-links a.active { color: var(--smlc-nav-secondary, #FFC10E) !important; }
+        }
+        @media (prefers-color-scheme: dark) and (max-width: 1023px) {
+            html body .menu-bar .navigation-drawer-panel, html body .header .nav-bar { background: #1c1c1e !important; }
+            html body .menu-bar .menu-links a:not(.active), html body .nav-links a:not(.active) { background: #2a2a2d !important; border-color: #555 !important; }
+        }
+    `;
+    (document.head || document.documentElement).appendChild(style);
+    smlcApplyNavColors();
+})();
+
 // ============================================================================
 // EVERY PICTURE OPENS IN THE LIGHTBOX
 // Pictures with their own click action keep it; any other picture on the page opens
@@ -3872,6 +4164,8 @@ function initAccessibility() {
 // === DOM EVENT LISTENERS ===
 window.addEventListener('hashchange', () => {
     handleSPAHashNavigation();
+    smlcApplyNavColors();
+    window.smlcApplyBranding();
     if (SMLC_FX.canvas) { smlcResolveScene(); smlcStartFx(); }
 });
 
@@ -3880,4 +4174,5 @@ window.addEventListener('DOMContentLoaded', () => {
     startCentralFooterClock();
     initWeatherHolidayEffects();
     initAccessibility();
+    smlcSetupScrollLogo();
 });

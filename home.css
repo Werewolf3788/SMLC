@@ -1,0 +1,519 @@
+/* =========================================
+   CHAPTER 1: GLOBAL BRANDING & RESET
+   ========================================= */
+* { box-sizing: border-box; }
+
+body { 
+    margin: 0; padding: 0; color: #333; font-family: sans-serif; 
+    min-height: 100vh; display: flex; flex-direction: column; 
+}
+
+.home-bg { background-color: #ffffff; }
+
+/* =========================================
+   CHAPTER 2: HEADER & NAVIGATION
+   ========================================= */
+.header { background-color: #fffdf6; width: 100%; border: none; }
+.header-logo { width: 100%; height: auto; display: block; border: none; }
+
+.nav-bar { background-color: #fffdf6; padding: 15px 0; border: none; }
+
+.nav-links { 
+    list-style: none !important; margin: 0; padding: 0; 
+    display: flex; justify-content: center; flex-wrap: wrap; 
+}
+
+.nav-links li { margin: 10px 30px; list-style: none; }
+.nav-links a { 
+    font-family: "Times New Roman", serif; color: #222222; 
+    text-decoration: underline; font-weight: bold; font-size: 18px; 
+    text-transform: capitalize; transition: color 0.3s;
+}
+.nav-links a.active { color: #1414fe !important; }
+.nav-links a:hover { color: #1414fe; }
+
+/* --- HAMBURGER FIX (Kills the "Ghost Box") --- */
+.hamburger {
+    display: none; background: none; border: none; 
+    cursor: pointer; padding: 10px;
+}
+.hamburger span {
+    display: block; width: 25px; height: 3px; 
+    background-color: #222; margin: 5px 0;
+}
+
+/* =========================================
+   CHAPTER 3: HERO, SLIDER & DISCOVER
+   ========================================= */
+.home-hero-cta { width: 100%; background-color: #0c2ef1; padding: 35px 20px; text-align: center; }
+.home-hero-cta h1 { color: #fff !important; font-family: 'Times New Roman', serif; font-size: clamp(1.2rem, 3vw, 2rem); margin: 0; text-transform: uppercase; }
+
+/* --- IMAGE SLIDER --- */
+.smlc-fullwidth-wrapper { width: 100%; overflow: hidden; background: #000; }
+.smlc-track { position: relative; width: 100%; height: 300px; background-color: #000; }
+.smlc-item { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; animation: smlcSimpleFade 30s infinite; }
+.smlc-item img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+@keyframes smlcSimpleFade { 0% { opacity: 0; } 5% { opacity: 1; } 33% { opacity: 1; } 38% { opacity: 0; } 100% { opacity: 0; }}
+.smlc-fade-1 { animation-delay: 0s; }
+.smlc-fade-2 { animation-delay: 10s; }
+.smlc-fade-3 { animation-delay: 20s; }
+
+/* --- DISCOVER SECTION --- */
+.discover-clay-county-section { width: 100%; padding: 60px 0; background-color: #ffffff; }
+/* 1. Fix Column Alignment */
+.discover-row { display: flex; flex-wrap: wrap; /* Allows stacking on mobile */ gap: 30px; align-items: stretch; /* This makes columns even height */}
+.discover-col { flex: 1; min-width: 300px; /* Prevents them from getting too skinny */ display: flex; flex-direction: column;}
+
+/* 2. Increase Font Size for "Your Source for Local News" */
+/* Adjust the selector to match the specific class or tag you used for that text */
+.local-news-subhead { font-size: 32px !important; /* Adjust this number as needed */ font-family: "Times New Roman", serif; font-weight: bold;}
+.index-heading-row { text-align: center; padding-bottom: 40px; }
+.index-heading-row h2 { font-family: 'Times New Roman', serif; font-size: 2.5rem; color: #000; }
+
+.index-grid-row { display: flex; gap: 20px; width: 90%; max-width: 1400px; margin: 0 auto; align-items: stretch; }
+.index-col { flex: 1; display:flex; flex-direction:column;}
+
+/* --- GLOSSY BOX --- */
+.glossy-wrapper { padding: 60px 40px; border-radius: 20px; border: 2px solid #222;  background-image: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=2000'); 
+    background-size: cover; background-position: center; height: 100%; object-fit: cover;}
+.glossy-box { 
+    max-width: 700px; margin: 0 auto; padding: 40px; border-radius: 20px;
+    background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.2); 
+}
+.yellow-text { color: #ffcc00 !important; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); }
+.mission-text.yellow-border { border-left: 5px solid #ffcc00; padding-left: 20px; margin-top: 20px; }
+
+.courthouse-heading { text-align: center; font-family: 'Times New Roman', serif; margin-bottom: 20px; }
+.courthouse-img { width: 100%; height: auto; border: 2px solid #222; box-shadow: 5px 5px 15px rgba(0,0,0,0.3); height: 100%; object-fit: cover; }
+
+/* =========================================
+   CHAPTER 4: ORANGE NEWS & NEWSLETTER
+   ========================================= */
+.orange-master-section { width: 100%; background-color: #ff6005; padding: 60px 0; margin: 40px 0; border-top: 3px solid #222; border-bottom: 3px solid #222; }
+.news-heading-bar { background-color: #707070; width: 85%; margin: 0 auto 40px; padding: 25px 20px; text-align: center; border-radius: 8px; }
+.news-heading-bar h2 { color: #fff; font-family: 'Times New Roman', serif; text-transform: uppercase; font-size: 42px !important; margin: 0; text-align: center; }
+
+.orange-grid-row { width: 85%; max-width: 1400px; margin: 0 auto; display: flex; gap: 40px; align-items: center; }
+.orange-col { flex: 1; }
+.news-img-styled { width: 100%; height: auto; border: 2px solid #222; box-shadow: 10px 10px 0px rgba(0,0,0,0.2); }
+
+/* NEWSLETTER STYLES */
+.wf-parent { background-color: #ff6005 !important; padding: 20px 0 !important; }
+.wf-wrapper { 
+    max-width: 600px; margin: 0 auto; padding: 40px; background-color: #fffdf6 !important; 
+    border: 2px solid #222 !important; box-shadow: 8px 8px 0px #222 !important; 
+}
+.wf-header { 
+    font-family: "Times New Roman", serif; font-size: 32px; font-weight: 900; 
+    text-align: center; border-top: 4px solid #222; border-bottom: 2px solid #222; 
+    padding: 15px 0; margin-bottom: 30px; 
+}
+.wf-label { font-weight: bold; font-size: 14px; text-transform: uppercase; display: block; border-bottom: 1px solid #222; margin-bottom: 8px; }
+.wf-field-input { width: 100%; border: 1px solid #222; padding: 12px; margin-bottom: 20px; }
+.wf-btn { 
+    width: 100%; background-color: #222 !important; color: #fff !important; 
+    padding: 20px; font-weight: bold; text-transform: uppercase; border: none; cursor: pointer; 
+}
+.wf-btn:hover { background-color: #1414fe !important; }
+
+/* =========================================
+   CHAPTER 5: INTRICATE GRID & PORTAL BOXES
+   ========================================= */
+.intricate-grid-container { display: flex; gap: 2.5%; width: 95%; margin: 40px auto; align-items: flex-start; }
+.intricate-col { flex: 1; display: flex; flex-direction: column; gap: 40px; }
+
+.clay-county-news-box { 
+    background-color: #fffdf6 !important; border: 2px solid #222 !important; 
+    padding: 30px; box-shadow: 10px 10px 0px #222 !important; 
+    display: flex; flex-direction: column; position: relative;
+}
+
+.clay-county-sync-container {
+    width: 100%;
+    max-width: 550px;
+    margin: -5% auto 0;
+    padding: 0;
+    display: block !important; /* Forces it to show */
+    min-height: 200px; /* Give it a starting height so it's not invisible */
+}
+
+#bulletin-iframe {
+    overflow: visible !important;
+}
+
+.news-box-header { text-align: center; border-top: 5px solid #222; border-bottom: 3px solid #222; padding: 10px; margin-bottom: 20px; }
+.news-box-header h3 { font-family: "Times New Roman", serif; text-transform: uppercase; margin: 0; font-size: 36px !important; /* Made the Title significantly bigger */ margin-bottom: 10px;}
+.news-box-header span { font-size: 14px !important; /* Made the Subtitle bigger */ letter-spacing: 2px; display: block; margin-bottom: 20px;}
+.spotlight-image-wrap { width: 100%; border: 1px solid #222; padding: 5px; background: #fff; margin-bottom: 15px; }
+.spotlight-image-wrap img { width: 100%; display: block; filter: grayscale(10%) sepia(5%); }
+
+.clipping-tag-black { 
+    position: absolute; top: 0; left: 20px; transform: translateY(-50%); 
+    background: #222; color: #fff; padding: 5px 15px; font-size: 12px; font-weight: bold; 
+}
+
+.clipping-btn {
+    display: block; width: 100%; background-color: #222 !important; color: #fff !important; 
+    padding: 15px 0; text-align: center; text-transform: uppercase; font-weight: 900; 
+    text-decoration: none; box-shadow: inset 0 0 0 3px #ffffff;
+}
+.clipping-btn:hover { background-color: #1414fe !important; }
+
+/* RICHARDS SPECIAL HEADER */
+.group-header { text-align: center; border-top: 5px double #222; border-bottom: 2px solid #222; padding: 15px 10px; margin-bottom: 20px; }
+
+/* =========================================
+   CHAPTER 6: BLUE NEWS FEED, THANKFUL & FOOTER
+   ========================================= */
+.blue-news-frame { background-color: #0c2ef1; padding: 60px 0; margin: 40px 0; }
+.news-content-90 { width: 90%; max-width: 1400px; margin: 0 auto; height: auto; background: #0C2EF1; }
+/* COMPACT COMMUNITY BULLETIN STYLING */
+#full-news-feed {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box; /* Prevents container bleeding */
+}
+
+.full-story-display {
+    background-color: #e5e5e5 !important; /* Your saved listing card color */
+    padding: 20px;
+    border: 1px solid #333;
+    box-shadow: 6px 6px 0px #222; /* Retro newspaper shadow */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Keeps button at the bottom */
+    min-height: 400px; /* Uniform card size */
+    overflow: hidden;
+}
+
+.full-story-display h1 {
+    font-size: 1.25rem !important; /* Forces the giant headlines to shrink */
+    line-height: 1.2;
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #cc0000; /* Matching your calendar red */
+    text-align: left;
+    border-bottom: 1px solid #333;
+}
+
+.story-body {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #444;
+    max-height: 150px; /* Prevents long stories from taking over the screen */
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 4; /* Limit text to 4 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden; /* This stops the bleeding */
+    margin: 15px 0;
+}
+
+.full-story-display img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    filter: sepia(20%); /* Adds a slight vintage newspaper feel */
+}
+
+/* --- THE "READ MORE" BUTTON --- */
+.news-read-more-btn {
+    background: #cc0000; /* Matching your calendar red */
+    color: white;
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 12px;
+    padding: 10px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s;
+}
+
+.news-read-more-btn:hover {
+    background: #000;
+}
+
+.thankful-section { width: 100%; background-color: #ffffff; padding: 60px 20px; text-align: center; }
+.thankful-content { max-width: 1000px; margin: 0 auto; font-family: "Times New Roman", serif; font-size: 1.2rem; line-height: 1.6; }
+
+.site-footer { background-color: #000 !important; color: #fff !important; text-align: center; padding: 40px 20px; margin-top: auto; }
+.site-footer a { color: #fff !important; text-decoration: underline; }
+
+/* =========================================
+   RESPONSIVE OVERRIDES
+   ========================================= */
+@media (max-width: 768px) {
+    .hamburger { display: flex; flex-direction: column; margin: 0 auto; }
+    .nav-links { display: none; flex-direction: column; width: 100%; text-align: center; background-color: #fffdf6; }
+    .nav-links.open { display: flex; }
+    .index-grid-row, .orange-grid-row, .intricate-grid-container { flex-direction: column; align-items: center; }
+    .index-col, .orange-col, .intricate-col { width: 100%; }
+}
+
+/* Home Page Newsletter Branding */
+.wf-header {
+    font-size: 18px !important;
+    font-weight: bold;
+    color: #222;
+    border-bottom: 2px solid #222;
+    margin-bottom: 25px;
+    padding-bottom: 10px;
+    text-transform: capitalize;
+}
+
+.wf-header span {
+    font-size: 1rem;
+    display: block;
+    margin-top: 5px;
+    color: #555;
+    letter-spacing: 1px;
+}
+
+.wf-row {
+    margin-bottom: 15px;
+}
+
+.wf-label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-transform: capitalize;
+}
+
+.wf-field-input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #222;
+    border-radius: 4px;
+    font-size: 18px;
+}
+
+.wf-btn {
+    background-color: #222 !important; /* Professional Black */
+    border: 1px solid #000 !important;
+    color: #fff !important;
+    padding: 12px 30px;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background 0.3s ease;
+}
+
+.wf-btn:hover {
+    background-color: #444 !important;
+}
+
+
+/* --- The Subscribe Button --- */
+.clipping-btn {
+    padding: 20px !important; /* Taller button */
+    font-size: 24px !important; /* Much larger text */
+    font-family: "Times New Roman", serif;
+    font-weight: bold;
+    text-transform: uppercase;
+    background-color: #222;
+    color: #fff;
+    transition: 0.3s;
+}
+
+.clipping-btn:hover {
+    background-color: #d9534f; /* Red on hover for a little pop */
+}
+
+
+
+/* =========================================
+   SMLC PORTAL ADDITIONS (2026-10-31)
+   Everything above this line is Scott's style.css, unchanged.
+   ========================================= */
+
+/* --- Menu from Firebase: town image as a small icon --- */
+.nav-links a { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 6px; }
+.nav-links .menu-thumb-icon {
+    width: 22px; height: 22px; object-fit: contain; flex-shrink: 0;
+    background: #fff; border: 1px solid #222; border-radius: 4px; padding: 1px;
+}
+/* The page you are on: secondary color text on the primary color background */
+.nav-links a.active {
+    color: var(--smlc-nav-secondary, #FFC10E) !important;
+    background: var(--smlc-nav-primary, #0258A3);
+    text-decoration: none;
+}
+.nav-links a.active:hover { color: var(--smlc-nav-secondary, #FFC10E) !important; }
+.nav-links li { margin: 8px 18px; }
+
+/* --- Calendar list (Scott's layout) --- */
+.event-row { padding: 15px 0; border-bottom: 1px dashed #ccc; }
+.event-row:last-child { border-bottom: none; }
+.event-date { color: #cc0000; font-weight: bold; font-size: 12px; text-transform: uppercase; }
+.event-title { font-size: 18px; font-weight: bold; margin: 5px 0; line-height: 1.2; }
+.event-meta { font-size: 13px; color: #444; }
+.event-links { margin-top: 8px; }
+.event-links a { color: #cc0000; font-weight: bold; font-size: 10px; text-transform: uppercase; text-decoration: none; }
+.event-links span { color: #777; margin: 0 5px; }
+
+/* --- Spotlight --- */
+.spotlight-name { font-size: 24px; font-weight: bold; display: block; text-align: center; margin-bottom: 5px; }
+.spotlight-loc { font-size: 12px; text-transform: uppercase; color: #d9534f; font-weight: bold; display: block; text-align: center; margin-bottom: 15px; letter-spacing: 1px; }
+
+/* --- Gas price billboard inside a newspaper box --- */
+.gas-clipping .gas-screen {
+    position: relative; width: 100%; aspect-ratio: 16 / 11; background: #000;
+    border: 6px solid #2a2a2a; border-radius: 8px; overflow: hidden; margin-bottom: 15px;
+}
+.gas-slide {
+    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity .8s ease-in-out; padding: 10px;
+}
+.gas-slide.active { opacity: 1; }
+.gas-town { color: #ffc929; font-size: clamp(14px, 3vw, 20px); font-weight: bold; letter-spacing: 2px; margin-bottom: 6px; text-shadow: 0 0 8px rgba(255,201,41,.6); }
+.gas-logo { height: 52px; width: 100%; max-width: 180px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
+.gas-logo img { max-height: 100%; max-width: 100%; object-fit: contain; border-radius: 4px; }
+.gas-logo img.white-bg { background: #fff; padding: 4px 10px; }
+.gas-logo-text { color: #fff; font-size: 16px; font-weight: 900; border: 1px solid #444; padding: 4px 12px; text-transform: uppercase; }
+.gas-row { width: 88%; display: flex; justify-content: space-between; align-items: center; }
+.gas-label { color: #ffc929; font-size: 13px; font-weight: bold; letter-spacing: 1px; font-family: sans-serif; }
+.gas-price { font-family: 'Courier New', Courier, monospace; font-size: clamp(1.6rem, 6vw, 2.4rem); font-weight: bold; }
+.gas-price.reg { color: #ff3b3b; text-shadow: 0 0 12px #ff0000; }
+.gas-price.dsl { color: #39ff14; text-shadow: 0 0 12px #228b22; }
+.gas-updated { color: #ffc929; font-size: 10px; margin-top: 6px; opacity: .75; text-transform: uppercase; font-family: sans-serif; }
+.gas-status { color: #ffc929; font-weight: bold; font-size: 13px; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+
+/* --- News cards: town badge, clean date, load more --- */
+.location-badge { background: #0056b3; color: #fff; font-size: 11px; font-weight: bold; padding: 3px 8px; border-radius: 3px; display: inline-block; margin-bottom: 8px; align-self: flex-start; }
+.news-date { font-size: .8rem; font-weight: bold; color: #777; margin: 0 0 10px; }
+.news-read-more-btn { display: block; }
+.news-load-more { display: block; margin: 10px auto 0; background: #222; color: #fff; border: 2px solid #fff; padding: 14px 30px; font: bold 16px "Times New Roman", serif; text-transform: uppercase; cursor: pointer; }
+.news-load-more:hover { background: #cc0000; }
+.news-status { color: #fff; text-align: center; font-style: italic; padding: 20px; grid-column: 1 / -1; }
+
+/* --- "More" dropdown (menu items with Category = More) --- */
+.nav-more { position: relative; }
+.nav-more-toggle {
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    font: bold 18px "Times New Roman", serif; color: #222; background: transparent;
+    border: 2px solid #222; border-radius: 6px; padding: 4px 12px;
+}
+.nav-more-toggle:hover, .nav-more.is-open .nav-more-toggle {
+    background: var(--smlc-nav-primary, #0258A3); color: var(--smlc-nav-secondary, #FFC10E); border-color: var(--smlc-nav-primary, #0258A3);
+}
+.nav-more-caret { font-size: 12px; transition: transform .2s; }
+.nav-more.is-open .nav-more-caret { transform: rotate(180deg); }
+.nav-more-list {
+    display: none; position: absolute; right: 0; top: calc(100% + 8px); z-index: 2000;
+    min-width: 230px; max-height: 70vh; overflow-y: auto; margin: 0; padding: 8px; list-style: none;
+    background: #fffdf6; border: 2px solid #222; box-shadow: 6px 6px 0 #222; text-align: left;
+}
+.nav-more.is-open .nav-more-list { display: block; }
+.nav-more-list li { margin: 0; }
+.nav-more-list a { display: flex; width: 100%; padding: 8px 10px; font-size: 16px; }
+@media (max-width: 768px) {
+    .nav-links li { margin: 8px 0; }
+    .nav-more { width: 100%; }
+    .nav-more-list { position: static; box-shadow: none; margin: 8px auto 0; width: 90%; }
+}
+
+/* =========================================
+   NIGHT MODE: follows the device's light / dark setting (no switch)
+   ========================================= */
+@media (prefers-color-scheme: dark) {
+    body, .home-bg, .discover-clay-county-section, .thankful-section { background-color: #121212 !important; color: #e4e4e7; }
+    .header, .nav-bar, .nav-links { background-color: #1c1c1e !important; }
+    .nav-links a { color: #f4f4f5 !important; }
+    .nav-links a:hover { color: #8fb8ff !important; }
+    .nav-links a.active { color: var(--smlc-nav-secondary, #FFC10E) !important; }
+    .hamburger span { background-color: #f4f4f5; }
+    .nav-more-toggle { color: #f4f4f5; border-color: #f4f4f5; }
+    .nav-more-list { background: #1c1c1e; border-color: #555; box-shadow: 6px 6px 0 #000; }
+    .nav-links .menu-thumb-icon { border-color: #555; }
+
+    .index-heading-row h2, .courthouse-heading { color: #f4f4f5; }
+    .courthouse-img { border-color: #555; }
+
+    .clay-county-news-box { background-color: #1c1c1e !important; border-color: #555 !important; box-shadow: 10px 10px 0px #000 !important; color: #e4e4e7; }
+    .news-box-header, .group-header { border-color: #e4e4e7; }
+    .news-box-header h3, .group-header h3, .spotlight-name { color: #f4f4f5; }
+    .clay-county-news-box span[style], .clay-county-news-box p, .clay-county-news-box .biz-description,
+    .news-box-header span, .group-header span { color: #c8c8d0 !important; }
+    .clay-county-news-box a.footer-master-link { color: #f4f4f5 !important; }
+    .clay-county-news-box div[style*="border-top"] { border-color: #444 !important; }
+    .clipping-tag-black { background: #000; border: 1px solid #555; }
+    .clipping-btn { background-color: #000 !important; }
+    .spotlight-image-wrap { background: #111; border-color: #555; }
+    .spotlight-loc { color: #ff8a80 !important; }
+
+    .event-row { border-color: #444; }
+    .event-date, .event-links a { color: #ff6b6b; }
+    .event-title { color: #f4f4f5; }
+    .event-meta { color: #b4b4bb; }
+
+    .wf-label { color: #e4e4e7; border-color: #777; }
+    .wf-field-input { background: #2a2a2d; color: #fff; border-color: #777; }
+
+    .full-story-display { background-color: #1c1c1e !important; border-color: #555; box-shadow: 6px 6px 0px #000; }
+    .full-story-display h1 { color: #ff6b6b; border-color: #555; }
+    .story-body { color: #c8c8d0; }
+    .news-date { color: #a1a1aa; }
+
+    .thankful-content, .thankful-content p { color: #e4e4e7; }
+    .thankful-content a { color: #8fb8ff; }
+}
+
+/* =========================================
+   2026-10-31 (Claude-Test): header like the town pages, bigger menu icons,
+   calendar countdown badges, Quick Answers
+   ========================================= */
+.skip-link { position: absolute; left: -999px; top: 0; background: #000; color: #fff; padding: 10px 16px; z-index: 20000; }
+.skip-link:focus { left: 8px; top: 8px; }
+
+/* Header image on top; the menu bar sticks to the top of the screen */
+.header-brand-link { display: block; line-height: 0; }
+.nav-bar { position: sticky; top: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; gap: 12px;
+    padding: 8px 16px; border-top: 3px solid #222; border-bottom: 3px double #222; box-shadow: 0 4px 10px rgba(0,0,0,.25); }
+.nav-bar .nav-links { flex: 1 1 auto; }
+.nav-links li { margin: 6px 14px; }
+/* The header logo joins the menu bar once the big header image has scrolled away */
+.smlc-menu-logo { display: none; flex: 0 0 auto; align-items: center; }
+.smlc-menu-logo img { height: 46px; width: auto; max-width: 220px; object-fit: contain; display: block; }
+html.smlc-header-scrolled .smlc-menu-logo { display: inline-flex; animation: smlcLogoIn .25s ease-out; }
+@keyframes smlcLogoIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@media (max-width: 767px) { .smlc-menu-logo img { height: 36px; max-width: 140px; } }
+
+/* Bigger town icons in the menu */
+.nav-links .menu-thumb-icon { width: 34px !important; height: 34px !important; }
+
+/* Calendar: countdown / live / ending soon badges (colors used nowhere else) */
+.event-status { margin: 0 0 6px; padding: 3px 10px; border-radius: 999px; font: bold 11px Arial, sans-serif; letter-spacing: 1px; text-transform: uppercase; }
+.event-status.status-starting { background: #00E5FF; color: #00262B; }
+.event-status.status-live { background: #FF1F8E; color: #fff; animation: smlcLivePulse 1.6s ease-in-out infinite; }
+.event-status.status-ending { background: #B026FF; color: #fff; }
+@keyframes smlcLivePulse { 0%,100% { box-shadow: 0 0 6px rgba(255,31,142,.5); } 50% { box-shadow: 0 0 16px rgba(255,31,142,.95); } }
+@media (prefers-reduced-motion: reduce) { .event-status.status-live { animation: none; } }
+
+/* Quick Answers (SEO / AEO) */
+.smlc-answers { width: 92%; max-width: 1400px; margin: 36px auto; }
+.smlc-answers-inner { background: #fffdf5; color: #1a1a1a; border: 2px solid #222; box-shadow: 6px 6px 0 #000; border-radius: 8px; padding: clamp(18px, 3vw, 34px); }
+.smlc-answers-title { margin: 0 0 10px; font: 900 clamp(1.5rem, 3vw, 2.2rem)/1.15 "Times New Roman", Georgia, serif; color: #0258A3; }
+.smlc-answers-lead { margin: 0 0 22px; max-width: 75ch; font-size: 1.05rem; line-height: 1.65; color: #333; }
+.smlc-answers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 14px 28px; }
+.smlc-answer { padding: 14px 0 0; border-top: 2px solid #222; }
+.smlc-answer-q { margin: 0 0 6px; font: 700 1.1rem/1.3 "Times New Roman", Georgia, serif; color: #1a1a1a; }
+.smlc-answer-a { margin: 0; font-size: 15px; line-height: 1.6; color: #333; }
+.smlc-answer-a a, .smlc-answers-lead a { color: #0258A3; text-decoration: underline; word-break: break-word; }
+@media (prefers-color-scheme: dark) {
+    .nav-bar { border-color: #555; }
+    .smlc-answers-inner { background: #1c1c1e; color: #f4f4f5; border-color: #555; }
+    .smlc-answers-title { color: #9ccfff; }
+    .smlc-answers-lead, .smlc-answer-a { color: #d4d4d8; }
+    .smlc-answer-q { color: #f4f4f5; }
+    .smlc-answer { border-color: #555; }
+    .smlc-answer-a a, .smlc-answers-lead a { color: #9ccfff; }
+}

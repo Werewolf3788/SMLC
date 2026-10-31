@@ -12,7 +12,13 @@
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <!-- Device language -> automatic translation (no language picker) -->
+    <script src="smlc-device-prefs.js"></script>
+    <script defer src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     <title>S & K Ventures Fuel Monitor & Management</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-banner.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-banner.png">
     <style>
         :root {
             --brand-red: #3e0100;
@@ -37,6 +43,162 @@
 
         #fuel-monitor-container * {
             box-sizing: border-box;
+        }
+
+        /* ===== Site Header + Menu ===== */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: var(--brand-red);
+            border-bottom: 3px solid var(--brand-gold);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        .site-header * { box-sizing: border-box; }
+
+        .site-header-bar {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .site-logo-link {
+            display: flex;
+            align-items: center;
+            min-width: 0;
+        }
+
+        .site-logo {
+            height: 52px;
+            width: auto;
+            max-width: 70vw;
+            object-fit: contain;
+            display: block;
+        }
+
+        .menu-toggle {
+            background: transparent;
+            border: 2px solid var(--brand-gold);
+            color: var(--brand-gold);
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .menu-toggle:hover,
+        .menu-toggle[aria-expanded="true"] {
+            background: var(--brand-gold);
+            color: var(--brand-red);
+        }
+
+        .menu-toggle .bars {
+            display: inline-flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .menu-toggle .bars span {
+            display: block;
+            width: 18px;
+            height: 2px;
+            background: currentColor;
+            border-radius: 2px;
+        }
+
+        .site-menu {
+            display: none;
+            background: #2a0100;
+            border-top: 1px solid rgba(255, 201, 41, 0.3);
+        }
+
+        .site-menu.open {
+            display: block;
+        }
+
+        .site-menu-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .menu-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 201, 41, 0.25);
+            border-radius: 8px;
+            padding: 10px 8px;
+            color: var(--brand-gold);
+            font-weight: bold;
+            font-size: 13px;
+            text-align: center;
+            transition: transform 0.15s, border-color 0.15s, background 0.15s;
+        }
+
+        .menu-item:hover {
+            transform: translateY(-2px);
+            border-color: var(--brand-gold);
+            background: rgba(255, 201, 41, 0.1);
+        }
+
+        .menu-item img {
+            width: 100%;
+            height: 70px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            background: #111;
+        }
+
+        .menu-status {
+            grid-column: 1 / -1;
+            color: var(--brand-gold);
+            text-align: center;
+            font-size: 13px;
+            opacity: 0.8;
+            padding: 10px;
+        }
+
+        .menu-more { grid-column: 1 / -1; }
+        .menu-more-toggle {
+            width: 100%; background: transparent; color: var(--brand-gold);
+            border: 2px solid var(--brand-gold); border-radius: 8px; padding: 10px;
+            font-weight: bold; font-size: 14px; letter-spacing: 1px; cursor: pointer;
+        }
+        .menu-more-toggle:hover, .menu-more.is-open .menu-more-toggle { background: var(--brand-gold); color: var(--brand-red); }
+        .menu-more-caret { display: inline-block; transition: transform .2s; }
+        .menu-more.is-open .menu-more-caret { transform: rotate(180deg); }
+        .menu-more-grid {
+            display: none; margin-top: 12px; gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        }
+        .menu-more.is-open .menu-more-grid { display: grid; }
+
+        @media (max-width: 480px) {
+            .site-logo { height: 40px; }
+            .menu-toggle .label { display: none; }
+            .site-menu-grid { grid-template-columns: repeat(2, 1fr); }
         }
 
         /* Integrated Layout Flex Containers */
@@ -403,6 +565,17 @@
             100% { opacity: 1; transform: scale(1); }
         }
 
+        /* Follows the device's light / dark setting */
+        @media (prefers-color-scheme: dark) {
+            body { background: #121212 !important; color: #e4e4e7; }
+            #wp-custom-wrapper h2 { color: var(--brand-gold); }
+            #wp-custom-wrapper .admin-card { background: #1c1c1e; color: #e4e4e7; box-shadow: 0 4px 10px rgba(0,0,0,.6); }
+            #wp-custom-wrapper label.input-label { color: #b4b4bb; }
+            #wp-custom-wrapper input { background: #2a2a2d; color: #fff; border-color: #444; }
+            #wp-custom-wrapper input[readonly] { background: #232326 !important; color: #b4b4bb; }
+            #wp-custom-wrapper select { background: #2a2a2d; color: #fff; }
+        }
+
         /* Layout Breakpoints */
         @media (max-width: 850px) {
             .split-workspace {
@@ -428,6 +601,26 @@
     </style>
 </head>
 <body style="margin:0; background:transparent;">
+<div id="google_translate_element"></div>
+
+<header class="site-header">
+    <div class="site-header-bar">
+        <a class="site-logo-link" href="./" target="_top">
+            <img class="site-logo"
+                 src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-banner.png"
+                 alt="SMLC">
+        </a>
+        <button class="menu-toggle" id="menu-toggle" aria-expanded="false" aria-controls="site-menu">
+            <span class="bars"><span></span><span></span><span></span></span>
+            <span class="label">MENU</span>
+        </button>
+    </div>
+    <nav class="site-menu" id="site-menu" aria-label="Site menu">
+        <div class="site-menu-grid" id="site-menu-grid">
+            <div class="menu-status">Loading menu...</div>
+        </div>
+    </nav>
+</header>
 
 <div id="fuel-monitor-container">
     <div id="wp-custom-wrapper">
@@ -525,6 +718,97 @@
         { id: "87817", name: "Xenia - Knapp's" },
         { id: "171711", name: "Clay City - Casey's" }
     ];
+
+    // ===== Site Menu (from master_county_data/global/menu) =====
+    // Each item: { name, website, imageUrl, alt } - written by Code.gs from the "Menu" tab
+    const menuToggle = document.getElementById('menu-toggle');
+    const menuPanel = document.getElementById('site-menu');
+    const menuGrid = document.getElementById('site-menu-grid');
+
+    menuToggle.addEventListener('click', () => {
+        const open = menuPanel.classList.toggle('open');
+        menuToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && menuPanel.classList.contains('open')) {
+            menuPanel.classList.remove('open');
+            menuToggle.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    function safeUrl(url) {
+        const u = String(url || '').trim();
+        return (/^(https?:\/\/|\.{0,2}\/|[\w\-]+\.html)/i.test(u)) ? u : '';
+    }
+
+    db.ref('master_county_data/global/menu').on('value', snap => {
+        const raw = snap.val();
+        // Firebase may return a list or an object with numbered keys
+        const items = raw ? Object.values(raw) : [];
+        menuGrid.innerHTML = '';
+
+        const usable = items.filter(it => it && safeUrl(it.website));
+        if (usable.length === 0) {
+            const msg = document.createElement('div');
+            msg.className = 'menu-status';
+            msg.textContent = 'Menu unavailable right now.';
+            menuGrid.appendChild(msg);
+            return;
+        }
+
+        function makeTile(it) {
+            const label = String(it.name || it.alt || '').trim();
+            const a = document.createElement('a');
+            a.className = 'menu-item';
+            a.href = safeUrl(it.website);
+            a.target = '_top';
+            const img = safeUrl(it.imageUrl);
+            if (img) {
+                const pic = document.createElement('img');
+                pic.src = img;
+                pic.alt = String(it.alt || label);
+                pic.loading = 'lazy';
+                pic.onerror = () => pic.remove();
+                a.appendChild(pic);
+            }
+            const text = document.createElement('span');
+            text.textContent = label;
+            a.appendChild(text);
+            return a;
+        }
+
+        // Category "More" (menu/<n>/category) -> its own dropdown inside the menu
+        const isMore = it => String(it.category || '').trim().toLowerCase() === 'more';
+        usable.filter(it => !isMore(it)).forEach(it => menuGrid.appendChild(makeTile(it)));
+
+        const moreItems = usable.filter(isMore);
+        if (moreItems.length) {
+            const wrap = document.createElement('div');
+            wrap.className = 'menu-more';
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'menu-more-toggle';
+            btn.setAttribute('aria-expanded', 'false');
+            btn.innerHTML = 'MORE <span class="menu-more-caret" aria-hidden="true">&#9662;</span>';
+            const list = document.createElement('div');
+            list.className = 'menu-more-grid';
+            moreItems.forEach(it => list.appendChild(makeTile(it)));
+            btn.addEventListener('click', () => {
+                const open = wrap.classList.toggle('is-open');
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+            wrap.appendChild(btn);
+            wrap.appendChild(list);
+            menuGrid.appendChild(wrap);
+        }
+    });
+
+    // Prevents anyone from injecting HTML through the public price form
+    function esc(v) {
+        return String(v == null ? '' : v).replace(/[&<>"']/g, c =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
 
     const container = document.getElementById('community-container');
     const selector = document.getElementById('station-selector');
@@ -662,13 +946,13 @@
                 </div>
                 <div class="price-row">
                     <span class="price-label">REGULAR</span>
-                    <span class="led-red">${info.reg}</span>
+                    <span class="led-red">${esc(info.reg)}</span>
                 </div>
                 <div class="price-row">
                     <span class="price-label">DIESEL</span>
-                    <span class="led-grn">${(info.dsl === "0" || !info.dsl) ? "---" : info.dsl}</span>
+                    <span class="led-grn">${(info.dsl === "0" || !info.dsl) ? "---" : esc(info.dsl)}</span>
                 </div>
-                <div class="update-tag">Updated: ${info.date}</div>
+                <div class="update-tag">Updated: ${esc(info.date)}</div>
             `;
             screen.appendChild(slide);
         });

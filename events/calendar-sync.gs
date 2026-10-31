@@ -137,7 +137,7 @@ function syncCalendarToFirestore() {
       isAllDay: isAllDay,
       displayDate: dateString,
       color: color,
-      desc: ev.getDescription() || "Visit ourflora.com for more details.",
+      desc: ev.getDescription() || "",
       addr: ev.getLocation() || "Clay County, IL",
       googleLink: generateGoogleLink(ev),
       icalData: generateICalData(ev),

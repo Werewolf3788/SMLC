@@ -222,7 +222,7 @@ async function syncICalToFirestore() {
           const links = linkUrls.map(u => ({ url: u, label: labelForUrl(u) }));
           const image = imageFromAttach(ev.attach) || imageUrls[0] || "";
 
-          const desc = descParsed.text || "Visit ourflora.com for more details.";
+          const desc = descParsed.text || "";
 
           // ---- Location: plain text address + a clean Google Maps directions URL ----
           const locParsed = parseRichText(ev.location);
