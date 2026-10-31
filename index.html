@@ -666,12 +666,32 @@
         }
 
         let gasTimer = null;
+        // Which stations to show = every town's /master_county_data/towns/{Town}/sections/gas_widget
+        // list ({ station_id, title }), same as the town pages. Built-in list is only the backup.
+        const GAS_TOWNS = ["Clay City", "Flora", "Louisville", "Sailor Springs", "Xenia"];
+        const gasWidgetByTown = {};
+        let lastPrices = null;
+        function gasStationList() {
+            const seen = {}, list = [];
+            GAS_TOWNS.forEach(town => {
+                (gasWidgetByTown[town] || []).forEach(e => {
+                    const id = e && e.station_id != null ? String(e.station_id).trim() : "";
+                    if (!id || seen[id]) return;
+                    seen[id] = 1;
+                    const known = GAS_STATIONS[id] || {};
+                    list.push({ id, display: known.display || town, name: String(e.title || known.name || ("Station " + id)).trim(), logo: known.logo || "", whiteBg: known.whiteBg });
+                });
+            });
+            if (list.length) return list;
+            return Object.keys(GAS_STATIONS).map(id => Object.assign({ id }, GAS_STATIONS[id]));
+        }
         function renderGas(data) {
+            if (data !== undefined) lastPrices = data;
+            data = lastPrices;
             const screen = document.getElementById("gas-screen");
             screen.innerHTML = "";
-            const ids = Object.keys(GAS_STATIONS);
-            ids.forEach(id => {
-                const cfg = GAS_STATIONS[id];
+            gasStationList().forEach(cfg => {
+                const id = cfg.id;
                 const info = (data && data[id]) || {};
                 const reg = info.reg ? esc(info.reg) : "---";
                 const dsl = (!info.dsl || info.dsl === "0") ? "---" : esc(info.dsl);
@@ -679,12 +699,12 @@
                 slide.className = "gas-slide";
                 slide.innerHTML =
                     '<div class="gas-town">' + esc(cfg.display.toUpperCase()) + ', IL</div>' +
-                    '<div class="gas-logo"><img src="' + GAS_LOGO_BASE + encodeURIComponent(cfg.logo) + '" alt="' + esc(cfg.name) + '"' + (cfg.whiteBg ? ' class="white-bg"' : '') + '></div>' +
+                    '<div class="gas-logo">' + (cfg.logo ? '<img src="' + GAS_LOGO_BASE + encodeURIComponent(cfg.logo) + '" alt="' + esc(cfg.name) + '"' + (cfg.whiteBg ? ' class="white-bg"' : '') + '>' : '<div class="gas-logo-text">' + esc(cfg.name) + '</div>') + '</div>' +
                     '<div class="gas-row"><span class="gas-label">REGULAR</span><span class="gas-price reg">' + reg + '</span></div>' +
                     '<div class="gas-row"><span class="gas-label">DIESEL</span><span class="gas-price dsl">' + dsl + '</span></div>' +
                     '<div class="gas-updated">Updated: ' + esc(info.date || "Pending") + '</div>';
                 const logo = slide.querySelector(".gas-logo img");
-                logo.onerror = () => {
+                if (logo) logo.onerror = () => {
                     const t = document.createElement("div");
                     t.className = "gas-logo-text";
                     t.textContent = cfg.name;
@@ -702,7 +722,14 @@
         if (db) {
             db.ref("master_county_data/global/menu").on("value", s => renderMenu(s.val()));
             db.ref("master_county_data/global/sections/spotlight").on("value", s => renderSpotlight(s.val()));
-            db.ref("fuel_prices").on("value", s => renderGas(s.val()));
+            db.ref("fuel_prices").on("value", s => renderGas(s.val() || {}));
+            GAS_TOWNS.forEach(town => {
+                db.ref("master_county_data/towns/" + town + "/sections/gas_widget").on("value", s => {
+                    const v = s.val();
+                    gasWidgetByTown[town] = v ? (Array.isArray(v) ? v : Object.values(v)) : [];
+                    if (lastPrices) renderGas();
+                });
+            });
         } else {
             document.getElementById("gas-screen").innerHTML = '<div class="gas-status">PRICES UNAVAILABLE</div>';
         }
