@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: v3.3.0
+   Active Version: v3.4.0
    File: universaltown.js
    Project: SMLC County Portal Semantic Master Script
    Description: Complete multi-town engine connecting 100% to Firebase (RTDB & Firestore).
@@ -21,6 +21,8 @@
                 - Dynamic GA4 Tag Injection (G-FHJNXDB9BB) with SPA Hash Route Pageview Tracking
                 - Town-specific & countywide Sports Scoreboard Engine
                 - Persistent 24-hour New York timestamp & version in footer
+                - v3.4.0: Weather & holiday background effects matching Clay County weather (rain, storm,
+                  snow, clouds, stars), fall leaves, holidays; snow builds up on cards; on/off switch
                 - v3.3.0: App-style bottom nav (Home / Towns / More) on phones + portrait tablets
                 - v3.3.0: Calendar countdown (1 hr), LIVE NOW, Ending Soon (30 min), ended events hidden
                 - v3.3.0: Everything in Central time + "your time" note when the device isn't on Central
@@ -1160,6 +1162,7 @@ function renderNavbarWeatherWidget(current) {
     if (pillIcon) pillIcon.innerHTML = iconUrl ? `<img src="${iconUrl}" alt="" onerror="this.style.display='none';">` : '';
     if (pillDetail) pillDetail.textContent = '5-Day Forecast';
     updateBottomNavWeather();
+    if (typeof window.smlcWeatherChanged === 'function') window.smlcWeatherChanged();
     triggerGoogleTranslateUpdate(widgetEl);
 }
 
@@ -2518,6 +2521,7 @@ function renderBottomNav() {
         <ul class="smlc-bn-list">
             <li><button type="button" class="smlc-bn-row" id="smlc-bn-weather-row">${SMLC_ICONS.weather}<span>Weather</span><span class="smlc-bn-row-detail" id="smlc-bn-weather-detail">5-Day Forecast</span></button></li>
             ${groups.more.map(linkHtml).join('')}
+            <li><button type="button" class="smlc-bn-row smlc-fx-toggle" onclick="toggleSmlcEffects()" aria-pressed="true"><span>&#10052;</span><span>Weather Effects</span><span class="smlc-bn-row-detail smlc-fx-toggle-state">On</span></button></li>
         </ul>
         <div class="smlc-bn-translate-slot"><div class="smlc-bn-sheet-title">Language</div><div id="smlc-bn-translate-target"></div></div>`;
     if (keepTranslate) moreSheet.querySelector('#smlc-bn-translate-target').appendChild(keepTranslate);
@@ -2526,6 +2530,7 @@ function renderBottomNav() {
         if (typeof window.openFiveDayForecastModal === 'function') window.openFiveDayForecastModal();
     });
     updateBottomNavWeather();
+    if (typeof smlcUpdateFxToggleLabels === 'function') smlcUpdateFxToggleLabels();
     applyBottomNavMode();
 }
 
@@ -2583,12 +2588,494 @@ function startCentralFooterClock() {
     smlcFooterClockTimer = setInterval(tick, 15000);
 }
 
+// ============================================================================
+// WEATHER & HOLIDAY BACKGROUND EFFECTS
+// - Matches Clay County, IL weather from /master_county_data/weather_forecast/current
+//   rain / storm (lightning) / snow / clouds / clear (no sun; stars after dark, Central time)
+// - Seasons & holidays (Central dates): fall leaves, Halloween, Thanksgiving, Christmas,
+//   New Year's, Valentine's, St. Patrick's, 4th of July
+// - Effects stay BEHIND the cards. Cards act like buildings: snow piles on top while it
+//   snows, leaves / holiday decorations collect in the corners.
+// - Visitors can switch effects off (saved on their device). Reduced-motion = still scene.
+// - Preview any effect:  ?fx=snow&holiday=christmas   or   #fx-snow-christmas
+//   fx: rain | storm | snow | clouds | clear | night     holiday: halloween | thanksgiving |
+//   christmas | newyear | valentine | stpatrick | july4 | fall | none
+// ============================================================================
+const SMLC_FX = {
+    weather: 'clear',        // from Firebase (or preview override)
+    holiday: null,           // halloween | christmas | ...
+    fall: false,             // leaf season
+    night: false,
+    enabled: true,
+    reducedMotion: false,
+    preview: null,           // { weather, holiday, night }
+    canvas: null, ctx: null, w: 0, h: 0, dpr: 1,
+    particles: [], clouds: [], stars: [], bursts: [],
+    raf: null, lastT: 0, flash: 0, nextFlash: 0,
+    snowDepth: 0, snowTimer: null
+};
+
+function smlcCentralParts(date = new Date()) {
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: SMLC_TZ, year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', hourCycle: 'h23', weekday: 'short' }).formatToParts(date);
+    const m = {};
+    parts.forEach(p => { m[p.type] = p.value; });
+    return { y: +m.year, mo: +m.month, d: +m.day, h: +m.hour % 24, wd: m.weekday };
+}
+
+function smlcThanksgivingDay(year) {
+    const first = new Date(Date.UTC(year, 10, 1)).getUTCDay();          // 0=Sun
+    const firstThu = 1 + ((4 - first + 7) % 7);
+    return firstThu + 21;                                                  // 4th Thursday
+}
+
+function smlcDetectHoliday(cp) {
+    const md = cp.mo * 100 + cp.d;
+    if (md >= 1015 && md <= 1031) return 'halloween';
+    if (cp.mo === 11) {
+        const tg = smlcThanksgivingDay(cp.y);
+        if (cp.d >= tg - 3 && cp.d <= tg + 3) return 'thanksgiving';
+    }
+    if (md >= 1201 && md <= 1226) return 'christmas';
+    if (md === 1231 || md === 101) return 'newyear';
+    if (md >= 207 && md <= 214) return 'valentine';
+    if (md >= 314 && md <= 317) return 'stpatrick';
+    if (md >= 701 && md <= 704) return 'july4';
+    return null;
+}
+
+function smlcIsFallSeason(cp) {
+    const md = cp.mo * 100 + cp.d;
+    return md >= 922 && md <= 1130;
+}
+
+function smlcIsNight(cp) {
+    // simple Central-time night window that follows the seasons
+    const darkFrom = [17, 18, 19, 20, 20, 21, 21, 20, 19, 19, 17, 17][cp.mo - 1];
+    const lightAt = [7, 7, 7, 6, 6, 5, 5, 6, 6, 7, 7, 7][cp.mo - 1];
+    return cp.h >= darkFrom || cp.h < lightAt;
+}
+
+function smlcWeatherFromCondition(condition) {
+    const c = String(condition || '').toLowerCase();
+    if (!c) return 'clear';
+    if (/thunder|t-?storm|storm/.test(c)) return 'storm';
+    if (/snow|flurr|sleet|blizzard|wintry|ice pellet/.test(c)) return 'snow';
+    if (/rain|shower|drizzle/.test(c)) return 'rain';
+    if (/cloud|overcast|fog|mist|haze|smoke/.test(c)) return 'clouds';
+    return 'clear';
+}
+
+function smlcReadPreview() {
+    const out = {};
+    try {
+        const q = new URLSearchParams(window.location.search);
+        if (q.get('fx')) out.weather = q.get('fx').toLowerCase();
+        if (q.get('holiday')) out.holiday = q.get('holiday').toLowerCase();
+    } catch (e) {}
+    const hm = (window.location.hash || '').toLowerCase().match(/^#fx-([a-z0-9-]+)/);
+    if (hm) {
+        hm[1].split('-').forEach(tok => {
+            if (['rain', 'storm', 'snow', 'clouds', 'clear', 'night'].includes(tok)) out.weather = tok;
+            else out.holiday = tok;
+        });
+    }
+    if (out.weather === 'night') { out.weather = 'clear'; out.night = true; }
+    return Object.keys(out).length ? out : null;
+}
+
+function smlcResolveScene() {
+    const cp = smlcCentralParts();
+    SMLC_FX.preview = smlcReadPreview();
+    const pv = SMLC_FX.preview || {};
+    SMLC_FX.weather = pv.weather || smlcWeatherFromCondition(window.smlcCurrentWeather && window.smlcCurrentWeather.condition);
+    let hol = pv.holiday !== undefined ? pv.holiday : smlcDetectHoliday(cp);
+    SMLC_FX.fall = pv.holiday !== undefined ? ['fall', 'halloween', 'thanksgiving'].includes(pv.holiday) : smlcIsFallSeason(cp);
+    if (hol === 'fall' || hol === 'none') hol = null;
+    SMLC_FX.holiday = hol;
+    SMLC_FX.night = pv.night || smlcIsNight(cp);
+
+    const root = document.documentElement;
+    root.classList.toggle('smlc-fx-on', SMLC_FX.enabled);
+    ['rain', 'storm', 'snow', 'clouds', 'clear'].forEach(w => root.classList.toggle(`smlc-wx-${w}`, SMLC_FX.enabled && SMLC_FX.weather === w));
+    ['halloween', 'thanksgiving', 'christmas', 'newyear', 'valentine', 'stpatrick', 'july4'].forEach(hh => root.classList.toggle(`smlc-hol-${hh}`, SMLC_FX.enabled && SMLC_FX.holiday === hh));
+    root.classList.toggle('smlc-fx-fall', SMLC_FX.enabled && SMLC_FX.fall);
+    smlcUpdateSnowBuildUp();
+    smlcBuildParticles();
+    smlcUpdateFxToggleLabels();
+}
+
+// ---------- snow that builds up on the cards (and melts when it stops) ----------
+function smlcUpdateSnowBuildUp() {
+    const MAX = 18, MIN_START = 4;
+    if (SMLC_FX.snowTimer) clearInterval(SMLC_FX.snowTimer);
+    let saved = 0;
+    try { saved = parseFloat(sessionStorage.getItem('smlc-snow-depth')) || 0; } catch (e) {}
+    SMLC_FX.snowDepth = saved;
+    const snowing = SMLC_FX.enabled && SMLC_FX.weather === 'snow';
+    if (snowing && SMLC_FX.snowDepth < MIN_START) SMLC_FX.snowDepth = MIN_START;
+    if (snowing && (SMLC_FX.reducedMotion || SMLC_FX.preview)) SMLC_FX.snowDepth = MAX;
+    const apply = () => {
+        document.documentElement.style.setProperty('--smlc-snow-depth', `${SMLC_FX.snowDepth.toFixed(1)}px`);
+        document.documentElement.classList.toggle('smlc-snow-cap', SMLC_FX.snowDepth > 0.5);
+        try { sessionStorage.setItem('smlc-snow-depth', String(SMLC_FX.snowDepth)); } catch (e) {}
+    };
+    apply();
+    SMLC_FX.snowTimer = setInterval(() => {
+        const step = 0.25;                                    // ~4 min to fully cover, then melts the same way
+        SMLC_FX.snowDepth = snowing ? Math.min(MAX, SMLC_FX.snowDepth + step) : Math.max(0, SMLC_FX.snowDepth - step);
+        apply();
+    }, 4000);
+}
+
+// ---------- canvas + particles ----------
+function smlcEnsureCanvas() {
+    if (SMLC_FX.canvas) return;
+    const c = document.createElement('canvas');
+    c.id = 'smlc-fx-canvas';
+    c.setAttribute('aria-hidden', 'true');
+    document.body.insertBefore(c, document.body.firstChild);
+    SMLC_FX.canvas = c;
+    SMLC_FX.ctx = c.getContext('2d');
+    smlcResizeCanvas();
+    window.addEventListener('resize', () => { smlcResizeCanvas(); smlcBuildParticles(); });
+}
+
+function smlcResizeCanvas() {
+    const c = SMLC_FX.canvas;
+    if (!c) return;
+    SMLC_FX.dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    SMLC_FX.w = window.innerWidth;
+    SMLC_FX.h = window.innerHeight;
+    c.width = Math.round(SMLC_FX.w * SMLC_FX.dpr);
+    c.height = Math.round(SMLC_FX.h * SMLC_FX.dpr);
+    SMLC_FX.ctx.setTransform(SMLC_FX.dpr, 0, 0, SMLC_FX.dpr, 0, 0);
+}
+
+const rnd = (a, b) => a + Math.random() * (b - a);
+
+function smlcBuildParticles() {
+    if (!SMLC_FX.canvas) return;
+    const { w, h, weather, holiday, fall, night } = SMLC_FX;
+    const scale = Math.max(0.45, Math.min(1, (w * h) / (1440 * 900)));   // fewer on phones
+    const P = [];
+    const add = (n, make) => { for (let i = 0; i < Math.round(n * scale); i++) P.push(make(true)); };
+
+    // clouds: drifting soft shapes (heavier/darker when it rains or snows)
+    SMLC_FX.clouds = [];
+    const cloudCount = { clouds: 7, rain: 6, storm: 7, snow: 5 }[weather] || (night ? 0 : 2);
+    for (let i = 0; i < cloudCount; i++) {
+        SMLC_FX.clouds.push({ x: rnd(-200, w), y: rnd(-20, h * 0.55), r: rnd(90, 220), vx: rnd(4, 12), a: weather === 'clear' ? 0.05 : rnd(0.07, 0.13), dark: weather === 'storm' || weather === 'rain' });
+    }
+
+    // stars on clear nights
+    SMLC_FX.stars = [];
+    if (weather === 'clear' && night) {
+        for (let i = 0; i < Math.round(120 * scale); i++) SMLC_FX.stars.push({ x: rnd(0, w), y: rnd(0, h), r: rnd(0.4, 1.4), p: rnd(0, Math.PI * 2), s: rnd(0.6, 2) });
+    }
+
+    if (weather === 'rain' || weather === 'storm') add(weather === 'storm' ? 220 : 160, (init) => ({ t: 'rain', x: rnd(-50, w + 50), y: init ? rnd(-h, h) : rnd(-60, -10), len: rnd(12, 26), vy: rnd(620, 900), vx: -60, a: rnd(0.32, 0.6) }));
+    if (weather === 'snow') add(170, (init) => ({ t: 'snow', x: rnd(0, w), y: init ? rnd(-h, h) : rnd(-20, -5), r: rnd(1.2, 3.6), vy: rnd(28, 70), sway: rnd(10, 35), ph: rnd(0, 6.28), a: rnd(0.55, 0.95) }));
+
+    const leafColors = ['#C2410C', '#B45309', '#9A3412', '#A16207', '#7C2D12', '#DC2626'];
+    const leafCount = (weather === 'snow') ? 0 : (weather === 'rain' || weather === 'storm') ? 10 : 26;
+    if (fall || holiday === 'thanksgiving') add(leafCount, (init) => ({ t: 'leaf', x: rnd(0, w), y: init ? rnd(-h, h) : rnd(-40, -10), s: rnd(9, 16), vy: rnd(30, 60), vx: rnd(-15, 25), rot: rnd(0, 6.28), vr: rnd(-1.5, 1.5), sway: rnd(20, 50), ph: rnd(0, 6.28), c: leafColors[Math.floor(Math.random() * leafColors.length)] }));
+
+    if (holiday === 'halloween') add(9, (init) => ({ t: 'bat', x: init ? rnd(0, w) : -40, y: rnd(h * 0.05, h * 0.6), s: rnd(16, 26), vx: rnd(35, 80), ph: rnd(0, 6.28), bob: rnd(10, 30) }));
+    if (holiday === 'valentine') add(22, (init) => ({ t: 'heart', x: rnd(0, w), y: init ? rnd(0, h * 1.2) : h + 20, s: rnd(6, 13), vy: -rnd(20, 45), sway: rnd(10, 30), ph: rnd(0, 6.28), a: rnd(0.35, 0.7) }));
+    if (holiday === 'stpatrick') add(20, (init) => ({ t: 'shamrock', x: rnd(0, w), y: init ? rnd(-h, h) : -20, s: rnd(7, 12), vy: rnd(25, 50), rot: rnd(0, 6.28), vr: rnd(-1, 1), sway: rnd(15, 35), ph: rnd(0, 6.28) }));
+    if (holiday === 'christmas') add(40, () => ({ t: 'sparkle', x: rnd(0, w), y: rnd(0, h), r: rnd(1, 2.4), p: rnd(0, 6.28), c: ['#ff4d4d', '#4dff88', '#ffd24d', '#4dc3ff'][Math.floor(Math.random() * 4)] }));
+    SMLC_FX.particles = P;
+    SMLC_FX.bursts = [];
+
+    if (SMLC_FX.reducedMotion) smlcDrawFrame(0, true);
+}
+
+function smlcRespawn(p) {
+    const { w, h } = SMLC_FX;
+    if (p.t === 'rain') { p.x = rnd(-50, w + 50); p.y = rnd(-60, -10); }
+    else if (p.t === 'snow' || p.t === 'leaf' || p.t === 'shamrock') { p.x = rnd(0, w); p.y = rnd(-40, -8); }
+    else if (p.t === 'heart') { p.x = rnd(0, w); p.y = h + 20; }
+    else if (p.t === 'bat') { p.x = -40; p.y = rnd(h * 0.05, h * 0.6); }
+}
+
+function smlcDrawLeaf(ctx, p) {
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+    ctx.fillStyle = p.c; ctx.globalAlpha = 0.9;
+    ctx.beginPath(); ctx.moveTo(0, -p.s);
+    ctx.quadraticCurveTo(p.s * 0.9, -p.s * 0.2, 0, p.s);
+    ctx.quadraticCurveTo(-p.s * 0.9, -p.s * 0.2, 0, -p.s); ctx.fill();
+    ctx.strokeStyle = 'rgba(60,20,0,.6)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, -p.s); ctx.lineTo(0, p.s * 1.2); ctx.stroke();
+    ctx.restore();
+}
+
+function smlcDrawBat(ctx, p, t) {
+    const flap = Math.sin(t * 9 + p.ph) * 0.6;
+    ctx.save(); ctx.translate(p.x, p.y + Math.sin(t * 1.5 + p.ph) * p.bob); ctx.scale(p.s / 12, p.s / 12);
+    ctx.fillStyle = 'rgba(18,12,24,.95)'; ctx.strokeStyle = 'rgba(255,150,50,.75)'; ctx.lineWidth = 1.2;
+    ctx.shadowColor = 'rgba(255,140,40,.55)'; ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(-8, -8 * flap - 4, -18, -6 * flap);
+    ctx.quadraticCurveTo(-13, -1, -10, 2); ctx.quadraticCurveTo(-6, 0, -3, 3);
+    ctx.lineTo(0, 1); ctx.lineTo(3, 3);
+    ctx.quadraticCurveTo(6, 0, 10, 2); ctx.quadraticCurveTo(13, -1, 18, -6 * flap);
+    ctx.quadraticCurveTo(8, -8 * flap - 4, 0, 0);
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+}
+
+function smlcDrawHeart(ctx, p) {
+    const s = p.s;
+    ctx.save(); ctx.translate(p.x, p.y); ctx.globalAlpha = p.a; ctx.fillStyle = '#ff4d8d';
+    ctx.beginPath(); ctx.moveTo(0, s * 0.35);
+    ctx.bezierCurveTo(-s, -s * 0.35, -s * 0.45, -s, 0, -s * 0.45);
+    ctx.bezierCurveTo(s * 0.45, -s, s, -s * 0.35, 0, s * 0.35); ctx.fill(); ctx.restore();
+}
+
+function smlcDrawShamrock(ctx, p) {
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = 'rgba(34,197,94,.75)';
+    const r = p.s * 0.42;
+    [[0, -r], [-r * 0.95, r * 0.35], [r * 0.95, r * 0.35]].forEach(([dx, dy]) => { ctx.beginPath(); ctx.arc(dx, dy, r, 0, 6.28); ctx.fill(); });
+    ctx.strokeStyle = 'rgba(34,197,94,.75)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(r * 0.6, p.s * 1.1); ctx.stroke();
+    ctx.restore();
+}
+
+function smlcSpawnFirework() {
+    const { w, h } = SMLC_FX;
+    const colors = SMLC_FX.holiday === 'july4' ? ['#ff3b3b', '#ffffff', '#3b82ff'] : ['#ffd24d', '#ff4dd2', '#4dffd2', '#ffffff', '#ff8a3d'];
+    const cx = rnd(w * 0.1, w * 0.9), cy = rnd(h * 0.08, h * 0.45), col = colors[Math.floor(Math.random() * colors.length)];
+    const sparks = [];
+    for (let i = 0; i < 46; i++) { const ang = (i / 46) * 6.28, sp = rnd(60, 150); sparks.push({ x: cx, y: cy, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp }); }
+    SMLC_FX.bursts.push({ sparks, life: 1.6, max: 1.6, col });
+}
+
+function smlcDrawFrame(dt, still = false) {
+    const ctx = SMLC_FX.ctx; if (!ctx) return;
+    const { w, h } = SMLC_FX;
+    const t = performance.now() / 1000;
+    ctx.clearRect(0, 0, w, h);
+
+    // clouds
+    SMLC_FX.clouds.forEach(c => {
+        if (!still) { c.x += c.vx * dt; if (c.x - c.r > w) c.x = -c.r * 2; }
+        const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
+        const base = c.dark ? '120,130,150' : '220,225,235';
+        g.addColorStop(0, `rgba(${base},${c.a})`); g.addColorStop(1, `rgba(${base},0)`);
+        ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(c.x, c.y, c.r * 1.6, c.r * 0.7, 0, 0, 6.28); ctx.fill();
+    });
+
+    // stars
+    SMLC_FX.stars.forEach(s => {
+        const a = 0.35 + 0.35 * Math.sin(t * s.s + s.p);
+        ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.28); ctx.fill();
+    });
+
+    // particles
+    for (const p of SMLC_FX.particles) {
+        if (!still) {
+            if (p.t === 'rain') { p.x += p.vx * dt; p.y += p.vy * dt; if (p.y > h + 30) smlcRespawn(p); }
+            else if (p.t === 'snow') { p.y += p.vy * dt; p.x += Math.sin(t * 0.8 + p.ph) * p.sway * dt; if (p.y > h + 10) smlcRespawn(p); }
+            else if (p.t === 'leaf' || p.t === 'shamrock') { p.y += p.vy * dt; p.x += ((p.vx || 0) + Math.sin(t + p.ph) * p.sway) * dt; p.rot += p.vr * dt; if (p.y > h + 20 || p.x > w + 40) smlcRespawn(p); }
+            else if (p.t === 'heart') { p.y += p.vy * dt; p.x += Math.sin(t + p.ph) * p.sway * dt; if (p.y < -30) smlcRespawn(p); }
+            else if (p.t === 'bat') { p.x += p.vx * dt; if (p.x > w + 40) smlcRespawn(p); }
+        }
+        if (p.t === 'rain') { ctx.strokeStyle = `rgba(205,225,255,${p.a})`; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + p.vx * 0.02, p.y + p.len); ctx.stroke(); }
+        else if (p.t === 'snow') { ctx.fillStyle = `rgba(255,255,255,${p.a})`; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.28); ctx.fill(); }
+        else if (p.t === 'leaf') smlcDrawLeaf(ctx, p);
+        else if (p.t === 'bat') smlcDrawBat(ctx, p, t);
+        else if (p.t === 'heart') smlcDrawHeart(ctx, p);
+        else if (p.t === 'shamrock') smlcDrawShamrock(ctx, p);
+        else if (p.t === 'sparkle') { const a = 0.25 + 0.45 * Math.max(0, Math.sin(t * 1.7 + p.p)); ctx.fillStyle = p.c; ctx.globalAlpha = a; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.28); ctx.fill(); ctx.globalAlpha = 1; }
+    }
+
+    // fireworks (New Year's / 4th of July)
+    if (!still && (SMLC_FX.holiday === 'newyear' || SMLC_FX.holiday === 'july4') && Math.random() < dt * 0.9) smlcSpawnFirework();
+    if (still && (SMLC_FX.holiday === 'newyear' || SMLC_FX.holiday === 'july4') && SMLC_FX.bursts.length === 0) { smlcSpawnFirework(); SMLC_FX.bursts.forEach(b => { b.sparks.forEach(s => { s.x += s.vx * 0.5; s.y += s.vy * 0.5; }); b.life = 1.2; }); }
+    SMLC_FX.bursts = SMLC_FX.bursts.filter(b => b.life > 0);
+    SMLC_FX.bursts.forEach(b => {
+        if (!still) b.life -= dt;
+        ctx.fillStyle = b.col; ctx.globalAlpha = Math.max(0, b.life / b.max) * 0.85;
+        b.sparks.forEach(s => { if (!still) { s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 40 * dt; } ctx.beginPath(); ctx.arc(s.x, s.y, 1.6, 0, 6.28); ctx.fill(); });
+        ctx.globalAlpha = 1;
+    });
+
+    // lightning
+    if (SMLC_FX.weather === 'storm' && !still) {
+        if (t > SMLC_FX.nextFlash) { SMLC_FX.flash = 0.35; SMLC_FX.nextFlash = t + rnd(6, 14); }
+        if (SMLC_FX.flash > 0) { ctx.fillStyle = `rgba(220,230,255,${SMLC_FX.flash})`; ctx.fillRect(0, 0, w, h); SMLC_FX.flash -= dt * 1.4; }
+    }
+}
+
+function smlcLoop(ts) {
+    const dt = Math.min(0.05, (ts - (SMLC_FX.lastT || ts)) / 1000);
+    SMLC_FX.lastT = ts;
+    smlcDrawFrame(dt);
+    SMLC_FX.raf = requestAnimationFrame(smlcLoop);
+}
+
+function smlcStartFx() {
+    smlcEnsureCanvas();
+    if (SMLC_FX.raf) cancelAnimationFrame(SMLC_FX.raf);
+    SMLC_FX.raf = null;
+    if (!SMLC_FX.enabled) { SMLC_FX.ctx.clearRect(0, 0, SMLC_FX.w, SMLC_FX.h); return; }
+    if (SMLC_FX.reducedMotion) { smlcDrawFrame(0, true); return; }
+    SMLC_FX.lastT = 0;
+    SMLC_FX.raf = requestAnimationFrame(smlcLoop);
+}
+
+// ---------- on/off switch ----------
+function smlcUpdateFxToggleLabels() {
+    document.querySelectorAll('.smlc-fx-toggle').forEach(btn => {
+        btn.setAttribute('aria-pressed', SMLC_FX.enabled ? 'true' : 'false');
+        const lbl = btn.querySelector('.smlc-fx-toggle-state');
+        if (lbl) lbl.textContent = SMLC_FX.enabled ? 'On' : 'Off';
+    });
+}
+
+window.toggleSmlcEffects = function () {
+    SMLC_FX.enabled = !SMLC_FX.enabled;
+    try { localStorage.setItem('smlc-fx', SMLC_FX.enabled ? 'on' : 'off'); } catch (e) {}
+    smlcResolveScene();
+    smlcStartFx();
+};
+
+function smlcAddFooterToggle() {
+    const footer = document.querySelector('#global-footer-container .footer-simple-inner') || document.querySelector('footer');
+    if (!footer || footer.querySelector('.smlc-fx-toggle')) return;
+    const p = document.createElement('p');
+    p.innerHTML = `<button type="button" class="smlc-fx-toggle smlc-fx-toggle-footer" onclick="toggleSmlcEffects()" aria-pressed="true">&#10052; Weather &amp; holiday effects: <span class="smlc-fx-toggle-state">On</span></button>`;
+    footer.appendChild(p);
+}
+
+function initWeatherHolidayEffects() {
+    try { SMLC_FX.enabled = localStorage.getItem('smlc-fx') !== 'off'; } catch (e) { SMLC_FX.enabled = true; }
+    try {
+        const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+        SMLC_FX.reducedMotion = mq.matches;
+        const onMq = () => { SMLC_FX.reducedMotion = mq.matches; smlcBuildParticles(); smlcStartFx(); };
+        if (mq.addEventListener) mq.addEventListener('change', onMq); else mq.addListener(onMq);
+    } catch (e) {}
+    smlcAddFooterToggle();
+    smlcEnsureCanvas();
+    smlcResolveScene();
+    smlcStartFx();
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) { if (SMLC_FX.raf) cancelAnimationFrame(SMLC_FX.raf); SMLC_FX.raf = null; }
+        else smlcStartFx();
+    });
+    setInterval(() => { smlcResolveScene(); }, 10 * 60 * 1000);   // re-check holiday / night every 10 min
+}
+
+window.smlcWeatherChanged = function () {
+    if (SMLC_FX.preview && SMLC_FX.preview.weather) return;
+    const next = smlcWeatherFromCondition(window.smlcCurrentWeather && window.smlcCurrentWeather.condition);
+    if (next !== SMLC_FX.weather) { smlcResolveScene(); smlcStartFx(); }
+};
+
+(function injectFxStyles() {
+    if (document.getElementById('smlc-fx-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'smlc-fx-styles';
+    const CARDS = '.clay-county-news-box, .news-clipping-wrapper, .newspaper-feed-chassis, .fuel-monitor-billboard-card, .point-of-interest-card, .article-card-chassis, .history-card, .proclamation-card-box, .et_pb_module_heading, .community-partner-card, .slideshow-box';
+    const cardList = (suffix) => CARDS.split(',').map(s => s.trim())
+        .filter(sel => !(suffix === '::after' && sel === '.et_pb_module_heading'))
+        .map(sel => `html.smlc-fx-on ${sel}${suffix}`).join(',\n');
+    style.textContent = `
+        #smlc-fx-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none; display: block; }
+        html:not(.smlc-fx-on) #smlc-fx-canvas { display: none; }
+
+        /* let the effects show through the big background bands (cards stay solid) */
+        html.smlc-fx-on .smlc-three-column-portal-wrapper,
+        html.smlc-fx-on .discover-split-layout,
+        html.smlc-fx-on .historical-timeline-chassis-wrapper,
+        html.smlc-fx-on .widescreen-strip-container,
+        html.smlc-fx-on .proclamation-wrapper {
+            background: linear-gradient(180deg, rgba(var(--town-primary-rgb, 2,88,163), .30), rgba(0,0,0,.42)) !important;
+        }
+
+        /* text that sits right on the background gets a 50% see-through panel */
+        html.smlc-fx-on .discover-header-block,
+        html.smlc-fx-on .timeline-header-block,
+        html.smlc-fx-on .partners-horizontal-strip > .feed-loading-placeholder {
+            background: rgba(0,0,0,.5); border-radius: 14px; padding: 14px 20px; width: fit-content; max-width: 100%;
+            margin-left: auto; margin-right: auto; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+        }
+
+        /* cards behave like buildings: something can sit on the roof / in the corners */
+        ${cardList('')} { position: relative; }
+
+        /* SNOW piling up on top of every card */
+        ${cardList('::before').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-snow-cap')} {
+            content: ''; position: absolute; left: -5px; right: -5px; z-index: 3; pointer-events: none;
+            top: calc(-1 * var(--smlc-snow-depth, 0px) + 3px); height: var(--smlc-snow-depth, 0px);
+            border-radius: 10px 12px 3px 3px;
+            background:
+                radial-gradient(ellipse 15px 8px at 50% 100%, #fff 96%, transparent 100%) 0 0 / 26px 60% repeat-x,
+                linear-gradient(#ffffff, #e9f1fb) bottom / 100% 62% no-repeat;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,.35));
+            transition: height 3.5s linear, top 3.5s linear;
+        }
+
+        /* RAIN beading along the roofline */
+        ${cardList('::before').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on:not(.smlc-snow-cap).smlc-wx-rain')},
+        ${cardList('::before').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on:not(.smlc-snow-cap).smlc-wx-storm')} {
+            content: ''; position: absolute; left: 6px; right: 6px; top: -3px; height: 6px; z-index: 3; pointer-events: none;
+            background: radial-gradient(circle at 50% 30%, rgba(210,230,255,.9) 0 1.6px, rgba(150,190,240,.5) 2.2px, transparent 2.8px) 0 0 / 17px 6px repeat-x;
+        }
+
+        /* CHRISTMAS string lights along the top (when it isn't snowing) */
+        ${cardList('::before').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on:not(.smlc-snow-cap):not(.smlc-wx-rain):not(.smlc-wx-storm).smlc-hol-christmas')} {
+            content: ''; position: absolute; left: 4px; right: 4px; top: -7px; height: 12px; z-index: 3; pointer-events: none;
+            background:
+                radial-gradient(circle at 6px 8px, #ff3b3b 0 3px, transparent 3.5px) 0 0 / 44px 12px repeat-x,
+                radial-gradient(circle at 17px 9px, #34d058 0 3px, transparent 3.5px) 0 0 / 44px 12px repeat-x,
+                radial-gradient(circle at 28px 8px, #ffd23b 0 3px, transparent 3.5px) 0 0 / 44px 12px repeat-x,
+                radial-gradient(circle at 39px 9px, #3bb4ff 0 3px, transparent 3.5px) 0 0 / 44px 12px repeat-x,
+                linear-gradient(#2b2b2b, #2b2b2b) 0 4px / 100% 1.5px no-repeat;
+            animation: smlcLightsTwinkle 2.4s ease-in-out infinite;
+        }
+        @keyframes smlcLightsTwinkle { 0%,100% { filter: brightness(1) drop-shadow(0 0 3px rgba(255,255,255,.5)); } 50% { filter: brightness(1.45) drop-shadow(0 0 6px rgba(255,240,180,.8)); } }
+
+        /* corner decorations (leaves pile up in fall, holiday items) */
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-fx-fall')},
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-halloween')},
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-thanksgiving')},
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-christmas')},
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-valentine')},
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-stpatrick')},
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-july4')},
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-newyear')} {
+            position: absolute; right: -6px; bottom: -10px; z-index: 3; pointer-events: none; line-height: 1;
+            font-size: 20px; letter-spacing: -6px; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5));
+            content: '\\1F342\\1F341\\1F342';
+        }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-halloween')} { content: '\\1F342\\1F383'; font-size: 22px; letter-spacing: -4px; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-thanksgiving')} { content: '\\1F342\\1F33D\\1F383'; letter-spacing: -4px; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-christmas')} { content: '\\1F384'; font-size: 26px; letter-spacing: 0; bottom: -6px; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-valentine')} { content: '\\1F495'; letter-spacing: 0; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-stpatrick')} { content: '\\2618\\FE0F'; letter-spacing: 0; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-july4')} { content: '\\1F1FA\\1F1F8'; letter-spacing: 0; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-newyear')} { content: '\\1F389'; letter-spacing: 0; }
+
+        html.smlc-fx-on .clipping-tag, html.smlc-fx-on .notice-tag-red { z-index: 4; }
+        .smlc-fx-toggle-footer { background: transparent; border: 1px solid rgba(255,255,255,.35); color: #fff; border-radius: 999px; padding: 8px 16px; min-height: 40px;
+            font: 700 13px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: .8px; text-transform: uppercase; cursor: pointer; }
+        .smlc-fx-toggle-footer:hover { border-color: var(--town-accent, var(--flora-orange, #FFC10E)); }
+        .smlc-fx-toggle[aria-pressed="false"] .smlc-fx-toggle-state { color: #ff8a8a; }
+        .smlc-fx-toggle[aria-pressed="true"] .smlc-fx-toggle-state { color: #8affb0; }
+        @media (prefers-reduced-motion: reduce) { html.smlc-fx-on * { transition: none !important; } html.smlc-fx-on .smlc-hol-christmas *::before { animation: none !important; } }
+    `;
+    (document.head || document.documentElement).appendChild(style);
+})();
+
 // === DOM EVENT LISTENERS ===
 window.addEventListener('hashchange', () => {
     handleSPAHashNavigation();
+    if (SMLC_FX.canvas) { smlcResolveScene(); smlcStartFx(); }
 });
 
 window.addEventListener('DOMContentLoaded', () => {
     handleSPAHashNavigation();
     startCentralFooterClock();
+    initWeatherHolidayEffects();
 });
