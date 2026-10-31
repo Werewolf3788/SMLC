@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: v3.1.0
+   Active Version: v3.2.0
    File: universaltown.js
    Project: SMLC County Portal Semantic Master Script
    Description: Complete multi-town engine connecting 100% to Firebase (RTDB & Firestore).
@@ -21,6 +21,10 @@
                 - Dynamic GA4 Tag Injection (G-FHJNXDB9BB) with SPA Hash Route Pageview Tracking
                 - Town-specific & countywide Sports Scoreboard Engine
                 - Persistent 24-hour New York timestamp & version in footer
+                - v3.2.0: Fuel widget reads /fuel_prices (not /billboard_network); no fake default prices
+                - v3.2.0: Sections engine targets pill-layout IDs (point-of-interest-*, article-*)
+                  with legacy ID fallback; failed/missing images show an
+                  "Image isn't available right now" notice instead of a broken icon
    Timestamp: 2026-10-25 05:25 EDT (New York)
    ========================================================================== */
 
@@ -281,6 +285,14 @@ function normalizeImageUrl(rawUrl) {
             return `//lh3.googleusercontent.com/d/${fileIdMatch[1]}`;
         }
     }
+    // github.com/.../blob/... page links -> raw file links
+    if (/^(https?:)?\/\/(www\.)?github\.com\/.+\/blob\//.test(url)) {
+        url = url.replace(/(www\.)?github\.com/, 'raw.githubusercontent.com').replace('/blob/', '/');
+    }
+    // Dropbox share links -> direct file
+    if (url.includes('dropbox.com')) {
+        url = /[?&]dl=0/.test(url) ? url.replace(/([?&])dl=0/, '$1raw=1') : (url.includes('raw=1') ? url : url + (url.includes('?') ? '&' : '?') + 'raw=1');
+    }
     return url.replace(/^https?:/, '');
 }
 
@@ -515,33 +527,93 @@ document.addEventListener('click', (e) => {
 }, true);
 
 // Image Loading & Lightbox Handlers
+// === IMAGE UNAVAILABLE NOTICE ENGINE ===
+// Any content image that is missing or fails to load is hidden and replaced with a
+// visible "Image isn't available right now" notice (never a broken-image icon).
+const SMLC_IMG_NOTICE_TEXT = "Image isn't available right now";
+// Tiny icons/logos: just hide them on failure (a text notice wouldn't fit).
+const SMLC_IMG_SKIP_SELECTOR = '.menu-thumb-icon, .weather-icon-img, .weather-pill-icon img, #weather-fiveday-forecast-modal img, .header-billboard-img, .station-logo-frame img';
+
+(function injectImageNoticeStyles() {
+    if (document.getElementById('smlc-img-notice-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'smlc-img-notice-styles';
+    style.textContent = `
+        .smlc-img-unavailable { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+            width: 100%; min-height: 140px; height: 100%; padding: 14px; box-sizing: border-box; text-align: center;
+            background: repeating-linear-gradient(45deg, #1b1b1d, #1b1b1d 10px, #222225 10px, #222225 20px);
+            color: #e8e8e8; border: 2px dashed #6b6b70; border-radius: 6px;
+            font: 700 14px/1.3 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: .5px; text-transform: uppercase; }
+        .smlc-img-unavailable-icon { font-size: 26px; line-height: 1; }
+        .point-of-interest-img-wrap .smlc-img-unavailable { aspect-ratio: 4 / 3; height: auto; }
+        .slider-slide .smlc-img-unavailable { position: absolute; inset: 0; border-radius: 0; }
+        .partner-logo-container .smlc-img-unavailable { min-height: 0; font-size: 11px; padding: 6px; border-width: 1px; }
+        .partner-logo-container .smlc-img-unavailable-icon { font-size: 16px; }
+        #lightbox-img-wrapper .smlc-img-unavailable { min-height: 180px; }
+    `;
+    (document.head || document.documentElement).appendChild(style);
+})();
+
+function showImageUnavailable(imgElement) {
+    if (!imgElement) return;
+    if (imgElement.matches(SMLC_IMG_SKIP_SELECTOR)) { imgElement.style.display = 'none'; return; }
+    imgElement.dataset.smlcImgFailed = '1';
+    imgElement.style.display = 'none';
+    let notice = imgElement.nextElementSibling;
+    if (!(notice && notice.classList.contains('smlc-img-unavailable'))) {
+        notice = document.createElement('div');
+        notice.className = 'smlc-img-unavailable';
+        notice.setAttribute('role', 'img');
+        notice.setAttribute('aria-label', SMLC_IMG_NOTICE_TEXT);
+        notice.innerHTML = `<span class="smlc-img-unavailable-icon" aria-hidden="true">&#9888;</span><span>${SMLC_IMG_NOTICE_TEXT}</span>`;
+        imgElement.insertAdjacentElement('afterend', notice);
+    }
+    notice.style.display = 'flex';
+    const wrap = imgElement.closest('figure, .spotlight-image-wrap, .history-img-box, .polaroid-wrap, .article-media-frame, #lightbox-img-wrapper');
+    if (wrap) wrap.style.display = '';
+}
+
+function clearImageUnavailable(imgElement) {
+    if (!imgElement || imgElement.dataset.smlcImgFailed !== '1') return;
+    imgElement.dataset.smlcImgFailed = '';
+    imgElement.style.display = 'block';
+    const notice = imgElement.nextElementSibling;
+    if (notice && notice.classList.contains('smlc-img-unavailable')) notice.style.display = 'none';
+}
+
+// Catch every image error/load on the page (capture phase, since these events don't bubble).
+window.addEventListener('error', (e) => {
+    const t = e.target;
+    if (!t || t.tagName !== 'IMG') return;
+    if (t.getAttribute('src') === '' || t.getAttribute('src') === null) return; // not attempted yet
+    showImageUnavailable(t);
+}, true);
+window.addEventListener('load', (e) => {
+    const t = e.target;
+    if (t && t.tagName === 'IMG') clearImageUnavailable(t);
+}, true);
+
 function safeSetImageSource(imgElement, srcUrl, fallbackWrapper = null, altText = "") {
     if (!imgElement) return;
-    const parentContainer = fallbackWrapper || imgElement.closest('figure, .spotlight-image-wrap, .section3-landmark-img-wrap, .polaroid-wrap, .article-media-frame') || imgElement.parentElement;
-    const defaultPlaceholder = '//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png';
-
     if (altText) imgElement.alt = altText;
 
-    if (!srcUrl || srcUrl.trim() === "" || srcUrl === "null" || srcUrl === "undefined") {
-        imgElement.src = defaultPlaceholder;
-        imgElement.style.display = "block";
-        if (parentContainer) parentContainer.style.display = "block";
+    if (!srcUrl || String(srcUrl).trim() === "" || srcUrl === "null" || srcUrl === "undefined") {
+        imgElement.removeAttribute('src');
+        showImageUnavailable(imgElement);
         return;
     }
 
+    clearImageUnavailable(imgElement);
     imgElement.style.display = "block";
-    if (parentContainer) parentContainer.style.display = "block";
-
-    imgElement.onerror = () => {
-        if (imgElement.src.includes('smlc-web.png')) {
-            if (parentContainer) parentContainer.style.display = "none";
-            imgElement.style.display = "none";
-        } else {
-            imgElement.src = defaultPlaceholder;
-        }
-    };
-
+    const wrap = fallbackWrapper || imgElement.closest('figure, .spotlight-image-wrap, .polaroid-wrap, .article-media-frame');
+    if (wrap) wrap.style.display = "";
+    imgElement.onerror = () => showImageUnavailable(imgElement);
     imgElement.src = srcUrl;
+}
+
+/** Fill-or-notice for images that live in static HTML but whose data never arrived. */
+function markImageMissingIfEmpty(imgElement) {
+    if (imgElement && !imgElement.getAttribute('src')) showImageUnavailable(imgElement);
 }
 
 function closeLightbox(event) {
@@ -565,7 +637,7 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = ""
     const cleanTargetUrl = targetUrl || '';
 
     if (imgSrc && targetImg) {
-        safeSetImageSource(targetImg, imgSrc, null, cleanAlt || cleanTitle);
+        safeSetImageSource(targetImg, normalizeImageUrl(imgSrc) || imgSrc, null, cleanAlt || cleanTitle);
         if (targetImg.parentElement) targetImg.parentElement.style.display = 'block';
     } else if (targetImg && targetImg.parentElement) {
         targetImg.parentElement.style.display = 'none';
@@ -1173,19 +1245,23 @@ function bindFirebaseSemanticSectionsEngine(db) {
         const renderResolvedSections = () => {
             // --- 1. POINT OF INTEREST IN DISCOVER SPOTLIGHT (Guaranteed Image Rendering) ---
             const poi = townSectionsData.point_of_interest || {};
-            const poiTitleEl = document.getElementById('right-card-meta-title') || document.getElementById('discover-spotlight-title');
-            const poiAboutEl = document.getElementById('desc2-target-1');
-            const poiDescEl = document.getElementById('right-card-meta-desc1');
+            const poiTitleEl = document.getElementById('point-of-interest-title') || document.getElementById('right-card-meta-title') || document.getElementById('discover-spotlight-title');
+            const poiAboutEl = document.getElementById('point-of-interest-about') || document.getElementById('desc2-target-1');
+            const poiDescEl = document.getElementById('point-of-interest-landmark-desc') || document.getElementById('right-card-meta-desc1');
 
             if (poiTitleEl && poi.title) poiTitleEl.innerText = poi.title;
             if (poiAboutEl && poi.about_text) poiAboutEl.innerText = poi.about_text;
-            if (poiDescEl && poi.landmark_description) poiDescEl.innerHTML = linkifyRawUrls(poi.landmark_description);
+            if (poiDescEl) {
+                if (poi.landmark_description) poiDescEl.innerHTML = linkifyRawUrls(poi.landmark_description);
+                else if (/^\s*Loading/i.test(poiDescEl.textContent)) poiDescEl.style.display = 'none';
+            }
 
-            const i1 = document.getElementById('dual-img-1');
-            const h1 = document.getElementById('dual-header-1');
+            const i1 = document.getElementById('point-of-interest-img-1') || document.getElementById('dual-img-1');
+            const h1 = document.getElementById('point-of-interest-header-1') || document.getElementById('dual-header-1');
             const rawImg1 = poi.image1 || poi.imageUrl || poi.image;
             const img1Url = normalizeImageUrl(rawImg1);
             const alt1Text = poi.alt1 || poi.header1 || poi.title || "Point of Interest";
+            if (i1 && !img1Url) safeSetImageSource(i1, null, null, alt1Text);
             if (i1 && img1Url) {
                 safeSetImageSource(i1, img1Url, null, alt1Text);
                 i1.style.display = "block";
@@ -1194,10 +1270,11 @@ function bindFirebaseSemanticSectionsEngine(db) {
             }
             if (h1 && (poi.header1 || poi.title)) h1.innerText = poi.header1 || poi.title;
 
-            const i2 = document.getElementById('dual-img-2');
-            const h2 = document.getElementById('dual-header-2');
+            const i2 = document.getElementById('point-of-interest-img-2') || document.getElementById('dual-img-2');
+            const h2 = document.getElementById('point-of-interest-header-2') || document.getElementById('dual-header-2');
             const img2Url = normalizeImageUrl(poi.image2);
             const alt2Text = poi.alt2 || poi.header2 || "Landmark 2";
+            if (i2 && !img2Url) safeSetImageSource(i2, null, null, alt2Text);
             if (i2 && img2Url) {
                 safeSetImageSource(i2, img2Url, null, alt2Text);
                 i2.style.display = "block";
@@ -1224,7 +1301,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
             const viewport = document.getElementById('flora-slideshow') || document.getElementById('xenia-slideshow') || document.querySelector('.slider-viewport');
             if (viewport && blendedSlides.length > 0) {
                 viewport.innerHTML = blendedSlides.map((item, idx) => {
-                    const imgUrl = normalizeImageUrl(item.imageUrl);
+                    const imgUrl = normalizeImageUrl(item.imageUrl || item.image);
                     const captionTitle = extractText(item.title || 'Town View');
                     const altText = item.alt || captionTitle;
                     const safeImg = escapeJsString(imgUrl);
@@ -1234,7 +1311,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
 
                     return `
                         <div class="slider-slide ${idx === 0 ? 'active' : ''}" style="position: absolute; inset: 0; opacity: ${idx === 0 ? 1 : 0}; transition: opacity 0.8s ease-in-out; z-index: ${idx === 0 ? 2 : 1};">
-                            <img src="${imgUrl}" alt="" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'COMMUNITY VIEW', '${safeAlt}', '${safeWeb}', '${safeAlt}')" style="width:100%; height:100%; object-fit:contain; background-color:#0a0a0a; cursor:pointer;">
+                            ${imgUrl ? `<img src="${imgUrl}" alt="${safeAlt}" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'COMMUNITY VIEW', '${safeAlt}', '${safeWeb}', '${safeAlt}')" style="width:100%; height:100%; object-fit:contain; background-color:#0a0a0a; cursor:pointer;">` : `<div class="smlc-img-unavailable" role="img" aria-label="${SMLC_IMG_NOTICE_TEXT}"><span class="smlc-img-unavailable-icon" aria-hidden="true">&#9888;</span><span>${SMLC_IMG_NOTICE_TEXT}</span></div>`}
                             ${captionTitle ? `<div class="slider-caption">${captionTitle}</div>` : ''}
                         </div>
                     `;
@@ -1264,18 +1341,28 @@ function bindFirebaseSemanticSectionsEngine(db) {
 
             // --- 3. FEATURED ARTICLE ---
             const art = townSectionsData.article || {};
-            const artTitleEl = document.getElementById('sec4-article-title');
-            const artCatEl = document.getElementById('sec4-category-tag');
-            const artDeckEl = document.getElementById('sec4-article-deck');
-            const artBodyEl = document.getElementById('sec4-article-body');
-            const artImgEl = document.getElementById('sec-4-1-article-img');
-            const artCapEl = document.getElementById('sec4-img-caption');
+            const artTitleEl = document.getElementById('article-title') || document.getElementById('sec4-article-title');
+            const artCatEl = document.getElementById('article-category') || document.getElementById('sec4-category-tag');
+            const artDeckEl = document.getElementById('article-deck') || document.getElementById('sec4-article-deck');
+            const artBodyEl = document.getElementById('article-body') || document.getElementById('sec4-article-body');
+            const artImgEl = document.getElementById('article-img') || document.getElementById('sec-4-1-article-img');
+            const artCapEl = document.getElementById('article-img-caption') || document.getElementById('sec4-img-caption');
+            const artFigureEl = document.getElementById('article-figure-frame') || (artImgEl ? artImgEl.closest('figure') : null);
 
             if (artTitleEl && art.title) artTitleEl.innerText = art.title;
             if (artCatEl && art.category) artCatEl.innerText = art.category;
             if (artDeckEl && art.deck) artDeckEl.innerText = art.deck;
             if (artBodyEl && art.body) {
-                artBodyEl.innerHTML = `<p style="margin-bottom:1.5em; text-align:justify; line-height:1.8;">${linkifyRawUrls(art.body)}</p>`;
+                // Split body into paragraphs and keep the image figure after the first one
+                const paras = String(art.body).split(/\n\s*\n|\r\n\s*\r\n/).map(t => t.trim()).filter(Boolean)
+                    .map(t => `<p>${linkifyRawUrls(t).replace(/\n/g, '<br>')}</p>`);
+                const keepFigure = artFigureEl && artBodyEl.contains(artFigureEl) ? artFigureEl : null;
+                if (keepFigure) keepFigure.remove();
+                artBodyEl.innerHTML = paras.join('');
+                if (keepFigure) {
+                    const first = artBodyEl.querySelector('p');
+                    if (first) first.insertAdjacentElement('afterend', keepFigure); else artBodyEl.appendChild(keepFigure);
+                }
             }
 
             const rawArtUrl = art.imageUrl || art.image || art.image1;
@@ -1283,6 +1370,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
             const artAltText = art.alt || art.title || "Featured Article Image";
 
             if (artImgEl) {
+                if (artFigureEl) artFigureEl.style.display = '';
                 safeSetImageSource(artImgEl, artImgUrl, null, artAltText);
                 artImgEl.onclick = () => fireLightbox(
                     escapeJsString(artImgEl.src), 
@@ -1292,7 +1380,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
                     '', 
                     escapeJsString(artAltText)
                 );
-                if (artCapEl) artCapEl.innerText = artAltText;
+                if (artCapEl) artCapEl.innerText = art.caption || artAltText;
             }
 
             // --- 4. BUSINESS SPOTLIGHT ---
@@ -1311,8 +1399,9 @@ function bindFirebaseSemanticSectionsEngine(db) {
 
             const spotImgUrl = normalizeImageUrl(spot.imageUrl);
             const spotAltText = spot.alt || spot.name || "Business Spotlight";
+            if (spotImgEl && !spotImgUrl) safeSetImageSource(spotImgEl, null, null, spotAltText);
             if (spotImgEl && spotImgUrl) {
-                safeSetImageSource(spotImgEl, spotImgUrl, null, '');
+                safeSetImageSource(spotImgEl, spotImgUrl, null, spotAltText);
                 spotImgEl.onclick = () => fireLightbox(escapeJsString(spotImgUrl), escapeJsString(spot.name || 'Merchant'), ACTIVE_TOWN.primaryName + ', IL', escapeJsString(spot.description || ''), escapeJsString(spot.website || ''), escapeJsString(spotAltText));
             }
 
@@ -1338,7 +1427,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
                     const desc = evt.description || "";
                     const isLong = desc.length > 150;
                     const displayDesc = isLong ? desc.substring(0, 140) + "..." : desc;
-                    const imgUrl = normalizeImageUrl(evt.imageUrl);
+                    const imgUrl = normalizeImageUrl(evt.imageUrl || evt.image);
 
                     return `
                         <div class="history-card" onclick="openHistoryLightboxModal(${idx})">
@@ -1346,7 +1435,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
                             <h3>${evt.title || 'Historical Landmark'}</h3>
                             <p>${displayDesc}</p>
                             ${isLong ? `<span class="read-more-trigger">Read Details &rarr;</span>` : ''}
-                            ${imgUrl ? `<div class="history-img-box"><img src="${imgUrl}" alt="" onerror="this.parentElement.style.display='none';"></div>` : ''}
+                            ${imgUrl ? `<div class="history-img-box"><img src="${imgUrl}" alt="${escapeJsString(evt.title || 'Historical image')}"></div>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -1568,16 +1657,18 @@ function initializeFirebaseGasMonitor(db) {
     if (stationIds.length === 0) return;
 
     try {
-        db.ref('billboard_network').on('value', (snap) => {
-            let val = snap.val();
-            if (!val) {
-                db.ref('fuel_prices').once('value', (fallbackSnap) => {
-                    val = fallbackSnap.val();
-                    if (val) startGasRotator(val, stationConfigs, stationIds, gasContainer);
-                });
-            } else {
+        // SMLC fuel data lives at /fuel_prices/{stationId} = { reg, dsl, date } (written by update-gas.html).
+        // NOTE: /billboard_network is a separate project and must not be read here.
+        db.ref('fuel_prices').on('value', (snap) => {
+            const val = snap.val();
+            if (val) {
                 startGasRotator(val, stationConfigs, stationIds, gasContainer);
+            } else {
+                gasContainer.innerHTML = `<div class="sidebar-widget-title">${(ACTIVE_TOWN.primaryName || 'Area').toUpperCase()} FUEL INDEX MONITOR</div><div class="fuel-note">Fuel prices aren't available right now.</div>`;
             }
+        }, (err) => {
+            console.warn("Gas monitor read notice:", err && err.message);
+            gasContainer.innerHTML = `<div class="sidebar-widget-title">FUEL INDEX MONITOR</div><div class="fuel-note">Fuel prices aren't available right now.</div>`;
         });
     } catch(e) {
         console.warn("Gas monitor notice:", e.message);
@@ -1595,11 +1686,11 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
         const config = stationConfigs[id];
         const info = data[id] || {};
 
-        const regPrice = info.reg || info.regular || info.price || "$3.29";
-        let dslPrice = info.dsl || info.diesel || "$3.89";
+        const regPrice = info.reg || info.regular || info.price || "---";
+        let dslPrice = info.dsl || info.diesel || "---";
         if (dslPrice === "0" || !dslPrice) dslPrice = "---";
 
-        const updateDate = info.date || info.updated || "Live Sync";
+        const updateDate = info.date || info.updated || "Pending";
         const safeLogo = encodeURIComponent(config.logo);
 
         container.style.cursor = "pointer";
@@ -1797,7 +1888,7 @@ async function loadLocalNewsDispatches() {
 
                     return `
                         <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
-                            ${imgUrl ? `<img src="${imgUrl}" alt="" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})" onerror="this.style.display='none';">` : ''}
+                            ${imgUrl ? `<img src="${imgUrl}" alt="" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})">` : ''}
                             <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-top:10px;">${cleanCalendarDate(story.date)}</div>
                             <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${cleanTitle}</div>
                             <div style="font-size:14px; color:#444;">${linkifyRawUrls(displayStory)}</div>
