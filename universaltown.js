@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: v3.4.0
+   Active Version: v3.5.0
    File: universaltown.js
    Project: SMLC County Portal Semantic Master Script
    Description: Complete multi-town engine connecting 100% to Firebase (RTDB & Firestore).
@@ -21,6 +21,8 @@
                 - Dynamic GA4 Tag Injection (G-FHJNXDB9BB) with SPA Hash Route Pageview Tracking
                 - Town-specific & countywide Sports Scoreboard Engine
                 - Persistent 24-hour New York timestamp & version in footer
+                - v3.5.0: Partner strips show only whole cards (5+ on desktop), refit on resize, no scrollbars
+                - v3.5.0: Header #0C5E75 in light view; Quick Answers styling; Event structured data (SEO/AEO)
                 - v3.4.0: Weather & holiday background effects matching Clay County weather (rain, storm,
                   snow, clouds, stars), fall leaves, holidays; snow builds up on cards; on/off switch
                 - v3.3.0: App-style bottom nav (Home / Towns / More) on phones + portrait tablets
@@ -1122,7 +1124,13 @@ function renderNavbarWeatherWidget(current) {
         widgetEl.onmouseleave = () => widgetEl.style.background = '#181818';
         widgetEl.onclick = openFiveDayForecastModal;
 
-        if (navBarTarget) {
+        // Put the badge in the menu row itself (not inside the collapsible menu panel,
+        // which must stay hidden until the Menu button is pressed on narrow screens)
+        const menuRow = document.querySelector('.menu-bar .menu-inner');
+        const translateBox = menuRow ? menuRow.querySelector('#google_translate_element') : null;
+        if (menuRow) {
+            menuRow.insertBefore(widgetEl, translateBox || null);
+        } else if (navBarTarget) {
             navBarTarget.style.display = "flex";
             navBarTarget.style.alignItems = "center";
             navBarTarget.appendChild(widgetEl);
@@ -1350,6 +1358,12 @@ function bindFirebaseServices() {
 }
 
 // === MENU ENGINE ===
+function smlcMenuChildren(item) {
+    if (!item) return [];
+    const raw = item.children || item.items || item.links || item.submenu || item.sub_menu || null;
+    return toPlainArray(raw).filter(k => k && k.name);
+}
+
 function bindFirebaseMenuEngine(db) {
     if (!db) return;
     const menuContainer = document.getElementById('dynamic-menu-links');
@@ -1380,6 +1394,18 @@ function bindFirebaseMenuEngine(db) {
 
                 const imgTag = normImageUrl ? `<img src="${normImageUrl}" alt="" class="menu-thumb-icon" onclick="event.preventDefault(); event.stopPropagation(); fireLightbox('${escapeJsString(normImageUrl)}', '${escapeJsString(name)}', 'MENU ASSET', '${escapeJsString(altText)}', '${escapeJsString(targetUrl)}', '${escapeJsString(altText)}')" onerror="this.style.display='none';" />` : '';
 
+                // A menu entry with sub-links (e.g. "More") becomes a dropdown
+                const kids = smlcMenuChildren(item);
+                if (kids.length) {
+                    return `
+                    <li class="smlc-menu-dropdown">
+                        <details>
+                            <summary data-ga-label="Nav_${name.replace(/\s+/g, '')}">${imgTag}<span>${name}</span><span class="smlc-dd-caret" aria-hidden="true">&#9662;</span></summary>
+                            <ul class="smlc-submenu">${kids.map(k => `<li><a href="${attachUtmParameters(k.website || '#')}" target="${resolveLinkTarget(k.website)}" ${resolveLinkTarget(k.website) === '_blank' ? 'rel="noopener"' : ''} data-ga-label="Nav_${String(k.name).replace(/\s+/g, '')}" onclick="window.closeMobileMenu();"><span>${k.name}</span></a></li>`).join('')}</ul>
+                        </details>
+                    </li>`;
+                }
+
                 return `
                     <li>
                         <a href="${targetUrl}" ${isActive} data-ga-label="Nav_${name.replace(/\s+/g, '')}" target="${linkTarget}" onclick="window.closeMobileMenu();">
@@ -1389,7 +1415,14 @@ function bindFirebaseMenuEngine(db) {
                     </li>
                 `;
             }).join('');
-            window.smlcMenuItems = rawItems.filter(Boolean).map(item => ({
+            // Phone menu: sub-links of a dropdown (e.g. "More") are listed on their own
+            const flat = [];
+            rawItems.filter(Boolean).forEach(item => {
+                const kids = smlcMenuChildren(item);
+                if (kids.length) kids.forEach(k => flat.push(k));
+                else if (!(normalizeTownName(item.name) === 'more' && !item.website)) flat.push(item);
+            });
+            window.smlcMenuItems = flat.map(item => ({
                 name: item.name || 'Link',
                 href: attachUtmParameters(item.website || '#'),
                 target: resolveLinkTarget(item.website),
@@ -1764,6 +1797,20 @@ function bindFirebasePartnersEngine(db) {
     }
 }
 
+// Partner strips show only WHOLE cards: as many as fit the width (5+ on desktop),
+// re-fitting when the window is resized. No scrollbars, logos never stretched.
+const SMLC_PARTNER_CARD_MIN = 176;   // px a card needs to look right (5 fit at 1024px+)
+const SMLC_PARTNER_GAP = 16;
+const SMLC_PARTNER_MAX = 7;
+const smlcPartnerStripObservers = {};
+
+function partnerCardsThatFit(containerElement, poolSize) {
+    const width = containerElement.clientWidth || (containerElement.parentElement && containerElement.parentElement.clientWidth) || window.innerWidth;
+    if (window.innerWidth < 768) return 1;
+    const fit = Math.floor((width + SMLC_PARTNER_GAP) / (SMLC_PARTNER_CARD_MIN + SMLC_PARTNER_GAP));
+    return Math.max(1, Math.min(fit, poolSize, SMLC_PARTNER_MAX));
+}
+
 function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, seedOffset = 0) {
     if (!containerElement || !partnerPool.length) return;
 
@@ -1776,7 +1823,7 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
         bottomCarouselInterval = null;
     }
 
-    const isMobileOrTablet = window.innerWidth < 1024;
+    const isMobileOrTablet = window.innerWidth < 768;
     let poolIndex = seedOffset % partnerPool.length;
     let isCarouselPaused = false;
     let hoverStartTime = 0;
@@ -1792,7 +1839,7 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
         return `
             <div class="community-partner-card" data-partner-name="${escapeJsString(name)}" style="transition: transform 0.35s ease, opacity 0.35s ease;">
                 <div class="partner-logo-container">
-                    <img class="partner-logo-asset" src="${imgUrl}" alt="" onclick="fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')" style="cursor:pointer;" onerror="this.closest('.community-partner-card').style.display='none';">
+                    <img class="partner-logo-asset" src="${imgUrl}" alt="${escapeJsString(altText)} logo" loading="lazy" onclick="fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')" style="cursor:pointer;">
                 </div>
                 <h4 class="partner-title">${name}</h4>
                 <a class="directory-tile-link" href="${link}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} data-ga-label="partner_cta">Visit Partner &rarr;</a>
@@ -1800,13 +1847,31 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
         `;
     };
 
-    const visibleCount = isMobileOrTablet ? 1 : Math.min(5, partnerPool.length);
-    const initialCards = [];
-    for (let i = 0; i < visibleCount; i++) {
-        const p = partnerPool[(poolIndex + i) % partnerPool.length];
-        initialCards.push(createPartnerMarkup(p, i));
+    let visibleCount = partnerCardsThatFit(containerElement, partnerPool.length);
+    const drawCards = () => {
+        const cards = [];
+        for (let i = 0; i < visibleCount; i++) {
+            const p = partnerPool[(poolIndex + i) % partnerPool.length];
+            cards.push(createPartnerMarkup(p, i));
+        }
+        containerElement.innerHTML = cards.join('');
+    };
+    drawCards();
+
+    // Re-fit when the strip changes width (window resize, rotate, sidebar, zoom)
+    if (smlcPartnerStripObservers[stripKey]) smlcPartnerStripObservers[stripKey].disconnect();
+    if (typeof ResizeObserver === 'function') {
+        let fitTimer = null;
+        const ro = new ResizeObserver(() => {
+            clearTimeout(fitTimer);
+            fitTimer = setTimeout(() => {
+                const next = partnerCardsThatFit(containerElement, partnerPool.length);
+                if (next !== visibleCount) { visibleCount = next; drawCards(); }
+            }, 120);
+        });
+        ro.observe(containerElement.parentElement || containerElement);
+        smlcPartnerStripObservers[stripKey] = ro;
     }
-    containerElement.innerHTML = initialCards.join('');
 
     const onPauseEnter = () => {
         isCarouselPaused = true;
@@ -1995,6 +2060,36 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
 }
 
 // === COMMUNITY BULLETIN ===
+// Upcoming events as schema.org Event data, so search engines / AI answers can cite them
+function publishEventStructuredData(items) {
+    try {
+        const events = (items || []).map(item => {
+            const win = getEventWindow(item);
+            if (!win || getEventStatus(win).state === 'ended') return null;
+            const name = item.name || item.title;
+            if (!name) return null;
+            const place = item.location || item.addr || `${ACTIVE_TOWN.primaryName}, IL`;
+            const ev = {
+                '@type': 'Event', name,
+                startDate: win.start.toISOString(), endDate: win.end.toISOString(),
+                eventStatus: 'https://schema.org/EventScheduled',
+                eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+                location: { '@type': 'Place', name: place, address: place },
+                organizer: { '@type': 'Organization', name: 'Support My Local Community', url: 'https://werewolf3788.github.io/SMLC/' }
+            };
+            const desc = item.details || item.description || item.descShort || item.desc;
+            if (desc) ev.description = String(desc).slice(0, 300);
+            const img = normalizeImageUrl(item.imageUrl || item.image);
+            if (img) ev.image = img.startsWith('//') ? 'https:' + img : img;
+            return ev;
+        }).filter(Boolean).slice(0, 25);
+        let tag = document.getElementById('smlc-events-ld');
+        if (!events.length) { if (tag) tag.remove(); return; }
+        if (!tag) { tag = document.createElement('script'); tag.type = 'application/ld+json'; tag.id = 'smlc-events-ld'; document.head.appendChild(tag); }
+        tag.textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': events });
+    } catch (e) { console.warn('Event data notice:', e.message); }
+}
+
 async function loadCommunityBulletinFeed() {
     const scroller = document.getElementById('bulletin-scroller-target');
     if (!scroller) return;
@@ -2074,6 +2169,7 @@ async function loadCommunityBulletinFeed() {
                 }).join('');
 
                 scroller.innerHTML = topBannerHtml + eventsHtml + bottomBannerHtml;
+                publishEventStructuredData(elements);
                 refreshEventStatuses();
                 if (smlcEventStatusTicker) clearInterval(smlcEventStatusTicker);
                 smlcEventStatusTicker = setInterval(refreshEventStatuses, 15000);
@@ -2258,7 +2354,9 @@ function handleSPAHashNavigation() {
     window.closeMobileMenu();
     ACTIVE_TOWN = getActiveTownConfig();
     document.body.setAttribute("data-town", ACTIVE_TOWN.primaryName.toUpperCase());
-    document.title = `${ACTIVE_TOWN.primaryName}, IL - SMLC Digital Town Square Portal`;
+    document.title = ACTIVE_TOWN.isHome
+        ? 'Clay County, IL Events, News, Gas Prices & Businesses | Support My Local Community'
+        : `${ACTIVE_TOWN.primaryName}, IL Events, News, Gas Prices & Local Businesses | Support My Local Community`;
 
     hydrateTownHeroUI();
     updateNavigationActiveState();
@@ -2319,6 +2417,51 @@ function handleSPAHashNavigation() {
             .divi-event-item .event-nav-link, .divi-event-item .read-more-btn, .divi-event-date { color: var(--on-card-accent, #9ccfff) !important; }
         }
 
+        /* ---------- Partner strips: whole cards in one row, no scrollbars, logos never stretched ---------- */
+        html .partners-horizontal-strip { display: flex; flex-wrap: nowrap; justify-content: center; align-items: stretch;
+            gap: 16px; overflow: hidden !important; padding: 4px 8px 10px; scrollbar-width: none; }
+        html .partners-horizontal-strip::-webkit-scrollbar { display: none; }
+        html .partners-horizontal-strip .community-partner-card { flex: 1 1 0; min-width: 0; max-width: 260px; margin: 0; box-sizing: border-box; }
+        html .partners-horizontal-strip .partner-logo-container { height: 90px; width: 100%; box-sizing: border-box; }
+        html .partners-horizontal-strip .partner-logo-container img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
+        html .partners-horizontal-strip .partner-title { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        @media (max-width: 767px) {
+            html .partners-horizontal-strip .community-partner-card { flex: 0 1 88%; max-width: 340px; }
+            html .partners-horizontal-strip .partner-logo-container { height: 105px; }
+        }
+
+        /* ---------- Menu dropdowns (Firebase menu entries with sub-links) ---------- */
+        .smlc-menu-dropdown { position: relative; }
+        .smlc-menu-dropdown > details > summary { list-style: none; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 14px; cursor: pointer;
+            color: #fff; font: 700 15px var(--font-label, 'Oswald', sans-serif); text-transform: uppercase; letter-spacing: 1px; border: 2px solid transparent; border-radius: 8px; }
+        .smlc-menu-dropdown > details > summary::-webkit-details-marker { display: none; }
+        .smlc-menu-dropdown > details[open] > summary, .smlc-menu-dropdown > details > summary:hover { border-color: var(--town-accent, var(--flora-orange, #FFC10E)); background: rgba(0,0,0,.6); }
+        .smlc-dd-caret { font-size: 11px; }
+        .smlc-submenu { list-style: none; margin: 6px 0 0; padding: 6px; background: #141416; border: 2px solid var(--town-accent, var(--flora-orange, #FFC10E)); border-radius: 10px; min-width: 200px; }
+        @media (min-width: 1024px) { .smlc-submenu { position: absolute; right: 0; top: 100%; z-index: 1100; box-shadow: 0 10px 24px rgba(0,0,0,.7); } }
+        .smlc-submenu a { display: flex !important; width: 100%; box-sizing: border-box; }
+        @media (min-width: 1024px) and (max-width: 1439px) { .smlc-menu-dropdown > details > summary { padding: 6px 9px; font-size: 13px; letter-spacing: .6px; } }
+
+        /* leave room so snow on top / decorations in the corners of partner cards aren't cut off */
+        html.smlc-fx-on .partners-horizontal-strip { padding: 24px 12px 16px; }
+
+        /* ---------- Header: #0C5E75 behind the header image in daytime (light) view ---------- */
+        @media (prefers-color-scheme: light) {
+            .site-brand-header, body.home-bg > header.header { background: #0C5E75 !important; }
+        }
+
+        /* ---------- Quick Answers (SEO / AEO) ---------- */
+        .smlc-answers { width: var(--container-width, 96%); max-width: var(--content-max, 1680px); margin: 28px auto 36px; padding: 0 clamp(4px, 2vw, 24px); box-sizing: border-box; position: relative; z-index: 1; }
+        .smlc-answers-inner { background: var(--card-surface-bg, #fffdf5); color: var(--card-text-primary, #1a1a1a); border: 2px solid var(--card-border-color, #222);
+            box-shadow: 6px 6px 0 var(--card-shadow-color, #000); border-radius: 8px; padding: clamp(18px, 3vw, 34px); }
+        .smlc-answers-title { margin: 0 0 10px; font: 900 clamp(1.5rem, 3vw, 2.2rem)/1.15 'Playfair Display', Georgia, serif; color: var(--on-card-accent, var(--primary, #0258A3)); }
+        .smlc-answers-lead { margin: 0 0 22px; max-width: 75ch; font-size: clamp(1rem, 1.3vw, 1.12rem); line-height: 1.65; color: var(--card-text-secondary, #333); }
+        .smlc-answers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 14px 28px; }
+        .smlc-answer { padding: 14px 0 0; border-top: 2px solid var(--card-border-color, #222); }
+        .smlc-answer-q { margin: 0 0 6px; font: 700 clamp(1.02rem, 1.3vw, 1.15rem)/1.3 'Playfair Display', Georgia, serif; color: var(--card-text-primary, #1a1a1a); }
+        .smlc-answer-a { margin: 0; font-size: 15px; line-height: 1.6; color: var(--card-text-secondary, #333); }
+        .smlc-answer-a a, .smlc-answers-lead a { color: var(--on-card-accent, #0258A3); text-decoration: underline; word-break: break-word; }
+
         /* ---------- ScoreStream sports widgets ---------- */
         .smlc-sports-block { margin: 0 0 16px; }
         .smlc-sports-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px;
@@ -2333,6 +2476,13 @@ function handleSPAHashNavigation() {
             .menu-bar .navigation-drawer-panel { flex: 1 1 auto; min-width: 0; justify-content: center; flex-wrap: wrap; gap: 8px; }
             #portal-weather-current-badge { margin-left: 8px !important; flex: 0 0 auto; }
         }
+        @media (max-width: 1023px) {
+            .menu-bar .menu-inner { gap: 10px; }
+            .menu-bar #portal-weather-current-badge { margin-left: auto !important; }
+            .menu-bar .navigation-drawer-panel.drawer-open .menu-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; width: 92%; margin: 0 auto; }
+            .menu-bar .navigation-drawer-panel.drawer-open .menu-links li { width: auto; margin: 0; }
+        }
+        html .partners-horizontal-strip .directory-tile-link { font-size: 12px; letter-spacing: .3px; padding: 8px 6px; white-space: nowrap; }
         @media (min-width: 1024px) and (max-width: 1439px) {
             .menu-bar .menu-links { gap: 4px 6px; }
             .menu-bar .menu-links a { padding: 6px 9px; font-size: 13px; letter-spacing: .6px; min-height: 44px; gap: 6px; }
@@ -2976,7 +3126,7 @@ window.smlcWeatherChanged = function () {
     if (document.getElementById('smlc-fx-styles')) return;
     const style = document.createElement('style');
     style.id = 'smlc-fx-styles';
-    const CARDS = '.clay-county-news-box, .news-clipping-wrapper, .newspaper-feed-chassis, .fuel-monitor-billboard-card, .point-of-interest-card, .article-card-chassis, .history-card, .proclamation-card-box, .et_pb_module_heading, .community-partner-card, .slideshow-box';
+    const CARDS = '.smlc-answers-inner, .clay-county-news-box, .news-clipping-wrapper, .newspaper-feed-chassis, .fuel-monitor-billboard-card, .point-of-interest-card, .article-card-chassis, .history-card, .proclamation-card-box, .et_pb_module_heading, .community-partner-card, .slideshow-box';
     const cardList = (suffix) => CARDS.split(',').map(s => s.trim())
         .filter(sel => !(suffix === '::after' && sel === '.et_pb_module_heading'))
         .map(sel => `html.smlc-fx-on ${sel}${suffix}`).join(',\n');
