@@ -658,6 +658,7 @@
 
         .clay-county-news-box {
             background-color: #fffdf5;
+            color: #1a1a1a; /* light cards need dark text (was inheriting the page's white text) */
             border: 2px solid #222;
             border-radius: 8px;
             padding: 20px;
@@ -1052,7 +1053,7 @@
 
     <!-- INTRICATE 3-COLUMN OPERATIONAL DATA CHASSIS -->
     <div class="intricate-grid-container">
-        <!-- COLUMN 1: COMMUNITY BULLETIN -->
+        <!-- COLUMN 1: COMMUNITY BULLETIN + SUBMIT EVENT CARD -->
         <div class="intricate-col">
             <div class="clay-county-news-box">
                 <div class="clipping-tag-black">Community Bulletin</div>
@@ -1064,15 +1065,20 @@
                 <div id="bulletin-scroller-target">
                     <div style="text-align:center; padding: 20px; font-style:italic;">Loading community calendar...</div>
                 </div>
-                <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd;">
-                    <a href="https://www.supportmylocalcommunity.com/submit-event/" target="_blank" rel="noopener" class="footer-master-link" style="color: #222; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; text-decoration: underline;" data-ga-label="submit_event_link">
-                        Submit Your Event &rarr;
-                    </a>
+            </div>
+            <!-- Event Submission Clipping -->
+            <div class="clay-county-news-box event-clipping" style="margin-top: 24px;">
+                <div class="clipping-tag-black">Community Bulletin</div>
+                <div class="news-box-header" style="text-align: center;">
+                    <h3>What's Happening?</h3>
+                    <span style="font-size: 0.625rem; text-transform: uppercase; letter-spacing: 2px; color: #444; font-weight: bold;">Clay County Community Calendar</span>
                 </div>
+                <p class="biz-description" style="text-align: center; font-style: italic; font-size: 0.875rem; margin: 12px 0;">"Got a local fundraiser, school event, or church dinner coming up? Share your news with the community for free!"</p>
+                <a href="https://www.supportmylocalcommunity.com/submit-event/" target="_blank" rel="noopener" class="clipping-btn" data-ga-label="submit_event_btn">Submit Your Event</a>
             </div>
         </div>
 
-        <!-- COLUMN 2: BUSINESS SPOTLIGHT & SUBMIT CLIPPING -->
+        <!-- COLUMN 2: BUSINESS SPOTLIGHT -->
         <div class="intricate-col">
             <!-- Dynamic Business Spotlight Box -->
             <div class="clay-county-news-box spotlight-clipping">
@@ -1090,16 +1096,6 @@
                 <a id="spotlight-asset-link" href="#" target="_blank" rel="noopener" class="clipping-btn" data-ga-label="spotlight_btn">Visit Business &rarr;</a>
             </div>
 
-            <!-- Event Submission Clipping -->
-            <div class="clay-county-news-box event-clipping" style="margin-top: 24px;">
-                <div class="clipping-tag-black">Community Bulletin</div>
-                <div class="news-box-header" style="text-align: center;">
-                    <h3>What's Happening?</h3>
-                    <span style="font-size: 0.625rem; text-transform: uppercase; letter-spacing: 2px; color: #444; font-weight: bold;">Clay County Community Calendar</span>
-                </div>
-                <p class="biz-description" style="text-align: center; font-style: italic; font-size: 0.875rem; margin: 12px 0;">"Got a local fundraiser, school event, or church dinner coming up? Share your news with the community for free!"</p>
-                <a href="https://www.supportmylocalcommunity.com/submit-event/" target="_blank" rel="noopener" class="clipping-btn" data-ga-label="submit_event_btn">Submit Your Event</a>
-            </div>
         </div>
 
         <!-- COLUMN 3: SMLC FACEBOOK & DYNAMIC LOCAL LINKS -->
