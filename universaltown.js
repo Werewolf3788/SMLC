@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: v3.2.0
+   Active Version: v3.3.0
    File: universaltown.js
    Project: SMLC County Portal Semantic Master Script
    Description: Complete multi-town engine connecting 100% to Firebase (RTDB & Firestore).
@@ -21,6 +21,11 @@
                 - Dynamic GA4 Tag Injection (G-FHJNXDB9BB) with SPA Hash Route Pageview Tracking
                 - Town-specific & countywide Sports Scoreboard Engine
                 - Persistent 24-hour New York timestamp & version in footer
+                - v3.3.0: App-style bottom nav (Home / Towns / More) on phones + portrait tablets
+                - v3.3.0: Calendar countdown (1 hr), LIVE NOW, Ending Soon (30 min), ended events hidden
+                - v3.3.0: Everything in Central time + "your time" note when the device isn't on Central
+                - v3.3.0: News filtered by town NAMES (towns/tagNames), number tags as backup
+                - v3.3.0: Gas stations per town from sections/gas_widget; ScoreStream sports per town
                 - v3.2.0: Fuel widget reads /fuel_prices (not /billboard_network); no fake default prices
                 - v3.2.0: Sections engine targets pill-layout IDs (point-of-interest-*, article-*)
                   with legacy ID fallback; failed/missing images show an
@@ -159,6 +164,7 @@ const TOWN_ALIAS_MAP = {
         historyKey: "louisville", 
         areaId: 1,
         linkedAreaIds: [1, 7, 9], // Louisville, Bible Grove, Hoosier (Shared 62858 ZIP Area)
+        linkedTownNames: ["Louisville", "Bible Grove", "Hoosier"],
         keywords: ["LOUISVILLE", "NORTH CLAY", "NC", "INDIANS", "NC CARDINALS"], 
         isHome: false, 
         seatBadge: "Clay County Seat", 
@@ -372,6 +378,12 @@ function formatToCentralTime(rawTimestamp) {
 function cleanCalendarDate(rawDate) {
     if (!rawDate || rawDate === "undefined" || rawDate === "null") return "Date to be Announced";
     try {
+        // A plain "2026-10-30" is a calendar day, not midnight UTC (which is the day before in Central)
+        const plainDay = String(rawDate).trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (plainDay) {
+            return new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
+                .format(new Date(Date.UTC(+plainDay[1], +plainDay[2] - 1, +plainDay[3], 12)));
+        }
         const d = new Date(rawDate);
         if (isNaN(d.getTime())) return String(rawDate);
         return new Intl.DateTimeFormat('en-US', {
@@ -422,6 +434,200 @@ function cleanCalendarTime(rawTime, rawDateFallback = null) {
     }
 
     return rawTime.trim();
+}
+
+// ============================================================================
+// CENTRAL TIME ENGINE
+// SMLC runs on Central time (America/Chicago). Every event/clock is computed as a
+// real moment in time, so countdowns are correct no matter where the viewer is.
+// When the viewer's device is NOT on Central time, a small "your time" note is shown.
+// ============================================================================
+const SMLC_TZ = 'America/Chicago';
+const SMLC_TZ_LABEL = 'CT';
+const SMLC_DEFAULT_EVENT_HOURS = 2;      // events with no end time are treated as 2 hours long
+const SMLC_COUNTDOWN_LEAD_MIN = 60;      // "Starts in..." shows 1 hour before start
+const SMLC_ENDING_SOON_MIN = 30;         // "Ending soon" shows in the last 30 minutes
+
+function getViewerTimeZone() {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || SMLC_TZ; } catch (e) { return SMLC_TZ; }
+}
+
+function tzOffsetMs(date, tz) {
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).formatToParts(date);
+    const m = {};
+    parts.forEach(p => { m[p.type] = p.value; });
+    const asUtc = Date.UTC(+m.year, +m.month - 1, +m.day, (+m.hour) % 24, +m.minute, +m.second);
+    return asUtc - Math.floor(date.getTime() / 1000) * 1000;
+}
+
+/** Central wall-clock time -> real Date (DST-safe). */
+function centralWallTimeToDate(y, mo, d, h = 0, mi = 0) {
+    const guess = Date.UTC(y, mo - 1, d, h, mi);
+    const off1 = tzOffsetMs(new Date(guess), SMLC_TZ);
+    let t = guess - off1;
+    const off2 = tzOffsetMs(new Date(t), SMLC_TZ);
+    if (off2 !== off1) t = guess - off2;
+    return new Date(t);
+}
+
+/** Calendar day (in Central) for a date string. "2026-10-30" is taken as-is. */
+function centralYmd(rawDate) {
+    if (!rawDate) return null;
+    const str = String(rawDate).trim();
+    const plain = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (plain) return { y: +plain[1], m: +plain[2], d: +plain[3] };
+    const dt = new Date(str);
+    if (isNaN(dt.getTime())) return null;
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: SMLC_TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(dt);
+    const m = {};
+    parts.forEach(p => { m[p.type] = p.value; });
+    return { y: +m.year, m: +m.month, d: +m.day };
+}
+
+/** "7:00 PM", "7pm", "19:00" -> { h, mi, hasMeridiem } */
+function parseClockText(txt) {
+    if (!txt) return null;
+    const t = String(txt).trim().toLowerCase().replace(/\./g, '');
+    const m = t.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm|a|p)?\b/);
+    if (!m) return null;
+    let h = parseInt(m[1], 10);
+    const mi = m[2] ? parseInt(m[2], 10) : 0;
+    const mer = m[3] ? m[3][0] : null;
+    if (h > 23 || mi > 59) return null;
+    if (mer === 'p' && h < 12) h += 12;
+    if (mer === 'a' && h === 12) h = 0;
+    return { h, mi, hasMeridiem: !!mer, rawHour: parseInt(m[1], 10) };
+}
+
+/**
+ * Works out the real start/end of a calendar item.
+ * Supports: ISO start/end fields, or date + time text like "7:00 PM - 10:00 PM" (Central).
+ * Returns { start: Date, end: Date, allDay: bool } or null.
+ */
+function getEventWindow(item) {
+    if (!item) return null;
+    const HOUR = 3600000;
+
+    if (item.start && !isNaN(new Date(item.start).getTime())) {
+        let start = new Date(item.start);
+        let end = item.end && !isNaN(new Date(item.end).getTime()) ? new Date(item.end) : null;
+        const allDay = item.isAllDay === true;
+        if (allDay) {
+            const ymd = centralYmd(item.start);
+            start = centralWallTimeToDate(ymd.y, ymd.m, ymd.d);
+            if (!end || end <= start) end = new Date(start.getTime() + 24 * HOUR);
+        }
+        if (!end || end <= start) end = new Date(start.getTime() + SMLC_DEFAULT_EVENT_HOURS * HOUR);
+        return { start, end, allDay };
+    }
+
+    const rawDate = item.date || item.displayDate;
+    const rawTime = String(item.time || item.displayTime || '').trim();
+
+    if (rawTime && /\d{4}-\d{2}-\d{2}T/.test(rawTime)) {
+        const start = new Date(rawTime);
+        if (!isNaN(start.getTime())) return { start, end: new Date(start.getTime() + SMLC_DEFAULT_EVENT_HOURS * HOUR), allDay: false };
+    }
+
+    const ymd = centralYmd(rawDate);
+    if (!ymd) return null;
+
+    const pieces = rawTime.split(/\s*(?:-|–|—|\bto\b|\buntil\b)\s*/i).filter(Boolean);
+    let p1 = parseClockText(pieces[0]);
+    const p2 = pieces.length > 1 ? parseClockText(pieces[1]) : null;
+
+    if (!p1) {
+        const start = centralWallTimeToDate(ymd.y, ymd.m, ymd.d);
+        return { start, end: new Date(start.getTime() + 24 * HOUR), allDay: true };
+    }
+    // "7 - 10 PM": borrow the end's AM/PM for the start
+    if (p2 && !p1.hasMeridiem && p2.hasMeridiem) {
+        const isPm = p2.h >= 12;
+        let h = (p1.rawHour % 12) + (isPm ? 12 : 0);
+        if (h > p2.h) h -= 12; // e.g. "11 - 1 PM" -> 11 AM
+        p1 = { ...p1, h: Math.max(0, h) };
+    }
+
+    const start = centralWallTimeToDate(ymd.y, ymd.m, ymd.d, p1.h, p1.mi);
+    let end = p2 ? centralWallTimeToDate(ymd.y, ymd.m, ymd.d, p2.h, p2.mi) : new Date(start.getTime() + SMLC_DEFAULT_EVENT_HOURS * HOUR);
+    if (end <= start) end = new Date(end.getTime() + 24 * HOUR); // runs past midnight
+    return { start, end, allDay: false };
+}
+
+function formatClockIn(date, tz, withZone = true) {
+    return new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: 'numeric', minute: '2-digit', hour12: true, ...(withZone ? { timeZoneName: 'short' } : {}) }).format(date);
+}
+
+/** True when the viewer's clock reads differently from Central at that moment. */
+function viewerDiffersFromCentral(atDate = new Date()) {
+    const viewerTz = getViewerTimeZone();
+    if (viewerTz === SMLC_TZ) return false;
+    try { return tzOffsetMs(atDate, viewerTz) !== tzOffsetMs(atDate, SMLC_TZ); } catch (e) { return false; }
+}
+
+/** "Your time: 8:00 PM – 11:00 PM EDT" (adds the day if it differs from the Central day) */
+function buildViewerTimeNote(win) {
+    if (!win || win.allDay || !viewerDiffersFromCentral(win.start)) return '';
+    const viewerTz = getViewerTimeZone();
+    const dayFmt = (tz) => new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short', month: 'short', day: 'numeric' }).format(win.start);
+    const dayNote = dayFmt(viewerTz) !== dayFmt(SMLC_TZ) ? `${dayFmt(viewerTz)}, ` : '';
+    return `Your time: ${dayNote}${formatClockIn(win.start, viewerTz, false)} &ndash; ${formatClockIn(win.end, viewerTz)}`;
+}
+
+function minutesLeftText(ms) {
+    const mins = Math.ceil(ms / 60000);
+    if (mins >= 60) return '1 HR';
+    if (mins <= 1) return '1 MIN';
+    return `${mins} MIN`;
+}
+
+/** Status for an event right now: ended | upcoming | starting | live | ending */
+function getEventStatus(win, now = Date.now()) {
+    if (!win) return { state: 'upcoming', text: '' };
+    const s = win.start.getTime(), e = win.end.getTime();
+    if (now >= e) return { state: 'ended', text: '' };
+    if (win.allDay) return now >= s ? { state: 'live', text: 'Happening Today' } : { state: 'upcoming', text: '' };
+    if (now >= s) {
+        if (e - now <= SMLC_ENDING_SOON_MIN * 60000) return { state: 'ending', text: `Ending Soon &middot; ${minutesLeftText(e - now)} left` };
+        return { state: 'live', text: 'Live Now' };
+    }
+    if (s - now <= SMLC_COUNTDOWN_LEAD_MIN * 60000) return { state: 'starting', text: `Starts in ${minutesLeftText(s - now)}` };
+    return { state: 'upcoming', text: '' };
+}
+
+let smlcEventStatusTicker = null;
+function refreshEventStatuses() {
+    const scroller = document.getElementById('bulletin-scroller-target');
+    if (!scroller) return;
+    const now = Date.now();
+    let visible = 0;
+    scroller.querySelectorAll('.divi-event-item').forEach(el => {
+        if (!el.dataset.start) { visible++; return; }
+        const win = { start: new Date(+el.dataset.start), end: new Date(+el.dataset.end), allDay: el.dataset.allday === '1' };
+        const st = getEventStatus(win, now);
+        if (st.state === 'ended') { el.style.display = 'none'; return; }
+        el.style.display = '';
+        visible++;
+        const badge = el.querySelector('.smlc-event-status');
+        if (!badge) return;
+        if (!st.text) { badge.style.display = 'none'; badge.className = 'smlc-event-status'; return; }
+        badge.className = `smlc-event-status smlc-status-${st.state}`;
+        badge.innerHTML = (st.state === 'live' ? '<span class="smlc-live-dot" aria-hidden="true"></span>' : '') + st.text;
+        badge.style.display = 'inline-flex';
+    });
+    let empty = scroller.querySelector('.smlc-no-events');
+    if (visible === 0) {
+        if (!empty) {
+            empty = document.createElement('div');
+            empty.className = 'smlc-no-events feed-loading-placeholder';
+            empty.textContent = 'No upcoming events right now. Check back soon!';
+            const firstBanner = scroller.firstElementChild;
+            if (firstBanner && firstBanner.nextSibling) scroller.insertBefore(empty, firstBanner.nextSibling); else scroller.appendChild(empty);
+        }
+        empty.style.display = '';
+    } else if (empty) {
+        empty.style.display = 'none';
+    }
 }
 
 function applyHighDensityScrollLimits(containerElement, itemCount, maxHeightPx = 480) {
@@ -653,7 +859,7 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = ""
     const parsedAlt = linkifyRawUrls(cleanAlt || '');
 
     const displayStory = (cleanAlt && cleanAlt !== cleanTitle) 
-        ? `<div style="font-style:italic; font-size:14px; color:#444; margin-bottom:12px; border-left:3px solid var(--primary); padding-left:10px;">Details: ${parsedAlt}</div>${parsedBody}`
+        ? `<div style="font-style:italic; font-size:14px; color:var(--card-text-secondary, #444); margin-bottom:12px; border-left:3px solid var(--primary); padding-left:10px;">Details: ${parsedAlt}</div>${parsedBody}`
         : parsedBody;
 
     const storyEl = document.getElementById('lightbox-target-story'); 
@@ -941,9 +1147,19 @@ function renderNavbarWeatherWidget(current) {
         ${iconUrl ? `<img src="${iconUrl}" alt="" class="weather-icon-img" onerror="this.style.display='none';">` : ''}
         <span class="weather-temp-num">${temp}</span>
         <span class="weather-desk-text">&bull; ${condition}</span>
-        <span class="weather-desk-text" style="font-size:11px; color:var(--flora-orange, #ff9800); margin-left:2px;">(5-Day &rarr;)</span>
+        <span class="weather-desk-text" style="font-size:11px; color:var(--town-accent, var(--flora-orange, #ff9800)); margin-left:2px;">(5-Day &rarr;)</span>
     `;
     widgetEl.title = `Current Weather | Updated: ${updatedCdt} | Click to view 5-day forecast`;
+
+    // Also fill the Weather pill on the page and the phone "More" menu
+    window.smlcCurrentWeather = { temp, condition };
+    const pillTemp = document.getElementById('weather-pill-temp');
+    const pillIcon = document.getElementById('weather-pill-icon');
+    const pillDetail = document.getElementById('weather-pill-detail');
+    if (pillTemp) pillTemp.textContent = `${temp} • ${condition}`;
+    if (pillIcon) pillIcon.innerHTML = iconUrl ? `<img src="${iconUrl}" alt="" onerror="this.style.display='none';">` : '';
+    if (pillDetail) pillDetail.textContent = '5-Day Forecast';
+    updateBottomNavWeather();
     triggerGoogleTranslateUpdate(widgetEl);
 }
 
@@ -1004,9 +1220,65 @@ window.openFiveDayForecastModal = function() {
 };
 
 // ============================================================================
-// SPORTS SCOREBOARD ENGINE (Town-Isolated Multi-Level Feeder)
-// Listens to: /master_county_data/sports
+// SPORTS SCOREBOARD ENGINE (ScoreStream widgets)
+// Reads: /master_county_data/towns/{Town}/sections/sports/[n]
+//   { school_grade, scorestream_code (widget id), score_widget_script, website }
+// Builds the ScoreStream container itself (only the widget id comes from the database)
+// and then (re)loads ScoreStream's embed script so it finds the new containers.
+// Home page shows every town's widgets.
 // ============================================================================
+const SCORESTREAM_EMBED_SRC = 'https://scorestream.com/apiJsCdn/widgets/embed.js';
+
+function extractScoreStreamWidget(entry) {
+    if (!entry) return null;
+    const code = String(entry.scorestream_code ?? '').trim();
+    const script = String(entry.score_widget_script ?? '');
+    let id = null;
+    let type = 'horzScoreboard';
+    if (/^\d+$/.test(code)) id = code;
+    const fromHtml = (code + ' ' + script).match(/data-user-widget-id\s*=\s*["']?(\d+)/i);
+    if (!id && fromHtml) id = fromHtml[1];
+    const typeMatch = (code + ' ' + script).match(/data-ss_widget_type\s*=\s*["']?([A-Za-z]+)/);
+    if (typeMatch) type = typeMatch[1];
+    if (!id) return null;
+    return { id, type, label: String(entry.school_grade || '').trim(), website: String(entry.website || '').trim() };
+}
+
+function loadScoreStreamEmbed() {
+    document.querySelectorAll('script[data-smlc-scorestream]').forEach(el => el.remove());
+    const tag = document.createElement('script');
+    tag.async = true;
+    tag.type = 'text/javascript';
+    tag.src = SCORESTREAM_EMBED_SRC + '?v=' + Date.now();   // fresh run so it scans the new containers
+    tag.setAttribute('data-smlc-scorestream', '1');
+    document.body.appendChild(tag);
+}
+
+let lastScoreStreamSignature = '';
+function renderScoreStreamWidgets(container, widgets) {
+    if (!widgets.length) {
+        container.innerHTML = '';
+        container.style.display = 'none';
+        lastScoreStreamSignature = '';
+        return;
+    }
+    const signature = widgets.map(w => `${w.townLabel || ''}|${w.id}|${w.type}|${w.label}|${w.website}`).join(',');
+    if (signature === lastScoreStreamSignature && container.querySelector('.scorestream-widget-container')) return;
+    lastScoreStreamSignature = signature;
+
+    container.innerHTML = widgets.map(w => {
+        const heading = [w.townLabel, w.label].filter(Boolean).join(' • ') || 'Local Scores';
+        const link = w.website ? `<a class="smlc-sports-link" href="${attachUtmParameters(w.website)}" target="${resolveLinkTarget(w.website)}" rel="noopener" data-ga-label="sports_team_site">Team site &rarr;</a>` : '';
+        return `
+            <div class="smlc-sports-block">
+                <div class="smlc-sports-head"><span class="smlc-sports-label">${heading}</span>${link}</div>
+                <div class="scorestream-widget-container" data-ss_widget_type="${w.type}" data-user-widget-id="${w.id}"></div>
+            </div>`;
+    }).join('');
+    container.style.display = 'block';
+    loadScoreStreamEmbed();
+}
+
 function bindFirebaseSportsEngine(db) {
     if (!db) return;
     const sportsContainer = document.getElementById('town-sports-scoreboard-target');
@@ -1014,67 +1286,28 @@ function bindFirebaseSportsEngine(db) {
 
     try {
         if (activeFbRefSports) activeFbRefSports.off();
-        activeFbRefSports = db.ref('master_county_data/sports');
+        lastScoreStreamSignature = '';
 
-        activeFbRefSports.on('value', (snapshot) => {
-            const sports = snapshot.val();
-            if (!sports) {
-                sportsContainer.style.display = 'none';
-                return;
-            }
+        if (ACTIVE_TOWN.isHome) {
+            activeFbRefSports = db.ref('master_county_data/towns');
+            activeFbRefSports.on('value', (snap) => {
+                const towns = snap.val() || {};
+                const widgets = [];
+                Object.keys(towns).forEach(townName => {
+                    toPlainArray(towns[townName]?.sections?.sports).forEach(entry => {
+                        const w = extractScoreStreamWidget(entry);
+                        if (w) widgets.push({ ...w, townLabel: townName });
+                    });
+                });
+                renderScoreStreamWidgets(sportsContainer, widgets);
+            });
+            return;
+        }
 
-            const activeTownKey = (ACTIVE_TOWN.jsonKey || ACTIVE_TOWN.primaryName || "").toLowerCase().replace(/\s+/g, '_');
-            let displayHtml = '';
-
-            const formatGameCard = (game, label) => {
-                if (!game || !game.homeTeam) return '';
-                const isFinal = (game.status || '').toUpperCase() === 'FINAL';
-                const badgeColor = isFinal ? '#2e7d32' : 'var(--flora-orange)';
-
-                return `
-                    <div class="sports-score-card" style="background:#111; border:1px solid #333; border-radius:6px; padding:12px; margin-bottom:10px; color:#fff;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                            <span style="font-size:11px; font-weight:bold; text-transform:uppercase; color:#bbb;">${label} &bull; ${game.sport || 'Athletics'}</span>
-                            <span style="background:${badgeColor}; font-size:10px; font-weight:bold; padding:2px 8px; border-radius:3px; text-transform:uppercase;">${game.status || 'UPCOMING'}</span>
-                        </div>
-                        <div style="font-size:15px; font-weight:bold; margin-bottom:4px;">
-                            ${game.homeTeam} ${isFinal ? `(${game.homeScore})` : ''} vs ${game.awayTeam} ${isFinal ? `(${game.awayScore})` : ''}
-                        </div>
-                        <div style="font-size:12px; color:#ddd; font-style:italic;">
-                            ${game.summary || ''}
-                        </div>
-                    </div>
-                `;
-            };
-
-            if (ACTIVE_TOWN.isHome) {
-                let allCards = '';
-                if (sports.flora) {
-                    allCards += formatGameCard(sports.flora.high_school, 'Flora HS');
-                    allCards += formatGameCard(sports.flora.junior_high, 'Floyd Henson JH');
-                }
-                if (sports.louisville) {
-                    allCards += formatGameCard(sports.louisville.high_school, 'North Clay HS');
-                    allCards += formatGameCard(sports.louisville.junior_high, 'North Clay JH');
-                }
-                if (sports.clay_city) {
-                    allCards += formatGameCard(sports.clay_city.high_school, 'Clay City HS');
-                    allCards += formatGameCard(sports.clay_city.junior_high, 'Clay City JH');
-                }
-                displayHtml = allCards;
-            } else if (sports[activeTownKey]) {
-                const townData = sports[activeTownKey];
-                displayHtml += formatGameCard(townData.high_school, `${ACTIVE_TOWN.primaryName} High School`);
-                displayHtml += formatGameCard(townData.junior_high, `${ACTIVE_TOWN.primaryName} Junior High`);
-            }
-
-            if (displayHtml.trim() !== '') {
-                sportsContainer.innerHTML = displayHtml;
-                sportsContainer.style.display = 'block';
-                triggerGoogleTranslateUpdate(sportsContainer);
-            } else {
-                sportsContainer.style.display = 'none';
-            }
+        activeFbRefSports = db.ref(`master_county_data/towns/${ACTIVE_TOWN.dbTownKey}/sections/sports`);
+        activeFbRefSports.on('value', (snap) => {
+            const widgets = toPlainArray(snap.val()).map(extractScoreStreamWidget).filter(Boolean);
+            renderScoreStreamWidgets(sportsContainer, widgets);
         });
     } catch (err) {
         console.warn("Sports engine notice:", err.message);
@@ -1153,6 +1386,13 @@ function bindFirebaseMenuEngine(db) {
                     </li>
                 `;
             }).join('');
+            window.smlcMenuItems = rawItems.filter(Boolean).map(item => ({
+                name: item.name || 'Link',
+                href: attachUtmParameters(item.website || '#'),
+                target: resolveLinkTarget(item.website),
+                img: normalizeImageUrl(item.imageUrl) || ''
+            }));
+            renderBottomNav();
             triggerGoogleTranslateUpdate(menuContainer);
         });
     } catch(err) {
@@ -1194,7 +1434,7 @@ function bindFirebaseLocalLinksEngine(db) {
                             <a href="${targetUrl}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} class="local-link-title-anchor" data-ga-label="local_link" style="font-weight: bold; font-size: 15px; color: var(--link-bright-blue); text-decoration: underline;">
                                 ${name}
                             </a>
-                            <span style="font-size: 11px; color: #666; margin-left: 6px;">(${displayLoc})</span>
+                            <span style="font-size: 11px; color: var(--card-muted, #555); margin-left: 6px;">(${displayLoc})</span>
                         </div>
                     `;
                 }).join('');
@@ -1652,23 +1892,57 @@ function initializeFirebaseGasMonitor(db) {
         "181818": { town: "xenia", display: "Xenia", name: "KNAPP'S", logo: "Knapps.png" }   
     };
 
+    // Which stations to show for this town:
+    //   1st choice: /master_county_data/towns/{Town}/sections/gas_widget/[n] { station_id, title }
+    //   fallback:   the built-in list above (by ACTIVE_TOWN.gasKey)
     const targetTowns = ACTIVE_TOWN.gasKey || ["flora"];
-    const stationIds = Object.keys(stationConfigs).filter(id => targetTowns.includes(stationConfigs[id].town));
-    if (stationIds.length === 0) return;
+    const fallbackIds = Object.keys(stationConfigs).filter(id => targetTowns.includes(stationConfigs[id].town));
+    const townKey = ACTIVE_TOWN.dbTownKey;
+    const notAvailable = (msg) => {
+        gasContainer.innerHTML = `<div class="sidebar-widget-title">${(ACTIVE_TOWN.isHome ? 'Clay County' : ACTIVE_TOWN.primaryName).toUpperCase()} FUEL INDEX MONITOR</div><div class="fuel-note">${msg}</div>`;
+    };
+
+    let townStations = null;   // [{ id, title }] from Firebase, or null while loading
+    let priceData = null;
+
+    const render = () => {
+        if (townStations === null || priceData === null) return;
+        const list = townStations.length > 0 ? townStations : fallbackIds.map(id => ({ id, title: '' }));
+        if (list.length === 0) { notAvailable("Fuel prices aren't available for this town yet."); return; }
+        const configs = {};
+        list.forEach(st => {
+            const known = stationConfigs[st.id] || {};
+            configs[st.id] = {
+                town: known.town || '',
+                display: ACTIVE_TOWN.isHome ? (known.display || 'Clay County') : (ACTIVE_TOWN.primaryName || known.display || ''),
+                name: st.title || known.name || `Station ${st.id}`,
+                stationTown: known.display || '',
+                logo: known.logo || ''
+            };
+        });
+        startGasRotator(priceData || {}, configs, list.map(st => st.id), gasContainer);
+    };
 
     try {
+        if (townKey && townKey !== 'Global') {
+            db.ref(`master_county_data/towns/${townKey}/sections/gas_widget`).on('value', (snap) => {
+                townStations = toPlainArray(snap.val())
+                    .filter(e => e && (e.station_id !== undefined && e.station_id !== null && String(e.station_id).trim() !== ''))
+                    .map(e => ({ id: String(e.station_id).trim(), title: e.title ? String(e.title).trim() : '' }));
+                render();
+            }, () => { townStations = []; render(); });
+        } else {
+            townStations = [];
+        }
+
         // SMLC fuel data lives at /fuel_prices/{stationId} = { reg, dsl, date } (written by update-gas.html).
         // NOTE: /billboard_network is a separate project and must not be read here.
         db.ref('fuel_prices').on('value', (snap) => {
-            const val = snap.val();
-            if (val) {
-                startGasRotator(val, stationConfigs, stationIds, gasContainer);
-            } else {
-                gasContainer.innerHTML = `<div class="sidebar-widget-title">${(ACTIVE_TOWN.primaryName || 'Area').toUpperCase()} FUEL INDEX MONITOR</div><div class="fuel-note">Fuel prices aren't available right now.</div>`;
-            }
+            priceData = snap.val() || {};
+            render();
         }, (err) => {
             console.warn("Gas monitor read notice:", err && err.message);
-            gasContainer.innerHTML = `<div class="sidebar-widget-title">FUEL INDEX MONITOR</div><div class="fuel-note">Fuel prices aren't available right now.</div>`;
+            notAvailable("Fuel prices aren't available right now.");
         });
     } catch(e) {
         console.warn("Gas monitor notice:", e.message);
@@ -1691,7 +1965,7 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
         if (dslPrice === "0" || !dslPrice) dslPrice = "---";
 
         const updateDate = info.date || info.updated || "Pending";
-        const safeLogo = encodeURIComponent(config.logo);
+        const safeLogo = config.logo ? encodeURIComponent(config.logo) : '';
 
         container.style.cursor = "pointer";
         container.onclick = () => window.open(attachUtmParameters(updatePortalUrl), '_blank');
@@ -1699,8 +1973,8 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
         container.innerHTML = `
             <div class="sidebar-widget-title">${config.display.toUpperCase()} FUEL INDEX MONITOR</div>
             <div class="fuel-station-header">
-                <div class="station-logo-frame"><img src="//raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/${safeLogo}" alt=""></div>
-                <div class="station-meta-title">${config.name} (${config.display})</div>
+                ${safeLogo ? `<div class="station-logo-frame"><img src="//raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/${safeLogo}" alt="" onerror="this.parentElement.style.display='none';"></div>` : ''}
+                <div class="station-meta-title">${config.name}${config.stationTown && !String(config.name).toUpperCase().includes(String(config.stationTown).toUpperCase()) ? ` (${config.stationTown})` : ''}</div>
             </div>
             <div class="fuel-pricing-grid">
                 <div class="price-box"><span class="price-type-label">REGULAR</span><span class="price-value-regular">${regPrice}</span></div>
@@ -1748,11 +2022,16 @@ async function loadCommunityBulletinFeed() {
                 const bottomBannerHtml = createGlobalSubscriptionBanner("County-Wide Calendar Subscriptions");
 
                 const eventsHtml = elements.map((item, idx) => {
+                    const win = getEventWindow(item);
+                    if (win && getEventStatus(win).state === 'ended') return ''; // already over -> hide
                     const eventTitle = item.name || item.title || "Community Gathering";
                     const eventLoc = item.location || ACTIVE_TOWN.primaryName + ", IL";
-                    const rawDetails = item.details || item.description || "";
+                    const rawDetails = item.details || item.description || item.descShort || item.desc || "";
                     const dateText = cleanCalendarDate(item.date || item.displayDate);
-                    const timeText = cleanCalendarTime(item.time || item.displayTime, item.date || item.displayDate);
+                    let timeText = cleanCalendarTime(item.time || item.displayTime, item.date || item.displayDate);
+                    if (win && !win.allDay && /\d/.test(timeText) && !/\b(CT|CST|CDT)\b/.test(timeText)) timeText += ` ${SMLC_TZ_LABEL}`;
+                    const viewerNote = buildViewerTimeNote(win);
+                    const winAttrs = win ? `data-start="${win.start.getTime()}" data-end="${win.end.getTime()}" data-allday="${win.allDay ? 1 : 0}"` : '';
                     const finalEventImg = normalizeImageUrl(item.imageUrl || item.image);
 
                     const singleGoogleUrl = generateGoogleCalendarEventUrl(eventTitle, item.date || item.displayDate, item.time || item.displayTime, eventLoc, rawDetails);
@@ -1766,23 +2045,25 @@ async function loadCommunityBulletinFeed() {
                     ` : '';
 
                     return `
-                        <div class="divi-event-item" style="margin-bottom:15px; padding-bottom:12px; border-bottom:1px dashed #ccc; overflow:hidden;">
+                        <div class="divi-event-item" ${winAttrs} style="margin-bottom:15px; padding-bottom:12px; border-bottom:1px dashed var(--card-muted, #ccc); overflow:hidden;">
                             ${thumbnailHtml}
+                            <span class="smlc-event-status" style="display:none;"></span>
                             <div class="divi-event-date" style="font-size:12px; color:var(--primary); font-weight:bold;">${dateText} &bull; ${timeText}</div>
+                            ${viewerNote ? `<div class="smlc-viewer-time">${viewerNote}</div>` : ''}
                             <div class="divi-event-title" style="font-size:16px; font-weight:bold; margin: 4px 0;">${eventTitle}</div>
-                            <div class="event-info-text" style="font-size:13px; color:#333;">
+                            <div class="event-info-text" style="font-size:13px; color:var(--card-text-secondary, #333);">
                                 <strong>Where:</strong> 
                                 <a href="${turnByTurnNavUrl}" target="_blank" rel="noopener" class="event-nav-link" style="color:var(--primary); font-weight:bold; text-decoration:underline;">
                                     ${eventLoc} &rarr; Directions
                                 </a>
                             </div>
-                            <div style="font-size:13px; color:#555; margin-top:4px;">${linkifyRawUrls(rawDetails.substring(0, 110))}...</div>
+                            <div class="smlc-event-desc" style="font-size:13px; color:var(--card-text-secondary, #444); margin-top:4px;">${linkifyRawUrls(rawDetails.substring(0, 110))}${rawDetails.length > 110 ? '...' : ''}</div>
                             
                             <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
                                 <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:var(--primary); font-weight:bold; cursor:pointer; font-size:12px; text-decoration:underline;">Read Details &rarr;</div>
-                                <span style="color:#bbb; font-size:11px;">|</span>
+                                <span style="color:var(--card-muted, #999); font-size:11px;">|</span>
                                 <a href="${singleGoogleUrl}" target="_blank" rel="noopener" style="font-size:11px; color:#1a73e8; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_google">+ Google Cal</a>
-                                <span style="color:#bbb; font-size:11px;">|</span>
+                                <span style="color:var(--card-muted, #999); font-size:11px;">|</span>
                                 <a href="${singleIcalBlob}" download="${eventTitle.replace(/\s+/g, '_')}.ics" style="font-size:11px; color:#1e7e34; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_ical">+ iCal (.ics)</a>
                             </div>
                         </div>
@@ -1790,6 +2071,9 @@ async function loadCommunityBulletinFeed() {
                 }).join('');
 
                 scroller.innerHTML = topBannerHtml + eventsHtml + bottomBannerHtml;
+                refreshEventStatuses();
+                if (smlcEventStatusTicker) clearInterval(smlcEventStatusTicker);
+                smlcEventStatusTicker = setInterval(refreshEventStatuses, 15000);
                 triggerGoogleTranslateUpdate(scroller);
             }
         }
@@ -1802,6 +2086,44 @@ async function loadCommunityBulletinFeed() {
 // LOCAL NEWS DISPATCHES: 100% Direct Live Cloud Firestore Ingestion
 // Strict Integer Matching via AREA_IDS tags (Tag 0 = Global, Tag 2 = Flora, etc.)
 // ============================================================================
+const SMLC_NO_NEWS_HTML = `<div class="feed-loading-placeholder" style="text-align:center; padding:20px; font-style:italic; color:var(--card-text-secondary, #444);">No News for this town, check out other towns for local news</div>`;
+const SMLC_COUNTY_WIDE_NAMES = ['claycounty', 'claycountyil', 'claycountyillinois', 'county', 'global', 'all'];
+
+function normalizeTownName(name) {
+    return String(name || '').toLowerCase().replace(/[^a-z]/g, '');
+}
+
+function toPlainArray(val) {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'object') return Object.values(val);
+    return [val];
+}
+
+/**
+ * Who sees a news story:
+ *  - Lists town names (towns / tagNames)  -> ONLY those towns.
+ *  - Says "Clay County" with no town names -> every town (county-wide).
+ *  - No names at all                        -> falls back to the number tags (0 = county-wide).
+ *  - Home page shows everything.
+ */
+function newsItemBelongsToActiveTown(item) {
+    if (!item) return false;
+    if (ACTIVE_TOWN.isHome) return true;
+
+    const names = [...toPlainArray(item.towns), ...toPlainArray(item.tagNames)].map(normalizeTownName).filter(Boolean);
+    const townNames = names.filter(n => !SMLC_COUNTY_WIDE_NAMES.includes(n));
+    const allowedNames = (ACTIVE_TOWN.linkedTownNames || [ACTIVE_TOWN.primaryName]).map(normalizeTownName);
+
+    if (townNames.length > 0) return townNames.some(n => allowedNames.includes(n));
+    if (names.length > 0) return true; // only "Clay County" listed -> county-wide
+
+    const numericTags = toPlainArray(item.tags).map(t => Number(t)).filter(n => !isNaN(n));
+    if (numericTags.includes(0)) return true;
+    const allowedAreaIds = ACTIVE_TOWN.linkedAreaIds || [ACTIVE_TOWN.areaId];
+    return numericTags.some(id => allowedAreaIds.includes(id));
+}
+
 async function loadLocalNewsDispatches() {
     const targetGrid = document.getElementById('news-matrix-target');
     if (!targetGrid) return;
@@ -1814,7 +2136,9 @@ async function loadLocalNewsDispatches() {
             const firestoreDb = firebase.firestore();
             const snap = await firestoreDb.collection("local_news").get();
             snap.forEach(docSnap => {
-                rawNewsList.push(docSnap.data());
+                const d = docSnap.data() || {};
+                if (d.updatedAt && typeof d.updatedAt.toDate === 'function') d.updatedAt = d.updatedAt.toDate().toISOString();
+                rawNewsList.push(d);
             });
         }
 
@@ -1850,7 +2174,8 @@ async function loadLocalNewsDispatches() {
                             source_url: unwrapVal(f.source_url) || '',
                             tags: unwrapVal(f.tags) || [],
                             tagNames: unwrapVal(f.tagNames) || [],
-                            towns: unwrapVal(f.towns) || []
+                            towns: unwrapVal(f.towns) || [],
+                            updatedAt: (f.updatedAt && (f.updatedAt.timestampValue || f.updatedAt.stringValue)) || ''
                         };
                     });
                 }
@@ -1858,24 +2183,9 @@ async function loadLocalNewsDispatches() {
         }
 
         if (Array.isArray(rawNewsList) && rawNewsList.length > 0) {
-            window.newsCacheBlock = rawNewsList.filter(item => {
-                if (!item) return false;
-
-                // 1. Home portal displays all county dispatches
-                if (ACTIVE_TOWN.isHome) return true;
-
-                // 2. Normalize tags to strict integers
-                const itemNumericTags = Array.isArray(item.tags)
-                    ? item.tags.map(t => Number(t)).filter(n => !isNaN(n))
-                    : [];
-
-                // 3. Global County News: Tagged with 0 (Clay County)
-                if (itemNumericTags.includes(0)) return true;
-
-                // 4. Multi-Town and Town-Specific News: Check if active town ID is in tags array
-                const allowedAreaIds = ACTIVE_TOWN.linkedAreaIds || [ACTIVE_TOWN.areaId];
-                return itemNumericTags.some(id => allowedAreaIds.includes(id));
-            });
+            window.newsCacheBlock = rawNewsList.filter(item => newsItemBelongsToActiveTown(item));
+            // Newest first
+            window.newsCacheBlock.sort((a, b) => (new Date(b.updatedAt || b.date).getTime() || 0) - (new Date(a.updatedAt || a.date).getTime() || 0));
 
             if (window.newsCacheBlock.length > 0) {
                 applyHighDensityScrollLimits(targetGrid, window.newsCacheBlock.length, 520);
@@ -1891,20 +2201,21 @@ async function loadLocalNewsDispatches() {
                             ${imgUrl ? `<img src="${imgUrl}" alt="" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})">` : ''}
                             <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-top:10px;">${cleanCalendarDate(story.date)}</div>
                             <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${cleanTitle}</div>
-                            <div style="font-size:14px; color:#444;">${linkifyRawUrls(displayStory)}</div>
+                            <div style="font-size:14px; color:var(--card-text-secondary, #444);">${linkifyRawUrls(displayStory)}</div>
                             ${isLong ? `<div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: var(--primary); font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>` : ''}
                         </div>
                     `;
                 }).join('');
                 triggerGoogleTranslateUpdate(targetGrid);
             } else {
-                targetGrid.innerHTML = `<div style="text-align:center; padding:20px; font-style:italic; color:#666;">No localized dispatches found for ${ACTIVE_TOWN.primaryName}.</div>`;
+                targetGrid.innerHTML = SMLC_NO_NEWS_HTML;
             }
         } else {
-            targetGrid.innerHTML = `<div style="text-align:center; padding:20px; font-style:italic; color:#666;">No localized dispatches found for ${ACTIVE_TOWN.primaryName}.</div>`;
+            targetGrid.innerHTML = SMLC_NO_NEWS_HTML;
         }
-    } catch(e) { 
-        console.warn("Firestore live news notice:", e.message); 
+    } catch(e) {
+        console.warn("Firestore live news notice:", e.message);
+        if (/Loading/i.test(targetGrid.textContent || '')) targetGrid.innerHTML = SMLC_NO_NEWS_HTML;
     }
 }
 
@@ -1960,6 +2271,316 @@ function handleSPAHashNavigation() {
     bindFirebaseServices();
     loadCommunityBulletinFeed();
     loadLocalNewsDispatches();
+    if (typeof closeBottomNavSheets === 'function') closeBottomNavSheets();
+    renderBottomNav();
+}
+
+// ============================================================================
+// SHARED UI STYLES (injected once so every town page gets them)
+//  - App-style bottom navigation (phones + portrait tablets)
+//  - Calendar status badges (Starts in / LIVE NOW / Ending soon)
+//  - Readable text on dark cards, ScoreStream blocks, desktop menu fitting
+// ============================================================================
+(function injectSharedUiStyles() {
+    if (document.getElementById('smlc-shared-ui-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'smlc-shared-ui-styles';
+    style.textContent = `
+        :root {
+            --smlc-bar-bg: var(--town-primary, var(--flora-blue, var(--primary, #0258A3)));
+            --smlc-bar-accent: var(--town-accent, var(--flora-orange, #FFC10E));
+            --smlc-bar-on-accent: var(--town-on-accent, #fff);
+            --smlc-bn-height: 68px;
+        }
+
+        /* ---------- Calendar status badges (colors used nowhere else on the site) ---------- */
+        .smlc-event-status { align-items: center; gap: 7px; margin: 0 0 6px; padding: 4px 10px; border-radius: 999px;
+            font: 700 11px/1.2 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; }
+        .smlc-status-starting { background: #00E5FF; color: #00262B; box-shadow: 0 0 10px rgba(0,229,255,.6); }
+        .smlc-status-live { background: #FF1F8E; color: #fff; box-shadow: 0 0 14px rgba(255,31,142,.75); animation: smlcLivePulse 1.6s ease-in-out infinite; }
+        .smlc-status-ending { background: #B026FF; color: #fff; box-shadow: 0 0 12px rgba(176,38,255,.7); }
+        .smlc-live-dot { width: 8px; height: 8px; border-radius: 50%; background: #fff; display: inline-block; animation: smlcLiveDot 1s ease-in-out infinite; }
+        @keyframes smlcLivePulse { 0%,100% { box-shadow: 0 0 8px rgba(255,31,142,.55); } 50% { box-shadow: 0 0 18px rgba(255,31,142,.95); } }
+        @keyframes smlcLiveDot { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+        @media (prefers-reduced-motion: reduce) { .smlc-status-live, .smlc-live-dot { animation: none; } }
+        .smlc-viewer-time { margin: 2px 0 4px; font: italic 600 11.5px/1.3 'Libre Baskerville', Georgia, serif; color: var(--card-text-secondary, #444); }
+
+        /* ---------- Readable text on cards in dark mode ---------- */
+        @media (prefers-color-scheme: dark) {
+            .divi-event-item, .divi-event-item .event-info-text, .smlc-event-desc, .clipping-footer, .clipping-tagline,
+            .sub-header-text, .community-voice-footer, .event-clipping-sub, .feed-loading-placeholder,
+            .fuel-note, .sync-timestamp-label, .lightbox-footer-bar, .biz-description, .invitation-body-text {
+                color: var(--card-text-secondary, #d4d4d8) !important;
+            }
+            .divi-event-title { color: var(--card-text-primary, #f4f4f5) !important; }
+            .divi-event-item .event-nav-link, .divi-event-item .read-more-btn, .divi-event-date { color: var(--on-card-accent, #9ccfff) !important; }
+        }
+
+        /* ---------- ScoreStream sports widgets ---------- */
+        .smlc-sports-block { margin: 0 0 16px; }
+        .smlc-sports-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px;
+            font: 700 13px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; color: var(--card-text-primary, #1a1a1a); }
+        .smlc-sports-link { font-size: 12px; color: var(--on-card-accent, #0258A3) !important; text-decoration: underline; white-space: nowrap; }
+        .smlc-sports-block .scorestream-widget-container { min-height: 60px; max-width: 100%; overflow-x: auto; }
+
+        /* ---------- Desktop: keep the top menu on one tidy row at every width ---------- */
+        @media (min-width: 1024px) {
+            .menu-bar .menu-inner { flex-wrap: nowrap; gap: 12px; }
+            .menu-bar .translate-box-header { position: static; flex: 0 0 auto; margin-left: auto; }
+            .menu-bar .navigation-drawer-panel { flex: 1 1 auto; min-width: 0; justify-content: center; flex-wrap: wrap; gap: 8px; }
+            #portal-weather-current-badge { margin-left: 8px !important; flex: 0 0 auto; }
+        }
+        @media (min-width: 1024px) and (max-width: 1439px) {
+            .menu-bar .menu-links { gap: 4px 6px; }
+            .menu-bar .menu-links a { padding: 6px 9px; font-size: 13px; letter-spacing: .6px; min-height: 44px; gap: 6px; }
+            .menu-bar .menu-thumb-icon { width: 20px; height: 20px; }
+        }
+
+        /* ---------- Bottom navigation (phones + portrait tablets) ---------- */
+        #smlc-bottom-nav, .smlc-bn-sheet, #smlc-bn-backdrop { display: none; }
+        html.smlc-bn-mode .smlc-top-nav { display: none !important; }
+        html.smlc-bn-mode body { padding-bottom: calc(var(--smlc-bn-height) + env(safe-area-inset-bottom, 0px)); }
+        html.smlc-bn-mode .weather-alert-bar { top: 0; }
+        html.smlc-bn-mode #back-to-top-anchor { bottom: calc(var(--smlc-bn-height) + 14px + env(safe-area-inset-bottom, 0px)); }
+        html.smlc-bn-mode #smlc-bottom-nav {
+            display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 9000;
+            height: calc(var(--smlc-bn-height) + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px);
+            background: var(--smlc-bar-bg); border-top: 3px solid var(--smlc-bar-accent); box-shadow: 0 -6px 18px rgba(0,0,0,.55);
+        }
+        .smlc-bn-btn { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; line-height: 1.15;
+            min-height: 48px; padding: 6px 4px; background: none; border: 0; color: #fff; cursor: pointer; text-decoration: none;
+            font: 700 12px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; -webkit-tap-highlight-color: transparent; }
+        .smlc-bn-btn > svg { width: 24px; height: 24px; margin-bottom: 2px; }
+        .smlc-bn-btn svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .smlc-bn-btn .smlc-bn-sub { font: 500 10px 'Oswald', sans-serif; letter-spacing: .5px; opacity: .85; text-transform: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .smlc-bn-btn.is-active, .smlc-bn-btn[aria-expanded="true"] { color: var(--smlc-bar-accent); }
+        .smlc-bn-btn:focus-visible { outline: 3px solid var(--smlc-bar-accent); outline-offset: -3px; }
+        .smlc-bn-btn .smlc-bn-caret { transition: transform .2s; }
+        .smlc-bn-btn[aria-expanded="true"] .smlc-bn-caret { transform: rotate(180deg); }
+
+        html.smlc-bn-mode #smlc-bn-backdrop.is-open { display: block; position: fixed; inset: 0; z-index: 8990; background: rgba(0,0,0,.55); }
+        html.smlc-bn-mode .smlc-bn-sheet.is-open {
+            display: block; position: fixed; left: 8px; right: 8px; z-index: 8995;
+            bottom: calc(var(--smlc-bn-height) + 8px + env(safe-area-inset-bottom, 0px));
+            max-height: 70vh; overflow-y: auto; padding: 10px; border-radius: 16px;
+            background: #141416; border: 2px solid var(--smlc-bar-accent); box-shadow: 0 -10px 32px rgba(0,0,0,.8);
+            animation: smlcSheetUp .22s ease-out;
+        }
+        @keyframes smlcSheetUp { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
+        @media (min-width: 600px) { html.smlc-bn-mode .smlc-bn-sheet.is-open { left: auto; right: auto; width: 420px; }
+            html.smlc-bn-mode #smlc-bn-sheet-towns.is-open { left: calc(50% - 210px); } html.smlc-bn-mode #smlc-bn-sheet-more.is-open { right: 8px; } }
+        .smlc-bn-sheet-title { margin: 2px 6px 8px; font: 700 12px 'Oswald', sans-serif; letter-spacing: 1.5px; text-transform: uppercase; color: #bdbdc4; }
+        .smlc-bn-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+        .smlc-bn-list a, .smlc-bn-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 10px 14px; box-sizing: border-box;
+            background: #1f1f23; border: 1px solid #333; border-radius: 10px; color: #fff; text-decoration: none; cursor: pointer;
+            font: 700 16px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; text-align: left; }
+        .smlc-bn-list a:hover, .smlc-bn-row:hover { border-color: var(--smlc-bar-accent); }
+        .smlc-bn-list a.is-active { background: var(--smlc-bar-bg); border-color: var(--smlc-bar-accent); }
+        .smlc-bn-list a.is-active::after { content: 'You are here'; margin-left: auto; font: 500 11px 'Oswald', sans-serif; letter-spacing: .5px; text-transform: none; color: var(--smlc-bar-accent); }
+        .smlc-bn-list img { width: 28px; height: 28px; object-fit: contain; border-radius: 4px; background: rgba(255,255,255,.1); }
+        .smlc-bn-row .smlc-bn-row-detail { margin-left: auto; font: 500 13px 'Oswald', sans-serif; text-transform: none; color: #cfcfd6; }
+        .smlc-bn-translate-slot { margin-top: 8px; padding: 10px 14px; background: #1f1f23; border: 1px solid #333; border-radius: 10px; color: #fff; }
+        .smlc-bn-translate-slot .smlc-bn-sheet-title { margin: 0 0 6px; }
+        .smlc-bn-translate-slot .translate-box-header { position: static !important; display: inline-flex; }
+        .smlc-bn-empty { padding: 10px 6px; color: #bdbdc4; font: italic 14px Georgia, serif; }
+    `;
+    (document.head || document.documentElement).appendChild(style);
+})();
+
+// ============================================================================
+// APP-STYLE BOTTOM NAVIGATION
+//   Phones (any orientation) + tablets in portrait:  [ Home ] [ Towns ▴ ] [ More ▴ ]
+//   Tablets in landscape + desktop:                   normal top menu
+// Menu items come from /master_county_data/global/menu (or the page's built-in links).
+//   - "Home"                     -> Home button
+//   - one of the 5 town names    -> Towns sheet
+//   - anything else (e.g. Amazon)-> More sheet (with Weather + Translate)
+// ============================================================================
+const SMLC_BOTTOM_NAV_QUERY = '(max-width: 767px), (pointer: coarse) and (orientation: portrait) and (max-width: 1366px), (pointer: coarse) and (max-height: 500px)';
+const SMLC_TOWN_NAMES = ['Clay City', 'Flora', 'Louisville', 'Sailor Springs', 'Xenia'];
+window.smlcMenuItems = null;      // filled by the Firebase menu engine
+window.smlcCurrentWeather = null; // filled by the weather engine
+
+const SMLC_ICONS = {
+    home: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>',
+    towns: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+    more: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>',
+    caret: '<svg class="smlc-bn-caret" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M6 15l6-6 6 6"/></svg>',
+    weather: '<svg viewBox="0 0 24 24" aria-hidden="true" style="width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2"><path d="M7 18h10a4 4 0 0 0 0-8 6 6 0 0 0-11.5 1.5A3.5 3.5 0 0 0 7 18z"/></svg>'
+};
+
+function escapeHtmlText(str) {
+    return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function collectNavItems() {
+    if (Array.isArray(window.smlcMenuItems) && window.smlcMenuItems.length) return window.smlcMenuItems;
+    const links = Array.from(document.querySelectorAll('#dynamic-menu-links a'));
+    return links.map(a => ({ name: (a.textContent || '').trim(), href: a.getAttribute('href') || '#', target: a.getAttribute('target') || '_self', img: '' }));
+}
+
+function classifyNavItems(items) {
+    const townKeys = SMLC_TOWN_NAMES.map(normalizeTownName);
+    const out = { home: null, towns: [], more: [] };
+    items.forEach(it => {
+        if (!it || !it.name) return;
+        const key = normalizeTownName(it.name);
+        if (key === 'home') { if (!out.home) out.home = it; }
+        else if (townKeys.includes(key)) out.towns.push(it);
+        else out.more.push(it);
+    });
+    // keep towns in the standard order
+    out.towns.sort((a, b) => townKeys.indexOf(normalizeTownName(a.name)) - townKeys.indexOf(normalizeTownName(b.name)));
+    return out;
+}
+
+function closeBottomNavSheets() {
+    document.querySelectorAll('.smlc-bn-sheet.is-open').forEach(el => el.classList.remove('is-open'));
+    document.querySelectorAll('#smlc-bottom-nav [aria-expanded]').forEach(b => b.setAttribute('aria-expanded', 'false'));
+    const bd = document.getElementById('smlc-bn-backdrop');
+    if (bd) bd.classList.remove('is-open');
+}
+
+function toggleBottomNavSheet(which) {
+    const sheet = document.getElementById(`smlc-bn-sheet-${which}`);
+    const btn = document.querySelector(`#smlc-bottom-nav [data-sheet="${which}"]`);
+    if (!sheet || !btn) return;
+    const opening = !sheet.classList.contains('is-open');
+    closeBottomNavSheets();
+    if (opening) {
+        sheet.classList.add('is-open');
+        btn.setAttribute('aria-expanded', 'true');
+        document.getElementById('smlc-bn-backdrop')?.classList.add('is-open');
+        const first = sheet.querySelector('a, button');
+        if (first) first.focus({ preventScroll: true });
+    }
+}
+window.closeBottomNavSheets = closeBottomNavSheets;
+
+function ensureBottomNavShell() {
+    if (document.getElementById('smlc-bottom-nav')) return;
+    const nav = document.createElement('nav');
+    nav.id = 'smlc-bottom-nav';
+    nav.setAttribute('aria-label', 'Site navigation');
+    document.body.appendChild(nav);
+
+    const backdrop = document.createElement('div');
+    backdrop.id = 'smlc-bn-backdrop';
+    backdrop.addEventListener('click', closeBottomNavSheets);
+    document.body.appendChild(backdrop);
+
+    ['towns', 'more'].forEach(which => {
+        const sheet = document.createElement('div');
+        sheet.id = `smlc-bn-sheet-${which}`;
+        sheet.className = 'smlc-bn-sheet';
+        sheet.setAttribute('role', 'dialog');
+        sheet.setAttribute('aria-label', which === 'towns' ? 'Choose a town' : 'More options');
+        document.body.appendChild(sheet);
+    });
+
+    nav.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-sheet]');
+        if (btn) { e.preventDefault(); toggleBottomNavSheet(btn.dataset.sheet); }
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeBottomNavSheets(); });
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.smlc-bn-sheet a')) closeBottomNavSheets();
+    });
+}
+
+function renderBottomNav() {
+    if (!document.body) return;
+    ensureBottomNavShell();
+    const groups = classifyNavItems(collectNavItems());
+    const activeKey = ACTIVE_TOWN.isHome ? 'home' : normalizeTownName(ACTIVE_TOWN.primaryName);
+    const homeHref = groups.home ? groups.home.href : 'index.html';
+    const linkHtml = (it) => {
+        const isActive = normalizeTownName(it.name) === activeKey;
+        const img = it.img ? `<img src="${escapeHtmlText(it.img)}" alt="" class="menu-thumb-icon">` : '';
+        return `<li><a href="${escapeHtmlText(it.href)}" target="${escapeHtmlText(it.target || '_self')}" ${it.target === '_blank' ? 'rel="noopener"' : ''} class="${isActive ? 'is-active' : ''}" ${isActive ? 'aria-current="page"' : ''} data-ga-label="BottomNav_${escapeHtmlText(String(it.name).replace(/\s+/g, ''))}">${img}<span>${escapeHtmlText(it.name)}</span></a></li>`;
+    };
+
+    const currentTownLabel = ACTIVE_TOWN.isHome ? 'Pick a town' : ACTIVE_TOWN.primaryName;
+    document.getElementById('smlc-bottom-nav').innerHTML = `
+        <a class="smlc-bn-btn ${ACTIVE_TOWN.isHome ? 'is-active' : ''}" href="${escapeHtmlText(homeHref)}" target="_self" data-ga-label="BottomNav_Home">${SMLC_ICONS.home}<span>Home</span><span class="smlc-bn-sub">Clay County</span></a>
+        <button type="button" class="smlc-bn-btn" data-sheet="towns" aria-expanded="false" aria-controls="smlc-bn-sheet-towns">${SMLC_ICONS.towns}<span>Towns ${SMLC_ICONS.caret}</span><span class="smlc-bn-sub">${escapeHtmlText(currentTownLabel)}</span></button>
+        <button type="button" class="smlc-bn-btn" data-sheet="more" aria-expanded="false" aria-controls="smlc-bn-sheet-more">${SMLC_ICONS.more}<span>More ${SMLC_ICONS.caret}</span><span class="smlc-bn-sub">Weather &amp; more</span></button>
+    `;
+
+    document.getElementById('smlc-bn-sheet-towns').innerHTML = `
+        <div class="smlc-bn-sheet-title">Choose a town</div>
+        <ul class="smlc-bn-list">${groups.towns.map(linkHtml).join('') || '<li class="smlc-bn-empty">Loading towns...</li>'}</ul>`;
+
+    const moreSheet = document.getElementById('smlc-bn-sheet-more');
+    const keepTranslate = moreSheet.querySelector('#google_translate_element');
+    moreSheet.innerHTML = `
+        <div class="smlc-bn-sheet-title">More</div>
+        <ul class="smlc-bn-list">
+            <li><button type="button" class="smlc-bn-row" id="smlc-bn-weather-row">${SMLC_ICONS.weather}<span>Weather</span><span class="smlc-bn-row-detail" id="smlc-bn-weather-detail">5-Day Forecast</span></button></li>
+            ${groups.more.map(linkHtml).join('')}
+        </ul>
+        <div class="smlc-bn-translate-slot"><div class="smlc-bn-sheet-title">Language</div><div id="smlc-bn-translate-target"></div></div>`;
+    if (keepTranslate) moreSheet.querySelector('#smlc-bn-translate-target').appendChild(keepTranslate);
+    document.getElementById('smlc-bn-weather-row').addEventListener('click', () => {
+        closeBottomNavSheets();
+        if (typeof window.openFiveDayForecastModal === 'function') window.openFiveDayForecastModal();
+    });
+    updateBottomNavWeather();
+    applyBottomNavMode();
+}
+
+function updateBottomNavWeather() {
+    const el = document.getElementById('smlc-bn-weather-detail');
+    const cw = window.smlcCurrentWeather;
+    if (el && cw) el.textContent = `${cw.temp} • ${cw.condition}`;
+}
+
+// Move the Google Translate box into the More sheet on phones, and back on desktop.
+let smlcTranslateHome = null;
+function applyBottomNavMode() {
+    const mq = window.matchMedia(SMLC_BOTTOM_NAV_QUERY);
+    const on = mq.matches;
+    document.documentElement.classList.toggle('smlc-bn-mode', on);
+    const topHeader = document.getElementById('dynamic-menu-links')?.closest('header');
+    if (topHeader) topHeader.classList.add('smlc-top-nav');
+    if (!on) closeBottomNavSheets();
+
+    const tr = document.getElementById('google_translate_element');
+    const slot = document.getElementById('smlc-bn-translate-target');
+    if (!tr) return;
+    if (!smlcTranslateHome && !tr.closest('.smlc-bn-sheet')) smlcTranslateHome = { parent: tr.parentElement, next: tr.nextSibling };
+    if (on && slot && tr.parentElement !== slot) slot.appendChild(tr);
+    if (!on && smlcTranslateHome && tr.parentElement !== smlcTranslateHome.parent) smlcTranslateHome.parent.insertBefore(tr, smlcTranslateHome.next);
+}
+
+(function watchBottomNavMode() {
+    try {
+        const mq = window.matchMedia(SMLC_BOTTOM_NAV_QUERY);
+        const handler = () => applyBottomNavMode();
+        if (mq.addEventListener) mq.addEventListener('change', handler); else mq.addListener(handler);
+        window.addEventListener('orientationchange', handler);
+    } catch (e) { /* older browsers: top menu stays */ }
+})();
+
+// ============================================================================
+// FOOTER CLOCK: Central time, plus the viewer's own time when it's different
+// ============================================================================
+let smlcFooterClockTimer = null;
+function startCentralFooterClock() {
+    const tick = () => {
+        const el = document.getElementById('footer-ny-clock') || document.getElementById('footer-central-clock');
+        if (!el) return;
+        const now = new Date();
+        const fmt = (tz) => new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short' }).format(now);
+        let text = fmt(SMLC_TZ);
+        if (viewerDiffersFromCentral(now)) text += `  •  Your time: ${fmt(getViewerTimeZone())}`;
+        el.textContent = text;
+        const label = el.previousElementSibling;
+        if (label && /New York|Central/i.test(label.textContent)) label.textContent = 'Central:';
+    };
+    tick();
+    if (smlcFooterClockTimer) clearInterval(smlcFooterClockTimer);
+    smlcFooterClockTimer = setInterval(tick, 15000);
 }
 
 // === DOM EVENT LISTENERS ===
@@ -1969,4 +2590,5 @@ window.addEventListener('hashchange', () => {
 
 window.addEventListener('DOMContentLoaded', () => {
     handleSPAHashNavigation();
+    startCentralFooterClock();
 });
