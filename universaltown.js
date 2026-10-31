@@ -120,7 +120,7 @@ const TOWN_ALIAS_MAP = {
         seatBadge: "Clay County Hub", 
         estMeta: "Est. 1868 | Zip Code 62824", 
         riverMarquee: "HOME OF THE CLAY CITY BULLDOGS & CUBIES", 
-        themeAccent: "#4A154B" 
+        themeAccent: "#0C2890" 
     },
     "FLORA": { 
         primaryName: "Flora", 
@@ -190,7 +190,7 @@ const TOWN_ALIAS_MAP = {
         seatBadge: "Clay County Village", 
         estMeta: "Est. 1879 | Zip Code 62879", 
         riverMarquee: "HISTORIC MINERAL SPRINGS HAVEN", 
-        themeAccent: "#00695C" 
+        themeAccent: "#4A154B" 
     }
 };
 
@@ -1835,7 +1835,7 @@ function hydrateTownHeroUI() {
 }
 
 function updateNavigationActiveState() {
-    const currentHash = (window.location.hash || "#/flora").toLowerCase();
+    const currentHash = (window.location.hash || ("#/" + (ACTIVE_TOWN.isHome ? "home" : ACTIVE_TOWN.primaryName.toLowerCase().replace(/\s+/g, "-")))).toLowerCase();
     document.querySelectorAll('#dynamic-menu-links a, .menu-links a').forEach(link => {
         const href = (link.getAttribute("href") || "").toLowerCase();
         if (currentHash && href === currentHash) {

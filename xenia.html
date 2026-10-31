@@ -1,425 +1,332 @@
 <!DOCTYPE html>
-<!-- Line 2: Town identifier attribute set to XENIA -->
-<!-- Timestamp: 2026-10-01 15:35 EDT (New York) | Version: v1.1.7 -->
+<!-- Town: XENIA | Version: v1.9.0 | Build: 2026-10-25 14:35 EDT (New York) -->
 <html lang="en-US" data-town="XENIA">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Xenia, Illinois news, events, weather and community information from Support My Local Community.">
+    <meta property="og:image" content="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png">
     <title>Xenia, IL - SMLC Digital Town Square Portal</title>
-
+    <link rel="icon" type="image/png" href="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png">
+    <link rel="apple-touch-icon" href="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png">
     <link rel="preconnect" href="//fonts.googleapis.com">
     <link rel="preconnect" href="//fonts.gstatic.com" crossorigin>
-    <link href="//fonts.googleapis.com/css2?family=Abril+Fatface&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="xenia.css" />
-
+    <link href="//fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="xenia.css">
     <script>
-        window.addEventListener('error', function(e) {
-            if (e.message && (e.message.includes('Script error') || e.message.includes('ResizeObserver'))) {
-                e.preventDefault();
-                return true;
-            }
+        window.addEventListener('error', function (e) {
+            if (e.message && (e.message.includes('Script error') || e.message.includes('ResizeObserver'))) { e.preventDefault(); return true; }
         }, true);
     </script>
-
-    <!-- Firebase SDK (Compat v9.22.1) -->
     <script crossorigin="anonymous" src="//www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script crossorigin="anonymous" src="//www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-
-    <!-- Global Site Tag (gtag.js) - Google Analytics & GTM -->
-    <script async src="//www.googletagmanager.com/gtag/js?id=G-CTYHDF4MSD" onerror="console.warn('GTM Script blocked or unavailable')"></script>
+    <script crossorigin="anonymous" src="//www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-
-        gtag('config', 'G-CTYHDF4MSD', {
-            'send_page_view': true,
-            'cookie_flags': 'SameSite=None;Secure'
-        });
-        gtag('config', 'G-L376P3NPY4');
-        gtag('config', 'G-H6Q756MVE8');
-    </script>
-
-    <!-- Google Translate Initialization Script -->
-    <script type="text/javascript">
         function googleTranslateElementInit() {
-            new google.translate.TranslateElement({
-                pageLanguage: 'en',
-                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
-            }, 'google_translate_element');
+            new google.translate.TranslateElement({ pageLanguage: 'en', layout: google.translate.TranslateElement.InlineLayout.SIMPLE }, 'google_translate_element');
         }
     </script>
-    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script defer src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </head>
 <body data-town="XENIA">
+<a class="skip-link" href="#main-content">Skip to content</a>
 
-    <!-- FLOATING HUD INDICATOR -->
-    <div class="portal-floating-hud-track">
-        <div id="hud-county-age-target" class="hud-floating-badge county-anniversary-badge" style="display: none;"></div>
-        <div id="hud-holiday-title-target" class="hud-floating-badge holiday-celebration-badge" style="display: none;"></div>
+<div class="portal-floating-hud-track">
+    <div id="hud-county-age-target" class="hud-floating-badge" style="display:none;"></div>
+    <div id="hud-holiday-title-target" class="hud-floating-badge" style="display:none;"></div>
+</div>
+
+<div id="global-header-container" class="site-brand-header">
+    <a href="#/home" class="header-billboard-link" data-ga-label="HeaderBillboardLink" target="_self">
+        <img src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="" class="header-billboard-img">
+    </a>
+</div>
+
+<header class="menu-bar">
+    <div class="menu-inner">
+        <button id="mobile-menu-toggle-btn" class="mobile-nav-toggle-btn" onclick="window.toggleMobileMenu();" aria-label="Toggle navigation menu" aria-expanded="false">
+            <span class="hamburger-icon-group"><span class="hamburger-bar"></span><span class="hamburger-bar"></span><span class="hamburger-bar"></span></span>
+            <span class="mobile-menu-btn-label">Menu</span>
+        </button>
+        <nav id="site-navigation-drawer" class="navigation-drawer-panel" aria-label="Towns">
+            <ul id="dynamic-menu-links" class="menu-links">
+                <li><a href="#/home" target="_self"><span>Home</span></a></li>
+                <li><a href="#/clay-city" target="_self"><span>Clay City</span></a></li>
+                <li><a href="#/flora" target="_self"><span>Flora</span></a></li>
+                <li><a href="#/louisville" target="_self"><span>Louisville</span></a></li>
+                <li><a href="#/sailor-springs" target="_self"><span>Sailor Springs</span></a></li>
+                <li><a href="#/xenia" class="active" target="_self"><span>Xenia</span></a></li>
+            </ul>
+        </nav>
+        <div id="google_translate_element" class="translate-box-header"></div>
     </div>
+</header>
 
-    <!-- SITE BRAND HEADER -->
-    <div id="global-header-container" class="site-brand-header">
-        <a href="#/home" class="header-billboard-link" data-ga-label="HeaderBillboardLink" target="_self">
-            <img src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="" class="header-billboard-img" />
-        </a>
-    </div>
+<div id="county-weather-alert-bar" class="weather-alert-bar" role="alert" style="display:none;">
+    <strong id="weather-alert-headline"></strong>
+    <span id="weather-alert-instruction" style="display:none;"></span>
+</div>
 
-    <!-- PERSISTENT STICKY TOP NAVIGATION BAR -->
-    <header class="menu-bar">
-        <div class="menu-inner">
-            <nav>
-                <ul id="dynamic-menu-links" class="menu-links">
-                    <li><a href="#/home" data-ga-label="NavHomeButton" target="_self"><span>Home</span></a></li>
-                    <li><a href="#/clay-city" data-ga-label="NavClayCityButton" target="_self"><span>Clay City</span></a></li>
-                    <li><a href="#/flora" data-ga-label="NavFloraButton" target="_self"><span>Flora</span></a></li>
-                    <li><a href="#/louisville" data-ga-label="NavLouisvilleButton" target="_self"><span>Louisville</span></a></li>
-                    <li><a href="#/sailor-springs" data-ga-label="NavSailorSpringsButton" target="_self"><span>Sailor Springs</span></a></li>
-                    <li><a href="#/xenia" class="active" data-ga-label="NavXeniaButton" target="_self"><span>Xenia</span></a></li>
-                </ul>
-            </nav>
-            <!-- Google Translate Dropdown Selector -->
-            <div id="google_translate_element" class="translate-box-header"></div>
+<main id="main-content">
+<div class="main-container hero-wrap">
+    <section class="town-hero-banner">
+        <div class="banner-content">
+            <span class="seat-badge" id="hero-seat-badge">Clay County Gateway</span>
+            <h1 class="town-title outlined-headline" id="hero-town-title">Xenia, Illinois</h1>
+            <p class="town-established-meta" id="hero-established-meta">Est. 1834 | Zip Code 62899</p>
+            <div class="river-marquee" id="hero-river-marquee">HISTORIC PRIDE &amp; RURAL HERITAGE</div>
         </div>
-    </header>
+    </section>
+</div>
 
-    <!-- HERO BANNER SECTION -->
-    <div class="main-container" style="padding-bottom: 0;">
-        <section class="town-hero-banner static-hero-colors">
-            <div class="banner-content">
-                <span class="seat-badge" id="hero-seat-badge">Clay County Gateway</span>
-                <h1 class="town-title outlined-headline" id="hero-town-title">Xenia, Illinois</h1>
-                <p class="town-established-meta" id="hero-established-meta">Est. 1834 | Zip Code 62899</p>
-                <div class="river-marquee" id="hero-river-marquee">HISTORIC PRIDE &amp; RURAL HERITAGE</div>
-            </div>
-        </section>
+<div class="portal-pill-tabs-wrapper">
+    <nav class="portal-pill-tabs-nav" aria-label="Portal categories">
+        <button type="button" class="portal-pill-btn active" onclick="window.switchPortalPill(this,'pill-panel-news-events');">Local Events &amp; News</button>
+        <button type="button" class="portal-pill-btn" onclick="window.switchPortalPill(this,'pill-panel-discover');">Discover Xenia</button>
+        <button type="button" id="portal-weather-pill" class="weather-pill" onclick="window.openFiveDayForecastModal && window.openFiveDayForecastModal();" aria-label="Current weather. Open 5-day forecast">
+            <span id="weather-pill-icon" class="weather-pill-icon"></span>
+            <span id="weather-pill-temp" class="weather-pill-temp">Weather</span>
+            <span id="weather-pill-detail" class="weather-pill-detail">5-Day Forecast</span>
+        </button>
+    </nav>
+</div>
+
+<div class="widescreen-strip-container hero-adjacent-strip">
+    <div class="partners-horizontal-strip" id="partners-grid-bottom">
+        <div class="feed-loading-placeholder">Loading regional partners...</div>
     </div>
+</div>
 
-    <!-- UPPER REGIONAL PARTNERS STRIP (Positioned under Hero Banner) -->
-    <div class="widescreen-strip-container section8-town-images-strip hero-adjacent-strip">
-        <section class="showcase-widget full-bleed-widget">
-            <div class="partners-horizontal-strip" id="partners-grid-bottom">
-                <div class="feed-loading-placeholder" style="color: #fff; text-align: center; width: 100%;">Syncing regional sponsor arrays...</div>
-            </div>
-        </section>
-    </div>
-
-    <!-- THREE-COLUMN PORTAL CHASSIS: Events, Newsroom & Directory, Social Voice -->
+<!-- ========== PILL 1: LOCAL EVENTS & NEWS ========== -->
+<div id="pill-panel-news-events" class="portal-tab-panel active">
     <section class="smlc-three-column-portal-wrapper" id="adaptive-time-portal-chassis">
         <div class="portal-grid-layout-fixed">
-            <!-- Left Column: Community Calendar & Events -->
-            <div class="portal-column-cell-box left-cell-stack">
+            <div class="portal-column-cell-box">
                 <div class="clay-county-news-box event-clipping">
                     <div class="clipping-tag">Community Bulletin</div>
                     <div class="event-clipping-header">
-                        <h3>What's Happening?</h3>
-                        <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #222; font-weight: bold;">Clay County Community Calendar</span>
+                        <h2>What's Happening?</h2>
+                        <span class="event-clipping-sub">Clay County Community Calendar</span>
                     </div>
-                    <p class="event-clipping-text">
-                        "Got a local fundraiser, school event, or church dinner coming up? Share your news with the community for free!"
-                    </p>
+                    <p class="event-clipping-text">"Got a local fundraiser, school event, or church dinner coming up? Share your news with the community for free!"</p>
                     <a href="https://www.supportmylocalcommunity.com/submit-event" target="_blank" rel="noopener" class="event-clipping-btn" data-ga-label="submit_event_btn">Submit Your Event</a>
                     <div class="clipping-footer">Clay City • Flora • Louisville • Sailor Springs • Xenia</div>
                 </div>
-
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">Upcoming Events in Xenia</h2>
                     <div class="news-clipping-wrapper">
-                        <div class="clipping-masthead">
-                            <span class="black-tag">Community Bulletin</span>
-                            <p class="clipping-tagline" id="month-tagline">Upcoming Events</p> 
-                        </div>
-                        <div id="bulletin-scroller-target">
-                            <div style="text-align:center; padding: 20px; font-style:italic;">Loading community calendar...</div>
-                        </div>
-                        <div class="clipping-footer">
-                            View Full Community Calendar &amp; Details<br>
-                            Support My Local Community
-                        </div>
+                        <div class="clipping-masthead"><span class="black-tag">Community Bulletin</span><p class="clipping-tagline" id="month-tagline">Upcoming Events</p></div>
+                        <div id="bulletin-scroller-target"><div class="feed-loading-placeholder">Loading community calendar...</div></div>
+                        <div class="clipping-footer">Full community calendar &amp; details<br>Support My Local Community</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Center Column: Local News & Business Directory Banner -->
-            <div class="portal-column-cell-box center-cell-stack">
+            <div class="portal-column-cell-box">
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">Xenia News</h2>
                     <div class="newspaper-feed-chassis">
-                        <div class="clipping-masthead">
-                            <span class="black-tag">SMLC Newsroom</span>
-                            <p class="clipping-tagline">Xenia Local Dispatches</p>
-                        </div>
-                        <div id="news-matrix-target" class="news-dynamic-masonry">
-                            <div class="feed-loading-placeholder">Reconstructing localized newsroom dispatches...</div>
-                        </div>
+                        <div class="clipping-masthead"><span class="black-tag">SMLC Newsroom</span><p class="clipping-tagline">Xenia Local Dispatches</p></div>
+                        <div id="town-sports-scoreboard-target" class="sports-scoreboard" style="display:none;"></div>
+                        <div id="news-matrix-target" class="news-cards-feed-chassis"><div class="feed-loading-placeholder">Loading local dispatches...</div></div>
                     </div>
                 </div>
-
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">Business Directory</h2>
-                    <div class="town-directory-container-s7">
-                        <img src="//ourflora.com/wp-content/uploads/2026/02/smlc.png?v=20260730_1630" 
-                             alt="" 
-                             class="town-directory-banner-s7 lightbox-triggerable-element" />
-                        <a href="https://clay-county-business-directory.supportmylocalcommunity.com/" target="_blank" rel="noopener" class="town-directory-interactive-btn-s7" style="width: 100%;" data-ga-label="section7_directory_btn">
-                            Clay County Business Directory
-                        </a>
+                    <div class="town-directory-container">
+                        <img src="//ourflora.com/wp-content/uploads/2026/02/smlc.png?v=20260730_1630" alt="" class="town-directory-banner lightbox-triggerable-element" data-title="Clay County Business Directory" data-desc="Find local businesses across Clay County." data-link="https://clay-county-business-directory.supportmylocalcommunity.com/" data-alt="Clay County Business Directory banner" loading="lazy">
+                        <a href="https://clay-county-business-directory.supportmylocalcommunity.com/" target="_blank" rel="noopener" class="town-directory-interactive-btn" data-ga-label="section7_directory_btn">Clay County Business Directory</a>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Column: SMLC Facebook Voice & Town Directory Links -->
-            <div class="portal-column-cell-box right-cell-stack">
+            <div class="portal-column-cell-box">
                 <div class="card-module-wrapper">
                     <h2 class="et_pb_module_heading">SMLC Facebook</h2>
                     <div class="clay-county-news-box group-invitation-master">
                         <div class="notice-tag-red">Local Conversation</div>
-                        <div class="polaroid-wrap">
-                            <img src="//lh3.googleusercontent.com/d/1yCujyb4EKKQABcywqz4PPBCUQ3ZxTKtL" alt="" class="lightbox-triggerable-element">
-                        </div>
-                        <div class="invitation-header-main">
-                            <h3>Join the Community</h3>
-                            <span class="sub-header-text">Official SMLC Facebook Page</span>
-                        </div>
-                        <p class="invitation-body-text">
-                            "Stay connected with your neighbors. Discuss local news, share community updates, and join neighbors in the Clay County conversation."
-                        </p>
-                        <a href="https://www.facebook.com/SupportMyLocalCommunity/" target="_blank" rel="noopener" class="fb-action-btn" data-ga-label="facebook_group_btn">
-                            Enter the Conversation
-                        </a>
-                        <span class="community-voice-footer">
-                            Community Voice • Clay County, IL
-                        </span>
+                        <div class="polaroid-wrap"><img src="//lh3.googleusercontent.com/d/1yCujyb4EKKQABcywqz4PPBCUQ3ZxTKtL" alt="" class="lightbox-triggerable-element" data-title="Support My Local Community on Facebook" data-desc="Official SMLC Facebook page for Xenia and Clay County." data-link="https://www.facebook.com/SupportMyLocalCommunity" data-alt="Support My Local Community logo" loading="lazy"></div>
+                        <div class="invitation-header-main"><h3>Join the Community</h3><span class="sub-header-text">Official SMLC Facebook Page</span></div>
+                        <p class="invitation-body-text">"Stay connected with your neighbors. Discuss local news, share community updates, and join the Clay County conversation."</p>
+                        <a href="https://www.facebook.com/SupportMyLocalCommunity" target="_blank" rel="noopener" class="fb-action-btn" data-ga-label="facebook_group_btn">Enter the Conversation</a>
+                        <span class="community-voice-footer">Community Voice • Clay County, IL</span>
                     </div>
                 </div>
-
                 <div class="card-module-wrapper">
-                    <h2 class="et_pb_module_heading">town local links</h2>
+                    <h2 class="et_pb_module_heading">Town Local Links</h2>
                     <div class="clay-county-news-box group-invitation-master">
                         <div class="notice-tag-red">Town Directory</div>
-                        <div class="invitation-header-main" style="margin-top:15px;">
-                            <h3>Local Links &amp; Resources</h3>
-                            <span class="sub-header-text">Official Xenia &amp; Clay County Portals</span>
-                        </div>
-                        <div class="scrollable-directory-stream">
-                            <div id="local-links-target-container" class="local-links-stream">
-                                <div style="font-style:italic; font-size:12px; color:#666;">Loading directory links...</div>
-                            </div>
-                        </div>
-                        <span class="community-voice-footer">
-                            Verified Resources • Clay County, IL
-                        </span>
+                        <div class="invitation-header-main"><h3>Local Links &amp; Resources</h3><span class="sub-header-text">Official Xenia &amp; Clay County Portals</span></div>
+                        <div class="scrollable-directory-stream"><div id="town-links-target-container" class="local-links-stream"><div class="feed-loading-placeholder">Loading directory links...</div></div></div>
+                        <span class="community-voice-footer">Verified Resources • Clay County, IL</span>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- SECTION 4: FEATURED ARTICLE & SIDEBAR (Spotlight + Fuel Index) -->
-    <div class="section4-two-box-wrapper">
-        <div class="section4-left-article-box">
-            <header class="section4-centered-article-header">
-                <div class="category-tag" id="sec4-category-tag">Heritage &amp; Farming</div>
-                <h1 class="article-stacked-title" id="sec4-article-title">Xenia's Early Settlement &amp; Roots</h1>
-                <p class="article-stacked-deck" id="sec4-article-deck">Preserving generations of agriculture and community togetherness in Clay County.</p>
-            </header>
-
-            <article class="article-body-content" id="sec4-article-body">
-                <p>
-                    Xenia, Illinois, established in the early 19th century, holds a rich place in the settlement story of Southern Illinois.
-                </p>
-
-                <figure class="article-media-frame">
-                    <img id="sec-4-1-article-img" 
-                         src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" 
-                         alt="" 
-                         class="lightbox-triggerable-element" />
-                    <figcaption id="sec4-img-caption">Main Street Xenia — Xenia, IL</figcaption>
-                </figure>
-
-                <p>
-                    From annual local gatherings to family farming operations, Xenia represents the enduring heartland value of helping your neighbors.
-                </p>
-            </article>
-
-            <div class="article-footer">
-                <span>Xenia Dispatches | Jan 2026</span>
-                <span>Issue No. 1 | Page 1</span>
-            </div>
-        </div>
-
-        <aside class="section4-right-widgets-stack">
+    <!-- Side-by-Side Spotlight & Gas Monitor -->
+    <div class="main-container spotlight-gas-duo-wrapper">
+        <div class="spotlight-gas-duo-grid">
             <div class="clay-county-news-box spotlight-clipping">
-                <div class="sidebar-widget-title">BUSINESS SPOTLIGHT</div>
-                <div class="spotlight-image-wrap">
-                    <img id="spotlight-asset-img" src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="">
-                </div>
+                <div class="sidebar-widget-title">Business Spotlight</div>
+                <div class="spotlight-image-wrap"><img id="spotlight-asset-img" src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="" loading="lazy"></div>
                 <span class="biz-title" id="spotlight-asset-name">Local Merchant</span>
                 <span class="biz-location" id="spotlight-asset-loc">Xenia, IL</span>
                 <p class="biz-description" id="spotlight-asset-desc">Supporting local commerce across Clay County.</p>
                 <a href="#" id="spotlight-asset-link" target="_blank" rel="noopener" class="spotlight-btn" data-ga-label="spotlight_btn">Visit Business &rarr;</a>
             </div>
-
             <div id="fuel-monitor-target-box" class="fuel-monitor-billboard-card">
-                <div class="sidebar-widget-title">XENIA FUEL INDEX MONITOR</div>
-                <div class="fuel-station-header">
-                    <div class="station-logo-frame">
-                        <img src="//raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/Casey's.png" alt="">
-                    </div>
-                    <div class="station-meta-title">LOCAL FUEL</div>
-                </div>
-                <div class="fuel-pricing-grid">
-                    <div class="price-box">
-                        <span class="price-type-label">REGULAR</span>
-                        <span class="price-value-regular">$3.29</span>
-                    </div>
-                    <div class="price-box">
-                        <span class="price-type-label">DIESEL</span>
-                        <span class="price-value-diesel">$3.89</span>
-                    </div>
-                </div>
-                <div class="sync-timestamp-label">Syncing Real-Time Prices...</div>
+                <div class="sidebar-widget-title">Xenia Fuel Index Monitor</div>
+                <div class="fuel-note">Loading fuel prices...</div>
             </div>
-        </aside>
+        </div>
     </div>
 
-    <!-- SECTION 5: HISTORICAL TIMELINE -->
-    <div class="main-container">
-        <section class="historical-timeline-chassis-wrapper">
-            <div class="timeline-inner-bounds">
-                <div class="timeline-row-1-header">
-                    <span class="main-timeline-center-title-node">Historical Timeline</span>
-                    <p class="main-timeline-sub-caption-node">Journey through key historical milestones that have shaped Xenia, IL.</p>
-                </div>
-                <div id="history-row-target" class="timeline-row-2-cards">
-                    <div class="feed-loading-placeholder">Parsing landmark records ledger database tracking layers...</div>
-                </div>
-            </div>
+    <div class="widescreen-strip-container strip-above-thanks">
+        <div class="partners-horizontal-strip" id="partners-grid-top"></div>
+    </div>
+
+    <div class="main-container proclamation-wrapper">
+        <section class="proclamation-card-box">
+            <p class="proclamation-body-text">We are very thankful and blessed for our customers who allow us to advertise their business to the community. We hope to be of service, not only to large corporations, but also to the small businesses in the area. A large corporation once started out as a small business, so our hope is to help those small businesses we serve reach the fullest potential they desire. You will never know what we are able to do for your business unless you ask. I hope to hear from you.</p>
+            <p class="proclamation-contact-text">For questions or comments about this site please email <a href="mailto:Scott.Robinson@skventuresigns.com" data-ga-label="proclamation_email">Scott.Robinson@skventuresigns.com</a></p>
         </section>
     </div>
+</div>
 
-    <!-- LOWER REGIONAL PARTNERS STRIP (Positioned Above Section 3 Split Layout) -->
-    <div class="widescreen-strip-container">
-        <section class="showcase-widget full-bleed-widget">
-            <div class="partners-horizontal-strip" id="partners-grid-top">
-                <div class="feed-loading-placeholder" style="color: #fff; text-align: center; width: 100%;">Syncing regional sponsor arrays...</div>
+<!-- ========== PILL 2: DISCOVER XENIA ========== -->
+<div id="pill-panel-discover" class="portal-tab-panel">
+    <section class="discover-split-layout">
+        <div class="discover-container-grid">
+            <div class="discover-header-block">
+                <h2 class="discover-main-title" id="point-of-interest-main-title">Discover Xenia's Vibrant Community</h2>
+                <p class="discover-intro-text" id="point-of-interest-intro-text">Explore Xenia's rich historical legacy, local agriculture, and close-knit neighborhood spirit.</p>
             </div>
-        </section>
-    </div>
-
-    <!-- SECTION 3: SPLIT LAYOUT (Slideshow, Community Overview & Landmarks) -->
-    <section class="section3-split-layout">
-        <div class="section3-container-grid">
-            <div class="section3-row-1">
-                <h2 class="section3-main-title" id="sec3-main-title">Discover Xenia's Vibrant Community</h2>
-                <p class="section3-intro-text" id="sec3-intro-text">Explore Xenia's rich historical legacy, local agriculture, and close-knit neighborhood spirit.</p>
-            </div>
-
-            <div class="section3-row-2">
-                <div class="section3-left-col">
-                    <div id="xenia-town-slideshow-matrix" class="section3-slideshow-box">
-                        <div id="xenia-slideshow" class="slider-viewport">
-                            <div class="slider-slide active">
-                                <img src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="">
-                                <div class="slider-caption">Xenia Village Square</div>
-                            </div>
+            <div class="discover-dual-grid">
+                <!-- Point of Interest Slot -->
+                <div class="point-of-interest-col">
+                    <div class="point-of-interest-card">
+                        <h3 class="point-of-interest-card-title" id="point-of-interest-title">Historic Xenia Landmarks</h3>
+                        <div class="point-of-interest-images-grid">
+                            <figure class="point-of-interest-img-wrap" id="point-of-interest-figure-1">
+                                <img id="point-of-interest-img-1" src="" alt="" class="lightbox-triggerable-element" loading="lazy">
+                                <figcaption class="point-of-interest-caption" id="point-of-interest-header-1">Local Landmark</figcaption>
+                            </figure>
+                            <figure class="point-of-interest-img-wrap" id="point-of-interest-figure-2">
+                                <img id="point-of-interest-img-2" src="" alt="" class="lightbox-triggerable-element" loading="lazy">
+                                <figcaption class="point-of-interest-caption" id="point-of-interest-header-2">Community Landmark</figcaption>
+                            </figure>
                         </div>
-                    </div>
-
-                    <div class="section3-about-box">
-                        <span class="section3-about-tag" id="sec3-about-tag">About Xenia</span>
-                        <p class="section3-about-text" id="desc2-target-1">Xenia, IL was established in 1834 along early western pioneer paths. Renowned for its rural charm and resilient community character, it remains a proud township in Western Clay County.</p>
+                        <p id="point-of-interest-about" class="point-of-interest-about-text">Xenia, IL was established in 1834 along early western pioneer paths. Renowned for its rural charm and resilient community character, it remains a proud township in Western Clay County.</p>
+                        <p id="point-of-interest-landmark-desc" class="point-of-interest-desc">Loading landmark details...</p>
                     </div>
                 </div>
-
-                <div class="section3-right-col">
-                    <div class="section3-landmark-card">
-                        <h3 class="section3-landmark-title" id="right-card-meta-title">Historic Xenia Landmarks</h3>
-                        <div class="section3-landmark-images">
-                            <div class="section3-landmark-img-wrap">
-                                <img id="dual-img-1" src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="" class="lightbox-triggerable-element">
-                                <span class="section3-landmark-caption" id="dual-header-1">Village Park</span>
-                            </div>
-                            <div class="section3-landmark-img-wrap">
-                                <img id="dual-img-2" src="//ourflora.com/wp-content/uploads/2026/02/smlc.png" alt="" class="lightbox-triggerable-element">
-                                <span class="section3-landmark-caption" id="dual-header-2">Historic District</span>
-                            </div>
+                <!-- Article Slot -->
+                <div class="article-col">
+                    <div class="article-card-chassis">
+                        <div class="article-inner-box">
+                            <header class="article-header">
+                                <div class="category-tag" id="article-category">Heritage &amp; Farming</div>
+                                <h2 class="article-stacked-title" id="article-title">Xenia's Early Settlement &amp; Roots</h2>
+                                <p class="article-stacked-deck" id="article-deck">Preserving generations of agriculture and community togetherness in Clay County.</p>
+                            </header>
+                            <article class="article-body-content" id="article-body">
+                                <p>Xenia, Illinois, established in the early 19th century, holds a rich place in the settlement story of Southern Illinois.</p>
+                                <figure class="article-media-frame" id="article-figure-frame" style="display:none;">
+                                    <img id="article-img" src="" alt="" class="lightbox-triggerable-element" loading="lazy">
+                                    <figcaption id="article-img-caption">Main Street Xenia, IL</figcaption>
+                                </figure>
+                                <p>From annual local gatherings to family farming operations, Xenia represents the enduring heartland value of helping your neighbors.</p>
+                            </article>
                         </div>
-                        <p id="right-card-meta-desc1" class="section3-landmark-desc">Loading landmark historical details...</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- SECTION 9 & 10: PROCLAMATION CARD & S&K VENTURE SIGNS CONTACT -->
-    <div class="main-container section9-bold-print-wrapper section10-message-chassis">
-        <section class="section10-proclamation-card-box">
-            <p class="proclamation-body-text">
-                We are very Thankful and Blessed for our Customers who allow us to advertise their Business to the Community. We hope to be of Service, not only to the Large Corporations, but also to the Small Business’ in the area. A Large Corporation once started out as a small business, so our hope is to help those Small Business’ we serve reach the fullest potential they desire. You will never know what we are able to do for Your Business unless you ask. I hope to hear from you.
-            </p>
-            <p class="proclamation-contact-text">
-                For questions or comments about this site please email <a href="mailto:Scott.Robinson@skventuresigns.com" data-ga-label="proclamation_email">Scott.Robinson@skventuresigns.com</a>
-            </p>
+    <!-- Historical Timeline -->
+    <div class="main-container timeline-wrap">
+        <section class="historical-timeline-chassis-wrapper">
+            <div class="timeline-header-block">
+                <h2 class="main-timeline-center-title-node" id="history-timeline-title">Historical Timeline</h2>
+                <p class="main-timeline-sub-caption-node" id="history-timeline-subtitle">Key milestones that shaped Xenia, IL.</p>
+            </div>
+            <div id="history-row-target" class="timeline-cards-grid"><div class="feed-loading-placeholder">Loading timeline...</div></div>
         </section>
     </div>
 
-    <!-- PORTAL GLOBAL LIGHTBOX MODAL -->
-    <div id="portal-global-lightbox" class="lightbox-overlay-mask" onclick="closeLightbox(event)">
-        <div class="lightbox-modal-window">
-            <div class="lightbox-header-bar" style="padding:15px; border-bottom:2px solid #222; display:flex; justify-content:space-between; align-items:center;">
-                <span id="lightbox-label" style="font-weight:bold; font-size:18px;">SMLC Dispatches</span>
-                <button onclick="document.getElementById('portal-global-lightbox').style.display='none'" class="lightbox-close-btn" style="font-size:24px; cursor:pointer; background:none; border:none;">&times;</button>
-            </div>
-            
-            <div style="padding:20px; overflow-y:auto;">
-                <h3 id="lightbox-target-title" style="font-size:24px; margin-top:0;">Title</h3>
-                <div id="lightbox-target-date" style="font-size: 13px; color: #cc0000; font-weight: bold; margin-bottom: 12px;">Wire Sync Info</div>
-                <p id="lightbox-target-story" style="font-size:16px; line-height:1.6;">Story Body</p>
-                <div id="lightbox-img-wrapper" style="margin-top:15px; text-align:center;">
-                    <img id="lightbox-target-img" src="" alt="" style="max-width:100%; max-height:65vh; border-radius:4px; object-fit:contain;">
-                </div>
-            </div>
-            
-            <div class="lightbox-footer-bar" style="padding:15px; border-top:1px solid #ddd; text-align:center; font-size:12px; color:#666;">
-                <span>SUPPORT MY LOCAL COMMUNITY NETWORK &copy; 2026</span>
-                <div id="lightbox-action-row" style="display:none; margin-top:8px;">
-                    <a id="lightbox-target-link" href="#" target="_blank" rel="noopener" style="color: #0258A3; font-weight: bold;" data-ga-label="lightbox_open_source">Open Source &rarr;</a>
-                </div>
+    <!-- Slideshow -->
+    <div class="main-container slideshow-wrap">
+        <div id="slideshow-container-box" class="slideshow-box">
+            <div id="slideshow-viewport" class="slider-viewport">
+                <div class="slider-slide active"><img src="//raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="" class="lightbox-triggerable-element" data-title="Xenia, Illinois"><div class="slider-caption">Xenia, Illinois</div></div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- GLOBAL SITE FOOTER -->
-    <footer id="global-footer-container" class="site-global-footer-matrix">
-        <div style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:20px; max-width:1200px; margin:0 auto; padding-bottom:20px;">
-            <div>
-                <span style="font-weight:bold; color:var(--cc-gold);">Contact Us:</span>
-                <div id="footer-phone-target">618-662-8341</div>
-            </div>
-            <div>
-                <span style="font-weight:bold; color:var(--cc-gold);">Email:</span><br>
-                <a id="footer-email-target" href="mailto:Scott.Robinson@skventuresigns.com" style="color:#fff;" data-ga-label="footer_email">Scott.Robinson@skventuresigns.com</a>
-            </div>
-            <div>
-                <span style="font-weight:bold; color:var(--cc-gold);">Address:</span>
-                <div id="footer-address-target">Clay County, Illinois</div>
-            </div>
+</main>
+
+<div id="portal-global-lightbox" class="lightbox-overlay-mask" onclick="closeLightbox(event)">
+    <div class="lightbox-modal-window">
+        <div class="lightbox-header-bar">
+            <span id="lightbox-label">SMLC Dispatches</span>
+            <button type="button" class="lightbox-close-btn" aria-label="Close" onclick="document.getElementById('portal-global-lightbox').style.display='none'">&times;</button>
         </div>
-        <div style="border-top:1px solid #333; padding-top:15px;">
-            <p id="footer-copy-target">&copy; 2026 Xenia Community Portal. All rights reserved.</p>
-            <p id="footer-build-version-stamp" style="margin-top: 8px; opacity: 0.9; font-size: 13px; color: #FFC10E; letter-spacing: 0.5px;">
-                <strong>System Build Version:</strong> v1.1.7 | <strong>Active Version:</strong> 2026-10-01_15:35
-            </p>
+        <div class="lightbox-body">
+            <h3 id="lightbox-target-title">Title</h3>
+            <div id="lightbox-target-date"></div>
+            <p id="lightbox-target-story"></p>
+            <div id="lightbox-img-wrapper"><img id="lightbox-target-img" src="" alt=""></div>
         </div>
-    </footer>
+        <div class="lightbox-footer-bar">
+            <span>SUPPORT MY LOCAL COMMUNITY NETWORK &copy; 2026</span>
+            <div id="lightbox-action-row" style="display:none;"><a id="lightbox-target-link" href="#" target="_blank" rel="noopener" data-ga-label="lightbox_open_source">Open link &rarr;</a></div>
+        </div>
+    </div>
+</div>
 
-    <!-- RETURN TO TOP ANCHOR -->
-    <button id="back-to-top-anchor" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Return to Top" style="position:fixed; bottom:20px; right:20px; padding:10px 15px; background:#222; color:#fff; border:1px solid var(--cc-gold); border-radius:4px; cursor:pointer;">↑</button>
+<footer id="global-footer-container" class="site-global-footer-matrix">
+    <div class="footer-simple-inner">
+        <p id="footer-copy-target">&copy; 2026 Xenia Community Portal. All rights reserved.</p>
+        <p id="footer-build-version-stamp"><strong>Version:</strong> v1.9.0 | <strong>Build:</strong> 2026-10-25 14:35 EDT | <strong>New York:</strong> <span id="footer-ny-clock">--:--</span></p>
+    </div>
+</footer>
+<button id="back-to-top-anchor" type="button" onclick="window.scrollTo({top:0,behavior:'smooth'});" aria-label="Return to top">&uarr;</button>
 
-    <!-- CORE SCRIPT -->
-    <script src="./universaltown.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    window.switchPortalPill = function (btn, panelId) {
+        if (!btn || !panelId) return;
+        document.querySelectorAll('.portal-pill-btn').forEach(function (b) { b.classList.remove('active'); });
+        document.querySelectorAll('.portal-tab-panel').forEach(function (p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        var panel = document.getElementById(panelId);
+        if (panel) {
+            panel.classList.add('active');
+            var wrap = document.querySelector('.portal-pill-tabs-wrapper');
+            if (wrap) window.scrollTo({ top: wrap.offsetTop - 60, behavior: 'smooth' });
+        }
+    };
+    document.addEventListener('click', function (e) {
+        var img = e.target.closest ? e.target.closest('img.lightbox-triggerable-element') : null;
+        if (!img || typeof window.fireLightbox !== 'function') return;
+        var d = img.dataset || {};
+        window.fireLightbox(img.currentSrc || img.src, d.title || '', d.date || '', d.desc || '', d.link || '', d.alt || d.title || '');
+    });
+    function tick() {
+        var el = document.getElementById('footer-ny-clock');
+        if (!el) return;
+        try {
+            el.textContent = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false, timeZoneName: 'short' }).format(new Date());
+        } catch (err) { console.warn('Clock notice:', err.message); }
+    }
+    tick(); setInterval(tick, 30000);
+});
+</script>
+<script src="./universaltown.js"></script>
 </body>
 </html>
