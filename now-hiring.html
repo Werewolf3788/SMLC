@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<!-- SMLC Now Hiring | Jobs in and around Clay County, IL | Data: Adzuna via jobs/jobs-sync.js -> Firebase | 2026-10-31 -->
+<html lang="en" data-town="HOME">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Now Hiring: Jobs in Clay County, IL | Support My Local Community</title>
+    <meta name="description" content="Job openings in Clay County, Illinois: Flora, Louisville, Clay City, Xenia, Sailor Springs and nearby. Updated twice a day.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://werewolf3788.github.io/SMLC/now-hiring">
+    <meta name="theme-color" content="#0C5E75">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Support My Local Community">
+    <meta property="og:title" content="Now Hiring: Jobs in Clay County, IL">
+    <meta property="og:description" content="Job openings in Clay County, Illinois and nearby, updated twice a day.">
+    <meta property="og:url" content="https://werewolf3788.github.io/SMLC/now-hiring.html">
+    <meta property="og:image" content="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png">
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/skventuresigns-design/media/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/skventuresigns-design/media/main/favicon.png">
+    <link rel="stylesheet" href="home.css">
+    <meta name="color-scheme" content="light dark">
+    <!-- Device language -> automatic translation (no language picker) -->
+    <script src="smlc-device-prefs.js"></script>
+    <script defer src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CTYHDF4MSD"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-CTYHDF4MSD');
+        gtag('config', 'G-FHJNXDB9BB');   // SMLC Google Analytics (stream 16198754554)
+    </script>
+    <style>
+        .jobs-wrap { max-width: 1100px; margin: 0 auto; padding: 28px 18px 48px; }
+        .jobs-hero { background: var(--smlc-nav-primary, #0258A3); color: #fff; text-align: center; padding: 30px 18px; }
+        .jobs-hero h1 { margin: 0 0 6px; font-family: 'Times New Roman', serif; font-size: clamp(1.6rem, 4vw, 2.4rem); text-transform: uppercase; color: #fff; }
+        .jobs-hero p { margin: 0; font-size: 1rem; opacity: .95; }
+        .jobs-tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 18px; }
+        .jobs-tools input, .jobs-tools select { font: inherit; font-size: 1rem; padding: 10px 12px; border: 1px solid #b9c2cc; border-radius: 8px; background: #fff; color: #111; }
+        .jobs-tools input { flex: 1 1 260px; }
+        .jobs-indeed-btn { display: inline-block; background: var(--smlc-nav-secondary, #FFC10E); color: #111 !important; font-weight: bold; padding: 10px 16px; border-radius: 8px; text-decoration: none; }
+        .jobs-status { margin: 0 0 14px; color: #555; font-size: .95rem; }
+        .jobs-section-title { font-size: 1.25rem; margin: 26px 0 10px; border-bottom: 2px solid var(--smlc-nav-primary, #0258A3); padding-bottom: 4px; }
+        .jobs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+        .job-card { background: #fff; border: 1px solid #dde3ea; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+        .job-card h3 { margin: 0; font-size: 1.1rem; line-height: 1.3; color: #111; }
+        .job-company { font-weight: bold; color: #333; }
+        .job-meta { font-size: .875rem; color: #555; }
+        .job-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .job-tag { background: #eef3f8; color: #1d3b5a; border-radius: 999px; padding: 2px 9px; font-size: .75rem; }
+        .job-desc { font-size: .9rem; color: #333; margin: 4px 0 0; }
+        .job-apply { margin-top: auto; padding-top: 8px; }
+        .job-apply a { display: inline-block; background: var(--smlc-nav-primary, #0258A3); color: #fff !important; text-decoration: none; font-weight: bold; padding: 8px 14px; border-radius: 6px; }
+        .jobs-attrib { margin-top: 28px; font-size: .85rem; color: #555; text-align: center; }
+        .jobs-attrib a { color: inherit; }
+        .jobs-empty { padding: 24px; text-align: center; background: #f6f8fa; border-radius: 10px; }
+        @media (prefers-color-scheme: dark) {
+            .job-card { background: #1d1d20; border-color: #34343a; }
+            .job-card h3, .job-company, .job-desc { color: #ececf0; }
+            .job-meta, .jobs-status, .jobs-attrib { color: #b5b5bd; }
+            .job-tag { background: #2a3440; color: #d5e4f3; }
+            .jobs-tools input, .jobs-tools select { background: #1d1d20; color: #ececf0; border-color: #44444c; }
+            .jobs-empty { background: #1d1d20; }
+        }
+    </style>
+</head>
+<body class="home-bg">
+    <div id="google_translate_element"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="header" id="site-header-banner">
+        <a href="index.html" class="header-brand-link" aria-label="Support My Local Community home">
+            <img id="site-header-img" src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" class="header-logo" alt="Support My Local Community - Clay County, Illinois">
+        </a>
+    </header>
+        <nav class="nav-bar" aria-label="Towns">
+            <a href="index.html" class="smlc-menu-logo" tabindex="-1" aria-hidden="true"><img id="site-header-mini" src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt=""></a>
+            <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+            <!-- Filled from Firebase /master_county_data/global/menu (these are the backup links) -->
+            <ul class="nav-links" id="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="clay-city.html">Clay City</a></li>
+                <li><a href="https://www.ourflora.com" target="_blank" rel="noopener">Flora</a></li>
+                <li><a href="louisville.html">Louisville</a></li>
+                <li><a href="sailor-springs.html">Sailor Springs</a></li>
+                <li><a href="xenia.html">Xenia</a></li>
+                <li><a href="now-hiring.html" class="active">Now Hiring</a></li>
+            </ul>
+        </nav>
+    <main id="main-content">
+        <section class="jobs-hero" aria-labelledby="jobs-title">
+            <h1 id="jobs-title">Now Hiring</h1>
+            <p>Job openings in Clay County, Illinois and nearby &mdash; updated twice a day</p>
+        </section>
+
+        <div class="jobs-wrap">
+            <div class="jobs-tools">
+                <label class="sr-only" for="jobs-search" style="position:absolute;left:-9999px;">Search jobs</label>
+                <input id="jobs-search" type="search" placeholder="Search jobs, e.g. nurse, driver, cashier" autocomplete="off">
+                <label for="jobs-town" style="position:absolute;left:-9999px;">Town</label>
+                <select id="jobs-town">
+                    <option value="">All of Clay County + nearby</option>
+                    <option value="__county">Clay County only</option>
+                    <option value="Clay City">Clay City</option>
+                    <option value="Flora">Flora</option>
+                    <option value="Louisville">Louisville</option>
+                    <option value="Sailor Springs">Sailor Springs</option>
+                    <option value="Xenia">Xenia</option>
+                    <option value="__nearby">Nearby (outside the county)</option>
+                </select>
+                <a class="jobs-indeed-btn" href="https://www.indeed.com/jobs?l=Clay+County%2C+IL" target="_blank" rel="noopener">See all jobs on Indeed &#8599;</a>
+            </div>
+            <p class="jobs-status" id="jobs-status" role="status">Loading job openings&hellip;</p>
+            <div id="jobs-results"></div>
+            <p class="jobs-attrib">Job listings provided by <a href="https://www.adzuna.com" target="_blank" rel="noopener">Adzuna</a>. Click a listing to apply on the employer's or job board's site.
+                Hiring? Email <a href="mailto:info@supportmylocalcommunity.com">info@supportmylocalcommunity.com</a>.</p>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <p>All Content, Photographs, Writings, Letters and Documents © 2026 - Support My Local Community</p>
+        <p>All Rights Reserved - <a href="https://www.skventuresigns.com" target="_blank" rel="noopener" class="footer-link">S&amp;K Ventures</a></p>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script>
+    (function () {
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg",
+            authDomain: "smlc-fuel-monitor.firebaseapp.com",
+            databaseURL: "https://smlc-fuel-monitor-default-rtdb.firebaseio.com",
+            projectId: "smlc-fuel-monitor"
+        };
+        const FIRESTORE_DOC = "https://firestore.googleapis.com/v1/projects/smlc-fuel-monitor/databases/(default)/documents/smlc_jobs/current";
+        const RTDB_BACKUP = FIREBASE_CONFIG.databaseURL + "/jobs_board.json";
+        const CT = "America/Chicago";
+        document.documentElement.style.setProperty("--smlc-nav-primary", "#0258A3");
+        document.documentElement.style.setProperty("--smlc-nav-secondary", "#FFC10E");
+
+        function esc(v) {
+            return String(v == null ? "" : v).replace(/[&<>"']/g, c =>
+                ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        }
+        function safeUrl(u) {
+            const s = String(u || "").trim();
+            return /^(https?:\/\/|\.{0,2}\/|[\w\-]+\.html)/i.test(s) ? s : "";
+        }
+        function driveToImage(u) {
+            const s = safeUrl(u);
+            const m = s.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=view&)?id=)([\w-]+)/);
+            return m ? "https://drive.google.com/thumbnail?id=" + m[1] + "&sz=w1600" : s;
+        }
+        function setFavicon(url) {
+            document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(l => {
+                l.href = url; l.removeAttribute("type");
+            });
+        }
+
+        /* ===================== MENU (same as the home page) ===================== */
+        const hamburger = document.getElementById("hamburger");
+        const navLinks = document.getElementById("nav-links");
+        hamburger.addEventListener("click", () => {
+            const open = navLinks.classList.toggle("open");
+            hamburger.setAttribute("aria-expanded", open ? "true" : "false");
+        });
+        let db = null;
+        try { db = firebase.initializeApp(FIREBASE_CONFIG, "smlcJobs").database(); } catch (e) { console.warn("Firebase not available:", e.message); }
+
+        function isCurrentPage(item) {
+            const name = String(item.name || "").trim().toUpperCase();
+            const href = safeUrl(item.website);
+            if (!href) return false;
+            try {
+                const target = new URL(href, location.href);
+                const here = new URL(location.href);
+                const clean = p => p.replace(/index\.html$/, "").replace(/\/$/, "");
+                return target.host === here.host && clean(target.pathname) === clean(here.pathname);
+            } catch (e) { return false; }
+        }
+
+        function renderMenu(raw) {
+            const items = (Array.isArray(raw) ? raw : Object.values(raw || {}))
+                .filter(it => it && (String(it.name || "").trim() || String(it.website || "").trim()));
+            if (!items.length) return;
+
+            // Header + tab icon = first menu item's image (menu/0)
+            const headerImg = driveToImage(items[0].imageUrl);
+            if (headerImg) {
+                document.getElementById("site-header-img").src = headerImg;
+                document.getElementById("site-header-mini").src = headerImg;
+                setFavicon(headerImg);
+            }
+
+            const isMore = it => String(it.category || "").trim().toLowerCase() === "more";
+            function makeItem(it) {
+                const href = safeUrl(it.website) || "#";
+                const li = document.createElement("li");
+                const a = document.createElement("a");
+                a.href = href;
+                if (/^https?:\/\//i.test(href) && !href.includes(location.host)) { a.target = "_blank"; a.rel = "noopener"; }
+                if (isCurrentPage(it)) a.className = "active";
+                const icon = driveToImage(it.imageUrl);
+                if (icon) {
+                    const img = document.createElement("img");
+                    img.className = "menu-thumb-icon";
+                    img.src = icon;
+                    img.alt = "";
+                    img.onerror = () => img.remove();
+                    a.appendChild(img);
+                }
+                const label = document.createElement("span");
+                label.textContent = String(it.name || it.alt || "").trim();
+                a.appendChild(label);
+                li.appendChild(a);
+                return li;
+            }
+
+            navLinks.innerHTML = "";
+            items.filter(it => !isMore(it)).forEach(it => navLinks.appendChild(makeItem(it)));
+
+            // Category "More" -> its own dropdown
+            const moreItems = items.filter(isMore);
+            if (moreItems.length) {
+                const li = document.createElement("li");
+                li.className = "nav-more";
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "nav-more-toggle";
+                btn.setAttribute("aria-expanded", "false");
+                btn.setAttribute("aria-haspopup", "true");
+                btn.innerHTML = 'More <span class="nav-more-caret" aria-hidden="true">&#9662;</span>';
+                const ul = document.createElement("ul");
+                ul.className = "nav-more-list";
+                moreItems.forEach(it => ul.appendChild(makeItem(it)));
+                btn.addEventListener("click", e => {
+                    e.stopPropagation();
+                    const open = li.classList.toggle("is-open");
+                    btn.setAttribute("aria-expanded", open ? "true" : "false");
+                });
+                li.appendChild(btn);
+                li.appendChild(ul);
+                navLinks.appendChild(li);
+            }
+        }
+        document.addEventListener("click", e => {
+            if (e.target.closest && e.target.closest(".nav-more")) return;
+            document.querySelectorAll(".nav-more.is-open").forEach(li => {
+                li.classList.remove("is-open");
+                li.querySelector(".nav-more-toggle").setAttribute("aria-expanded", "false");
+            });
+        });
+
+        if (db) db.ref("master_county_data/global/menu").on("value", s => {
+            renderMenu(s.val());
+            // Keep "Now Hiring" in the menu even before it's added to the Menu tab
+            if (!navLinks.querySelector('a[href$="now-hiring.html"]')) {
+                const li = document.createElement("li");
+                li.innerHTML = '<a href="now-hiring.html" class="active"><span>Now Hiring</span></a>';
+                const more = navLinks.querySelector(".nav-more");
+                more ? navLinks.insertBefore(li, more) : navLinks.appendChild(li);
+            }
+        });
+
+        const banner = document.getElementById("site-header-banner");
+        if (banner && "IntersectionObserver" in window) {
+            new IntersectionObserver(([en]) => document.documentElement.classList.toggle("smlc-header-scrolled", !en.isIntersecting)).observe(banner);
+        }
+
+        /* ===================== JOBS ===================== */
+        const statusEl = document.getElementById("jobs-status");
+        const resultsEl = document.getElementById("jobs-results");
+        const searchEl = document.getElementById("jobs-search");
+        const townEl = document.getElementById("jobs-town");
+        let allJobs = [];
+        let updatedAt = "";
+
+        // ?town=Flora preselects a town (used by links from the town pages)
+        const qTown = new URLSearchParams(location.search).get("town");
+        if (qTown) { const opt = [...townEl.options].find(o => o.value.toLowerCase() === qTown.toLowerCase()); if (opt) townEl.value = opt.value; }
+
+        function postedText(iso) {
+            const d = new Date(iso);
+            if (isNaN(d)) return "";
+            const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+            if (days <= 0) return "Posted today";
+            if (days === 1) return "Posted yesterday";
+            if (days < 30) return "Posted " + days + " days ago";
+            return "Posted " + d.toLocaleDateString("en-US", { timeZone: CT, month: "short", day: "numeric", year: "numeric" });
+        }
+        function money(n) { return "$" + Number(n).toLocaleString("en-US"); }
+        function salaryText(j) {
+            if (!j.salaryMin && !j.salaryMax) return "";
+            const lo = j.salaryMin, hi = j.salaryMax;
+            const hourly = (hi || lo) < 300;
+            const fmt = v => hourly ? "$" + Number(v).toFixed(2) : money(v);
+            const range = lo && hi && lo !== hi ? fmt(lo) + " – " + fmt(hi) : fmt(lo || hi);
+            return range + (hourly ? " / hour" : " / year");
+        }
+        function contractLabel(c) {
+            return ({ full_time: "Full-time", part_time: "Part-time", permanent: "Permanent", contract: "Contract" })[c] || "";
+        }
+        function card(j) {
+            const url = safeUrl(j.url);
+            const tags = [contractLabel(j.contract), j.category].filter(Boolean)
+                .map(t => '<span class="job-tag">' + esc(t) + '</span>').join("");
+            const pay = salaryText(j);
+            return '<article class="job-card">' +
+                '<h3>' + esc(j.title) + '</h3>' +
+                (j.company ? '<div class="job-company">' + esc(j.company) + '</div>' : '') +
+                '<div class="job-meta">📍 ' + esc(j.location || j.town || "") + (j.created ? ' &bull; ' + esc(postedText(j.created)) : '') + '</div>' +
+                (pay ? '<div class="job-meta">💵 ' + esc(pay) + '</div>' : '') +
+                (tags ? '<div class="job-tags">' + tags + '</div>' : '') +
+                (j.description ? '<p class="job-desc">' + esc(j.description.length > 220 ? j.description.slice(0, 217).replace(/\s+\S*$/, "") + "…" : j.description) + '</p>' : '') +
+                (url ? '<div class="job-apply"><a href="' + esc(url) + '" target="_blank" rel="noopener nofollow" aria-label="View and apply: ' + esc(j.title) + '">View &amp; Apply &#8599;</a></div>' : '') +
+                '</article>';
+        }
+        function render() {
+            const q = searchEl.value.trim().toLowerCase();
+            const town = townEl.value;
+            const list = allJobs.filter(j => {
+                if (town === "__county" && !j.inCounty) return false;
+                if (town === "__nearby" && j.inCounty) return false;
+                if (town && !town.startsWith("__") && j.town !== town) return false;
+                if (q && !(j.title + " " + j.company + " " + j.category + " " + j.description + " " + j.location).toLowerCase().includes(q)) return false;
+                return true;
+            });
+            const county = list.filter(j => j.inCounty), nearby = list.filter(j => !j.inCounty);
+            const when = updatedAt ? new Date(updatedAt).toLocaleString("en-US", { timeZone: CT, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " CT" : "";
+            statusEl.textContent = list.length + " job" + (list.length === 1 ? "" : "s") + " found" + (when ? " · updated " + when : "");
+            if (!list.length) {
+                resultsEl.innerHTML = '<div class="jobs-empty">No openings match right now. Try another search, or <a href="https://www.indeed.com/jobs?l=Clay+County%2C+IL" target="_blank" rel="noopener">see all jobs on Indeed</a>.</div>';
+                return;
+            }
+            resultsEl.innerHTML =
+                (county.length ? '<h2 class="jobs-section-title">In Clay County (' + county.length + ')</h2><div class="jobs-grid">' + county.map(card).join("") + '</div>' : '') +
+                (nearby.length ? '<h2 class="jobs-section-title">Nearby (' + nearby.length + ')</h2><div class="jobs-grid">' + nearby.map(card).join("") + '</div>' : '');
+        }
+        searchEl.addEventListener("input", render);
+        townEl.addEventListener("change", render);
+
+        async function loadJobs() {
+            let payload = null;
+            try {
+                const res = await fetch(FIRESTORE_DOC);
+                if (res.ok) {
+                    const f = (await res.json()).fields || {};
+                    payload = { updatedAt: f.updatedAt && f.updatedAt.stringValue, jobsJson: f.jobsJson && f.jobsJson.stringValue };
+                }
+            } catch (e) { /* try backup */ }
+            if (!payload || !payload.jobsJson) {
+                try {
+                    const res = await fetch(RTDB_BACKUP);
+                    if (res.ok) payload = await res.json();
+                } catch (e) { /* nothing */ }
+            }
+            if (!payload || !payload.jobsJson) {
+                statusEl.textContent = "";
+                resultsEl.innerHTML = '<div class="jobs-empty">Job listings are on their way. In the meantime, <a href="https://www.indeed.com/jobs?l=Clay+County%2C+IL" target="_blank" rel="noopener">see all Clay County jobs on Indeed</a>.</div>';
+                return;
+            }
+            try { allJobs = JSON.parse(payload.jobsJson) || []; } catch (e) { allJobs = []; }
+            updatedAt = payload.updatedAt || "";
+            render();
+        }
+        loadJobs();
+    })();
+    </script>
+</body>
+</html>
