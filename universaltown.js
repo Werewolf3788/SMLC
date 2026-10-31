@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: v3.4.0
+   Active Version: v3.7.0
    File: universaltown.js
    Project: SMLC County Portal Semantic Master Script
    Description: Complete multi-town engine connecting 100% to Firebase (RTDB & Firestore).
@@ -21,6 +21,13 @@
                 - Dynamic GA4 Tag Injection (G-FHJNXDB9BB) with SPA Hash Route Pageview Tracking
                 - Town-specific & countywide Sports Scoreboard Engine
                 - Persistent 24-hour New York timestamp & version in footer
+                - v3.7.0: Accessibility: dialogs (focus, Esc, Tab trap), keyboard-reachable pictures/cards,
+                  pills as tabs, announcements, decorations hidden from screen readers, heading order,
+                  text sizes in rem, device contrast/forced colors, Accessibility panel
+                - v3.6.0: Events read from Firestore /smlc_events (2 months ahead) with attachment thumbnails,
+                  attachment links + lightbox; every picture opens the lightbox; alt text only shown there
+                - v3.5.0: Partner strips show only whole cards (5+ on desktop), refit on resize, no scrollbars
+                - v3.5.0: Header #0C5E75 in light view; Quick Answers styling; Event structured data (SEO/AEO)
                 - v3.4.0: Weather & holiday background effects matching Clay County weather (rain, storm,
                   snow, clouds, stars), fall leaves, holidays; snow builds up on cards; on/off switch
                 - v3.3.0: App-style bottom nav (Home / Towns / More) on phones + portrait tablets
@@ -126,11 +133,11 @@ const TOWN_ALIAS_MAP = {
         historyKey: "clay_city", 
         areaId: 3,
         linkedAreaIds: [3],
-        keywords: ["CLAY CITY", "CC", "CUBIES", "BULLDOGS"], 
+        keywords: ["CLAY CITY", "CC", "WOLVES", "PUPS"], 
         isHome: false, 
         seatBadge: "Clay County Hub", 
         estMeta: "Est. 1868 | Zip Code 62824", 
-        riverMarquee: "HOME OF THE CLAY CITY BULLDOGS & CUBIES", 
+        riverMarquee: "HOME OF THE CLAY CITY WOLVES & PUPS", 
         themeAccent: "#0C2890" 
     },
     "FLORA": { 
@@ -336,13 +343,23 @@ function extractText(val) {
 function linkifyRawUrls(text) {
     if (!text) return "";
     const urlPattern = /(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi;
-    return String(text).replace(urlPattern, (match) => {
+    const linkify = (chunk) => chunk.replace(urlPattern, (match) => {
         let cleanHref = match;
         if (!cleanHref.match(/^https?:\/\//i)) {
             cleanHref = '//' + cleanHref;
         }
-        return `<a href="${cleanHref}" target="_blank" rel="noopener" style="color:var(--link-bright-blue); text-decoration:underline; word-break:break-all;">${match}</a>`;
+        return `<a href="${attachUtmParameters(cleanHref)}" target="_blank" rel="noopener" style="color:var(--link-bright-blue); text-decoration:underline; word-break:break-all;">${match}</a>`;
     });
+    // Only turn plain-text URLs into links: leave existing HTML tags (and text inside links) alone
+    let insideLink = 0;
+    return String(text).split(/(<[^>]+>)/g).map(part => {
+        if (part.startsWith('<')) {
+            if (/^<a[\s>]/i.test(part)) insideLink++;
+            else if (/^<\/a>/i.test(part)) insideLink = Math.max(0, insideLink - 1);
+            return part;
+        }
+        return insideLink ? part : linkify(part);
+    }).join('');
 }
 
 function buildTurnByTurnNavigationUrl(rawAddress) {
@@ -740,7 +757,7 @@ document.addEventListener('click', (e) => {
 // visible "Image isn't available right now" notice (never a broken-image icon).
 const SMLC_IMG_NOTICE_TEXT = "Image isn't available right now";
 // Tiny icons/logos: just hide them on failure (a text notice wouldn't fit).
-const SMLC_IMG_SKIP_SELECTOR = '.menu-thumb-icon, .weather-icon-img, .weather-pill-icon img, #weather-fiveday-forecast-modal img, .header-billboard-img, .station-logo-frame img';
+const SMLC_IMG_SKIP_SELECTOR = '.smlc-menu-logo img, .menu-thumb-icon, .weather-icon-img, .weather-pill-icon img, #weather-fiveday-forecast-modal img, .header-billboard-img, .station-logo-frame img';
 
 (function injectImageNoticeStyles() {
     if (document.getElementById('smlc-img-notice-styles')) return;
@@ -751,12 +768,12 @@ const SMLC_IMG_SKIP_SELECTOR = '.menu-thumb-icon, .weather-icon-img, .weather-pi
             width: 100%; min-height: 140px; height: 100%; padding: 14px; box-sizing: border-box; text-align: center;
             background: repeating-linear-gradient(45deg, #1b1b1d, #1b1b1d 10px, #222225 10px, #222225 20px);
             color: #e8e8e8; border: 2px dashed #6b6b70; border-radius: 6px;
-            font: 700 14px/1.3 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: .5px; text-transform: uppercase; }
-        .smlc-img-unavailable-icon { font-size: 26px; line-height: 1; }
+            font: 700 0.875rem/1.3 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: .5px; text-transform: uppercase; }
+        .smlc-img-unavailable-icon { font-size: 1.625rem; line-height: 1; }
         .point-of-interest-img-wrap .smlc-img-unavailable { aspect-ratio: 4 / 3; height: auto; }
         .slider-slide .smlc-img-unavailable { position: absolute; inset: 0; border-radius: 0; }
-        .partner-logo-container .smlc-img-unavailable { min-height: 0; font-size: 11px; padding: 6px; border-width: 1px; }
-        .partner-logo-container .smlc-img-unavailable-icon { font-size: 16px; }
+        .partner-logo-container .smlc-img-unavailable { min-height: 0; font-size: 0.6875rem; padding: 6px; border-width: 1px; }
+        .partner-logo-container .smlc-img-unavailable-icon { font-size: 1rem; }
         #lightbox-img-wrapper .smlc-img-unavailable { min-height: 180px; }
     `;
     (document.head || document.documentElement).appendChild(style);
@@ -861,7 +878,7 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = ""
     const parsedAlt = linkifyRawUrls(cleanAlt || '');
 
     const displayStory = (cleanAlt && cleanAlt !== cleanTitle) 
-        ? `<div style="font-style:italic; font-size:14px; color:var(--card-text-secondary, #444); margin-bottom:12px; border-left:3px solid var(--primary); padding-left:10px;">Details: ${parsedAlt}</div>${parsedBody}`
+        ? `<div class="smlc-lightbox-alt" style="font-style:italic; font-size:0.875rem; color:var(--card-text-secondary, #444); margin-bottom:12px; border-left:3px solid var(--primary); padding-left:10px;">Image description: ${parsedAlt}</div>${parsedBody}`
         : parsedBody;
 
     const storyEl = document.getElementById('lightbox-target-story'); 
@@ -908,12 +925,17 @@ function openCalendarLightboxModal(idx) {
     const dateText = cleanCalendarDate(targetItem.date || targetItem.displayDate || targetItem.event_date);
     const timeText = cleanCalendarTime(targetItem.time || targetItem.displayTime, targetItem.date || targetItem.displayDate);
     const rawLoc = targetItem.location || ACTIVE_TOWN.primaryName + ", IL";
-    const rawDetails = targetItem.details || targetItem.description || "No additional event details provided.";
+    let rawDetails = targetItem.details || targetItem.description || targetItem.desc || "No additional event details provided.";
     const finalEventImg = targetItem.imageUrl || targetItem.image || null;
+    const atts = toPlainArray(targetItem.attachments).filter(a => a && a.fileUrl);
+    if (atts.length) rawDetails += ' <br><br><strong>Attachments:</strong><br>' + atts.map(a => `&#128206; ${escapeHtmlText(a.title)}: ${a.fileUrl} `).join('<br>');
     const navUrl = buildTurnByTurnNavigationUrl(rawLoc);
-    const metaHeader = `${dateText} &bull; ${timeText}<br>Location: <a href="${navUrl}" target="_blank" rel="noopener" style="color:var(--primary); font-weight:bold; text-decoration:underline;">${rawLoc} (Directions &rarr;)</a>`;
+    const winLb = getEventWindow(targetItem);
+    const tzNote = winLb && !winLb.allDay ? ` ${SMLC_TZ_LABEL}` : '';
+    const yourTime = buildViewerTimeNote(winLb);
+    const metaHeader = `${dateText} &bull; ${timeText}${tzNote}${yourTime ? `<br><em>${yourTime}</em>` : ''}<br>Location: <a href="${navUrl}" target="_blank" rel="noopener" style="color:var(--primary); font-weight:bold; text-decoration:underline;">${rawLoc} (Directions &rarr;)</a>`;
 
-    fireLightbox(finalEventImg, title, metaHeader, rawDetails, '', title);
+    fireLightbox(finalEventImg, title, metaHeader, rawDetails, '', `${title} flyer`);
 }
 
 function openNewsLightboxModal(idx) {
@@ -1062,16 +1084,16 @@ function showWeatherAlertModalPopup(headline, instruction, severity, updatedCdt,
     popupOverlay.innerHTML = `
         <div style="background:#fff; border-top:6px solid ${themeColor}; border-radius:8px; max-width:550px; width:100%; box-shadow:0 12px 32px rgba(0,0,0,0.4); overflow:hidden; font-family:sans-serif; text-align:left;">
             <div style="background:#f8f9fa; padding:14px 20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:12px; font-weight:bold; color:${themeColor}; text-transform:uppercase; letter-spacing:0.5px;">EMERGENCY BULLETIN &bull; ${severity}</span>
-                <button type="button" onclick="hideWeatherAlertModalPopup()" style="background:none; border:none; font-size:22px; line-height:1; cursor:pointer; color:#666;">&times;</button>
+                <span style="font-size:0.75rem; font-weight:bold; color:${themeColor}; text-transform:uppercase; letter-spacing:0.5px;">EMERGENCY BULLETIN &bull; ${severity}</span>
+                <button type="button" onclick="hideWeatherAlertModalPopup()" style="background:none; border:none; font-size:1.375rem; line-height:1; cursor:pointer; color:#666;">&times;</button>
             </div>
             <div style="padding:20px; max-height:65vh; overflow-y:auto;">
-                <h3 style="margin:0 0 10px 0; font-size:18px; color:#111; font-weight:bold;">${headline}</h3>
-                <div style="font-size:11px; color:#777; margin-bottom:12px; font-weight:bold;">Issued: ${updatedCdt}</div>
-                <div style="font-size:14px; line-height:1.6; color:#333; white-space:pre-line;">${linkifyRawUrls(instruction || 'Please monitor local emergency weather dispatches and take safety precautions.')}</div>
+                <h3 style="margin:0 0 10px 0; font-size:1.125rem; color:#111; font-weight:bold;">${headline}</h3>
+                <div style="font-size:0.6875rem; color:#777; margin-bottom:12px; font-weight:bold;">Issued: ${updatedCdt}</div>
+                <div style="font-size:0.875rem; line-height:1.6; color:#333; white-space:pre-line;">${linkifyRawUrls(instruction || 'Please monitor local emergency weather dispatches and take safety precautions.')}</div>
             </div>
             <div style="background:#f1f3f5; padding:12px 20px; text-align:right;">
-                <button type="button" onclick="hideWeatherAlertModalPopup()" style="background:${themeColor}; color:#fff; border:none; padding:8px 18px; border-radius:4px; font-weight:bold; font-size:13px; cursor:pointer;">Acknowledge & Close</button>
+                <button type="button" onclick="hideWeatherAlertModalPopup()" style="background:${themeColor}; color:#fff; border:none; padding:8px 18px; border-radius:4px; font-weight:bold; font-size:0.8125rem; cursor:pointer;">Acknowledge & Close</button>
             </div>
         </div>
     `;
@@ -1122,7 +1144,13 @@ function renderNavbarWeatherWidget(current) {
         widgetEl.onmouseleave = () => widgetEl.style.background = '#181818';
         widgetEl.onclick = openFiveDayForecastModal;
 
-        if (navBarTarget) {
+        // Put the badge in the menu row itself (not inside the collapsible menu panel,
+        // which must stay hidden until the Menu button is pressed on narrow screens)
+        const menuRow = document.querySelector('.menu-bar .menu-inner');
+        const translateBox = menuRow ? menuRow.querySelector('#google_translate_element') : null;
+        if (menuRow) {
+            menuRow.insertBefore(widgetEl, translateBox || null);
+        } else if (navBarTarget) {
             navBarTarget.style.display = "flex";
             navBarTarget.style.alignItems = "center";
             navBarTarget.appendChild(widgetEl);
@@ -1138,9 +1166,9 @@ function renderNavbarWeatherWidget(current) {
 
     widgetEl.innerHTML = `
         <style>
-            #portal-weather-current-badge .weather-desk-text { display: inline-block; font-size: 13px; font-weight: bold; }
+            #portal-weather-current-badge .weather-desk-text { display: inline-block; font-size: 0.8125rem; font-weight: bold; }
             #portal-weather-current-badge .weather-icon-img { width: 26px; height: 26px; object-fit: contain; display: block; }
-            #portal-weather-current-badge .weather-temp-num { font-size: 13px; font-weight: bold; }
+            #portal-weather-current-badge .weather-temp-num { font-size: 0.8125rem; font-weight: bold; }
             @media (max-width: 1023px) {
                 #portal-weather-current-badge .weather-desk-text { display: none !important; }
                 #portal-weather-current-badge { padding: 4px 10px !important; min-height: 44px; min-width: 44px; justify-content: center; }
@@ -1149,7 +1177,7 @@ function renderNavbarWeatherWidget(current) {
         ${iconUrl ? `<img src="${iconUrl}" alt="" class="weather-icon-img" onerror="this.style.display='none';">` : ''}
         <span class="weather-temp-num">${temp}</span>
         <span class="weather-desk-text">&bull; ${condition}</span>
-        <span class="weather-desk-text" style="font-size:11px; color:var(--town-accent, var(--flora-orange, #ff9800)); margin-left:2px;">(5-Day &rarr;)</span>
+        <span class="weather-desk-text" style="font-size:0.6875rem; color:var(--town-accent, var(--flora-orange, #ff9800)); margin-left:2px;">(5-Day &rarr;)</span>
     `;
     widgetEl.title = `Current Weather | Updated: ${updatedCdt} | Click to view 5-day forecast`;
 
@@ -1191,13 +1219,13 @@ window.openFiveDayForecastModal = function() {
 
         return `
             <div style="flex:1 1 120px; min-width:120px; background:#1e1e1e; border:1px solid #333; border-radius:8px; padding:12px; text-align:center; color:#fff;">
-                <div style="font-size:12px; font-weight:bold; text-transform:uppercase; color:#bbb; margin-bottom:6px;">${dayName}</div>
+                <div style="font-size:0.75rem; font-weight:bold; text-transform:uppercase; color:#bbb; margin-bottom:6px;">${dayName}</div>
                 ${iconUrl ? `<img src="${iconUrl}" alt="" style="width:38px; height:38px; margin:0 auto 6px auto; display:block;" onerror="this.style.display='none';">` : ''}
-                <div style="font-size:12px; color:#ddd; font-weight:bold; min-height:30px; display:flex; align-items:center; justify-content:center;">${condition}</div>
-                <div style="font-size:15px; font-weight:bold; margin:6px 0;">
+                <div style="font-size:0.75rem; color:#ddd; font-weight:bold; min-height:30px; display:flex; align-items:center; justify-content:center;">${condition}</div>
+                <div style="font-size:0.9375rem; font-weight:bold; margin:6px 0;">
                     <span style="color:#ff8a65;">${high}</span> / <span style="color:#90caf9;">${low}</span>
                 </div>
-                <div style="font-size:11px; color:#aaa; border-top:1px dashed #333; padding-top:6px; margin-top:6px;">
+                <div style="font-size:0.6875rem; color:#aaa; border-top:1px dashed #333; padding-top:6px; margin-top:6px;">
                     Rain: ${precipChance} (${precipInches})
                 </div>
             </div>
@@ -1207,14 +1235,14 @@ window.openFiveDayForecastModal = function() {
     modalEl.innerHTML = `
         <div style="background:#141414; border:1px solid #333; border-radius:10px; max-width:760px; width:100%; box-shadow:0 12px 32px rgba(0,0,0,0.5); overflow:hidden; font-family:sans-serif;">
             <div style="background:#222; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333;">
-                <span style="font-size:14px; font-weight:bold; color:#fff; text-transform:uppercase; letter-spacing:0.5px;">Clay County 5-Day Extended Weather Outlook</span>
-                <button type="button" onclick="document.getElementById('weather-fiveday-forecast-modal').style.display='none';" style="background:none; border:none; font-size:24px; color:#aaa; cursor:pointer;">&times;</button>
+                <span style="font-size:0.875rem; font-weight:bold; color:#fff; text-transform:uppercase; letter-spacing:0.5px;">Clay County 5-Day Extended Weather Outlook</span>
+                <button type="button" onclick="document.getElementById('weather-fiveday-forecast-modal').style.display='none';" style="background:none; border:none; font-size:1.5rem; color:#aaa; cursor:pointer;">&times;</button>
             </div>
             <div style="padding:20px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center; max-height:75vh; overflow-y:auto;">
                 ${cardsHtml || '<div style="color:#aaa; padding:20px;">No forecast telemetry available.</div>'}
             </div>
             <div style="background:#1c1c1c; padding:10px 20px; text-align:right;">
-                <button type="button" onclick="document.getElementById('weather-fiveday-forecast-modal').style.display='none';" style="background:#0258A3; color:#fff; border:none; padding:6px 16px; border-radius:4px; font-weight:bold; font-size:12px; cursor:pointer;">Close</button>
+                <button type="button" onclick="document.getElementById('weather-fiveday-forecast-modal').style.display='none';" style="background:#0258A3; color:#fff; border:none; padding:6px 16px; border-radius:4px; font-weight:bold; font-size:0.75rem; cursor:pointer;">Close</button>
             </div>
         </div>
     `;
@@ -1350,6 +1378,12 @@ function bindFirebaseServices() {
 }
 
 // === MENU ENGINE ===
+function smlcMenuChildren(item) {
+    if (!item) return [];
+    const raw = item.children || item.items || item.links || item.submenu || item.sub_menu || null;
+    return toPlainArray(raw).filter(k => k && k.name);
+}
+
 function bindFirebaseMenuEngine(db) {
     if (!db) return;
     const menuContainer = document.getElementById('dynamic-menu-links');
@@ -1381,6 +1415,18 @@ function bindFirebaseMenuEngine(db) {
                 const isActive = (activeTownName === itemNameUpper || (ACTIVE_TOWN.isHome && itemNameUpper === "HOME") || (window.location.hash || "").toUpperCase().includes(itemNameUpper.replace(/\s+/g, '-'))) ? 'class="active"' : '';
 
                 const imgTag = normImageUrl ? `<img src="${normImageUrl}" alt="" class="menu-thumb-icon" onerror="this.style.display='none';" />` : '';
+
+                // A menu entry with sub-links (e.g. "More") becomes a dropdown
+                const kids = smlcMenuChildren(item);
+                if (kids.length) {
+                    return `
+                    <li class="smlc-menu-dropdown">
+                        <details>
+                            <summary data-ga-label="Nav_${name.replace(/\s+/g, '')}">${imgTag}<span>${name}</span><span class="smlc-dd-caret" aria-hidden="true">&#9662;</span></summary>
+                            <ul class="smlc-submenu">${kids.map(k => `<li><a href="${attachUtmParameters(k.website || '#')}" target="${resolveLinkTarget(k.website)}" ${resolveLinkTarget(k.website) === '_blank' ? 'rel="noopener"' : ''} data-ga-label="Nav_${String(k.name).replace(/\s+/g, '')}" onclick="window.closeMobileMenu();"><span>${k.name}</span></a></li>`).join('')}</ul>
+                        </details>
+                    </li>`;
+                }
 
                 return `
                     <li>
@@ -1422,7 +1468,8 @@ function bindFirebaseMenuEngine(db) {
 // === LOCAL LINKS ENGINE ===
 function bindFirebaseLocalLinksEngine(db) {
     if (!db) return;
-    const linkTarget = document.getElementById('local-links-target-container');
+    // town pages use id="town-links-target-container"; older pages used local-links-target-container
+    const linkTarget = document.getElementById('town-links-target-container') || document.getElementById('local-links-target-container');
     if (!linkTarget) return;
 
     const townName = ACTIVE_TOWN.dbTownKey || "Flora";
@@ -1434,30 +1481,32 @@ function bindFirebaseLocalLinksEngine(db) {
             const rawCombined = [...townLinks, ...globalLinks];
             const filteredLinks = rawCombined.filter(item => {
                 if (!item) return false;
-                const title = extractText(item.title || item.name);
-                const url = item.website || item.url || "";
+                const title = extractText(item.title || item.name || item.label || item.alt);
+                const url = item.website || item.url || item.link || item.href || "";
                 return (title && url && !url.toLowerCase().startsWith('mailto:'));
             });
 
             if (filteredLinks.length > 0) {
                 applyHighDensityScrollLimits(linkTarget, filteredLinks.length, 360);
                 linkTarget.innerHTML = filteredLinks.map(link => {
-                    const name = extractText(link.title || link.name) || "Local Resource";
-                    const rawUrl = link.website || link.url || "#";
+                    const name = extractText(link.title || link.name || link.label || link.alt) || "Local Resource";
+                    const rawUrl = link.website || link.url || link.link || link.href || "#";
                     const targetUrl = attachUtmParameters(rawUrl);
                     const linkTargetAttr = resolveLinkTarget(rawUrl);
                     const displayLoc = link.location || link.town || ACTIVE_TOWN.primaryName;
 
                     return `
                         <div class="local-link-node" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #ddd; text-align: left;">
-                            <a href="${targetUrl}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} class="local-link-title-anchor" data-ga-label="local_link" style="font-weight: bold; font-size: 15px; color: var(--link-bright-blue); text-decoration: underline;">
+                            <a href="${targetUrl}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} class="local-link-title-anchor" data-ga-label="local_link" style="font-weight: bold; font-size: 0.9375rem; color: var(--link-bright-blue); text-decoration: underline;">
                                 ${name}
                             </a>
-                            <span style="font-size: 11px; color: var(--card-muted, #555); margin-left: 6px;">(${displayLoc})</span>
+                            <span style="font-size: 0.6875rem; color: var(--card-muted, #555); margin-left: 6px;">(${displayLoc})</span>
                         </div>
                     `;
                 }).join('');
                 triggerGoogleTranslateUpdate(linkTarget);
+            } else {
+                linkTarget.innerHTML = '<div class="feed-loading-placeholder">No local links listed for this town yet.</div>';
             }
         } catch(e) {
             console.warn("Render combined links notice:", e.message);
@@ -1468,18 +1517,22 @@ function bindFirebaseLocalLinksEngine(db) {
         if (activeFbRefLinksTown) activeFbRefLinksTown.off();
         if (activeFbRefLinksGlobal) activeFbRefLinksGlobal.off();
 
-        activeFbRefLinksTown = db.ref(`master_county_data/towns/${townName}/sections/town_links/links`);
-        activeFbRefGlobalSections = db.ref(`master_county_data/global/sections/town_links/links`);
+        // Links live at .../sections/town_links (a list), or .../sections/town_links/links on older data
+        const readLinks = (val) => {
+            if (!val) return [];
+            if (val.links) return toPlainArray(val.links);
+            return toPlainArray(val).filter(x => x && typeof x === 'object');
+        };
+        activeFbRefLinksTown = db.ref(`master_county_data/towns/${townName}/sections/town_links`);
+        activeFbRefLinksGlobal = db.ref(`master_county_data/global/sections/town_links`);   // own slot (was sharing one and getting switched off)
 
         activeFbRefLinksTown.on('value', (snap) => {
-            const val = snap.val();
-            townLinks = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
+            townLinks = readLinks(snap.val());
             renderCombinedLinks();
         });
 
-        activeFbRefGlobalSections.on('value', (snap) => {
-            const val = snap.val();
-            globalLinks = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
+        activeFbRefLinksGlobal.on('value', (snap) => {
+            globalLinks = readLinks(snap.val());
             renderCombinedLinks();
         });
     } catch(e) {
@@ -1780,6 +1833,23 @@ function bindFirebasePartnersEngine(db) {
     }
 }
 
+// Partner strips show only WHOLE cards: as many as fit the width (5+ on desktop),
+// re-fitting when the window is resized. No scrollbars, logos never stretched.
+const SMLC_PARTNER_CARD_MIN = 176;   // px a card needs to look right (5 fit at 1024px+)
+const SMLC_PARTNER_GAP = 16;
+const SMLC_PARTNER_MAX = 7;
+const smlcPartnerStripObservers = {};
+const smlcPartnerRefitters = {};
+window.smlcRefitPartnerStrips = () => Object.values(smlcPartnerRefitters).forEach(fn => { try { fn(); } catch (e) {} });
+
+function partnerCardsThatFit(containerElement, poolSize) {
+    const width = containerElement.clientWidth || (containerElement.parentElement && containerElement.parentElement.clientWidth) || window.innerWidth;
+    if (window.innerWidth < 768) return 1;
+    const textScale = (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16;   // bigger text = wider cards
+    const fit = Math.floor((width + SMLC_PARTNER_GAP) / (SMLC_PARTNER_CARD_MIN * textScale + SMLC_PARTNER_GAP));
+    return Math.max(1, Math.min(fit, poolSize, SMLC_PARTNER_MAX));
+}
+
 function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, seedOffset = 0) {
     if (!containerElement || !partnerPool.length) return;
 
@@ -1792,7 +1862,7 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
         bottomCarouselInterval = null;
     }
 
-    const isMobileOrTablet = window.innerWidth < 1024;
+    const isMobileOrTablet = window.innerWidth < 768;
     let poolIndex = seedOffset % partnerPool.length;
     let isCarouselPaused = false;
     let hoverStartTime = 0;
@@ -1808,21 +1878,43 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
         return `
             <div class="community-partner-card" data-partner-name="${escapeJsString(name)}" style="transition: transform 0.35s ease, opacity 0.35s ease;">
                 <div class="partner-logo-container">
-                    <img class="partner-logo-asset" src="${imgUrl}" alt="" onclick="fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')" style="cursor:pointer;" onerror="this.closest('.community-partner-card').style.display='none';">
+                    <img class="partner-logo-asset" src="${imgUrl}" alt="${escapeJsString(altText)} logo" loading="lazy" onclick="fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')" style="cursor:pointer;">
                 </div>
-                <h4 class="partner-title">${name}</h4>
+                <h3 class="partner-title">${name}</h3>
                 <a class="directory-tile-link" href="${link}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} data-ga-label="partner_cta">Visit Partner &rarr;</a>
             </div>
         `;
     };
 
-    const visibleCount = isMobileOrTablet ? 1 : Math.min(5, partnerPool.length);
-    const initialCards = [];
-    for (let i = 0; i < visibleCount; i++) {
-        const p = partnerPool[(poolIndex + i) % partnerPool.length];
-        initialCards.push(createPartnerMarkup(p, i));
+    let visibleCount = partnerCardsThatFit(containerElement, partnerPool.length);
+    const drawCards = () => {
+        const cards = [];
+        for (let i = 0; i < visibleCount; i++) {
+            const p = partnerPool[(poolIndex + i) % partnerPool.length];
+            cards.push(createPartnerMarkup(p, i));
+        }
+        containerElement.innerHTML = cards.join('');
+    };
+    drawCards();
+
+    // Re-fit when the strip changes width (window resize, rotate, sidebar, zoom)
+    if (smlcPartnerStripObservers[stripKey]) smlcPartnerStripObservers[stripKey].disconnect();
+    smlcPartnerRefitters[stripKey] = () => {
+        const next = partnerCardsThatFit(containerElement, partnerPool.length);
+        if (next !== visibleCount) { visibleCount = next; drawCards(); }
+    };
+    if (typeof ResizeObserver === 'function') {
+        let fitTimer = null;
+        const ro = new ResizeObserver(() => {
+            clearTimeout(fitTimer);
+            fitTimer = setTimeout(() => {
+                const next = partnerCardsThatFit(containerElement, partnerPool.length);
+                if (next !== visibleCount) { visibleCount = next; drawCards(); }
+            }, 120);
+        });
+        ro.observe(containerElement.parentElement || containerElement);
+        smlcPartnerStripObservers[stripKey] = ro;
     }
-    containerElement.innerHTML = initialCards.join('');
 
     const onPauseEnter = () => {
         isCarouselPaused = true;
@@ -2011,28 +2103,243 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
 }
 
 // === COMMUNITY BULLETIN ===
+// Upcoming events as schema.org Event data, so search engines / AI answers can cite them
+function publishEventStructuredData(items) {
+    try {
+        const events = (items || []).map(item => {
+            const win = getEventWindow(item);
+            if (!win || getEventStatus(win).state === 'ended') return null;
+            const name = item.name || item.title;
+            if (!name) return null;
+            const place = item.location || item.addr || `${ACTIVE_TOWN.primaryName}, IL`;
+            const ev = {
+                '@type': 'Event', name,
+                startDate: win.start.toISOString(), endDate: win.end.toISOString(),
+                eventStatus: 'https://schema.org/EventScheduled',
+                eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+                location: { '@type': 'Place', name: place, address: place },
+                organizer: { '@type': 'Organization', name: 'Support My Local Community', url: 'https://werewolf3788.github.io/SMLC/' }
+            };
+            const desc = item.details || item.description || item.descShort || item.desc;
+            if (desc) ev.description = String(desc).slice(0, 300);
+            const img = normalizeImageUrl(item.imageUrl || item.image);
+            if (img) ev.image = img.startsWith('//') ? 'https:' + img : img;
+            return ev;
+        }).filter(Boolean).slice(0, 25);
+        let tag = document.getElementById('smlc-events-ld');
+        if (!events.length) { if (tag) tag.remove(); return; }
+        if (!tag) { tag = document.createElement('script'); tag.type = 'application/ld+json'; tag.id = 'smlc-events-ld'; document.head.appendChild(tag); }
+        tag.textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': events });
+    } catch (e) { console.warn('Event data notice:', e.message); }
+}
+
+// ============================================================================
+// EVENTS SOURCE: Firestore /smlc_events (written by the Calendar sync, 2 months ahead)
+// Each doc: { title, start, end, isAllDay, desc, addr, googleLink, icalData,
+//             attachments: [{ title, fileUrl, mimeType, iconLink }], attachmentUrl, image? }
+// ============================================================================
+function smlcIsImageAttachment(att) {
+    if (!att) return false;
+    const mime = String(att.mimeType || '').toLowerCase();
+    const url = String(att.fileUrl || att.url || '');
+    if (mime) return mime.startsWith('image/');
+    return /\.(jpe?g|png|gif|webp|avif)(\?|#|$)/i.test(url) || /googleusercontent\.com/i.test(url);
+}
+
+function smlcCentralClock(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return new Intl.DateTimeFormat('en-US', { timeZone: SMLC_TZ, hour: 'numeric', minute: '2-digit', hour12: true }).format(d);
+}
+
+// Old calendar syncs filled empty descriptions with this filler line: never show it
+function smlcCleanEventText(t) {
+    return String(t || '').replace(/^\s*Visit ourflora\.com for more details\.?\s*$/i, '');
+}
+
+function smlcNormalizeEventDoc(d) {
+    if (!d || !(d.title || d.name)) return null;
+    const attachments = toPlainArray(d.attachments).filter(a => a && (a.fileUrl || a.url)).map(a => ({
+        title: a.title || 'Attachment', fileUrl: a.fileUrl || a.url, mimeType: a.mimeType || '', isImage: smlcIsImageAttachment(a)
+    }));
+    if (!attachments.length && d.attachmentUrl) attachments.push({ title: 'Attachment', fileUrl: d.attachmentUrl, mimeType: '', isImage: smlcIsImageAttachment({ fileUrl: d.attachmentUrl }) });
+    const firstImage = attachments.find(a => a.isImage);
+    const hasStart = d.start && !isNaN(new Date(d.start).getTime());
+    return {
+        ...d,
+        name: d.title || d.name,
+        location: d.addr || d.location || '',
+        details: smlcCleanEventText(d.desc || d.details || d.description),
+        desc: smlcCleanEventText(d.desc),
+        description: smlcCleanEventText(d.description),
+        imageUrl: d.imageUrl || d.image || (firstImage ? firstImage.fileUrl : ''),
+        attachments,
+        date: hasStart ? d.start : (d.date || d.displayDate),
+        time: hasStart ? (d.isAllDay ? '' : `${smlcCentralClock(d.start)} - ${smlcCentralClock(d.end || d.start)}`) : (d.time || d.displayTime || '')
+    };
+}
+
+async function smlcLoadFirestoreEvents() {
+    let docs = [];
+    try {
+        if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+            const snap = await firebase.firestore().collection('smlc_events').get();
+            snap.forEach(ds => docs.push(ds.data()));
+        }
+    } catch (e) { console.warn('Events (Firestore SDK) notice:', e.message); }
+
+    if (!docs.length) {
+        try {
+            const unwrap = (v) => {
+                if (!v) return null;
+                if (v.stringValue !== undefined) return v.stringValue;
+                if (v.integerValue !== undefined) return parseInt(v.integerValue, 10);
+                if (v.doubleValue !== undefined) return v.doubleValue;
+                if (v.booleanValue !== undefined) return v.booleanValue;
+                if (v.timestampValue !== undefined) return v.timestampValue;
+                if (v.arrayValue) return (v.arrayValue.values || []).map(unwrap);
+                if (v.mapValue) { const o = {}; Object.entries(v.mapValue.fields || {}).forEach(([k, x]) => { o[k] = unwrap(x); }); return o; }
+                return null;
+            };
+            let token = null;
+            do {
+                const url = 'https://firestore.googleapis.com/v1/projects/smlc-fuel-monitor/databases/(default)/documents/smlc_events?pageSize=300' + (token ? '&pageToken=' + encodeURIComponent(token) : '');
+                const res = await fetch(url);
+                if (!res.ok) break;
+                const body = await res.json();
+                (body.documents || []).forEach(doc => { const o = {}; Object.entries(doc.fields || {}).forEach(([k, x]) => { o[k] = unwrap(x); }); docs.push(o); });
+                token = body.nextPageToken || null;
+            } while (token);
+        } catch (e) { console.warn('Events (Firestore REST) notice:', e.message); }
+    }
+
+    return docs.map(smlcNormalizeEventDoc).filter(Boolean)
+        .sort((a, b) => (new Date(a.start || a.date).getTime() || 0) - (new Date(b.start || b.date).getTime() || 0));
+}
+
+// ============================================================================
+// ADD-TO-CALENDAR (Google Calendar + Apple/Outlook .ics), built from the real
+// start/end times so the event lands at the right time in any time zone.
+// Attachments (flyers) are added to the event: as links in Google's details,
+// and as ATTACH lines + links in the .ics file.
+// ============================================================================
+const SMLC_PUBLIC_CALENDAR_ID = '09907fc6fff214b9dad96172ef13e7b80d62ea80cf22b504d096a47f277a9d2b@group.calendar.google.com';
+const SMLC_SUBSCRIBE_GOOGLE = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(SMLC_PUBLIC_CALENDAR_ID)}`;
+const SMLC_SUBSCRIBE_ICAL = `webcal://calendar.google.com/calendar/ical/${encodeURIComponent(SMLC_PUBLIC_CALENDAR_ID)}/public/basic.ics`;
+
+function smlcEventForCalendar(item) {
+    const win = getEventWindow(item);
+    if (!win) return null;
+    const attachments = toPlainArray(item.attachments).filter(a => a && a.fileUrl);
+    const title = item.name || item.title || 'Community Event';
+    const location = item.location || item.addr || `${ACTIVE_TOWN.primaryName}, IL`;
+    const plainDetails = String(item.details || item.description || item.desc || '').replace(/<[^>]+>/g, ' ').replace(/\s+\n/g, '\n').trim();
+    return { title, location, details: plainDetails, attachments, ...win };
+}
+
+function smlcUtcStamp(d) { return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''); }
+function smlcCentralDateStamp(d) {
+    const p = new Intl.DateTimeFormat('en-US', { timeZone: SMLC_TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(d);
+    const m = {}; p.forEach(x => { m[x.type] = x.value; });
+    return `${m.year}${m.month}${m.day}`;
+}
+
+function smlcAttachmentLines(ev) {
+    return ev.attachments.map(a => `${a.title || 'Attachment'}: ${String(a.fileUrl).startsWith('//') ? 'https:' + a.fileUrl : a.fileUrl}`);
+}
+
+function smlcGoogleCalendarUrl(ev) {
+    const dates = ev.allDay
+        ? `${smlcCentralDateStamp(ev.start)}/${smlcCentralDateStamp(ev.end)}`
+        : `${smlcUtcStamp(ev.start)}/${smlcUtcStamp(ev.end)}`;
+    const extra = smlcAttachmentLines(ev);
+    const details = [ev.details, extra.length ? 'Attachments:\n' + extra.join('\n') : '', 'From Support My Local Community: https://werewolf3788.github.io/SMLC/']
+        .filter(Boolean).join('\n\n').slice(0, 1800);
+    const params = new URLSearchParams({ action: 'TEMPLATE', text: ev.title, dates, details, location: ev.location, ctz: SMLC_TZ });
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+function smlcIcsEscape(t) { return String(t || '').replace(/\\/g, '\\\\').replace(/\r?\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;'); }
+function smlcIcsFold(line) {
+    const out = []; let rest = line;
+    while (rest.length > 74) { out.push(rest.slice(0, 74)); rest = ' ' + rest.slice(74); }
+    out.push(rest); return out.join('\r\n');
+}
+
+function smlcBuildIcs(ev) {
+    const uid = `${smlcUtcStamp(ev.start)}-${ev.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)}@supportmylocalcommunity`;
+    const extra = smlcAttachmentLines(ev);
+    const description = [ev.details, extra.length ? 'Attachments:\n' + extra.join('\n') : ''].filter(Boolean).join('\n\n');
+    const lines = [
+        'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Support My Local Community//Clay County IL//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+        'BEGIN:VEVENT',
+        `UID:${uid}`,
+        `DTSTAMP:${smlcUtcStamp(new Date())}`,
+        ev.allDay ? `DTSTART;VALUE=DATE:${smlcCentralDateStamp(ev.start)}` : `DTSTART:${smlcUtcStamp(ev.start)}`,
+        ev.allDay ? `DTEND;VALUE=DATE:${smlcCentralDateStamp(ev.end)}` : `DTEND:${smlcUtcStamp(ev.end)}`,
+        `SUMMARY:${smlcIcsEscape(ev.title)}`,
+        `LOCATION:${smlcIcsEscape(ev.location)}`,
+        `DESCRIPTION:${smlcIcsEscape(description)}`,
+        'URL:https://werewolf3788.github.io/SMLC/',
+        ...ev.attachments.map(a => `ATTACH${a.mimeType ? ';FMTTYPE=' + a.mimeType : ''}:${String(a.fileUrl).startsWith('//') ? 'https:' + a.fileUrl : a.fileUrl}`),
+        'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${smlcIcsEscape(ev.title)}`, 'TRIGGER:-PT1H', 'END:VALARM',
+        'END:VEVENT', 'END:VCALENDAR'
+    ];
+    return lines.map(smlcIcsFold).join('\r\n') + '\r\n';
+}
+
+/** Adds one event to Apple Calendar / Outlook / any calendar app (.ics). */
+window.smlcAddEventToIcs = function (idx) {
+    const item = (window.calendarCachedEvents || [])[idx];
+    const ev = item && smlcEventForCalendar(item);
+    if (!ev) return false;
+    const ics = smlcBuildIcs(ev);
+    const fileName = `${ev.title.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '_') || 'event'}.ics`;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    try {
+        if (isIOS) {
+            // iPhone/iPad: opening the calendar data shows the "Add to Calendar" screen
+            window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
+        } else {
+            const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = fileName; a.rel = 'noopener';
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 4000);
+        }
+        trackGa4Event('add_to_calendar', { method: 'ics', event_title: ev.title });
+    } catch (e) { console.warn('Add to calendar notice:', e.message); }
+    return false;
+};
+
 async function loadCommunityBulletinFeed() {
     const scroller = document.getElementById('bulletin-scroller-target');
     if (!scroller) return;
 
     try {
-        const endpoint = DEFAULT_APP_CONFIG.regional_endpoints.apps_script_bulletin_url;
-        const res = await fetch(endpoint + '?feed=true');
-        if (res.ok) {
-            const elements = await res.json();
+        let elements = await smlcLoadFirestoreEvents();
+        if (!elements.length) {
+            try {
+                const endpoint = DEFAULT_APP_CONFIG.regional_endpoints.apps_script_bulletin_url;
+                const res = await fetch(endpoint + '?feed=true');
+                if (res.ok) { const feed = await res.json(); if (Array.isArray(feed)) elements = feed; }
+            } catch (feedErr) { console.warn("Bulletin feed notice:", feedErr.message); }
+        }
+        {
             if (Array.isArray(elements) && elements.length > 0) {
                 window.calendarCachedEvents = elements;
                 applyHighDensityScrollLimits(scroller, elements.length, 500);
 
-                const webcalFeedUrl = "script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec?feed=ics";
-                const googleSubUrl = `https://www.google.com/calendar/render?cid=webcal://${encodeURIComponent(webcalFeedUrl)}`;
+                const googleSubUrl = SMLC_SUBSCRIBE_GOOGLE;
+                const appleSubUrl = SMLC_SUBSCRIBE_ICAL;
 
                 const createGlobalSubscriptionBanner = (headerText) => `
                     <div style="background:#f8f9fa; border:1px solid #e2e8f0; padding:10px; border-radius:6px; margin: 12px 0; text-align:center;">
-                        <span style="font-size:12px; font-weight:bold; color:#222; display:block; margin-bottom:6px; text-transform:uppercase;">${headerText}</span>
+                        <span style="font-size:0.75rem; font-weight:bold; color:#222; display:block; margin-bottom:6px; text-transform:uppercase;">${headerText}</span>
                         <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
-                            <a href="${googleSubUrl}" target="_blank" rel="noopener" style="font-size:11px; font-weight:bold; color:#ffffff !important; background:#1a73e8; padding:6px 12px; border-radius:4px; text-decoration:none; display:inline-block;" data-ga-label="global_cal_google">Google Calendar</a>
-                            <a href="webcal://${webcalFeedUrl}" style="font-size:11px; font-weight:bold; color:#ffffff !important; background:#1e7e34; padding:6px 12px; border-radius:4px; text-decoration:none; display:inline-block;" data-ga-label="global_cal_ical">Apple / iCal</a>
+                            <a href="${googleSubUrl}" target="_blank" rel="noopener" style="font-size:0.6875rem; font-weight:bold; color:#ffffff !important; background:#1a73e8; padding:6px 12px; border-radius:4px; text-decoration:none; display:inline-block;" data-ga-label="global_cal_google">Google Calendar</a>
+                            <a href="${appleSubUrl}" style="font-size:0.6875rem; font-weight:bold; color:#ffffff !important; background:#1e7e34; padding:6px 12px; border-radius:4px; text-decoration:none; display:inline-block;" data-ga-label="global_cal_ical">Apple / iCal</a>
                         </div>
                     </div>
                 `;
@@ -2053,13 +2360,16 @@ async function loadCommunityBulletinFeed() {
                     const winAttrs = win ? `data-start="${win.start.getTime()}" data-end="${win.end.getTime()}" data-allday="${win.allDay ? 1 : 0}"` : '';
                     const finalEventImg = normalizeImageUrl(item.imageUrl || item.image);
 
-                    const singleGoogleUrl = generateGoogleCalendarEventUrl(eventTitle, item.date || item.displayDate, item.time || item.displayTime, eventLoc, rawDetails);
-                    const singleIcalBlob = generateIcalDataBlob(eventTitle, item.date || item.displayDate, item.time || item.displayTime, eventLoc, rawDetails);
+                    const calEv = smlcEventForCalendar(item);
+                    const singleGoogleUrl = calEv ? smlcGoogleCalendarUrl(calEv) : generateGoogleCalendarEventUrl(eventTitle, item.date || item.displayDate, item.time || item.displayTime, eventLoc, rawDetails);
+                    const singleIcalBlob = item.icalData ? `data:text/calendar;charset=utf8;base64,${item.icalData}` : generateIcalDataBlob(eventTitle, item.date || item.displayDate, item.time || item.displayTime, eventLoc, rawDetails);
+                    const fileAttachments = toPlainArray(item.attachments).filter(a => a && !a.isImage && a.fileUrl);
+                    const attachmentChips = fileAttachments.length ? `<div class="smlc-event-attachments">${fileAttachments.map(a => `<a href="${escapeHtmlText(a.fileUrl)}" target="_blank" rel="noopener" class="smlc-attachment-chip" data-ga-label="event_attachment">&#128206; ${escapeHtmlText(a.title)}</a>`).join('')}</div>` : '';
                     const turnByTurnNavUrl = buildTurnByTurnNavigationUrl(eventLoc);
 
                     const thumbnailHtml = finalEventImg ? `
                         <div style="float: right; margin: 0 0 10px 12px;">
-                            <img src="${finalEventImg}" alt="" onclick="openCalendarLightboxModal(${idx})" style="width:85px; height:85px; object-fit:cover; border-radius:6px; border:2px solid #222; cursor:pointer; display:block;" onerror="this.parentElement.style.display='none';" />
+                            <img src="${finalEventImg}" alt="${escapeHtmlText(eventTitle)} flyer" title="View flyer" onclick="openCalendarLightboxModal(${idx})" style="width:85px; height:85px; object-fit:cover; border-radius:6px; border:2px solid var(--card-border-color, #222); cursor:zoom-in; display:block;" onerror="this.parentElement.style.display='none';" />
                         </div>
                     ` : '';
 
@@ -2067,29 +2377,31 @@ async function loadCommunityBulletinFeed() {
                         <div class="divi-event-item" ${winAttrs} style="margin-bottom:15px; padding-bottom:12px; border-bottom:1px dashed var(--card-muted, #ccc); overflow:hidden;">
                             ${thumbnailHtml}
                             <span class="smlc-event-status" style="display:none;"></span>
-                            <div class="divi-event-date" style="font-size:12px; color:var(--primary); font-weight:bold;">${dateText} &bull; ${timeText}</div>
+                            <div class="divi-event-date" style="font-size:0.75rem; color:var(--primary); font-weight:bold;">${dateText} &bull; ${timeText}</div>
                             ${viewerNote ? `<div class="smlc-viewer-time">${viewerNote}</div>` : ''}
-                            <div class="divi-event-title" style="font-size:16px; font-weight:bold; margin: 4px 0;">${eventTitle}</div>
-                            <div class="event-info-text" style="font-size:13px; color:var(--card-text-secondary, #333);">
+                            <div class="divi-event-title" style="font-size:1rem; font-weight:bold; margin: 4px 0;">${eventTitle}</div>
+                            <div class="event-info-text" style="font-size:0.8125rem; color:var(--card-text-secondary, #333);">
                                 <strong>Where:</strong> 
                                 <a href="${turnByTurnNavUrl}" target="_blank" rel="noopener" class="event-nav-link" style="color:var(--primary); font-weight:bold; text-decoration:underline;">
                                     ${eventLoc} &rarr; Directions
                                 </a>
                             </div>
-                            <div class="smlc-event-desc" style="font-size:13px; color:var(--card-text-secondary, #444); margin-top:4px;">${linkifyRawUrls(rawDetails.substring(0, 110))}${rawDetails.length > 110 ? '...' : ''}</div>
+                            ${attachmentChips}
+                            <div class="smlc-event-desc" style="font-size:0.8125rem; color:var(--card-text-secondary, #444); margin-top:4px;">${linkifyRawUrls(rawDetails.substring(0, 110))}${rawDetails.length > 110 ? '...' : ''}</div>
                             
                             <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                                <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:var(--primary); font-weight:bold; cursor:pointer; font-size:12px; text-decoration:underline;">Read Details &rarr;</div>
-                                <span style="color:var(--card-muted, #999); font-size:11px;">|</span>
-                                <a href="${singleGoogleUrl}" target="_blank" rel="noopener" style="font-size:11px; color:#1a73e8; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_google">+ Google Cal</a>
-                                <span style="color:var(--card-muted, #999); font-size:11px;">|</span>
-                                <a href="${singleIcalBlob}" download="${eventTitle.replace(/\s+/g, '_')}.ics" style="font-size:11px; color:#1e7e34; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_ical">+ iCal (.ics)</a>
+                                <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:var(--primary); font-weight:bold; cursor:pointer; font-size:0.75rem; text-decoration:underline;">Read Details &rarr;</div>
+                                <span style="color:var(--card-muted, #999); font-size:0.6875rem;">|</span>
+                                <a href="${singleGoogleUrl}" target="_blank" rel="noopener" style="font-size:0.6875rem; color:#1a73e8; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_google" aria-label="Add ${escapeHtmlText(eventTitle)} to Google Calendar">+ Google Cal</a>
+                                <span style="color:var(--card-muted, #999); font-size:0.6875rem;">|</span>
+                                <a href="#" role="button" onclick="return smlcAddEventToIcs(${idx});" style="font-size:0.6875rem; color:#1e7e34; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_ical" aria-label="Add ${escapeHtmlText(eventTitle)} to Apple or Outlook calendar">+ Apple / Outlook</a>
                             </div>
                         </div>
                     `;
                 }).join('');
 
                 scroller.innerHTML = topBannerHtml + eventsHtml + bottomBannerHtml;
+                publishEventStructuredData(elements);
                 refreshEventStatuses();
                 if (smlcEventStatusTicker) clearInterval(smlcEventStatusTicker);
                 smlcEventStatusTicker = setInterval(refreshEventStatuses, 15000);
@@ -2218,9 +2530,9 @@ async function loadLocalNewsDispatches() {
                     return `
                         <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
                             ${imgUrl ? `<img src="${imgUrl}" alt="" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})">` : ''}
-                            <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-top:10px;">${cleanCalendarDate(story.date)}</div>
-                            <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${cleanTitle}</div>
-                            <div style="font-size:14px; color:var(--card-text-secondary, #444);">${linkifyRawUrls(displayStory)}</div>
+                            <div style="font-size:0.75rem; color:var(--primary); font-weight:bold; margin-top:10px;">${cleanCalendarDate(story.date)}</div>
+                            <div style="font-weight:bold; font-size:1rem; margin:6px 0; color:#1a1a1a;">${cleanTitle}</div>
+                            <div style="font-size:0.875rem; color:var(--card-text-secondary, #444);">${linkifyRawUrls(displayStory)}</div>
                             ${isLong ? `<div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: var(--primary); font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>` : ''}
                         </div>
                     `;
@@ -2274,7 +2586,9 @@ function handleSPAHashNavigation() {
     window.closeMobileMenu();
     ACTIVE_TOWN = getActiveTownConfig();
     document.body.setAttribute("data-town", ACTIVE_TOWN.primaryName.toUpperCase());
-    document.title = `${ACTIVE_TOWN.primaryName}, IL - SMLC Digital Town Square Portal`;
+    document.title = ACTIVE_TOWN.isHome
+        ? 'Clay County, IL Events, News, Gas Prices & Businesses | Support My Local Community'
+        : `${ACTIVE_TOWN.primaryName}, IL Events, News, Gas Prices & Local Businesses | Support My Local Community`;
 
     hydrateTownHeroUI();
     updateNavigationActiveState();
@@ -2314,7 +2628,7 @@ function handleSPAHashNavigation() {
 
         /* ---------- Calendar status badges (colors used nowhere else on the site) ---------- */
         .smlc-event-status { align-items: center; gap: 7px; margin: 0 0 6px; padding: 4px 10px; border-radius: 999px;
-            font: 700 11px/1.2 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; }
+            font: 700 0.6875rem/1.2 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; }
         .smlc-status-starting { background: #00E5FF; color: #00262B; box-shadow: 0 0 10px rgba(0,229,255,.6); }
         .smlc-status-live { background: #FF1F8E; color: #fff; box-shadow: 0 0 14px rgba(255,31,142,.75); animation: smlcLivePulse 1.6s ease-in-out infinite; }
         .smlc-status-ending { background: #B026FF; color: #fff; box-shadow: 0 0 12px rgba(176,38,255,.7); }
@@ -2322,7 +2636,7 @@ function handleSPAHashNavigation() {
         @keyframes smlcLivePulse { 0%,100% { box-shadow: 0 0 8px rgba(255,31,142,.55); } 50% { box-shadow: 0 0 18px rgba(255,31,142,.95); } }
         @keyframes smlcLiveDot { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
         @media (prefers-reduced-motion: reduce) { .smlc-status-live, .smlc-live-dot { animation: none; } }
-        .smlc-viewer-time { margin: 2px 0 4px; font: italic 600 11.5px/1.3 'Libre Baskerville', Georgia, serif; color: var(--card-text-secondary, #444); }
+        .smlc-viewer-time { margin: 2px 0 4px; font: italic 600 0.7188rem/1.3 'Libre Baskerville', Georgia, serif; color: var(--card-text-secondary, #444); }
 
         /* ---------- Readable text on cards in dark mode ---------- */
         @media (prefers-color-scheme: dark) {
@@ -2335,11 +2649,67 @@ function handleSPAHashNavigation() {
             .divi-event-item .event-nav-link, .divi-event-item .read-more-btn, .divi-event-date { color: var(--on-card-accent, #9ccfff) !important; }
         }
 
+        /* ---------- Partner strips: whole cards in one row, no scrollbars, logos never stretched ---------- */
+        html .partners-horizontal-strip { display: flex; flex-wrap: nowrap; justify-content: center; align-items: stretch;
+            gap: 16px; overflow: hidden !important; padding: 4px 8px 10px; scrollbar-width: none; }
+        html .partners-horizontal-strip::-webkit-scrollbar { display: none; }
+        html .partners-horizontal-strip .community-partner-card { flex: 1 1 0; min-width: 0; max-width: 260px; margin: 0; box-sizing: border-box; }
+        html .partners-horizontal-strip .partner-logo-container { height: 90px; width: 100%; box-sizing: border-box; }
+        html .partners-horizontal-strip .partner-logo-container img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
+        html .partners-horizontal-strip .partner-title { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        @media (max-width: 767px) {
+            html .partners-horizontal-strip .community-partner-card { flex: 0 1 88%; max-width: 340px; }
+            html .partners-horizontal-strip .partner-logo-container { height: 105px; }
+        }
+
+        /* ---------- Alt text is for screen readers, search engines and the lightbox only:
+                      never shown as text on the page (e.g. while a picture is loading or broken) ---------- */
+        img { color: transparent; font-size: 0; }
+        #lightbox-target-img { font-size: 0; }
+
+        /* ---------- Event attachments ---------- */
+        .smlc-event-attachments { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }
+        .smlc-attachment-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font: 700 0.75rem 'Oswald', 'Arial Narrow', sans-serif;
+            letter-spacing: .4px; background: rgba(var(--town-primary-rgb, 2,88,163), .12); color: var(--on-card-accent, #0258A3) !important; border: 1px solid currentColor; text-decoration: none; }
+        .smlc-attachment-chip:hover { background: rgba(var(--town-primary-rgb, 2,88,163), .25); }
+
+        /* ---------- Menu dropdowns (Firebase menu entries with sub-links) ---------- */
+        .smlc-menu-dropdown { position: relative; }
+        .smlc-menu-dropdown > details > summary { list-style: none; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 14px; cursor: pointer;
+            color: #fff; font: 700 0.9375rem var(--font-label, 'Oswald', sans-serif); text-transform: uppercase; letter-spacing: 1px; border: 2px solid transparent; border-radius: 8px; }
+        .smlc-menu-dropdown > details > summary::-webkit-details-marker { display: none; }
+        .smlc-menu-dropdown > details[open] > summary, .smlc-menu-dropdown > details > summary:hover { border-color: var(--town-accent, var(--flora-orange, #FFC10E)); background: rgba(0,0,0,.6); }
+        .smlc-dd-caret { font-size: 0.6875rem; }
+        .smlc-submenu { list-style: none; margin: 6px 0 0; padding: 6px; background: #141416; border: 2px solid var(--town-accent, var(--flora-orange, #FFC10E)); border-radius: 10px; min-width: 200px; }
+        @media (min-width: 1024px) { .smlc-submenu { position: absolute; right: 0; top: 100%; z-index: 1100; box-shadow: 0 10px 24px rgba(0,0,0,.7); } }
+        .smlc-submenu a { display: flex !important; width: 100%; box-sizing: border-box; }
+        @media (min-width: 1024px) and (max-width: 1439px) { .smlc-menu-dropdown > details > summary { padding: 6px 9px; font-size: 0.8125rem; letter-spacing: .6px; } }
+
+        /* leave room so snow on top / decorations in the corners of partner cards aren't cut off */
+        html.smlc-fx-on .partners-horizontal-strip { padding: 24px 12px 16px; }
+
+        /* ---------- Header: #0C5E75 behind the header image in daytime (light) view ---------- */
+        @media (prefers-color-scheme: light) {
+            .site-brand-header, body.home-bg > header.header { background: #0C5E75 !important; }
+        }
+
+        /* ---------- Quick Answers (SEO / AEO) ---------- */
+        .smlc-answers { width: var(--container-width, 96%); max-width: var(--content-max, 1680px); margin: 28px auto 36px; padding: 0 clamp(4px, 2vw, 24px); box-sizing: border-box; position: relative; z-index: 1; }
+        .smlc-answers-inner { background: var(--card-surface-bg, #fffdf5); color: var(--card-text-primary, #1a1a1a); border: 2px solid var(--card-border-color, #222);
+            box-shadow: 6px 6px 0 var(--card-shadow-color, #000); border-radius: 8px; padding: clamp(18px, 3vw, 34px); }
+        .smlc-answers-title { margin: 0 0 10px; font: 900 clamp(1.5rem, 3vw, 2.2rem)/1.15 'Playfair Display', Georgia, serif; color: var(--on-card-accent, var(--primary, #0258A3)); }
+        .smlc-answers-lead { margin: 0 0 22px; max-width: 75ch; font-size: clamp(1rem, 1.3vw, 1.12rem); line-height: 1.65; color: var(--card-text-secondary, #333); }
+        .smlc-answers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 14px 28px; }
+        .smlc-answer { padding: 14px 0 0; border-top: 2px solid var(--card-border-color, #222); }
+        .smlc-answer-q { margin: 0 0 6px; font: 700 clamp(1.02rem, 1.3vw, 1.15rem)/1.3 'Playfair Display', Georgia, serif; color: var(--card-text-primary, #1a1a1a); }
+        .smlc-answer-a { margin: 0; font-size: 0.9375rem; line-height: 1.6; color: var(--card-text-secondary, #333); }
+        .smlc-answer-a a, .smlc-answers-lead a { color: var(--on-card-accent, #0258A3); text-decoration: underline; word-break: break-word; }
+
         /* ---------- ScoreStream sports widgets ---------- */
         .smlc-sports-block { margin: 0 0 16px; }
         .smlc-sports-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px;
-            font: 700 13px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; color: var(--card-text-primary, #1a1a1a); }
-        .smlc-sports-link { font-size: 12px; color: var(--on-card-accent, #0258A3) !important; text-decoration: underline; white-space: nowrap; }
+            font: 700 0.8125rem 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; color: var(--card-text-primary, #1a1a1a); }
+        .smlc-sports-link { font-size: 0.75rem; color: var(--on-card-accent, #0258A3) !important; text-decoration: underline; white-space: nowrap; }
         .smlc-sports-block .scorestream-widget-container { min-height: 60px; max-width: 100%; overflow-x: auto; }
 
         /* ---------- Desktop: keep the top menu on one tidy row at every width ---------- */
@@ -2349,9 +2719,16 @@ function handleSPAHashNavigation() {
             .menu-bar .navigation-drawer-panel { flex: 1 1 auto; min-width: 0; justify-content: center; flex-wrap: wrap; gap: 8px; }
             #portal-weather-current-badge { margin-left: 8px !important; flex: 0 0 auto; }
         }
+        @media (max-width: 1023px) {
+            .menu-bar .menu-inner { gap: 10px; }
+            .menu-bar #portal-weather-current-badge { margin-left: auto !important; }
+            .menu-bar .navigation-drawer-panel.drawer-open .menu-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; width: 92%; margin: 0 auto; }
+            .menu-bar .navigation-drawer-panel.drawer-open .menu-links li { width: auto; margin: 0; }
+        }
+        html .partners-horizontal-strip .directory-tile-link { font-size: 0.75rem; letter-spacing: .3px; padding: 8px 6px; white-space: nowrap; }
         @media (min-width: 1024px) and (max-width: 1439px) {
             .menu-bar .menu-links { gap: 4px 6px; }
-            .menu-bar .menu-links a { padding: 6px 9px; font-size: 13px; letter-spacing: .6px; min-height: 44px; gap: 6px; }
+            .menu-bar .menu-links a { padding: 6px 9px; font-size: 0.8125rem; letter-spacing: .6px; min-height: 44px; gap: 6px; }
             .menu-bar .menu-thumb-icon { width: 20px; height: 20px; }
         }
 
@@ -2368,10 +2745,10 @@ function handleSPAHashNavigation() {
         }
         .smlc-bn-btn { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; line-height: 1.15;
             min-height: 48px; padding: 6px 4px; background: none; border: 0; color: #fff; cursor: pointer; text-decoration: none;
-            font: 700 12px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; -webkit-tap-highlight-color: transparent; }
+            font: 700 0.75rem 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; -webkit-tap-highlight-color: transparent; }
         .smlc-bn-btn > svg { width: 24px; height: 24px; margin-bottom: 2px; }
         .smlc-bn-btn svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-        .smlc-bn-btn .smlc-bn-sub { font: 500 10px 'Oswald', sans-serif; letter-spacing: .5px; opacity: .85; text-transform: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .smlc-bn-btn .smlc-bn-sub { font: 500 0.625rem 'Oswald', sans-serif; letter-spacing: .5px; opacity: .85; text-transform: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .smlc-bn-btn.is-active, .smlc-bn-btn[aria-expanded="true"] { color: var(--smlc-bar-accent); }
         .smlc-bn-btn:focus-visible { outline: 3px solid var(--smlc-bar-accent); outline-offset: -3px; }
         .smlc-bn-btn .smlc-bn-caret { transition: transform .2s; }
@@ -2388,20 +2765,20 @@ function handleSPAHashNavigation() {
         @keyframes smlcSheetUp { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
         @media (min-width: 600px) { html.smlc-bn-mode .smlc-bn-sheet.is-open { left: auto; right: auto; width: 420px; }
             html.smlc-bn-mode #smlc-bn-sheet-towns.is-open { left: calc(50% - 210px); } html.smlc-bn-mode #smlc-bn-sheet-more.is-open { right: 8px; } }
-        .smlc-bn-sheet-title { margin: 2px 6px 8px; font: 700 12px 'Oswald', sans-serif; letter-spacing: 1.5px; text-transform: uppercase; color: #bdbdc4; }
+        .smlc-bn-sheet-title { margin: 2px 6px 8px; font: 700 0.75rem 'Oswald', sans-serif; letter-spacing: 1.5px; text-transform: uppercase; color: #bdbdc4; }
         .smlc-bn-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
         .smlc-bn-list a, .smlc-bn-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 10px 14px; box-sizing: border-box;
             background: #1f1f23; border: 1px solid #333; border-radius: 10px; color: #fff; text-decoration: none; cursor: pointer;
-            font: 700 16px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; text-align: left; }
+            font: 700 1rem 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; text-align: left; }
         .smlc-bn-list a:hover, .smlc-bn-row:hover { border-color: var(--smlc-bar-accent); }
         .smlc-bn-list a.is-active { background: var(--smlc-bar-bg); border-color: var(--smlc-bar-accent); }
-        .smlc-bn-list a.is-active::after { content: 'You are here'; margin-left: auto; font: 500 11px 'Oswald', sans-serif; letter-spacing: .5px; text-transform: none; color: var(--smlc-bar-accent); }
+        .smlc-bn-list a.is-active::after { content: 'You are here'; margin-left: auto; font: 500 0.6875rem 'Oswald', sans-serif; letter-spacing: .5px; text-transform: none; color: var(--smlc-bar-accent); }
         .smlc-bn-list img { width: 28px; height: 28px; object-fit: contain; border-radius: 4px; background: rgba(255,255,255,.1); }
-        .smlc-bn-row .smlc-bn-row-detail { margin-left: auto; font: 500 13px 'Oswald', sans-serif; text-transform: none; color: #cfcfd6; }
+        .smlc-bn-row .smlc-bn-row-detail { margin-left: auto; font: 500 0.8125rem 'Oswald', sans-serif; text-transform: none; color: #cfcfd6; }
         .smlc-bn-translate-slot { margin-top: 8px; padding: 10px 14px; background: #1f1f23; border: 1px solid #333; border-radius: 10px; color: #fff; }
         .smlc-bn-translate-slot .smlc-bn-sheet-title { margin: 0 0 6px; }
         .smlc-bn-translate-slot .translate-box-header { position: static !important; display: inline-flex; }
-        .smlc-bn-empty { padding: 10px 6px; color: #bdbdc4; font: italic 14px Georgia, serif; }
+        .smlc-bn-empty { padding: 10px 6px; color: #bdbdc4; font: italic 0.875rem Georgia, serif; }
     `;
     (document.head || document.documentElement).appendChild(style);
 })();
@@ -2540,7 +2917,8 @@ function renderBottomNav() {
         <ul class="smlc-bn-list">
             <li><button type="button" class="smlc-bn-row" id="smlc-bn-weather-row">${SMLC_ICONS.weather}<span>Weather</span><span class="smlc-bn-row-detail" id="smlc-bn-weather-detail">5-Day Forecast</span></button></li>
             ${groups.more.map(linkHtml).join('')}
-            <li><button type="button" class="smlc-bn-row smlc-fx-toggle" onclick="toggleSmlcEffects()" aria-pressed="true"><span>&#10052;</span><span>Weather Effects</span><span class="smlc-bn-row-detail smlc-fx-toggle-state">On</span></button></li>
+            <li><button type="button" class="smlc-bn-row" onclick="openSmlcAccessibilityPanel()"><span aria-hidden="true">&#9855;</span><span>Accessibility</span></button></li>
+            <li><button type="button" class="smlc-bn-row smlc-fx-toggle" onclick="toggleSmlcEffects()" aria-pressed="true"><span aria-hidden="true">&#10052;</span><span>Weather Effects</span><span class="smlc-bn-row-detail smlc-fx-toggle-state">On</span></button></li>
         </ul>
         <div class="smlc-bn-translate-slot"><div class="smlc-bn-sheet-title">Language</div><div id="smlc-bn-translate-target"></div></div>`;
     if (keepTranslate) moreSheet.querySelector('#smlc-bn-translate-target').appendChild(keepTranslate);
@@ -2962,7 +3340,7 @@ function smlcAddFooterToggle() {
     const footer = document.querySelector('#global-footer-container .footer-simple-inner') || document.querySelector('footer');
     if (!footer || footer.querySelector('.smlc-fx-toggle')) return;
     const p = document.createElement('p');
-    p.innerHTML = `<button type="button" class="smlc-fx-toggle smlc-fx-toggle-footer" onclick="toggleSmlcEffects()" aria-pressed="true">&#10052; Weather &amp; holiday effects: <span class="smlc-fx-toggle-state">On</span></button>`;
+    p.innerHTML = `<button type="button" class="smlc-fx-toggle smlc-fx-toggle-footer" onclick="toggleSmlcEffects()" aria-pressed="true"><span aria-hidden="true">&#10052;</span> Weather &amp; holiday effects: <span class="smlc-fx-toggle-state">On</span></button>`;
     footer.appendChild(p);
 }
 
@@ -2995,7 +3373,7 @@ window.smlcWeatherChanged = function () {
     if (document.getElementById('smlc-fx-styles')) return;
     const style = document.createElement('style');
     style.id = 'smlc-fx-styles';
-    const CARDS = '.clay-county-news-box, .news-clipping-wrapper, .newspaper-feed-chassis, .fuel-monitor-billboard-card, .point-of-interest-card, .article-card-chassis, .history-card, .proclamation-card-box, .et_pb_module_heading, .community-partner-card, .slideshow-box';
+    const CARDS = '.smlc-answers-inner, .clay-county-news-box, .news-clipping-wrapper, .newspaper-feed-chassis, .fuel-monitor-billboard-card, .point-of-interest-card, .article-card-chassis, .history-card, .proclamation-card-box, .et_pb_module_heading, .community-partner-card, .slideshow-box';
     const cardList = (suffix) => CARDS.split(',').map(s => s.trim())
         .filter(sel => !(suffix === '::after' && sel === '.et_pb_module_heading'))
         .map(sel => `html.smlc-fx-on ${sel}${suffix}`).join(',\n');
@@ -3065,20 +3443,20 @@ window.smlcWeatherChanged = function () {
         ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-july4')},
         ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-newyear')} {
             position: absolute; right: -6px; bottom: -10px; z-index: 3; pointer-events: none; line-height: 1;
-            font-size: 20px; letter-spacing: -6px; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5));
-            content: '\\1F342\\1F341\\1F342';
+            font-size: 1.25rem; letter-spacing: -6px; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5));
+            content: '\\1F342\\1F341\\1F342'; content: '\\1F342\\1F341\\1F342' / '';
         }
-        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-halloween')} { content: '\\1F342\\1F383'; font-size: 22px; letter-spacing: -4px; }
-        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-thanksgiving')} { content: '\\1F342\\1F33D\\1F383'; letter-spacing: -4px; }
-        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-christmas')} { content: '\\1F384'; font-size: 26px; letter-spacing: 0; bottom: -6px; }
-        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-valentine')} { content: '\\1F495'; letter-spacing: 0; }
-        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-stpatrick')} { content: '\\2618\\FE0F'; letter-spacing: 0; }
-        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-july4')} { content: '\\1F1FA\\1F1F8'; letter-spacing: 0; }
-        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-newyear')} { content: '\\1F389'; letter-spacing: 0; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-halloween')} { content: '\\1F342\\1F383'; content: '\\1F342\\1F383' / ''; font-size: 1.375rem; letter-spacing: -4px; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-thanksgiving')} { content: '\\1F342\\1F33D\\1F383'; content: '\\1F342\\1F33D\\1F383' / ''; letter-spacing: -4px; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-christmas')} { content: '\\1F384'; content: '\\1F384' / ''; font-size: 1.625rem; letter-spacing: 0; bottom: -6px; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-valentine')} { content: '\\1F495'; content: '\\1F495' / ''; letter-spacing: 0; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-stpatrick')} { content: '\\2618\\FE0F'; content: '\\2618\\FE0F' / ''; letter-spacing: 0; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-july4')} { content: '\\1F1FA\\1F1F8'; content: '\\1F1FA\\1F1F8' / ''; letter-spacing: 0; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-newyear')} { content: '\\1F389'; content: '\\1F389' / ''; letter-spacing: 0; }
 
         html.smlc-fx-on .clipping-tag, html.smlc-fx-on .notice-tag-red { z-index: 4; }
         .smlc-fx-toggle-footer { background: transparent; border: 1px solid rgba(255,255,255,.35); color: #fff; border-radius: 999px; padding: 8px 16px; min-height: 40px;
-            font: 700 13px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: .8px; text-transform: uppercase; cursor: pointer; }
+            font: 700 0.8125rem 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: .8px; text-transform: uppercase; cursor: pointer; }
         .smlc-fx-toggle-footer:hover { border-color: var(--town-accent, var(--flora-orange, #FFC10E)); }
         .smlc-fx-toggle[aria-pressed="false"] .smlc-fx-toggle-state { color: #ff8a8a; }
         .smlc-fx-toggle[aria-pressed="true"] .smlc-fx-toggle-state { color: #8affb0; }
@@ -3134,7 +3512,7 @@ window.smlcApplyBranding = function (items) {
         // Header image (menu/0) on every page
         const headerUrl = normalizeImageUrl(list[0].imageUrl);
         if (headerUrl) {
-            document.querySelectorAll('.header-billboard-img, .header-logo').forEach(img => {
+            document.querySelectorAll('.header-billboard-img, .header-logo, .smlc-menu-logo img').forEach(img => {
                 if (img.getAttribute('src') !== headerUrl) img.src = headerUrl;
                 if (!img.alt) img.alt = list[0].alt || 'Support My Local Community';
             });
@@ -3153,6 +3531,27 @@ window.smlcApplyBranding = function (items) {
         console.warn('Branding notice:', e.message);
     }
 };
+
+// Header logo shows up inside the sticky menu bar once the big header image scrolls away
+function smlcSetupScrollLogo() {
+    const inner = document.querySelector('.menu-bar .menu-inner');
+    const banner = document.querySelector('.site-brand-header');
+    if (!inner || !banner || inner.querySelector('.smlc-menu-logo')) return;
+    const bannerImg = banner.querySelector('img');
+    const a = document.createElement('a');
+    a.className = 'smlc-menu-logo';
+    a.href = (document.querySelector('.header-billboard-link') || {}).getAttribute ? (document.querySelector('.header-billboard-link').getAttribute('href') || 'index.html') : 'index.html';
+    a.setAttribute('aria-label', 'Support My Local Community home');
+    a.setAttribute('tabindex', '-1');
+    a.innerHTML = `<img src="${bannerImg ? bannerImg.getAttribute('src') : ''}" alt="">`;
+    inner.insertBefore(a, inner.firstChild);
+    const set = (scrolled) => document.documentElement.classList.toggle('smlc-header-scrolled', scrolled);
+    if ('IntersectionObserver' in window) {
+        new IntersectionObserver(([entry]) => set(!entry.isIntersecting), { threshold: 0 }).observe(banner);
+    } else {
+        window.addEventListener('scroll', () => set(window.scrollY > banner.offsetHeight), { passive: true });
+    }
+}
 
 // "More" dropdown in the top menu (menu items with Category = More)
 function smlcWireMoreMenu(container) {
@@ -3190,6 +3589,14 @@ document.addEventListener('keydown', e => {
         /* Full-width header image on every page */
         .site-brand-header, .site-brand-header .header-billboard-link { display: block; width: 100%; background: #fffdf6 !important; }
         .site-brand-header img.header-billboard-img { width: 100% !important; height: auto !important; max-height: none !important; display: block; object-fit: contain; }
+
+        /* Header logo inside the menu bar after scrolling past the header image */
+        .smlc-menu-logo { display: none; flex: 0 0 auto; align-items: center; margin-right: 12px; }
+        .smlc-menu-logo img { height: 46px; width: auto; max-width: 220px; object-fit: contain; display: block; }
+        html.smlc-header-scrolled .smlc-menu-logo { display: inline-flex; animation: smlcLogoIn .25s ease-out; }
+        @keyframes smlcLogoIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+        @media (min-width: 1024px) { html.smlc-header-scrolled .menu-bar .menu-inner { justify-content: flex-start; } }
+        @media (max-width: 1023px) { .smlc-menu-logo img { height: 38px; max-width: 150px; } }
 
         /* Menu bar: newspaper cream like the SMLC home page */
         html body .menu-bar, html body .header .nav-bar {
@@ -3229,7 +3636,7 @@ document.addEventListener('keydown', e => {
         /* Town images in the menu act as small icons */
         html body .menu-bar .menu-thumb-icon,
         html body .nav-links .menu-thumb-icon {
-            width: 22px !important; height: 22px !important;
+            width: 34px !important; height: 34px !important; object-fit: contain !important;
             background: #fff !important;
             border: 1px solid #222 !important;
             border-radius: 4px !important;
@@ -3298,6 +3705,436 @@ document.addEventListener('keydown', e => {
     smlcApplyNavColors();
 })();
 
+// ============================================================================
+// EVERY PICTURE OPENS IN THE LIGHTBOX
+// Pictures with their own click action keep it; any other picture on the page opens
+// the lightbox with its title, description, link and its alt text (the alt text is
+// only ever shown there, never on the page itself).
+// ============================================================================
+document.addEventListener('click', (e) => {
+    const img = e.target.closest ? e.target.closest('img') : null;
+    if (!img || typeof fireLightbox !== 'function') return;
+    if (img.onclick || img.getAttribute('onclick') || img.classList.contains('lightbox-triggerable-element')) return;
+    if (img.closest('a, button, [onclick], .menu-bar, .smlc-top-nav, #smlc-bottom-nav, .smlc-bn-sheet, #portal-global-lightbox, #weather-fiveday-forecast-modal, .weather-pill, #portal-weather-current-badge, .scorestream-widget-container, .site-brand-header')) return;
+    if (img.dataset.smlcImgFailed === '1' || !img.currentSrc) return;
+    const card = img.closest('.history-card, .clay-county-news-box, .point-of-interest-card, .article-inner-box, .community-partner-card, .news-matrix-card, section, .main-container');
+    const heading = card ? card.querySelector('h1, h2, h3, h4, .biz-title, .partner-title') : null;
+    const d = img.dataset || {};
+    fireLightbox(img.currentSrc || img.src, d.title || (heading ? heading.textContent.trim() : ''), d.date || '', d.desc || '', d.link || '', img.getAttribute('alt') || d.alt || '');
+});
+
+// ============================================================================
+// ACCESSIBILITY (screen readers, keyboard, low vision)
+// Invisible to mouse/touch users. Adds:
+//  - popups (lightbox, forecast, alerts, phone menus) announced as dialogs, focus moved in,
+//    Tab kept inside, Esc closes, focus returned afterwards
+//  - every clickable picture / card reachable with Tab and opened with Enter or Space
+//  - the two pills announced as tabs ("Local Events & News, tab, selected")
+//  - polite announcements when sections change or content finishes loading
+//  - matches device settings: increased contrast, forced colors, larger text
+//  - optional Accessibility panel: bigger text, high contrast, underlined links,
+//    easy-to-read font, background effects off (saved on the device)
+// ============================================================================
+const SMLC_A11Y_KEY = 'smlc-a11y';
+let smlcA11yPrefs = { text: 0, contrast: false, underline: false, readable: false };
+
+// ---------- polite screen-reader announcements ----------
+function smlcAnnounce(message) {
+    let region = document.getElementById('smlc-live-region');
+    if (!region) {
+        region = document.createElement('div');
+        region.id = 'smlc-live-region';
+        region.className = 'smlc-sr-only';
+        region.setAttribute('aria-live', 'polite');
+        region.setAttribute('aria-atomic', 'true');
+        document.body.appendChild(region);
+    }
+    region.textContent = '';
+    setTimeout(() => { region.textContent = message; }, 60);
+}
+window.smlcAnnounce = smlcAnnounce;
+
+// ---------- dialogs: focus in, Tab trapped, Esc closes, focus returned ----------
+const SMLC_FOCUSABLE = 'a[href], button:not([disabled]), input, select, textarea, summary, [tabindex]:not([tabindex="-1"])';
+const smlcOpenDialogs = [];
+
+function smlcDialogIsOpen(overlay) {
+    return overlay && overlay.isConnected && getComputedStyle(overlay).display !== 'none' && getComputedStyle(overlay).visibility !== 'hidden';
+}
+
+function smlcRegisterDialog(overlay, panel, labelEl, closeFn) {
+    if (!overlay || overlay.dataset.smlcDialog === '1') return;
+    overlay.dataset.smlcDialog = '1';
+    const target = panel || overlay;
+    target.setAttribute('role', 'dialog');
+    target.setAttribute('aria-modal', 'true');
+    if (labelEl) { if (!labelEl.id) labelEl.id = 'smlc-dlg-' + Math.random().toString(36).slice(2, 8); target.setAttribute('aria-labelledby', labelEl.id); }
+    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+    let wasOpen = smlcDialogIsOpen(overlay);
+    const onChange = () => {
+        const open = smlcDialogIsOpen(overlay);
+        if (open && !wasOpen) {
+            const entry = { overlay, target, closeFn, returnTo: document.activeElement };
+            smlcOpenDialogs.push(entry);
+            setTimeout(() => {
+                const closeBtn = target.querySelector('.lightbox-close-btn, button[aria-label="Close"], button');
+                (closeBtn || target).focus({ preventScroll: true });
+            }, 30);
+        } else if (!open && wasOpen) {
+            const idx = smlcOpenDialogs.findIndex(d => d.overlay === overlay);
+            if (idx > -1) {
+                const entry = smlcOpenDialogs.splice(idx, 1)[0];
+                if (entry.returnTo && entry.returnTo.isConnected && typeof entry.returnTo.focus === 'function') entry.returnTo.focus({ preventScroll: true });
+            }
+        }
+        wasOpen = open;
+    };
+    new MutationObserver(onChange).observe(overlay, { attributes: true, attributeFilter: ['style', 'class'] });
+}
+
+document.addEventListener('keydown', (e) => {
+    const top = smlcOpenDialogs[smlcOpenDialogs.length - 1];
+    if (!top || !smlcDialogIsOpen(top.overlay)) return;
+    if (e.key === 'Escape') { e.preventDefault(); top.closeFn(); return; }
+    if (e.key === 'Tab') {
+        const items = Array.from(top.target.querySelectorAll(SMLC_FOCUSABLE)).filter(el => el.offsetParent !== null || el === document.activeElement);
+        if (!items.length) { e.preventDefault(); return; }
+        const first = items[0], last = items[items.length - 1];
+        if (e.shiftKey && (document.activeElement === first || !top.target.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && (document.activeElement === last || !top.target.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+    }
+});
+
+function smlcWireKnownDialogs() {
+    const lb = document.getElementById('portal-global-lightbox');
+    if (lb) {
+        const closeBtn = lb.querySelector('.lightbox-close-btn');
+        if (closeBtn && !closeBtn.getAttribute('aria-label')) closeBtn.setAttribute('aria-label', 'Close');
+        smlcRegisterDialog(lb, lb.querySelector('.lightbox-modal-window'), document.getElementById('lightbox-target-title'), () => { lb.style.display = 'none'; });
+    }
+    const fc = document.getElementById('weather-fiveday-forecast-modal');
+    if (fc) smlcRegisterDialog(fc, fc.firstElementChild, fc.querySelector('span'), () => { fc.style.display = 'none'; });
+    const wa = document.getElementById('weather-alert-popup-modal');
+    if (wa) smlcRegisterDialog(wa, wa.firstElementChild, wa.querySelector('h2, h3, strong'), () => { if (typeof window.hideWeatherAlertModalPopup === 'function') window.hideWeatherAlertModalPopup(); else wa.style.display = 'none'; });
+    ['towns', 'more'].forEach(w => {
+        const sh = document.getElementById(`smlc-bn-sheet-${w}`);
+        if (sh) smlcRegisterDialog(sh, sh, sh.querySelector('.smlc-bn-sheet-title'), () => closeBottomNavSheets());
+    });
+    const ap = document.getElementById('smlc-a11y-panel');
+    if (ap) smlcRegisterDialog(ap, ap.querySelector('.smlc-a11y-card'), ap.querySelector('h2'), () => { ap.hidden = true; ap.style.display = 'none'; });
+}
+
+// ---------- make mouse-only click targets work with the keyboard ----------
+const SMLC_CLICKABLE_SELECTOR = [
+    'img[onclick]', 'img.lightbox-triggerable-element', '#point-of-interest-img-1', '#point-of-interest-img-2',
+    '#spotlight-asset-img', '#article-img', '.slider-slide img', '.partner-logo-asset', '.history-card',
+    '.read-more-btn', '.read-more-trigger', '#fuel-monitor-target-box', '#portal-weather-current-badge',
+    'div[onclick]', 'span[onclick]', 'main img'
+].join(', ');
+
+function smlcEnhanceClickables(root = document) {
+    root.querySelectorAll(SMLC_CLICKABLE_SELECTOR).forEach(el => {
+        if (el.dataset.smlcKb === '1') return;
+        if (el.closest('a, button, summary, .scorestream-widget-container, .site-brand-header, #portal-global-lightbox')) return;
+        if (el.matches('.lightbox-overlay-mask, .slider-viewport')) return;
+        if (el.tagName === 'IMG' && (el.dataset.smlcImgFailed === '1' || el.closest('.menu-bar, .weather-pill, #fuel-monitor-target-box, .history-card, .station-logo-frame'))) return;
+        el.dataset.smlcKb = '1';
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('role', 'button');
+        if (el.tagName === 'IMG') {
+            const alt = (el.getAttribute('alt') || '').trim();
+            el.setAttribute('aria-label', alt ? `Open picture: ${alt}` : 'Open picture');
+        } else if (el.id === 'fuel-monitor-target-box') {
+            el.setAttribute('aria-label', 'Fuel prices. Open the fuel price page');
+        } else if (el.id === 'portal-weather-current-badge') {
+            el.setAttribute('aria-label', 'Current weather. Open the 5-day forecast');
+        } else if (el.classList.contains('history-card')) {
+            const t = el.querySelector('h3'); const y = el.querySelector('h2');
+            el.setAttribute('aria-label', `Read more: ${(y ? y.textContent + ', ' : '')}${t ? t.textContent : 'history'}`);
+        }
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
+        });
+    });
+}
+
+// ---------- pills as tabs ----------
+function smlcSetupPillTabs() {
+    const nav = document.querySelector('.portal-pill-tabs-nav');
+    if (!nav || nav.dataset.smlcTabs === '1') return;
+    const tabs = Array.from(nav.querySelectorAll('.portal-pill-btn'));
+    if (!tabs.length) return;
+    nav.dataset.smlcTabs = '1';
+    const list = document.createElement('div');
+    list.className = 'smlc-pill-tablist';
+    list.setAttribute('role', 'tablist');
+    list.setAttribute('aria-label', 'Page sections');
+    nav.insertBefore(list, tabs[0]);
+    tabs.forEach((btn, i) => {
+        list.appendChild(btn);
+        const m = (btn.getAttribute('onclick') || '').match(/'(pill-panel-[\w-]+)'/);
+        const panel = m ? document.getElementById(m[1]) : null;
+        if (!btn.id) btn.id = `smlc-pill-tab-${i}`;
+        btn.setAttribute('role', 'tab');
+        if (panel) {
+            btn.setAttribute('aria-controls', panel.id);
+            panel.setAttribute('role', 'tabpanel');
+            panel.setAttribute('aria-labelledby', btn.id);
+        }
+        btn.addEventListener('keydown', (e) => {
+            if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) return;
+            e.preventDefault();
+            let n = e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : (i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+            tabs[n].focus(); tabs[n].click();
+        });
+    });
+    const sync = () => tabs.forEach(b => {
+        const sel = b.classList.contains('active');
+        b.setAttribute('aria-selected', sel ? 'true' : 'false');
+        b.setAttribute('tabindex', sel ? '0' : '-1');
+    });
+    sync();
+    const original = window.switchPortalPill;
+    window.switchPortalPill = function (btn, panelId) {
+        if (typeof original === 'function') original(btn, panelId);
+        sync();
+        if (btn) smlcAnnounce(`Showing ${btn.textContent.trim()}`);
+    };
+}
+
+// ---------- headings in order + regions named ----------
+function smlcFixStructure() {
+    document.querySelectorAll('.widescreen-strip-container').forEach((strip, i) => {
+        if (strip.querySelector('.smlc-sr-heading')) return;
+        const h = document.createElement('h2');
+        h.className = 'smlc-sr-only smlc-sr-heading';
+        h.textContent = i === 0 ? 'Local partners' : 'More local partners';
+        strip.insertBefore(h, strip.firstChild);
+        strip.setAttribute('role', 'region');
+        strip.setAttribute('aria-label', h.textContent);
+    });
+    const billboard = document.querySelector('.header-billboard-link');
+    if (billboard && !billboard.getAttribute('aria-label')) billboard.setAttribute('aria-label', 'Support My Local Community home');
+    ['bulletin-scroller-target', 'news-matrix-target'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && /Loading/i.test(el.textContent)) el.setAttribute('aria-busy', 'true');
+    });
+}
+
+// partner names / event titles: real heading levels (h3 under the section h2)
+function smlcFixPartnerHeadings(root) {
+    root.querySelectorAll('h4.partner-title').forEach(h4 => {
+        const h3 = document.createElement('h3');
+        h3.className = h4.className; h3.innerHTML = h4.innerHTML;
+        h4.replaceWith(h3);
+    });
+}
+
+// ---------- preferences ----------
+function smlcLoadA11yPrefs() {
+    try { Object.assign(smlcA11yPrefs, JSON.parse(localStorage.getItem(SMLC_A11Y_KEY) || '{}')); } catch (e) {}
+}
+function smlcSaveA11yPrefs() {
+    try { localStorage.setItem(SMLC_A11Y_KEY, JSON.stringify(smlcA11yPrefs)); } catch (e) {}
+}
+function smlcApplyA11yPrefs() {
+    const root = document.documentElement;
+    let deviceContrast = false;
+    try { deviceContrast = window.matchMedia('(prefers-contrast: more)').matches; } catch (e) {}
+    root.classList.toggle('smlc-a11y-text-1', smlcA11yPrefs.text === 1);
+    root.classList.toggle('smlc-a11y-text-2', smlcA11yPrefs.text === 2);
+    root.classList.toggle('smlc-hc', !!smlcA11yPrefs.contrast || deviceContrast);
+    root.classList.toggle('smlc-underline', !!smlcA11yPrefs.underline);
+    root.classList.toggle('smlc-readable', !!smlcA11yPrefs.readable);
+    if (smlcA11yPrefs.readable && !document.getElementById('smlc-readable-font')) {
+        const l = document.createElement('link');
+        l.id = 'smlc-readable-font'; l.rel = 'stylesheet';
+        l.href = 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap';
+        document.head.appendChild(l);
+    }
+    smlcSyncA11yPanel();
+    if (typeof window.smlcRefitPartnerStrips === 'function') setTimeout(window.smlcRefitPartnerStrips, 50);
+}
+
+function smlcSyncA11yPanel() {
+    const panel = document.getElementById('smlc-a11y-panel');
+    if (!panel) return;
+    panel.querySelectorAll('[data-a11y-text]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.a11yText === smlcA11yPrefs.text)));
+    const set = (key, val) => { const el = panel.querySelector(`[data-a11y="${key}"]`); if (el) el.checked = !!val; };
+    set('contrast', smlcA11yPrefs.contrast); set('underline', smlcA11yPrefs.underline); set('readable', smlcA11yPrefs.readable);
+    set('effects', typeof SMLC_FX !== 'undefined' ? SMLC_FX.enabled : true);
+}
+
+window.openSmlcAccessibilityPanel = function () {
+    let panel = document.getElementById('smlc-a11y-panel');
+    if (!panel) {
+        panel = document.createElement('div');
+        panel.id = 'smlc-a11y-panel';
+        panel.className = 'smlc-a11y-overlay';
+        panel.innerHTML = `
+            <div class="smlc-a11y-card">
+                <div class="smlc-a11y-head"><h2>Accessibility</h2><button type="button" class="smlc-a11y-close" aria-label="Close">&times;</button></div>
+                <p class="smlc-a11y-intro">Adjust the site to make it easier to read. Your choices are saved on this device.</p>
+                <fieldset class="smlc-a11y-group"><legend>Text size</legend>
+                    <div class="smlc-a11y-seg">
+                        <button type="button" data-a11y-text="0" aria-pressed="true">Normal</button>
+                        <button type="button" data-a11y-text="1" aria-pressed="false">Large</button>
+                        <button type="button" data-a11y-text="2" aria-pressed="false">Larger</button>
+                    </div>
+                </fieldset>
+                <label class="smlc-a11y-switch"><input type="checkbox" data-a11y="contrast"><span>High contrast</span></label>
+                <label class="smlc-a11y-switch"><input type="checkbox" data-a11y="underline"><span>Underline all links</span></label>
+                <label class="smlc-a11y-switch"><input type="checkbox" data-a11y="readable"><span>Easy-to-read font</span></label>
+                <label class="smlc-a11y-switch"><input type="checkbox" data-a11y="effects"><span>Weather &amp; holiday effects</span></label>
+                <div class="smlc-a11y-actions"><button type="button" class="smlc-a11y-reset">Reset to default</button><button type="button" class="smlc-a11y-done">Done</button></div>
+            </div>`;
+        document.body.appendChild(panel);
+        const close = () => { panel.style.display = 'none'; };
+        panel.addEventListener('click', (e) => { if (e.target === panel) close(); });
+        panel.querySelector('.smlc-a11y-close').addEventListener('click', close);
+        panel.querySelector('.smlc-a11y-done').addEventListener('click', close);
+        panel.querySelectorAll('[data-a11y-text]').forEach(b => b.addEventListener('click', () => {
+            smlcA11yPrefs.text = +b.dataset.a11yText; smlcSaveA11yPrefs(); smlcApplyA11yPrefs();
+            smlcAnnounce(`Text size ${b.textContent}`);
+        }));
+        panel.querySelectorAll('input[data-a11y]').forEach(inp => inp.addEventListener('change', () => {
+            const key = inp.dataset.a11y;
+            if (key === 'effects') {
+                if (typeof SMLC_FX !== 'undefined' && SMLC_FX.enabled !== inp.checked) window.toggleSmlcEffects();
+            } else {
+                smlcA11yPrefs[key] = inp.checked; smlcSaveA11yPrefs(); smlcApplyA11yPrefs();
+            }
+            smlcAnnounce(`${inp.nextElementSibling.textContent} ${inp.checked ? 'on' : 'off'}`);
+        }));
+        panel.querySelector('.smlc-a11y-reset').addEventListener('click', () => {
+            smlcA11yPrefs = { text: 0, contrast: false, underline: false, readable: false };
+            smlcSaveA11yPrefs(); smlcApplyA11yPrefs();
+            if (typeof SMLC_FX !== 'undefined' && !SMLC_FX.enabled) window.toggleSmlcEffects();
+            smlcSyncA11yPanel();
+            smlcAnnounce('Accessibility settings reset');
+        });
+        smlcWireKnownDialogs();
+    }
+    if (typeof closeBottomNavSheets === 'function') closeBottomNavSheets();
+    smlcSyncA11yPanel();
+    panel.style.display = 'flex';
+};
+
+function smlcAddA11yEntryPoints() {
+    const footer = document.querySelector('#global-footer-container .footer-simple-inner') || document.querySelector('footer');
+    if (footer && !footer.querySelector('.smlc-a11y-open')) {
+        const p = document.createElement('p');
+        p.innerHTML = `<button type="button" class="smlc-a11y-open smlc-fx-toggle-footer" onclick="openSmlcAccessibilityPanel()"><span aria-hidden="true">&#9855;</span> Accessibility options</button>`;
+        footer.appendChild(p);
+    }
+}
+
+function initAccessibility() {
+    smlcLoadA11yPrefs();
+    smlcApplyA11yPrefs();
+    smlcAddA11yEntryPoints();
+    smlcSetupPillTabs();
+    smlcFixStructure();
+    smlcWireKnownDialogs();
+    smlcEnhanceClickables();
+    smlcFixPartnerHeadings(document);
+    try {
+        const mq = window.matchMedia('(prefers-contrast: more)');
+        const h = () => smlcApplyA11yPrefs();
+        if (mq.addEventListener) mq.addEventListener('change', h); else mq.addListener(h);
+    } catch (e) {}
+
+    // content arrives later from Firebase: keep enhancing + announce finished loads
+    let pending = null;
+    new MutationObserver((muts) => {
+        clearTimeout(pending);
+        pending = setTimeout(() => {
+            smlcEnhanceClickables();
+            smlcFixPartnerHeadings(document);
+            smlcWireKnownDialogs();
+            ['bulletin-scroller-target', 'news-matrix-target'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.getAttribute('aria-busy') === 'true' && !/Loading/i.test(el.textContent)) {
+                    el.setAttribute('aria-busy', 'false');
+                }
+            });
+        }, 150);
+    }).observe(document.body, { childList: true, subtree: true });
+}
+
+(function injectA11yStyles() {
+    if (document.getElementById('smlc-a11y-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'smlc-a11y-styles';
+    style.textContent = `
+        .smlc-sr-only { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important;
+            overflow: hidden !important; clip: rect(0 0 0 0) !important; white-space: nowrap !important; border: 0 !important; }
+        .smlc-pill-tablist { display: contents; }
+
+        /* a clear focus ring that shows on light AND dark backgrounds (keyboard only) */
+        :focus-visible { outline: 3px solid var(--town-accent, var(--flora-orange, #FFC10E)) !important; outline-offset: 2px !important; box-shadow: 0 0 0 6px rgba(0,0,0,.85) !important; }
+        [role="button"][tabindex="0"] { cursor: pointer; }
+
+        /* accent text on dark cards in night view stays readable */
+        @media (prefers-color-scheme: dark) {
+            .biz-location, .read-more-trigger { color: var(--on-card-accent, #9ccfff) !important; }
+        }
+
+        /* text size: the whole site scales from the root size */
+        html.smlc-a11y-text-1 { font-size: 118.75%; }
+        html.smlc-a11y-text-2 { font-size: 137.5%; }
+
+        /* underline links */
+        html.smlc-underline a { text-decoration: underline !important; text-underline-offset: 2px; }
+
+        /* easy-to-read font */
+        html.smlc-readable body, html.smlc-readable body *:not(.smlc-sr-only) { font-family: 'Atkinson Hyperlegible', Verdana, Tahoma, Arial, sans-serif !important; letter-spacing: .01em !important; }
+
+        /* high contrast (device "Increase contrast" or the Accessibility panel) */
+        html.smlc-hc body { background: #000 !important; }
+        html.smlc-hc #smlc-fx-canvas { display: none !important; }
+        html.smlc-hc body :is(main, section, article, header, footer, nav, div, p, span, li, h1, h2, h3, h4, h5, h6, figure, figcaption, strong, em, label, legend, fieldset):not(.smlc-event-status):not(.smlc-event-status *):not(.price-box *):not(.smlc-img-unavailable) {
+            background-color: #000 !important; background-image: none !important; color: #fff !important; text-shadow: none !important; box-shadow: none !important; filter: none !important; }
+        html.smlc-hc body :is(a, a *) { color: #ffeb3b !important; text-decoration: underline !important; }
+        html.smlc-hc body :is(button, summary, .portal-pill-btn, .weather-pill, .directory-tile-link, .event-clipping-btn, .fb-action-btn, .spotlight-btn, .town-directory-interactive-btn, .smlc-bn-btn, .smlc-bn-row) {
+            background: #000 !important; color: #fff !important; border: 2px solid #fff !important; text-shadow: none !important; box-shadow: none !important; }
+        html.smlc-hc body .portal-pill-btn.active, html.smlc-hc body .portal-pill-btn[aria-selected="true"] { background: #fff !important; color: #000 !important; }
+        html.smlc-hc body :is(.clay-county-news-box, .news-clipping-wrapper, .newspaper-feed-chassis, .news-matrix-card, .fuel-monitor-billboard-card, .point-of-interest-card, .article-inner-box, .history-card, .proclamation-card-box, .community-partner-card, .smlc-answers-inner, .et_pb_module_heading, .lightbox-modal-window, .smlc-bn-sheet, .smlc-a11y-card) {
+            border: 2px solid #fff !important; outline: none !important; }
+        html.smlc-hc body .smlc-event-status { background: #fff !important; color: #000 !important; box-shadow: none !important; animation: none !important; }
+        html.smlc-hc body *::before, html.smlc-hc body *::after { text-shadow: none; }
+        html.smlc-hc.smlc-fx-on .clay-county-news-box::after, html.smlc-hc.smlc-fx-on *::after { content: none !important; }
+
+        /* Windows High Contrast / forced colors */
+        @media (forced-colors: active) {
+            #smlc-fx-canvas { display: none !important; }
+            html.smlc-fx-on *::before, html.smlc-fx-on *::after { content: none !important; }
+            .portal-pill-btn, .weather-pill, .smlc-bn-btn, .directory-tile-link { border: 2px solid ButtonText !important; }
+            .smlc-event-status { border: 2px solid CanvasText; }
+        }
+
+        /* Accessibility panel */
+        .smlc-a11y-overlay { position: fixed; inset: 0; z-index: 10050; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,.75); }
+        .smlc-a11y-card { width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto; background: #141416; color: #fff; border: 2px solid var(--town-accent, #FFC10E); border-radius: 14px; padding: 18px 20px; box-sizing: border-box; }
+        .smlc-a11y-head { display: flex; justify-content: space-between; align-items: center; }
+        .smlc-a11y-head h2 { margin: 0; font: 700 1.4rem 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; }
+        .smlc-a11y-close { min-width: 44px; min-height: 44px; background: none; border: 0; color: #fff; font-size: 1.8rem; cursor: pointer; }
+        .smlc-a11y-intro { margin: 6px 0 14px; color: #d4d4d8; font-size: .95rem; line-height: 1.5; }
+        .smlc-a11y-group { border: 0; margin: 0 0 12px; padding: 0; }
+        .smlc-a11y-group legend { font: 700 .85rem 'Oswald', sans-serif; letter-spacing: 1px; text-transform: uppercase; color: #bdbdc4; margin-bottom: 6px; }
+        .smlc-a11y-seg { display: flex; gap: 6px; }
+        .smlc-a11y-seg button { flex: 1; min-height: 44px; background: #1f1f23; color: #fff; border: 1px solid #444; border-radius: 8px; font: 700 .95rem 'Oswald', sans-serif; cursor: pointer; }
+        .smlc-a11y-seg button[aria-pressed="true"] { background: var(--town-accent, #FFC10E); color: var(--town-on-accent, #000); border-color: var(--town-accent, #FFC10E); }
+        .smlc-a11y-switch { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 12px; margin: 0 0 8px; background: #1f1f23; border: 1px solid #333; border-radius: 10px; cursor: pointer; font-size: 1rem; }
+        .smlc-a11y-switch input { width: 22px; height: 22px; accent-color: var(--town-accent, #FFC10E); }
+        .smlc-a11y-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 14px; }
+        .smlc-a11y-actions button { min-height: 44px; padding: 8px 16px; border-radius: 8px; font: 700 .95rem 'Oswald', sans-serif; letter-spacing: .5px; cursor: pointer; }
+        .smlc-a11y-reset { background: none; color: #fff; border: 1px solid #666; }
+        .smlc-a11y-done { background: var(--town-accent, #FFC10E); color: var(--town-on-accent, #000); border: 0; }
+    `;
+    (document.head || document.documentElement).appendChild(style);
+})();
+
 // === DOM EVENT LISTENERS ===
 window.addEventListener('hashchange', () => {
     handleSPAHashNavigation();
@@ -3310,4 +4147,6 @@ window.addEventListener('DOMContentLoaded', () => {
     handleSPAHashNavigation();
     startCentralFooterClock();
     initWeatherHolidayEffects();
+    initAccessibility();
+    smlcSetupScrollLogo();
 });

@@ -14,10 +14,10 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Use Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 24.x
 
       - name: Install dependencies
         run: npm install firebase rss-parser cheerio
