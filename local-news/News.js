@@ -322,10 +322,50 @@ function cleanLink(rawLink) {
     if (rawLink.includes("google.com/url?") || rawLink.includes("google.com/alerts/url?")) {
         const urlMatch = rawLink.match(/(?:url|q)=([^&]+)/);
         if (urlMatch && urlMatch[1]) {
-            return decodeURIComponent(urlMatch[1]);
+            return stripLocaleParams(decodeURIComponent(urlMatch[1]));
         }
     }
-    return rawLink;
+    return stripLocaleParams(rawLink);
+}
+
+/** Removes ?locale=fo_FO / hl= / lang= so links open in the reader's own language */
+function stripLocaleParams(url) {
+    try {
+        const u = new URL(url);
+        ["locale", "hl", "lang", "_fb_noscript"].forEach(k => u.searchParams.delete(k));
+        return u.toString();
+    } catch (e) {
+        return url;
+    }
+}
+
+// Sites Google Alerts picks up that are not news (personal info / classifieds)
+const ALERT_BLOCKED_SITES = [
+    "411.com", "whitepages.com", "spokeo.com", "beenverified.com", "truepeoplesearch.com",
+    "fastpeoplesearch.com", "peoplefinders.com", "radaris.com", "mylife.com", "intelius.com",
+    "instantcheckmate.com", "truthfinder.com", "zabasearch.com", "peekyou.com", "addresses.com",
+    "anywho.com", "usphonebook.com", "clustrmaps.com", "nuwber.com", "thatsthem.com",
+    "familytreenow.com", "searchpeoplefree.com", "peoplesearchnow.com", "cyberbackgroundchecks.com",
+    "ancientfaces.com", "zillow.com", "realtor.com", "trulia.com", "redfin.com", "homes.com",
+    "craigslist.org", "ebay.com", "amazon.com", "yelp.com", "mapquest.com", "manta.com", "bizapedia.com"
+];
+
+/** Returns why a Google Alert item should be skipped, or "" to keep it */
+function googleAlertJunkReason(title, link, rawLink = "") {
+    // Google indexed the page in another language (e.g. ?locale=fo_FO), so its snippet is foreign
+    const loc = decodeURIComponent(String(rawLink)).match(/[?&](?:locale|hl|lang)=([a-z]{2,3})/i);
+    if (loc && loc[1].toLowerCase() !== "en") return "page in another language (" + loc[1] + ")";
+    let host = "", path = "";
+    try { const u = new URL(link); host = u.hostname.toLowerCase().replace(/^www\./, ""); path = u.pathname.toLowerCase(); } catch (e) { return "bad link"; }
+    if (ALERT_BLOCKED_SITES.some(site => host === site || host.endsWith("." + site))) return "people-search / listing site";
+    if (/facebook\.com$/.test(host) && /^\/(marketplace|groups\/[^/]+\/buy_sell|people|profile\.php)/.test(path)) return "Facebook Marketplace / profile";
+    if (/person-search|people-search|\/person\/|\/people\//.test(path)) return "people-search page";
+    if (/\|\s*(address|phone|age)\b|\bage\s*\d{2}\+/i.test(title)) return "personal-info listing";
+    // Mostly non-English titles (letters outside basic Latin, or common foreign words)
+    const letters = (title.match(/\p{L}/gu) || []).length;
+    const nonAscii = (title.match(/[^\x00-\x7F]/g) || []).length;
+    if (letters && nonAscii / letters > 0.08) return "not English";
+    return "";
 }
 
 /** "www.wandtv.com" -> "wandtv.com" (shown as "Read at wandtv.com") */
@@ -450,6 +490,16 @@ async function fetchAllFeedItems() {
             for (const item of feed.items) {
                 const itemTitle = cleanTitle(item.title);
                 const itemLink = cleanLink(item.link || source.url);
+
+                // Google Alerts also returns people-search pages, Facebook Marketplace
+                // listings and pages forced into other languages - skip those.
+                if (isGoogleAlert) {
+                    const junkReason = googleAlertJunkReason(itemTitle, itemLink, item.link || "");
+                    if (junkReason) {
+                        console.log(`[ALERT SKIPPED] ${junkReason}: "${itemTitle}"`);
+                        continue;
+                    }
+                }
                 let itemStory = cleanStoryText(item.contentEncoded || item.content || item.contentSnippet || item.summary || item.description || "");
                 const itemSummary = cleanStoryText(item.contentSnippet || item.summary || item.description || item.content || "").slice(0, 500);
                 let itemImage = extractImageFromFeed(item);
