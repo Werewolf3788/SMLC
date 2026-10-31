@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: v3.6.0
+   Active Version: v3.7.0
    File: universaltown.js
    Project: SMLC County Portal Semantic Master Script
    Description: Complete multi-town engine connecting 100% to Firebase (RTDB & Firestore).
@@ -21,6 +21,9 @@
                 - Dynamic GA4 Tag Injection (G-FHJNXDB9BB) with SPA Hash Route Pageview Tracking
                 - Town-specific & countywide Sports Scoreboard Engine
                 - Persistent 24-hour New York timestamp & version in footer
+                - v3.7.0: Accessibility: dialogs (focus, Esc, Tab trap), keyboard-reachable pictures/cards,
+                  pills as tabs, announcements, decorations hidden from screen readers, heading order,
+                  text sizes in rem, device contrast/forced colors, Accessibility panel
                 - v3.6.0: Events read from Firestore /smlc_events (2 months ahead) with attachment thumbnails,
                   attachment links + lightbox; every picture opens the lightbox; alt text only shown there
                 - v3.5.0: Partner strips show only whole cards (5+ on desktop), refit on resize, no scrollbars
@@ -765,12 +768,12 @@ const SMLC_IMG_SKIP_SELECTOR = '.menu-thumb-icon, .weather-icon-img, .weather-pi
             width: 100%; min-height: 140px; height: 100%; padding: 14px; box-sizing: border-box; text-align: center;
             background: repeating-linear-gradient(45deg, #1b1b1d, #1b1b1d 10px, #222225 10px, #222225 20px);
             color: #e8e8e8; border: 2px dashed #6b6b70; border-radius: 6px;
-            font: 700 14px/1.3 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: .5px; text-transform: uppercase; }
-        .smlc-img-unavailable-icon { font-size: 26px; line-height: 1; }
+            font: 700 0.875rem/1.3 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: .5px; text-transform: uppercase; }
+        .smlc-img-unavailable-icon { font-size: 1.625rem; line-height: 1; }
         .point-of-interest-img-wrap .smlc-img-unavailable { aspect-ratio: 4 / 3; height: auto; }
         .slider-slide .smlc-img-unavailable { position: absolute; inset: 0; border-radius: 0; }
-        .partner-logo-container .smlc-img-unavailable { min-height: 0; font-size: 11px; padding: 6px; border-width: 1px; }
-        .partner-logo-container .smlc-img-unavailable-icon { font-size: 16px; }
+        .partner-logo-container .smlc-img-unavailable { min-height: 0; font-size: 0.6875rem; padding: 6px; border-width: 1px; }
+        .partner-logo-container .smlc-img-unavailable-icon { font-size: 1rem; }
         #lightbox-img-wrapper .smlc-img-unavailable { min-height: 180px; }
     `;
     (document.head || document.documentElement).appendChild(style);
@@ -875,7 +878,7 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = ""
     const parsedAlt = linkifyRawUrls(cleanAlt || '');
 
     const displayStory = (cleanAlt && cleanAlt !== cleanTitle) 
-        ? `<div class="smlc-lightbox-alt" style="font-style:italic; font-size:14px; color:var(--card-text-secondary, #444); margin-bottom:12px; border-left:3px solid var(--primary); padding-left:10px;">Image description: ${parsedAlt}</div>${parsedBody}`
+        ? `<div class="smlc-lightbox-alt" style="font-style:italic; font-size:0.875rem; color:var(--card-text-secondary, #444); margin-bottom:12px; border-left:3px solid var(--primary); padding-left:10px;">Image description: ${parsedAlt}</div>${parsedBody}`
         : parsedBody;
 
     const storyEl = document.getElementById('lightbox-target-story'); 
@@ -1081,16 +1084,16 @@ function showWeatherAlertModalPopup(headline, instruction, severity, updatedCdt,
     popupOverlay.innerHTML = `
         <div style="background:#fff; border-top:6px solid ${themeColor}; border-radius:8px; max-width:550px; width:100%; box-shadow:0 12px 32px rgba(0,0,0,0.4); overflow:hidden; font-family:sans-serif; text-align:left;">
             <div style="background:#f8f9fa; padding:14px 20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:12px; font-weight:bold; color:${themeColor}; text-transform:uppercase; letter-spacing:0.5px;">EMERGENCY BULLETIN &bull; ${severity}</span>
-                <button type="button" onclick="hideWeatherAlertModalPopup()" style="background:none; border:none; font-size:22px; line-height:1; cursor:pointer; color:#666;">&times;</button>
+                <span style="font-size:0.75rem; font-weight:bold; color:${themeColor}; text-transform:uppercase; letter-spacing:0.5px;">EMERGENCY BULLETIN &bull; ${severity}</span>
+                <button type="button" onclick="hideWeatherAlertModalPopup()" style="background:none; border:none; font-size:1.375rem; line-height:1; cursor:pointer; color:#666;">&times;</button>
             </div>
             <div style="padding:20px; max-height:65vh; overflow-y:auto;">
-                <h3 style="margin:0 0 10px 0; font-size:18px; color:#111; font-weight:bold;">${headline}</h3>
-                <div style="font-size:11px; color:#777; margin-bottom:12px; font-weight:bold;">Issued: ${updatedCdt}</div>
-                <div style="font-size:14px; line-height:1.6; color:#333; white-space:pre-line;">${linkifyRawUrls(instruction || 'Please monitor local emergency weather dispatches and take safety precautions.')}</div>
+                <h3 style="margin:0 0 10px 0; font-size:1.125rem; color:#111; font-weight:bold;">${headline}</h3>
+                <div style="font-size:0.6875rem; color:#777; margin-bottom:12px; font-weight:bold;">Issued: ${updatedCdt}</div>
+                <div style="font-size:0.875rem; line-height:1.6; color:#333; white-space:pre-line;">${linkifyRawUrls(instruction || 'Please monitor local emergency weather dispatches and take safety precautions.')}</div>
             </div>
             <div style="background:#f1f3f5; padding:12px 20px; text-align:right;">
-                <button type="button" onclick="hideWeatherAlertModalPopup()" style="background:${themeColor}; color:#fff; border:none; padding:8px 18px; border-radius:4px; font-weight:bold; font-size:13px; cursor:pointer;">Acknowledge & Close</button>
+                <button type="button" onclick="hideWeatherAlertModalPopup()" style="background:${themeColor}; color:#fff; border:none; padding:8px 18px; border-radius:4px; font-weight:bold; font-size:0.8125rem; cursor:pointer;">Acknowledge & Close</button>
             </div>
         </div>
     `;
@@ -1163,9 +1166,9 @@ function renderNavbarWeatherWidget(current) {
 
     widgetEl.innerHTML = `
         <style>
-            #portal-weather-current-badge .weather-desk-text { display: inline-block; font-size: 13px; font-weight: bold; }
+            #portal-weather-current-badge .weather-desk-text { display: inline-block; font-size: 0.8125rem; font-weight: bold; }
             #portal-weather-current-badge .weather-icon-img { width: 26px; height: 26px; object-fit: contain; display: block; }
-            #portal-weather-current-badge .weather-temp-num { font-size: 13px; font-weight: bold; }
+            #portal-weather-current-badge .weather-temp-num { font-size: 0.8125rem; font-weight: bold; }
             @media (max-width: 1023px) {
                 #portal-weather-current-badge .weather-desk-text { display: none !important; }
                 #portal-weather-current-badge { padding: 4px 10px !important; min-height: 44px; min-width: 44px; justify-content: center; }
@@ -1174,7 +1177,7 @@ function renderNavbarWeatherWidget(current) {
         ${iconUrl ? `<img src="${iconUrl}" alt="" class="weather-icon-img" onerror="this.style.display='none';">` : ''}
         <span class="weather-temp-num">${temp}</span>
         <span class="weather-desk-text">&bull; ${condition}</span>
-        <span class="weather-desk-text" style="font-size:11px; color:var(--town-accent, var(--flora-orange, #ff9800)); margin-left:2px;">(5-Day &rarr;)</span>
+        <span class="weather-desk-text" style="font-size:0.6875rem; color:var(--town-accent, var(--flora-orange, #ff9800)); margin-left:2px;">(5-Day &rarr;)</span>
     `;
     widgetEl.title = `Current Weather | Updated: ${updatedCdt} | Click to view 5-day forecast`;
 
@@ -1216,13 +1219,13 @@ window.openFiveDayForecastModal = function() {
 
         return `
             <div style="flex:1 1 120px; min-width:120px; background:#1e1e1e; border:1px solid #333; border-radius:8px; padding:12px; text-align:center; color:#fff;">
-                <div style="font-size:12px; font-weight:bold; text-transform:uppercase; color:#bbb; margin-bottom:6px;">${dayName}</div>
+                <div style="font-size:0.75rem; font-weight:bold; text-transform:uppercase; color:#bbb; margin-bottom:6px;">${dayName}</div>
                 ${iconUrl ? `<img src="${iconUrl}" alt="" style="width:38px; height:38px; margin:0 auto 6px auto; display:block;" onerror="this.style.display='none';">` : ''}
-                <div style="font-size:12px; color:#ddd; font-weight:bold; min-height:30px; display:flex; align-items:center; justify-content:center;">${condition}</div>
-                <div style="font-size:15px; font-weight:bold; margin:6px 0;">
+                <div style="font-size:0.75rem; color:#ddd; font-weight:bold; min-height:30px; display:flex; align-items:center; justify-content:center;">${condition}</div>
+                <div style="font-size:0.9375rem; font-weight:bold; margin:6px 0;">
                     <span style="color:#ff8a65;">${high}</span> / <span style="color:#90caf9;">${low}</span>
                 </div>
-                <div style="font-size:11px; color:#aaa; border-top:1px dashed #333; padding-top:6px; margin-top:6px;">
+                <div style="font-size:0.6875rem; color:#aaa; border-top:1px dashed #333; padding-top:6px; margin-top:6px;">
                     Rain: ${precipChance} (${precipInches})
                 </div>
             </div>
@@ -1232,14 +1235,14 @@ window.openFiveDayForecastModal = function() {
     modalEl.innerHTML = `
         <div style="background:#141414; border:1px solid #333; border-radius:10px; max-width:760px; width:100%; box-shadow:0 12px 32px rgba(0,0,0,0.5); overflow:hidden; font-family:sans-serif;">
             <div style="background:#222; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333;">
-                <span style="font-size:14px; font-weight:bold; color:#fff; text-transform:uppercase; letter-spacing:0.5px;">Clay County 5-Day Extended Weather Outlook</span>
-                <button type="button" onclick="document.getElementById('weather-fiveday-forecast-modal').style.display='none';" style="background:none; border:none; font-size:24px; color:#aaa; cursor:pointer;">&times;</button>
+                <span style="font-size:0.875rem; font-weight:bold; color:#fff; text-transform:uppercase; letter-spacing:0.5px;">Clay County 5-Day Extended Weather Outlook</span>
+                <button type="button" onclick="document.getElementById('weather-fiveday-forecast-modal').style.display='none';" style="background:none; border:none; font-size:1.5rem; color:#aaa; cursor:pointer;">&times;</button>
             </div>
             <div style="padding:20px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center; max-height:75vh; overflow-y:auto;">
                 ${cardsHtml || '<div style="color:#aaa; padding:20px;">No forecast telemetry available.</div>'}
             </div>
             <div style="background:#1c1c1c; padding:10px 20px; text-align:right;">
-                <button type="button" onclick="document.getElementById('weather-fiveday-forecast-modal').style.display='none';" style="background:#0258A3; color:#fff; border:none; padding:6px 16px; border-radius:4px; font-weight:bold; font-size:12px; cursor:pointer;">Close</button>
+                <button type="button" onclick="document.getElementById('weather-fiveday-forecast-modal').style.display='none';" style="background:#0258A3; color:#fff; border:none; padding:6px 16px; border-radius:4px; font-weight:bold; font-size:0.75rem; cursor:pointer;">Close</button>
             </div>
         </div>
     `;
@@ -1484,10 +1487,10 @@ function bindFirebaseLocalLinksEngine(db) {
 
                     return `
                         <div class="local-link-node" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #ddd; text-align: left;">
-                            <a href="${targetUrl}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} class="local-link-title-anchor" data-ga-label="local_link" style="font-weight: bold; font-size: 15px; color: var(--link-bright-blue); text-decoration: underline;">
+                            <a href="${targetUrl}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} class="local-link-title-anchor" data-ga-label="local_link" style="font-weight: bold; font-size: 0.9375rem; color: var(--link-bright-blue); text-decoration: underline;">
                                 ${name}
                             </a>
-                            <span style="font-size: 11px; color: var(--card-muted, #555); margin-left: 6px;">(${displayLoc})</span>
+                            <span style="font-size: 0.6875rem; color: var(--card-muted, #555); margin-left: 6px;">(${displayLoc})</span>
                         </div>
                     `;
                 }).join('');
@@ -1820,11 +1823,14 @@ const SMLC_PARTNER_CARD_MIN = 176;   // px a card needs to look right (5 fit at 
 const SMLC_PARTNER_GAP = 16;
 const SMLC_PARTNER_MAX = 7;
 const smlcPartnerStripObservers = {};
+const smlcPartnerRefitters = {};
+window.smlcRefitPartnerStrips = () => Object.values(smlcPartnerRefitters).forEach(fn => { try { fn(); } catch (e) {} });
 
 function partnerCardsThatFit(containerElement, poolSize) {
     const width = containerElement.clientWidth || (containerElement.parentElement && containerElement.parentElement.clientWidth) || window.innerWidth;
     if (window.innerWidth < 768) return 1;
-    const fit = Math.floor((width + SMLC_PARTNER_GAP) / (SMLC_PARTNER_CARD_MIN + SMLC_PARTNER_GAP));
+    const textScale = (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16;   // bigger text = wider cards
+    const fit = Math.floor((width + SMLC_PARTNER_GAP) / (SMLC_PARTNER_CARD_MIN * textScale + SMLC_PARTNER_GAP));
     return Math.max(1, Math.min(fit, poolSize, SMLC_PARTNER_MAX));
 }
 
@@ -1858,7 +1864,7 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
                 <div class="partner-logo-container">
                     <img class="partner-logo-asset" src="${imgUrl}" alt="${escapeJsString(altText)} logo" loading="lazy" onclick="fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')" style="cursor:pointer;">
                 </div>
-                <h4 class="partner-title">${name}</h4>
+                <h3 class="partner-title">${name}</h3>
                 <a class="directory-tile-link" href="${link}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} data-ga-label="partner_cta">Visit Partner &rarr;</a>
             </div>
         `;
@@ -1877,6 +1883,10 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
 
     // Re-fit when the strip changes width (window resize, rotate, sidebar, zoom)
     if (smlcPartnerStripObservers[stripKey]) smlcPartnerStripObservers[stripKey].disconnect();
+    smlcPartnerRefitters[stripKey] = () => {
+        const next = partnerCardsThatFit(containerElement, partnerPool.length);
+        if (next !== visibleCount) { visibleCount = next; drawCards(); }
+    };
     if (typeof ResizeObserver === 'function') {
         let fitTimer = null;
         const ro = new ResizeObserver(() => {
@@ -2207,10 +2217,10 @@ async function loadCommunityBulletinFeed() {
 
                 const createGlobalSubscriptionBanner = (headerText) => `
                     <div style="background:#f8f9fa; border:1px solid #e2e8f0; padding:10px; border-radius:6px; margin: 12px 0; text-align:center;">
-                        <span style="font-size:12px; font-weight:bold; color:#222; display:block; margin-bottom:6px; text-transform:uppercase;">${headerText}</span>
+                        <span style="font-size:0.75rem; font-weight:bold; color:#222; display:block; margin-bottom:6px; text-transform:uppercase;">${headerText}</span>
                         <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
-                            <a href="${googleSubUrl}" target="_blank" rel="noopener" style="font-size:11px; font-weight:bold; color:#ffffff !important; background:#1a73e8; padding:6px 12px; border-radius:4px; text-decoration:none; display:inline-block;" data-ga-label="global_cal_google">Google Calendar</a>
-                            <a href="webcal://${webcalFeedUrl}" style="font-size:11px; font-weight:bold; color:#ffffff !important; background:#1e7e34; padding:6px 12px; border-radius:4px; text-decoration:none; display:inline-block;" data-ga-label="global_cal_ical">Apple / iCal</a>
+                            <a href="${googleSubUrl}" target="_blank" rel="noopener" style="font-size:0.6875rem; font-weight:bold; color:#ffffff !important; background:#1a73e8; padding:6px 12px; border-radius:4px; text-decoration:none; display:inline-block;" data-ga-label="global_cal_google">Google Calendar</a>
+                            <a href="webcal://${webcalFeedUrl}" style="font-size:0.6875rem; font-weight:bold; color:#ffffff !important; background:#1e7e34; padding:6px 12px; border-radius:4px; text-decoration:none; display:inline-block;" data-ga-label="global_cal_ical">Apple / iCal</a>
                         </div>
                     </div>
                 `;
@@ -2247,24 +2257,24 @@ async function loadCommunityBulletinFeed() {
                         <div class="divi-event-item" ${winAttrs} style="margin-bottom:15px; padding-bottom:12px; border-bottom:1px dashed var(--card-muted, #ccc); overflow:hidden;">
                             ${thumbnailHtml}
                             <span class="smlc-event-status" style="display:none;"></span>
-                            <div class="divi-event-date" style="font-size:12px; color:var(--primary); font-weight:bold;">${dateText} &bull; ${timeText}</div>
+                            <div class="divi-event-date" style="font-size:0.75rem; color:var(--primary); font-weight:bold;">${dateText} &bull; ${timeText}</div>
                             ${viewerNote ? `<div class="smlc-viewer-time">${viewerNote}</div>` : ''}
-                            <div class="divi-event-title" style="font-size:16px; font-weight:bold; margin: 4px 0;">${eventTitle}</div>
-                            <div class="event-info-text" style="font-size:13px; color:var(--card-text-secondary, #333);">
+                            <div class="divi-event-title" style="font-size:1rem; font-weight:bold; margin: 4px 0;">${eventTitle}</div>
+                            <div class="event-info-text" style="font-size:0.8125rem; color:var(--card-text-secondary, #333);">
                                 <strong>Where:</strong> 
                                 <a href="${turnByTurnNavUrl}" target="_blank" rel="noopener" class="event-nav-link" style="color:var(--primary); font-weight:bold; text-decoration:underline;">
                                     ${eventLoc} &rarr; Directions
                                 </a>
                             </div>
                             ${attachmentChips}
-                            <div class="smlc-event-desc" style="font-size:13px; color:var(--card-text-secondary, #444); margin-top:4px;">${linkifyRawUrls(rawDetails.substring(0, 110))}${rawDetails.length > 110 ? '...' : ''}</div>
+                            <div class="smlc-event-desc" style="font-size:0.8125rem; color:var(--card-text-secondary, #444); margin-top:4px;">${linkifyRawUrls(rawDetails.substring(0, 110))}${rawDetails.length > 110 ? '...' : ''}</div>
                             
                             <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                                <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:var(--primary); font-weight:bold; cursor:pointer; font-size:12px; text-decoration:underline;">Read Details &rarr;</div>
-                                <span style="color:var(--card-muted, #999); font-size:11px;">|</span>
-                                <a href="${singleGoogleUrl}" target="_blank" rel="noopener" style="font-size:11px; color:#1a73e8; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_google">+ Google Cal</a>
-                                <span style="color:var(--card-muted, #999); font-size:11px;">|</span>
-                                <a href="${singleIcalBlob}" download="${eventTitle.replace(/\s+/g, '_')}.ics" style="font-size:11px; color:#1e7e34; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_ical">+ iCal (.ics)</a>
+                                <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:var(--primary); font-weight:bold; cursor:pointer; font-size:0.75rem; text-decoration:underline;">Read Details &rarr;</div>
+                                <span style="color:var(--card-muted, #999); font-size:0.6875rem;">|</span>
+                                <a href="${singleGoogleUrl}" target="_blank" rel="noopener" style="font-size:0.6875rem; color:#1a73e8; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_google">+ Google Cal</a>
+                                <span style="color:var(--card-muted, #999); font-size:0.6875rem;">|</span>
+                                <a href="${singleIcalBlob}" download="${eventTitle.replace(/\s+/g, '_')}.ics" style="font-size:0.6875rem; color:#1e7e34; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_ical">+ iCal (.ics)</a>
                             </div>
                         </div>
                     `;
@@ -2400,9 +2410,9 @@ async function loadLocalNewsDispatches() {
                     return `
                         <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
                             ${imgUrl ? `<img src="${imgUrl}" alt="" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})">` : ''}
-                            <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-top:10px;">${cleanCalendarDate(story.date)}</div>
-                            <div style="font-weight:bold; font-size:16px; margin:6px 0; color:#1a1a1a;">${cleanTitle}</div>
-                            <div style="font-size:14px; color:var(--card-text-secondary, #444);">${linkifyRawUrls(displayStory)}</div>
+                            <div style="font-size:0.75rem; color:var(--primary); font-weight:bold; margin-top:10px;">${cleanCalendarDate(story.date)}</div>
+                            <div style="font-weight:bold; font-size:1rem; margin:6px 0; color:#1a1a1a;">${cleanTitle}</div>
+                            <div style="font-size:0.875rem; color:var(--card-text-secondary, #444);">${linkifyRawUrls(displayStory)}</div>
                             ${isLong ? `<div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: var(--primary); font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>` : ''}
                         </div>
                     `;
@@ -2498,7 +2508,7 @@ function handleSPAHashNavigation() {
 
         /* ---------- Calendar status badges (colors used nowhere else on the site) ---------- */
         .smlc-event-status { align-items: center; gap: 7px; margin: 0 0 6px; padding: 4px 10px; border-radius: 999px;
-            font: 700 11px/1.2 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; }
+            font: 700 0.6875rem/1.2 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; }
         .smlc-status-starting { background: #00E5FF; color: #00262B; box-shadow: 0 0 10px rgba(0,229,255,.6); }
         .smlc-status-live { background: #FF1F8E; color: #fff; box-shadow: 0 0 14px rgba(255,31,142,.75); animation: smlcLivePulse 1.6s ease-in-out infinite; }
         .smlc-status-ending { background: #B026FF; color: #fff; box-shadow: 0 0 12px rgba(176,38,255,.7); }
@@ -2506,7 +2516,7 @@ function handleSPAHashNavigation() {
         @keyframes smlcLivePulse { 0%,100% { box-shadow: 0 0 8px rgba(255,31,142,.55); } 50% { box-shadow: 0 0 18px rgba(255,31,142,.95); } }
         @keyframes smlcLiveDot { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
         @media (prefers-reduced-motion: reduce) { .smlc-status-live, .smlc-live-dot { animation: none; } }
-        .smlc-viewer-time { margin: 2px 0 4px; font: italic 600 11.5px/1.3 'Libre Baskerville', Georgia, serif; color: var(--card-text-secondary, #444); }
+        .smlc-viewer-time { margin: 2px 0 4px; font: italic 600 0.7188rem/1.3 'Libre Baskerville', Georgia, serif; color: var(--card-text-secondary, #444); }
 
         /* ---------- Readable text on cards in dark mode ---------- */
         @media (prefers-color-scheme: dark) {
@@ -2539,21 +2549,21 @@ function handleSPAHashNavigation() {
 
         /* ---------- Event attachments ---------- */
         .smlc-event-attachments { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }
-        .smlc-attachment-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font: 700 12px 'Oswald', 'Arial Narrow', sans-serif;
+        .smlc-attachment-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font: 700 0.75rem 'Oswald', 'Arial Narrow', sans-serif;
             letter-spacing: .4px; background: rgba(var(--town-primary-rgb, 2,88,163), .12); color: var(--on-card-accent, #0258A3) !important; border: 1px solid currentColor; text-decoration: none; }
         .smlc-attachment-chip:hover { background: rgba(var(--town-primary-rgb, 2,88,163), .25); }
 
         /* ---------- Menu dropdowns (Firebase menu entries with sub-links) ---------- */
         .smlc-menu-dropdown { position: relative; }
         .smlc-menu-dropdown > details > summary { list-style: none; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 14px; cursor: pointer;
-            color: #fff; font: 700 15px var(--font-label, 'Oswald', sans-serif); text-transform: uppercase; letter-spacing: 1px; border: 2px solid transparent; border-radius: 8px; }
+            color: #fff; font: 700 0.9375rem var(--font-label, 'Oswald', sans-serif); text-transform: uppercase; letter-spacing: 1px; border: 2px solid transparent; border-radius: 8px; }
         .smlc-menu-dropdown > details > summary::-webkit-details-marker { display: none; }
         .smlc-menu-dropdown > details[open] > summary, .smlc-menu-dropdown > details > summary:hover { border-color: var(--town-accent, var(--flora-orange, #FFC10E)); background: rgba(0,0,0,.6); }
-        .smlc-dd-caret { font-size: 11px; }
+        .smlc-dd-caret { font-size: 0.6875rem; }
         .smlc-submenu { list-style: none; margin: 6px 0 0; padding: 6px; background: #141416; border: 2px solid var(--town-accent, var(--flora-orange, #FFC10E)); border-radius: 10px; min-width: 200px; }
         @media (min-width: 1024px) { .smlc-submenu { position: absolute; right: 0; top: 100%; z-index: 1100; box-shadow: 0 10px 24px rgba(0,0,0,.7); } }
         .smlc-submenu a { display: flex !important; width: 100%; box-sizing: border-box; }
-        @media (min-width: 1024px) and (max-width: 1439px) { .smlc-menu-dropdown > details > summary { padding: 6px 9px; font-size: 13px; letter-spacing: .6px; } }
+        @media (min-width: 1024px) and (max-width: 1439px) { .smlc-menu-dropdown > details > summary { padding: 6px 9px; font-size: 0.8125rem; letter-spacing: .6px; } }
 
         /* leave room so snow on top / decorations in the corners of partner cards aren't cut off */
         html.smlc-fx-on .partners-horizontal-strip { padding: 24px 12px 16px; }
@@ -2572,14 +2582,14 @@ function handleSPAHashNavigation() {
         .smlc-answers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 14px 28px; }
         .smlc-answer { padding: 14px 0 0; border-top: 2px solid var(--card-border-color, #222); }
         .smlc-answer-q { margin: 0 0 6px; font: 700 clamp(1.02rem, 1.3vw, 1.15rem)/1.3 'Playfair Display', Georgia, serif; color: var(--card-text-primary, #1a1a1a); }
-        .smlc-answer-a { margin: 0; font-size: 15px; line-height: 1.6; color: var(--card-text-secondary, #333); }
+        .smlc-answer-a { margin: 0; font-size: 0.9375rem; line-height: 1.6; color: var(--card-text-secondary, #333); }
         .smlc-answer-a a, .smlc-answers-lead a { color: var(--on-card-accent, #0258A3); text-decoration: underline; word-break: break-word; }
 
         /* ---------- ScoreStream sports widgets ---------- */
         .smlc-sports-block { margin: 0 0 16px; }
         .smlc-sports-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px;
-            font: 700 13px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; color: var(--card-text-primary, #1a1a1a); }
-        .smlc-sports-link { font-size: 12px; color: var(--on-card-accent, #0258A3) !important; text-decoration: underline; white-space: nowrap; }
+            font: 700 0.8125rem 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; color: var(--card-text-primary, #1a1a1a); }
+        .smlc-sports-link { font-size: 0.75rem; color: var(--on-card-accent, #0258A3) !important; text-decoration: underline; white-space: nowrap; }
         .smlc-sports-block .scorestream-widget-container { min-height: 60px; max-width: 100%; overflow-x: auto; }
 
         /* ---------- Desktop: keep the top menu on one tidy row at every width ---------- */
@@ -2595,10 +2605,10 @@ function handleSPAHashNavigation() {
             .menu-bar .navigation-drawer-panel.drawer-open .menu-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; width: 92%; margin: 0 auto; }
             .menu-bar .navigation-drawer-panel.drawer-open .menu-links li { width: auto; margin: 0; }
         }
-        html .partners-horizontal-strip .directory-tile-link { font-size: 12px; letter-spacing: .3px; padding: 8px 6px; white-space: nowrap; }
+        html .partners-horizontal-strip .directory-tile-link { font-size: 0.75rem; letter-spacing: .3px; padding: 8px 6px; white-space: nowrap; }
         @media (min-width: 1024px) and (max-width: 1439px) {
             .menu-bar .menu-links { gap: 4px 6px; }
-            .menu-bar .menu-links a { padding: 6px 9px; font-size: 13px; letter-spacing: .6px; min-height: 44px; gap: 6px; }
+            .menu-bar .menu-links a { padding: 6px 9px; font-size: 0.8125rem; letter-spacing: .6px; min-height: 44px; gap: 6px; }
             .menu-bar .menu-thumb-icon { width: 20px; height: 20px; }
         }
 
@@ -2615,10 +2625,10 @@ function handleSPAHashNavigation() {
         }
         .smlc-bn-btn { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; line-height: 1.15;
             min-height: 48px; padding: 6px 4px; background: none; border: 0; color: #fff; cursor: pointer; text-decoration: none;
-            font: 700 12px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; -webkit-tap-highlight-color: transparent; }
+            font: 700 0.75rem 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; -webkit-tap-highlight-color: transparent; }
         .smlc-bn-btn > svg { width: 24px; height: 24px; margin-bottom: 2px; }
         .smlc-bn-btn svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-        .smlc-bn-btn .smlc-bn-sub { font: 500 10px 'Oswald', sans-serif; letter-spacing: .5px; opacity: .85; text-transform: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .smlc-bn-btn .smlc-bn-sub { font: 500 0.625rem 'Oswald', sans-serif; letter-spacing: .5px; opacity: .85; text-transform: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .smlc-bn-btn.is-active, .smlc-bn-btn[aria-expanded="true"] { color: var(--smlc-bar-accent); }
         .smlc-bn-btn:focus-visible { outline: 3px solid var(--smlc-bar-accent); outline-offset: -3px; }
         .smlc-bn-btn .smlc-bn-caret { transition: transform .2s; }
@@ -2635,20 +2645,20 @@ function handleSPAHashNavigation() {
         @keyframes smlcSheetUp { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
         @media (min-width: 600px) { html.smlc-bn-mode .smlc-bn-sheet.is-open { left: auto; right: auto; width: 420px; }
             html.smlc-bn-mode #smlc-bn-sheet-towns.is-open { left: calc(50% - 210px); } html.smlc-bn-mode #smlc-bn-sheet-more.is-open { right: 8px; } }
-        .smlc-bn-sheet-title { margin: 2px 6px 8px; font: 700 12px 'Oswald', sans-serif; letter-spacing: 1.5px; text-transform: uppercase; color: #bdbdc4; }
+        .smlc-bn-sheet-title { margin: 2px 6px 8px; font: 700 0.75rem 'Oswald', sans-serif; letter-spacing: 1.5px; text-transform: uppercase; color: #bdbdc4; }
         .smlc-bn-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
         .smlc-bn-list a, .smlc-bn-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 10px 14px; box-sizing: border-box;
             background: #1f1f23; border: 1px solid #333; border-radius: 10px; color: #fff; text-decoration: none; cursor: pointer;
-            font: 700 16px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; text-align: left; }
+            font: 700 1rem 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; text-align: left; }
         .smlc-bn-list a:hover, .smlc-bn-row:hover { border-color: var(--smlc-bar-accent); }
         .smlc-bn-list a.is-active { background: var(--smlc-bar-bg); border-color: var(--smlc-bar-accent); }
-        .smlc-bn-list a.is-active::after { content: 'You are here'; margin-left: auto; font: 500 11px 'Oswald', sans-serif; letter-spacing: .5px; text-transform: none; color: var(--smlc-bar-accent); }
+        .smlc-bn-list a.is-active::after { content: 'You are here'; margin-left: auto; font: 500 0.6875rem 'Oswald', sans-serif; letter-spacing: .5px; text-transform: none; color: var(--smlc-bar-accent); }
         .smlc-bn-list img { width: 28px; height: 28px; object-fit: contain; border-radius: 4px; background: rgba(255,255,255,.1); }
-        .smlc-bn-row .smlc-bn-row-detail { margin-left: auto; font: 500 13px 'Oswald', sans-serif; text-transform: none; color: #cfcfd6; }
+        .smlc-bn-row .smlc-bn-row-detail { margin-left: auto; font: 500 0.8125rem 'Oswald', sans-serif; text-transform: none; color: #cfcfd6; }
         .smlc-bn-translate-slot { margin-top: 8px; padding: 10px 14px; background: #1f1f23; border: 1px solid #333; border-radius: 10px; color: #fff; }
         .smlc-bn-translate-slot .smlc-bn-sheet-title { margin: 0 0 6px; }
         .smlc-bn-translate-slot .translate-box-header { position: static !important; display: inline-flex; }
-        .smlc-bn-empty { padding: 10px 6px; color: #bdbdc4; font: italic 14px Georgia, serif; }
+        .smlc-bn-empty { padding: 10px 6px; color: #bdbdc4; font: italic 0.875rem Georgia, serif; }
     `;
     (document.head || document.documentElement).appendChild(style);
 })();
@@ -2784,7 +2794,8 @@ function renderBottomNav() {
         <ul class="smlc-bn-list">
             <li><button type="button" class="smlc-bn-row" id="smlc-bn-weather-row">${SMLC_ICONS.weather}<span>Weather</span><span class="smlc-bn-row-detail" id="smlc-bn-weather-detail">5-Day Forecast</span></button></li>
             ${groups.more.map(linkHtml).join('')}
-            <li><button type="button" class="smlc-bn-row smlc-fx-toggle" onclick="toggleSmlcEffects()" aria-pressed="true"><span>&#10052;</span><span>Weather Effects</span><span class="smlc-bn-row-detail smlc-fx-toggle-state">On</span></button></li>
+            <li><button type="button" class="smlc-bn-row" onclick="openSmlcAccessibilityPanel()"><span aria-hidden="true">&#9855;</span><span>Accessibility</span></button></li>
+            <li><button type="button" class="smlc-bn-row smlc-fx-toggle" onclick="toggleSmlcEffects()" aria-pressed="true"><span aria-hidden="true">&#10052;</span><span>Weather Effects</span><span class="smlc-bn-row-detail smlc-fx-toggle-state">On</span></button></li>
         </ul>
         <div class="smlc-bn-translate-slot"><div class="smlc-bn-sheet-title">Language</div><div id="smlc-bn-translate-target"></div></div>`;
     if (keepTranslate) moreSheet.querySelector('#smlc-bn-translate-target').appendChild(keepTranslate);
@@ -3206,7 +3217,7 @@ function smlcAddFooterToggle() {
     const footer = document.querySelector('#global-footer-container .footer-simple-inner') || document.querySelector('footer');
     if (!footer || footer.querySelector('.smlc-fx-toggle')) return;
     const p = document.createElement('p');
-    p.innerHTML = `<button type="button" class="smlc-fx-toggle smlc-fx-toggle-footer" onclick="toggleSmlcEffects()" aria-pressed="true">&#10052; Weather &amp; holiday effects: <span class="smlc-fx-toggle-state">On</span></button>`;
+    p.innerHTML = `<button type="button" class="smlc-fx-toggle smlc-fx-toggle-footer" onclick="toggleSmlcEffects()" aria-pressed="true"><span aria-hidden="true">&#10052;</span> Weather &amp; holiday effects: <span class="smlc-fx-toggle-state">On</span></button>`;
     footer.appendChild(p);
 }
 
@@ -3309,20 +3320,20 @@ window.smlcWeatherChanged = function () {
         ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-july4')},
         ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-newyear')} {
             position: absolute; right: -6px; bottom: -10px; z-index: 3; pointer-events: none; line-height: 1;
-            font-size: 20px; letter-spacing: -6px; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5));
-            content: '\\1F342\\1F341\\1F342';
+            font-size: 1.25rem; letter-spacing: -6px; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5));
+            content: '\\1F342\\1F341\\1F342'; content: '\\1F342\\1F341\\1F342' / '';
         }
-        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-halloween')} { content: '\\1F342\\1F383'; font-size: 22px; letter-spacing: -4px; }
-        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-thanksgiving')} { content: '\\1F342\\1F33D\\1F383'; letter-spacing: -4px; }
-        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-christmas')} { content: '\\1F384'; font-size: 26px; letter-spacing: 0; bottom: -6px; }
-        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-valentine')} { content: '\\1F495'; letter-spacing: 0; }
-        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-stpatrick')} { content: '\\2618\\FE0F'; letter-spacing: 0; }
-        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-july4')} { content: '\\1F1FA\\1F1F8'; letter-spacing: 0; }
-        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-newyear')} { content: '\\1F389'; letter-spacing: 0; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-halloween')} { content: '\\1F342\\1F383'; content: '\\1F342\\1F383' / ''; font-size: 1.375rem; letter-spacing: -4px; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-thanksgiving')} { content: '\\1F342\\1F33D\\1F383'; content: '\\1F342\\1F33D\\1F383' / ''; letter-spacing: -4px; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-christmas')} { content: '\\1F384'; content: '\\1F384' / ''; font-size: 1.625rem; letter-spacing: 0; bottom: -6px; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-valentine')} { content: '\\1F495'; content: '\\1F495' / ''; letter-spacing: 0; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-stpatrick')} { content: '\\2618\\FE0F'; content: '\\2618\\FE0F' / ''; letter-spacing: 0; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-july4')} { content: '\\1F1FA\\1F1F8'; content: '\\1F1FA\\1F1F8' / ''; letter-spacing: 0; }
+        ${cardList('::after').replace(/html\.smlc-fx-on/g, 'html.smlc-fx-on.smlc-hol-newyear')} { content: '\\1F389'; content: '\\1F389' / ''; letter-spacing: 0; }
 
         html.smlc-fx-on .clipping-tag, html.smlc-fx-on .notice-tag-red { z-index: 4; }
         .smlc-fx-toggle-footer { background: transparent; border: 1px solid rgba(255,255,255,.35); color: #fff; border-radius: 999px; padding: 8px 16px; min-height: 40px;
-            font: 700 13px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: .8px; text-transform: uppercase; cursor: pointer; }
+            font: 700 0.8125rem 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: .8px; text-transform: uppercase; cursor: pointer; }
         .smlc-fx-toggle-footer:hover { border-color: var(--town-accent, var(--flora-orange, #FFC10E)); }
         .smlc-fx-toggle[aria-pressed="false"] .smlc-fx-toggle-state { color: #ff8a8a; }
         .smlc-fx-toggle[aria-pressed="true"] .smlc-fx-toggle-state { color: #8affb0; }
@@ -3349,6 +3360,418 @@ document.addEventListener('click', (e) => {
     fireLightbox(img.currentSrc || img.src, d.title || (heading ? heading.textContent.trim() : ''), d.date || '', d.desc || '', d.link || '', img.getAttribute('alt') || d.alt || '');
 });
 
+// ============================================================================
+// ACCESSIBILITY (screen readers, keyboard, low vision)
+// Invisible to mouse/touch users. Adds:
+//  - popups (lightbox, forecast, alerts, phone menus) announced as dialogs, focus moved in,
+//    Tab kept inside, Esc closes, focus returned afterwards
+//  - every clickable picture / card reachable with Tab and opened with Enter or Space
+//  - the two pills announced as tabs ("Local Events & News, tab, selected")
+//  - polite announcements when sections change or content finishes loading
+//  - matches device settings: increased contrast, forced colors, larger text
+//  - optional Accessibility panel: bigger text, high contrast, underlined links,
+//    easy-to-read font, background effects off (saved on the device)
+// ============================================================================
+const SMLC_A11Y_KEY = 'smlc-a11y';
+let smlcA11yPrefs = { text: 0, contrast: false, underline: false, readable: false };
+
+// ---------- polite screen-reader announcements ----------
+function smlcAnnounce(message) {
+    let region = document.getElementById('smlc-live-region');
+    if (!region) {
+        region = document.createElement('div');
+        region.id = 'smlc-live-region';
+        region.className = 'smlc-sr-only';
+        region.setAttribute('aria-live', 'polite');
+        region.setAttribute('aria-atomic', 'true');
+        document.body.appendChild(region);
+    }
+    region.textContent = '';
+    setTimeout(() => { region.textContent = message; }, 60);
+}
+window.smlcAnnounce = smlcAnnounce;
+
+// ---------- dialogs: focus in, Tab trapped, Esc closes, focus returned ----------
+const SMLC_FOCUSABLE = 'a[href], button:not([disabled]), input, select, textarea, summary, [tabindex]:not([tabindex="-1"])';
+const smlcOpenDialogs = [];
+
+function smlcDialogIsOpen(overlay) {
+    return overlay && overlay.isConnected && getComputedStyle(overlay).display !== 'none' && getComputedStyle(overlay).visibility !== 'hidden';
+}
+
+function smlcRegisterDialog(overlay, panel, labelEl, closeFn) {
+    if (!overlay || overlay.dataset.smlcDialog === '1') return;
+    overlay.dataset.smlcDialog = '1';
+    const target = panel || overlay;
+    target.setAttribute('role', 'dialog');
+    target.setAttribute('aria-modal', 'true');
+    if (labelEl) { if (!labelEl.id) labelEl.id = 'smlc-dlg-' + Math.random().toString(36).slice(2, 8); target.setAttribute('aria-labelledby', labelEl.id); }
+    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+    let wasOpen = smlcDialogIsOpen(overlay);
+    const onChange = () => {
+        const open = smlcDialogIsOpen(overlay);
+        if (open && !wasOpen) {
+            const entry = { overlay, target, closeFn, returnTo: document.activeElement };
+            smlcOpenDialogs.push(entry);
+            setTimeout(() => {
+                const closeBtn = target.querySelector('.lightbox-close-btn, button[aria-label="Close"], button');
+                (closeBtn || target).focus({ preventScroll: true });
+            }, 30);
+        } else if (!open && wasOpen) {
+            const idx = smlcOpenDialogs.findIndex(d => d.overlay === overlay);
+            if (idx > -1) {
+                const entry = smlcOpenDialogs.splice(idx, 1)[0];
+                if (entry.returnTo && entry.returnTo.isConnected && typeof entry.returnTo.focus === 'function') entry.returnTo.focus({ preventScroll: true });
+            }
+        }
+        wasOpen = open;
+    };
+    new MutationObserver(onChange).observe(overlay, { attributes: true, attributeFilter: ['style', 'class'] });
+}
+
+document.addEventListener('keydown', (e) => {
+    const top = smlcOpenDialogs[smlcOpenDialogs.length - 1];
+    if (!top || !smlcDialogIsOpen(top.overlay)) return;
+    if (e.key === 'Escape') { e.preventDefault(); top.closeFn(); return; }
+    if (e.key === 'Tab') {
+        const items = Array.from(top.target.querySelectorAll(SMLC_FOCUSABLE)).filter(el => el.offsetParent !== null || el === document.activeElement);
+        if (!items.length) { e.preventDefault(); return; }
+        const first = items[0], last = items[items.length - 1];
+        if (e.shiftKey && (document.activeElement === first || !top.target.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && (document.activeElement === last || !top.target.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+    }
+});
+
+function smlcWireKnownDialogs() {
+    const lb = document.getElementById('portal-global-lightbox');
+    if (lb) {
+        const closeBtn = lb.querySelector('.lightbox-close-btn');
+        if (closeBtn && !closeBtn.getAttribute('aria-label')) closeBtn.setAttribute('aria-label', 'Close');
+        smlcRegisterDialog(lb, lb.querySelector('.lightbox-modal-window'), document.getElementById('lightbox-target-title'), () => { lb.style.display = 'none'; });
+    }
+    const fc = document.getElementById('weather-fiveday-forecast-modal');
+    if (fc) smlcRegisterDialog(fc, fc.firstElementChild, fc.querySelector('span'), () => { fc.style.display = 'none'; });
+    const wa = document.getElementById('weather-alert-popup-modal');
+    if (wa) smlcRegisterDialog(wa, wa.firstElementChild, wa.querySelector('h2, h3, strong'), () => { if (typeof window.hideWeatherAlertModalPopup === 'function') window.hideWeatherAlertModalPopup(); else wa.style.display = 'none'; });
+    ['towns', 'more'].forEach(w => {
+        const sh = document.getElementById(`smlc-bn-sheet-${w}`);
+        if (sh) smlcRegisterDialog(sh, sh, sh.querySelector('.smlc-bn-sheet-title'), () => closeBottomNavSheets());
+    });
+    const ap = document.getElementById('smlc-a11y-panel');
+    if (ap) smlcRegisterDialog(ap, ap.querySelector('.smlc-a11y-card'), ap.querySelector('h2'), () => { ap.hidden = true; ap.style.display = 'none'; });
+}
+
+// ---------- make mouse-only click targets work with the keyboard ----------
+const SMLC_CLICKABLE_SELECTOR = [
+    'img[onclick]', 'img.lightbox-triggerable-element', '#point-of-interest-img-1', '#point-of-interest-img-2',
+    '#spotlight-asset-img', '#article-img', '.slider-slide img', '.partner-logo-asset', '.history-card',
+    '.read-more-btn', '.read-more-trigger', '#fuel-monitor-target-box', '#portal-weather-current-badge',
+    'div[onclick]', 'span[onclick]', 'main img'
+].join(', ');
+
+function smlcEnhanceClickables(root = document) {
+    root.querySelectorAll(SMLC_CLICKABLE_SELECTOR).forEach(el => {
+        if (el.dataset.smlcKb === '1') return;
+        if (el.closest('a, button, summary, .scorestream-widget-container, .site-brand-header, #portal-global-lightbox')) return;
+        if (el.matches('.lightbox-overlay-mask, .slider-viewport')) return;
+        if (el.tagName === 'IMG' && (el.dataset.smlcImgFailed === '1' || el.closest('.menu-bar, .weather-pill, #fuel-monitor-target-box, .history-card, .station-logo-frame'))) return;
+        el.dataset.smlcKb = '1';
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('role', 'button');
+        if (el.tagName === 'IMG') {
+            const alt = (el.getAttribute('alt') || '').trim();
+            el.setAttribute('aria-label', alt ? `Open picture: ${alt}` : 'Open picture');
+        } else if (el.id === 'fuel-monitor-target-box') {
+            el.setAttribute('aria-label', 'Fuel prices. Open the fuel price page');
+        } else if (el.id === 'portal-weather-current-badge') {
+            el.setAttribute('aria-label', 'Current weather. Open the 5-day forecast');
+        } else if (el.classList.contains('history-card')) {
+            const t = el.querySelector('h3'); const y = el.querySelector('h2');
+            el.setAttribute('aria-label', `Read more: ${(y ? y.textContent + ', ' : '')}${t ? t.textContent : 'history'}`);
+        }
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
+        });
+    });
+}
+
+// ---------- pills as tabs ----------
+function smlcSetupPillTabs() {
+    const nav = document.querySelector('.portal-pill-tabs-nav');
+    if (!nav || nav.dataset.smlcTabs === '1') return;
+    const tabs = Array.from(nav.querySelectorAll('.portal-pill-btn'));
+    if (!tabs.length) return;
+    nav.dataset.smlcTabs = '1';
+    const list = document.createElement('div');
+    list.className = 'smlc-pill-tablist';
+    list.setAttribute('role', 'tablist');
+    list.setAttribute('aria-label', 'Page sections');
+    nav.insertBefore(list, tabs[0]);
+    tabs.forEach((btn, i) => {
+        list.appendChild(btn);
+        const m = (btn.getAttribute('onclick') || '').match(/'(pill-panel-[\w-]+)'/);
+        const panel = m ? document.getElementById(m[1]) : null;
+        if (!btn.id) btn.id = `smlc-pill-tab-${i}`;
+        btn.setAttribute('role', 'tab');
+        if (panel) {
+            btn.setAttribute('aria-controls', panel.id);
+            panel.setAttribute('role', 'tabpanel');
+            panel.setAttribute('aria-labelledby', btn.id);
+        }
+        btn.addEventListener('keydown', (e) => {
+            if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) return;
+            e.preventDefault();
+            let n = e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : (i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+            tabs[n].focus(); tabs[n].click();
+        });
+    });
+    const sync = () => tabs.forEach(b => {
+        const sel = b.classList.contains('active');
+        b.setAttribute('aria-selected', sel ? 'true' : 'false');
+        b.setAttribute('tabindex', sel ? '0' : '-1');
+    });
+    sync();
+    const original = window.switchPortalPill;
+    window.switchPortalPill = function (btn, panelId) {
+        if (typeof original === 'function') original(btn, panelId);
+        sync();
+        if (btn) smlcAnnounce(`Showing ${btn.textContent.trim()}`);
+    };
+}
+
+// ---------- headings in order + regions named ----------
+function smlcFixStructure() {
+    document.querySelectorAll('.widescreen-strip-container').forEach((strip, i) => {
+        if (strip.querySelector('.smlc-sr-heading')) return;
+        const h = document.createElement('h2');
+        h.className = 'smlc-sr-only smlc-sr-heading';
+        h.textContent = i === 0 ? 'Local partners' : 'More local partners';
+        strip.insertBefore(h, strip.firstChild);
+        strip.setAttribute('role', 'region');
+        strip.setAttribute('aria-label', h.textContent);
+    });
+    const billboard = document.querySelector('.header-billboard-link');
+    if (billboard && !billboard.getAttribute('aria-label')) billboard.setAttribute('aria-label', 'Support My Local Community home');
+    ['bulletin-scroller-target', 'news-matrix-target'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && /Loading/i.test(el.textContent)) el.setAttribute('aria-busy', 'true');
+    });
+}
+
+// partner names / event titles: real heading levels (h3 under the section h2)
+function smlcFixPartnerHeadings(root) {
+    root.querySelectorAll('h4.partner-title').forEach(h4 => {
+        const h3 = document.createElement('h3');
+        h3.className = h4.className; h3.innerHTML = h4.innerHTML;
+        h4.replaceWith(h3);
+    });
+}
+
+// ---------- preferences ----------
+function smlcLoadA11yPrefs() {
+    try { Object.assign(smlcA11yPrefs, JSON.parse(localStorage.getItem(SMLC_A11Y_KEY) || '{}')); } catch (e) {}
+}
+function smlcSaveA11yPrefs() {
+    try { localStorage.setItem(SMLC_A11Y_KEY, JSON.stringify(smlcA11yPrefs)); } catch (e) {}
+}
+function smlcApplyA11yPrefs() {
+    const root = document.documentElement;
+    let deviceContrast = false;
+    try { deviceContrast = window.matchMedia('(prefers-contrast: more)').matches; } catch (e) {}
+    root.classList.toggle('smlc-a11y-text-1', smlcA11yPrefs.text === 1);
+    root.classList.toggle('smlc-a11y-text-2', smlcA11yPrefs.text === 2);
+    root.classList.toggle('smlc-hc', !!smlcA11yPrefs.contrast || deviceContrast);
+    root.classList.toggle('smlc-underline', !!smlcA11yPrefs.underline);
+    root.classList.toggle('smlc-readable', !!smlcA11yPrefs.readable);
+    if (smlcA11yPrefs.readable && !document.getElementById('smlc-readable-font')) {
+        const l = document.createElement('link');
+        l.id = 'smlc-readable-font'; l.rel = 'stylesheet';
+        l.href = 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap';
+        document.head.appendChild(l);
+    }
+    smlcSyncA11yPanel();
+    if (typeof window.smlcRefitPartnerStrips === 'function') setTimeout(window.smlcRefitPartnerStrips, 50);
+}
+
+function smlcSyncA11yPanel() {
+    const panel = document.getElementById('smlc-a11y-panel');
+    if (!panel) return;
+    panel.querySelectorAll('[data-a11y-text]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.a11yText === smlcA11yPrefs.text)));
+    const set = (key, val) => { const el = panel.querySelector(`[data-a11y="${key}"]`); if (el) el.checked = !!val; };
+    set('contrast', smlcA11yPrefs.contrast); set('underline', smlcA11yPrefs.underline); set('readable', smlcA11yPrefs.readable);
+    set('effects', typeof SMLC_FX !== 'undefined' ? SMLC_FX.enabled : true);
+}
+
+window.openSmlcAccessibilityPanel = function () {
+    let panel = document.getElementById('smlc-a11y-panel');
+    if (!panel) {
+        panel = document.createElement('div');
+        panel.id = 'smlc-a11y-panel';
+        panel.className = 'smlc-a11y-overlay';
+        panel.innerHTML = `
+            <div class="smlc-a11y-card">
+                <div class="smlc-a11y-head"><h2>Accessibility</h2><button type="button" class="smlc-a11y-close" aria-label="Close">&times;</button></div>
+                <p class="smlc-a11y-intro">Adjust the site to make it easier to read. Your choices are saved on this device.</p>
+                <fieldset class="smlc-a11y-group"><legend>Text size</legend>
+                    <div class="smlc-a11y-seg">
+                        <button type="button" data-a11y-text="0" aria-pressed="true">Normal</button>
+                        <button type="button" data-a11y-text="1" aria-pressed="false">Large</button>
+                        <button type="button" data-a11y-text="2" aria-pressed="false">Larger</button>
+                    </div>
+                </fieldset>
+                <label class="smlc-a11y-switch"><input type="checkbox" data-a11y="contrast"><span>High contrast</span></label>
+                <label class="smlc-a11y-switch"><input type="checkbox" data-a11y="underline"><span>Underline all links</span></label>
+                <label class="smlc-a11y-switch"><input type="checkbox" data-a11y="readable"><span>Easy-to-read font</span></label>
+                <label class="smlc-a11y-switch"><input type="checkbox" data-a11y="effects"><span>Weather &amp; holiday effects</span></label>
+                <div class="smlc-a11y-actions"><button type="button" class="smlc-a11y-reset">Reset to default</button><button type="button" class="smlc-a11y-done">Done</button></div>
+            </div>`;
+        document.body.appendChild(panel);
+        const close = () => { panel.style.display = 'none'; };
+        panel.addEventListener('click', (e) => { if (e.target === panel) close(); });
+        panel.querySelector('.smlc-a11y-close').addEventListener('click', close);
+        panel.querySelector('.smlc-a11y-done').addEventListener('click', close);
+        panel.querySelectorAll('[data-a11y-text]').forEach(b => b.addEventListener('click', () => {
+            smlcA11yPrefs.text = +b.dataset.a11yText; smlcSaveA11yPrefs(); smlcApplyA11yPrefs();
+            smlcAnnounce(`Text size ${b.textContent}`);
+        }));
+        panel.querySelectorAll('input[data-a11y]').forEach(inp => inp.addEventListener('change', () => {
+            const key = inp.dataset.a11y;
+            if (key === 'effects') {
+                if (typeof SMLC_FX !== 'undefined' && SMLC_FX.enabled !== inp.checked) window.toggleSmlcEffects();
+            } else {
+                smlcA11yPrefs[key] = inp.checked; smlcSaveA11yPrefs(); smlcApplyA11yPrefs();
+            }
+            smlcAnnounce(`${inp.nextElementSibling.textContent} ${inp.checked ? 'on' : 'off'}`);
+        }));
+        panel.querySelector('.smlc-a11y-reset').addEventListener('click', () => {
+            smlcA11yPrefs = { text: 0, contrast: false, underline: false, readable: false };
+            smlcSaveA11yPrefs(); smlcApplyA11yPrefs();
+            if (typeof SMLC_FX !== 'undefined' && !SMLC_FX.enabled) window.toggleSmlcEffects();
+            smlcSyncA11yPanel();
+            smlcAnnounce('Accessibility settings reset');
+        });
+        smlcWireKnownDialogs();
+    }
+    if (typeof closeBottomNavSheets === 'function') closeBottomNavSheets();
+    smlcSyncA11yPanel();
+    panel.style.display = 'flex';
+};
+
+function smlcAddA11yEntryPoints() {
+    const footer = document.querySelector('#global-footer-container .footer-simple-inner') || document.querySelector('footer');
+    if (footer && !footer.querySelector('.smlc-a11y-open')) {
+        const p = document.createElement('p');
+        p.innerHTML = `<button type="button" class="smlc-a11y-open smlc-fx-toggle-footer" onclick="openSmlcAccessibilityPanel()"><span aria-hidden="true">&#9855;</span> Accessibility options</button>`;
+        footer.appendChild(p);
+    }
+}
+
+function initAccessibility() {
+    smlcLoadA11yPrefs();
+    smlcApplyA11yPrefs();
+    smlcAddA11yEntryPoints();
+    smlcSetupPillTabs();
+    smlcFixStructure();
+    smlcWireKnownDialogs();
+    smlcEnhanceClickables();
+    smlcFixPartnerHeadings(document);
+    try {
+        const mq = window.matchMedia('(prefers-contrast: more)');
+        const h = () => smlcApplyA11yPrefs();
+        if (mq.addEventListener) mq.addEventListener('change', h); else mq.addListener(h);
+    } catch (e) {}
+
+    // content arrives later from Firebase: keep enhancing + announce finished loads
+    let pending = null;
+    new MutationObserver((muts) => {
+        clearTimeout(pending);
+        pending = setTimeout(() => {
+            smlcEnhanceClickables();
+            smlcFixPartnerHeadings(document);
+            smlcWireKnownDialogs();
+            ['bulletin-scroller-target', 'news-matrix-target'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.getAttribute('aria-busy') === 'true' && !/Loading/i.test(el.textContent)) {
+                    el.setAttribute('aria-busy', 'false');
+                }
+            });
+        }, 150);
+    }).observe(document.body, { childList: true, subtree: true });
+}
+
+(function injectA11yStyles() {
+    if (document.getElementById('smlc-a11y-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'smlc-a11y-styles';
+    style.textContent = `
+        .smlc-sr-only { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important;
+            overflow: hidden !important; clip: rect(0 0 0 0) !important; white-space: nowrap !important; border: 0 !important; }
+        .smlc-pill-tablist { display: contents; }
+
+        /* a clear focus ring that shows on light AND dark backgrounds (keyboard only) */
+        :focus-visible { outline: 3px solid var(--town-accent, var(--flora-orange, #FFC10E)) !important; outline-offset: 2px !important; box-shadow: 0 0 0 6px rgba(0,0,0,.85) !important; }
+        [role="button"][tabindex="0"] { cursor: pointer; }
+
+        /* accent text on dark cards in night view stays readable */
+        @media (prefers-color-scheme: dark) {
+            .biz-location, .read-more-trigger { color: var(--on-card-accent, #9ccfff) !important; }
+        }
+
+        /* text size: the whole site scales from the root size */
+        html.smlc-a11y-text-1 { font-size: 118.75%; }
+        html.smlc-a11y-text-2 { font-size: 137.5%; }
+
+        /* underline links */
+        html.smlc-underline a { text-decoration: underline !important; text-underline-offset: 2px; }
+
+        /* easy-to-read font */
+        html.smlc-readable body, html.smlc-readable body *:not(.smlc-sr-only) { font-family: 'Atkinson Hyperlegible', Verdana, Tahoma, Arial, sans-serif !important; letter-spacing: .01em !important; }
+
+        /* high contrast (device "Increase contrast" or the Accessibility panel) */
+        html.smlc-hc body { background: #000 !important; }
+        html.smlc-hc #smlc-fx-canvas { display: none !important; }
+        html.smlc-hc body :is(main, section, article, header, footer, nav, div, p, span, li, h1, h2, h3, h4, h5, h6, figure, figcaption, strong, em, label, legend, fieldset):not(.smlc-event-status):not(.smlc-event-status *):not(.price-box *):not(.smlc-img-unavailable) {
+            background-color: #000 !important; background-image: none !important; color: #fff !important; text-shadow: none !important; box-shadow: none !important; filter: none !important; }
+        html.smlc-hc body :is(a, a *) { color: #ffeb3b !important; text-decoration: underline !important; }
+        html.smlc-hc body :is(button, summary, .portal-pill-btn, .weather-pill, .directory-tile-link, .event-clipping-btn, .fb-action-btn, .spotlight-btn, .town-directory-interactive-btn, .smlc-bn-btn, .smlc-bn-row) {
+            background: #000 !important; color: #fff !important; border: 2px solid #fff !important; text-shadow: none !important; box-shadow: none !important; }
+        html.smlc-hc body .portal-pill-btn.active, html.smlc-hc body .portal-pill-btn[aria-selected="true"] { background: #fff !important; color: #000 !important; }
+        html.smlc-hc body :is(.clay-county-news-box, .news-clipping-wrapper, .newspaper-feed-chassis, .news-matrix-card, .fuel-monitor-billboard-card, .point-of-interest-card, .article-inner-box, .history-card, .proclamation-card-box, .community-partner-card, .smlc-answers-inner, .et_pb_module_heading, .lightbox-modal-window, .smlc-bn-sheet, .smlc-a11y-card) {
+            border: 2px solid #fff !important; outline: none !important; }
+        html.smlc-hc body .smlc-event-status { background: #fff !important; color: #000 !important; box-shadow: none !important; animation: none !important; }
+        html.smlc-hc body *::before, html.smlc-hc body *::after { text-shadow: none; }
+        html.smlc-hc.smlc-fx-on .clay-county-news-box::after, html.smlc-hc.smlc-fx-on *::after { content: none !important; }
+
+        /* Windows High Contrast / forced colors */
+        @media (forced-colors: active) {
+            #smlc-fx-canvas { display: none !important; }
+            html.smlc-fx-on *::before, html.smlc-fx-on *::after { content: none !important; }
+            .portal-pill-btn, .weather-pill, .smlc-bn-btn, .directory-tile-link { border: 2px solid ButtonText !important; }
+            .smlc-event-status { border: 2px solid CanvasText; }
+        }
+
+        /* Accessibility panel */
+        .smlc-a11y-overlay { position: fixed; inset: 0; z-index: 10050; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,.75); }
+        .smlc-a11y-card { width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto; background: #141416; color: #fff; border: 2px solid var(--town-accent, #FFC10E); border-radius: 14px; padding: 18px 20px; box-sizing: border-box; }
+        .smlc-a11y-head { display: flex; justify-content: space-between; align-items: center; }
+        .smlc-a11y-head h2 { margin: 0; font: 700 1.4rem 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 1px; text-transform: uppercase; }
+        .smlc-a11y-close { min-width: 44px; min-height: 44px; background: none; border: 0; color: #fff; font-size: 1.8rem; cursor: pointer; }
+        .smlc-a11y-intro { margin: 6px 0 14px; color: #d4d4d8; font-size: .95rem; line-height: 1.5; }
+        .smlc-a11y-group { border: 0; margin: 0 0 12px; padding: 0; }
+        .smlc-a11y-group legend { font: 700 .85rem 'Oswald', sans-serif; letter-spacing: 1px; text-transform: uppercase; color: #bdbdc4; margin-bottom: 6px; }
+        .smlc-a11y-seg { display: flex; gap: 6px; }
+        .smlc-a11y-seg button { flex: 1; min-height: 44px; background: #1f1f23; color: #fff; border: 1px solid #444; border-radius: 8px; font: 700 .95rem 'Oswald', sans-serif; cursor: pointer; }
+        .smlc-a11y-seg button[aria-pressed="true"] { background: var(--town-accent, #FFC10E); color: var(--town-on-accent, #000); border-color: var(--town-accent, #FFC10E); }
+        .smlc-a11y-switch { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 12px; margin: 0 0 8px; background: #1f1f23; border: 1px solid #333; border-radius: 10px; cursor: pointer; font-size: 1rem; }
+        .smlc-a11y-switch input { width: 22px; height: 22px; accent-color: var(--town-accent, #FFC10E); }
+        .smlc-a11y-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 14px; }
+        .smlc-a11y-actions button { min-height: 44px; padding: 8px 16px; border-radius: 8px; font: 700 .95rem 'Oswald', sans-serif; letter-spacing: .5px; cursor: pointer; }
+        .smlc-a11y-reset { background: none; color: #fff; border: 1px solid #666; }
+        .smlc-a11y-done { background: var(--town-accent, #FFC10E); color: var(--town-on-accent, #000); border: 0; }
+    `;
+    (document.head || document.documentElement).appendChild(style);
+})();
+
 // === DOM EVENT LISTENERS ===
 window.addEventListener('hashchange', () => {
     handleSPAHashNavigation();
@@ -3359,4 +3782,5 @@ window.addEventListener('DOMContentLoaded', () => {
     handleSPAHashNavigation();
     startCentralFooterClock();
     initWeatherHolidayEffects();
+    initAccessibility();
 });
