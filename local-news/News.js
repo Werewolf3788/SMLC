@@ -1,6 +1,6 @@
 /* === SECTION: File Header & Config === */
-// Active Version: v1.9.2 | Timestamp: 2026-10-31
-// Description: Multi-Source Local News Scraper with Strict Clay County Town Filtering + Numeric Area IDs
+// Active Version: v1.9.3 | Timestamp: 2026-10-31_06:51:00 EDT
+// Description: Multi-Source Local News Scraper with XML Sanitizer, Cloudflare Bypass & Strict Clay County Filtering
 
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
@@ -26,8 +26,19 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// Desktop Chrome browser headers to bypass Cloudflare / Wordfence 403 blocks on datacenter IPs
+const BROWSER_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1"
+};
+
 const rssParser = new Parser({
-    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) LocalNewsBot/1.9' },
+    headers: BROWSER_HEADERS,
     customFields: {
         item: [
             ['content:encoded', 'contentEncoded'],
@@ -231,23 +242,32 @@ function resolveStoryTags(title, summary) {
         }
     }
 
-    // 1. Towns matched: keep Clay County (tag 0) so stories show up in general county feeds
     const towns = [...hits].filter(a => a !== "Clay County");
     if (towns.length > 0) {
         return ["Clay County", ...towns];
     }
 
-    // 2. Colleges hidden if no town matched
     if (COLLEGE_REGEX.test(text)) return null;
-
-    // 3. County-wide only
     if (hits.has("Clay County")) return ["Clay County"];
 
-    // 4. Everything else discarded
     return null;
 }
 
-/* === SECTION: Data Cleaning & Extraction Helpers === */
+/* === SECTION: XML Sanitizer & Data Extraction === */
+/**
+ * Repairs malformed XML common in local WordPress/Radio feeds:
+ * 1. Encodes naked ampersands that break SAX entity parsing
+ * 2. Removes backslashes in attributes
+ * 3. Strips illegal non-printable control characters
+ */
+function sanitizeXml(rawXml) {
+    if (!rawXml) return "";
+    return rawXml
+        .replace(/&(?!(?:[a-zA-Z0-9]+|#\d+|#x[0-9a-fA-F]+);)/g, "&amp;")
+        .replace(/=\s*"(.*?)\\"/g, '="$1"')
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+}
+
 function decodeEntities(str) {
     if (!str) return "";
     return str
@@ -321,7 +341,7 @@ function extractImageFromFeed(item) {
 async function scrapeWebPageContent(url) {
     try {
         const res = await fetch(url, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) LocalNewsBot/1.9' },
+            headers: BROWSER_HEADERS,
             signal: AbortSignal.timeout(6000)
         });
 
@@ -364,7 +384,6 @@ async function scrapeWebPageContent(url) {
     }
 }
 
-// Generates an ID using headline text + MD5 hash of link to guarantee zero collisions
 function generateUniqueKey(title, link) {
     const slug = (title || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 35);
     const hash = crypto.createHash("md5").update(link || title).digest("hex").slice(0, 8);
@@ -378,6 +397,7 @@ async function fetchAllFeedItems() {
     for (const source of sourcesData) {
         const sourceType = (source.type || "").toLowerCase();
 
+        // 1. Direct Web Scraping
         if (sourceType === "html" || sourceType === "webpage") {
             try {
                 console.log(`[HTML SCRAPING] ${source.name} (${source.url})`);
@@ -401,9 +421,24 @@ async function fetchAllFeedItems() {
             continue;
         }
 
+        // 2. Pre-fetched Sanitized RSS Feeds
         try {
             console.log(`[FEED FETCHING] ${source.name} (${source.url})`);
-            const feed = await rssParser.parseURL(source.url);
+            
+            const response = await fetch(source.url, {
+                headers: BROWSER_HEADERS,
+                signal: AbortSignal.timeout(8000)
+            });
+
+            if (!response.ok) {
+                console.error(`[FEED HTTP ERROR] ${source.name} returned HTTP ${response.status}`);
+                continue;
+            }
+
+            const rawXml = await response.text();
+            const cleanXml = sanitizeXml(rawXml);
+            const feed = await rssParser.parseString(cleanXml);
+
             const skipFallback = source.excerptOnly === true || /wnoi\.com/i.test(source.url);
 
             for (const item of feed.items) {
@@ -509,7 +544,7 @@ async function runScraper() {
             location: displayLocation,
             source_name: item.source_name || "Local News",
             source_url: item.source_url || link,
-            tags: tagIds,         // Numeric array (0 = Clay County, 2 = Flora, etc.)
+            tags: tagIds,         // Numeric array ([0] for Clay County, [0, 2] for Flora)
             tagNames: tags,       // Human-readable labels
             towns: towns,
             title: title,
