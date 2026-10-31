@@ -1,0 +1,19 @@
+# Support My Local Community (SMLC)
+
+> Free community portal for Clay County, Illinois (Central Time). Local events, news, gas prices, weather and businesses for Clay City, Flora, Louisville, Sailor Springs and Xenia.
+
+## Pages
+- [Clay County home](https://werewolf3788.github.io/SMLC/): county-wide events, news, partners and business directory
+- [Clay City, IL](https://werewolf3788.github.io/SMLC/clay-city): Clay City events, news, gas prices, weather, landmarks and history (ZIP 62824)
+- [Flora, IL](https://werewolf3788.github.io/SMLC/flora): Flora events, news, gas prices, weather, landmarks and history (ZIP 62839)
+- [Louisville, IL](https://werewolf3788.github.io/SMLC/louisville): Louisville events, news, gas prices, weather, landmarks and history (ZIP 62858)
+- [Sailor Springs, IL](https://werewolf3788.github.io/SMLC/sailor-springs): Sailor Springs events, news, gas prices, weather, landmarks and history (ZIP 62879)
+- [Xenia, IL](https://werewolf3788.github.io/SMLC/xenia): Xenia events, news, gas prices, weather, landmarks and history (ZIP 62899)
+
+## Key facts
+- Clay County, Illinois is in the Central Time Zone; all times on the site are Central.
+- Louisville is the Clay County seat. Flora is the largest city.
+- Submit an event (free): https://www.supportmylocalcommunity.com/submit-event
+- Clay County Business Directory: https://clay-county-business-directory.supportmylocalcommunity.com/
+- Contact: Scott Robinson, Scott.Robinson@skventuresigns.com
+- Facebook: https://www.facebook.com/SupportMyLocalCommunity

@@ -1,6 +1,6 @@
 /**
  * PROJECT: Support My Local Community / Ourflora - Clay County, IL
- * PURPOSE: Parse public Google Calendar .ics feed & sync active 720-hr events to Firestore
+ * PURPOSE: Parse public Google Calendar .ics feed & sync active events (next 2 months) to Firestore
  * LEAD DEVELOPER: Werewolf3788
  * VERSION: v1.4.0 (Clean descriptions, extracted links, maps URL, event image)
  */
@@ -171,9 +171,14 @@ async function syncICalToFirestore() {
     const rawData = await ical.async.fromURL(ICAL_URL);
     const now = new Date();
 
-    // 720 Hours in milliseconds (30 days)
-    const MS_720_HOURS = 30 * 24 * 60 * 60 * 1000;
-    const future720Hours = new Date(now.getTime() + MS_720_HOURS);
+    // Rolling window: now -> same date & time 2 calendar months ahead
+    // (never spills into the next month: Dec 31 + 2 months = Feb 28/29)
+    const MONTHS_AHEAD = 2;
+    const windowEnd = new Date(now.getTime());
+    const startDay = windowEnd.getDate();
+    windowEnd.setDate(1);
+    windowEnd.setMonth(windowEnd.getMonth() + MONTHS_AHEAD);
+    windowEnd.setDate(Math.min(startDay, new Date(windowEnd.getFullYear(), windowEnd.getMonth() + 1, 0).getDate()));
 
     const activeEvents = [];
 
@@ -185,11 +190,11 @@ async function syncICalToFirestore() {
         const start = new Date(ev.start);
         const end = new Date(ev.end);
 
-        // Strict 720-hour rolling window filter
+        // Rolling 2-month window filter
         const isStillActive = end && end.getTime() > now.getTime();
-        const startsWithin720Hours = start && start.getTime() <= future720Hours.getTime();
+        const startsInWindow = start && start.getTime() <= windowEnd.getTime();
 
-        if (isStillActive && startsWithin720Hours) {
+        if (isStillActive && startsInWindow) {
           const title = parseRichText(ev.summary).text || "Untitled Event";
           const uppercaseTitle = title.toUpperCase();
           const isAllDay = ev.datetype === 'date';
@@ -252,7 +257,7 @@ async function syncICalToFirestore() {
     // Sort by start time ascending
     activeEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
 
-    console.log(`Parsed ${activeEvents.length} active events strictly within the 720-hour sliding window.`);
+    console.log(`Parsed ${activeEvents.length} active events in the next 2 months.`);
 
     // Wipe-and-replace collection: /smlc_events
     const collectionRef = db.collection('smlc_events');
