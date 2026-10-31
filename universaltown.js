@@ -67,11 +67,18 @@
 
 // Line 54: Google Translate Global Callback & Dynamic Mutation Scanner
 window.googleTranslateElementInit = function() {
+    // Translation follows the device language (smlc-device-prefs.js).
+    // English devices never start the translator.
+    if (typeof window.smlcStartTranslate === 'function') {
+        try { window.smlcStartTranslate(); } catch (e) { console.warn("Google Translate initialization notice:", e.message); }
+        return;
+    }
+    if (window.SMLC_TRANSLATE_WANTED === false) return;
     try {
         if (window.google && window.google.translate) {
             new window.google.translate.TranslateElement({
                 pageLanguage: 'en',
-                layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE
+                autoDisplay: false
             }, 'google_translate_element');
         }
     } catch(e) {

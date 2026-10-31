@@ -22,26 +22,49 @@
         return special[base] || base;
     }
 
-    function setCookie(value, expires) {
-        var host = location.hostname;
-        var parts = ['googtrans=' + value, 'path=/'];
-        if (expires) parts.push('expires=' + expires);
-        document.cookie = parts.join('; ');
-        if (host && host.indexOf('.') !== -1 && !/^\d+\.\d+\.\d+\.\d+$/.test(host)) {
-            document.cookie = parts.concat('domain=' + host).join('; ');
-            document.cookie = parts.concat('domain=.' + host).join('; ');
+    // Google Translate reads a "googtrans" cookie. Old copies can sit on several
+    // paths/domains (from the old language picker), so write/clear them all.
+    function cookiePaths() {
+        var paths = ['/'];
+        var segs = location.pathname.split('/').filter(Boolean);
+        var acc = '';
+        for (var i = 0; i < segs.length; i++) {
+            acc += '/' + segs[i];
+            paths.push(acc, acc + '/');
         }
+        return paths;
+    }
+    function cookieDomains() {
+        var host = location.hostname;
+        var list = [''];
+        if (host && host.indexOf('.') !== -1 && !/^\d+\.\d+\.\d+\.\d+$/.test(host)) list.push(host, '.' + host);
+        return list;
+    }
+    function setCookie(value, expires) {
+        var paths = expires ? cookiePaths() : ['/'];
+        paths.forEach(function (path) {
+            cookieDomains().forEach(function (domain) {
+                var parts = ['googtrans=' + value, 'path=' + path];
+                if (expires) parts.push('expires=' + expires);
+                if (domain) parts.push('domain=' + domain);
+                document.cookie = parts.join('; ');
+            });
+        });
     }
 
     var target = googleLangFromDevice();
     var current = (document.cookie.match(/(?:^|;\s*)googtrans=([^;]*)/) || [])[1] || '';
 
+    var EXPIRED = 'Thu, 01 Jan 1970 00:00:00 GMT';
     if (target === PAGE_LANGUAGE) {
-        // English device: make sure no old translation sticks around
-        if (current) setCookie('', 'Thu, 01 Jan 1970 00:00:00 GMT');
+        // English device: wipe every old translation cookie so nothing sticks around
+        if (current) setCookie('', EXPIRED);
     } else {
         var wanted = '/' + PAGE_LANGUAGE + '/' + target;
-        if (decodeURIComponent(current) !== wanted) setCookie(wanted);
+        if (decodeURIComponent(current) !== wanted) {
+            setCookie('', EXPIRED);   // clear stale copies on other paths first
+            setCookie(wanted);
+        }
     }
     window.SMLC_DEVICE_LANGUAGE = target;
 
@@ -53,12 +76,18 @@
             document.body.appendChild(el);
         }
     };
-    if (typeof window.googleTranslateElementInit !== 'function') {
-        window.googleTranslateElementInit = function () {
-            window.smlcEnsureTranslateElement();
-            new google.translate.TranslateElement({ pageLanguage: PAGE_LANGUAGE, autoDisplay: false }, 'google_translate_element');
-        };
-    }
+    // Only start Google Translate when the device is NOT English.
+    // English devices never load the translator, so a page can't come up in
+    // another language. Pages call window.smlcStartTranslate() from their
+    // googleTranslateElementInit; it does nothing on English devices.
+    window.SMLC_TRANSLATE_WANTED = (target !== PAGE_LANGUAGE);
+    window.smlcStartTranslate = function () {
+        if (!window.SMLC_TRANSLATE_WANTED) return;
+        if (!(window.google && window.google.translate && window.google.translate.TranslateElement)) return;
+        window.smlcEnsureTranslateElement();
+        new window.google.translate.TranslateElement({ pageLanguage: PAGE_LANGUAGE, autoDisplay: false }, 'google_translate_element');
+    };
+    window.googleTranslateElementInit = window.smlcStartTranslate;
 
     // Hide every Google Translate control, banner and tooltip
     var css = '' +
