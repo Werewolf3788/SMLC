@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: v3.5.0
+   Active Version: v3.6.0
    File: universaltown.js
    Project: SMLC County Portal Semantic Master Script
    Description: Complete multi-town engine connecting 100% to Firebase (RTDB & Firestore).
@@ -21,6 +21,8 @@
                 - Dynamic GA4 Tag Injection (G-FHJNXDB9BB) with SPA Hash Route Pageview Tracking
                 - Town-specific & countywide Sports Scoreboard Engine
                 - Persistent 24-hour New York timestamp & version in footer
+                - v3.6.0: Events read from Firestore /smlc_events (2 months ahead) with attachment thumbnails,
+                  attachment links + lightbox; every picture opens the lightbox; alt text only shown there
                 - v3.5.0: Partner strips show only whole cards (5+ on desktop), refit on resize, no scrollbars
                 - v3.5.0: Header #0C5E75 in light view; Quick Answers styling; Event structured data (SEO/AEO)
                 - v3.4.0: Weather & holiday background effects matching Clay County weather (rain, storm,
@@ -338,13 +340,23 @@ function extractText(val) {
 function linkifyRawUrls(text) {
     if (!text) return "";
     const urlPattern = /(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi;
-    return String(text).replace(urlPattern, (match) => {
+    const linkify = (chunk) => chunk.replace(urlPattern, (match) => {
         let cleanHref = match;
         if (!cleanHref.match(/^https?:\/\//i)) {
             cleanHref = '//' + cleanHref;
         }
-        return `<a href="${cleanHref}" target="_blank" rel="noopener" style="color:var(--link-bright-blue); text-decoration:underline; word-break:break-all;">${match}</a>`;
+        return `<a href="${attachUtmParameters(cleanHref)}" target="_blank" rel="noopener" style="color:var(--link-bright-blue); text-decoration:underline; word-break:break-all;">${match}</a>`;
     });
+    // Only turn plain-text URLs into links: leave existing HTML tags (and text inside links) alone
+    let insideLink = 0;
+    return String(text).split(/(<[^>]+>)/g).map(part => {
+        if (part.startsWith('<')) {
+            if (/^<a[\s>]/i.test(part)) insideLink++;
+            else if (/^<\/a>/i.test(part)) insideLink = Math.max(0, insideLink - 1);
+            return part;
+        }
+        return insideLink ? part : linkify(part);
+    }).join('');
 }
 
 function buildTurnByTurnNavigationUrl(rawAddress) {
@@ -863,7 +875,7 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = ""
     const parsedAlt = linkifyRawUrls(cleanAlt || '');
 
     const displayStory = (cleanAlt && cleanAlt !== cleanTitle) 
-        ? `<div style="font-style:italic; font-size:14px; color:var(--card-text-secondary, #444); margin-bottom:12px; border-left:3px solid var(--primary); padding-left:10px;">Details: ${parsedAlt}</div>${parsedBody}`
+        ? `<div class="smlc-lightbox-alt" style="font-style:italic; font-size:14px; color:var(--card-text-secondary, #444); margin-bottom:12px; border-left:3px solid var(--primary); padding-left:10px;">Image description: ${parsedAlt}</div>${parsedBody}`
         : parsedBody;
 
     const storyEl = document.getElementById('lightbox-target-story'); 
@@ -910,12 +922,17 @@ function openCalendarLightboxModal(idx) {
     const dateText = cleanCalendarDate(targetItem.date || targetItem.displayDate || targetItem.event_date);
     const timeText = cleanCalendarTime(targetItem.time || targetItem.displayTime, targetItem.date || targetItem.displayDate);
     const rawLoc = targetItem.location || ACTIVE_TOWN.primaryName + ", IL";
-    const rawDetails = targetItem.details || targetItem.description || "No additional event details provided.";
+    let rawDetails = targetItem.details || targetItem.description || targetItem.desc || "No additional event details provided.";
     const finalEventImg = targetItem.imageUrl || targetItem.image || null;
+    const atts = toPlainArray(targetItem.attachments).filter(a => a && a.fileUrl);
+    if (atts.length) rawDetails += ' <br><br><strong>Attachments:</strong><br>' + atts.map(a => `&#128206; ${escapeHtmlText(a.title)}: ${a.fileUrl} `).join('<br>');
     const navUrl = buildTurnByTurnNavigationUrl(rawLoc);
-    const metaHeader = `${dateText} &bull; ${timeText}<br>Location: <a href="${navUrl}" target="_blank" rel="noopener" style="color:var(--primary); font-weight:bold; text-decoration:underline;">${rawLoc} (Directions &rarr;)</a>`;
+    const winLb = getEventWindow(targetItem);
+    const tzNote = winLb && !winLb.allDay ? ` ${SMLC_TZ_LABEL}` : '';
+    const yourTime = buildViewerTimeNote(winLb);
+    const metaHeader = `${dateText} &bull; ${timeText}${tzNote}${yourTime ? `<br><em>${yourTime}</em>` : ''}<br>Location: <a href="${navUrl}" target="_blank" rel="noopener" style="color:var(--primary); font-weight:bold; text-decoration:underline;">${rawLoc} (Directions &rarr;)</a>`;
 
-    fireLightbox(finalEventImg, title, metaHeader, rawDetails, '', title);
+    fireLightbox(finalEventImg, title, metaHeader, rawDetails, '', `${title} flyer`);
 }
 
 function openNewsLightboxModal(idx) {
@@ -2090,15 +2107,97 @@ function publishEventStructuredData(items) {
     } catch (e) { console.warn('Event data notice:', e.message); }
 }
 
+// ============================================================================
+// EVENTS SOURCE: Firestore /smlc_events (written by the Calendar sync, 2 months ahead)
+// Each doc: { title, start, end, isAllDay, desc, addr, googleLink, icalData,
+//             attachments: [{ title, fileUrl, mimeType, iconLink }], attachmentUrl, image? }
+// ============================================================================
+function smlcIsImageAttachment(att) {
+    if (!att) return false;
+    const mime = String(att.mimeType || '').toLowerCase();
+    const url = String(att.fileUrl || att.url || '');
+    if (mime) return mime.startsWith('image/');
+    return /\.(jpe?g|png|gif|webp|avif)(\?|#|$)/i.test(url) || /googleusercontent\.com/i.test(url);
+}
+
+function smlcCentralClock(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return new Intl.DateTimeFormat('en-US', { timeZone: SMLC_TZ, hour: 'numeric', minute: '2-digit', hour12: true }).format(d);
+}
+
+function smlcNormalizeEventDoc(d) {
+    if (!d || !(d.title || d.name)) return null;
+    const attachments = toPlainArray(d.attachments).filter(a => a && (a.fileUrl || a.url)).map(a => ({
+        title: a.title || 'Attachment', fileUrl: a.fileUrl || a.url, mimeType: a.mimeType || '', isImage: smlcIsImageAttachment(a)
+    }));
+    if (!attachments.length && d.attachmentUrl) attachments.push({ title: 'Attachment', fileUrl: d.attachmentUrl, mimeType: '', isImage: smlcIsImageAttachment({ fileUrl: d.attachmentUrl }) });
+    const firstImage = attachments.find(a => a.isImage);
+    const hasStart = d.start && !isNaN(new Date(d.start).getTime());
+    return {
+        ...d,
+        name: d.title || d.name,
+        location: d.addr || d.location || '',
+        details: d.desc || d.details || d.description || '',
+        imageUrl: d.imageUrl || d.image || (firstImage ? firstImage.fileUrl : ''),
+        attachments,
+        date: hasStart ? d.start : (d.date || d.displayDate),
+        time: hasStart ? (d.isAllDay ? '' : `${smlcCentralClock(d.start)} - ${smlcCentralClock(d.end || d.start)}`) : (d.time || d.displayTime || '')
+    };
+}
+
+async function smlcLoadFirestoreEvents() {
+    let docs = [];
+    try {
+        if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+            const snap = await firebase.firestore().collection('smlc_events').get();
+            snap.forEach(ds => docs.push(ds.data()));
+        }
+    } catch (e) { console.warn('Events (Firestore SDK) notice:', e.message); }
+
+    if (!docs.length) {
+        try {
+            const unwrap = (v) => {
+                if (!v) return null;
+                if (v.stringValue !== undefined) return v.stringValue;
+                if (v.integerValue !== undefined) return parseInt(v.integerValue, 10);
+                if (v.doubleValue !== undefined) return v.doubleValue;
+                if (v.booleanValue !== undefined) return v.booleanValue;
+                if (v.timestampValue !== undefined) return v.timestampValue;
+                if (v.arrayValue) return (v.arrayValue.values || []).map(unwrap);
+                if (v.mapValue) { const o = {}; Object.entries(v.mapValue.fields || {}).forEach(([k, x]) => { o[k] = unwrap(x); }); return o; }
+                return null;
+            };
+            let token = null;
+            do {
+                const url = 'https://firestore.googleapis.com/v1/projects/smlc-fuel-monitor/databases/(default)/documents/smlc_events?pageSize=300' + (token ? '&pageToken=' + encodeURIComponent(token) : '');
+                const res = await fetch(url);
+                if (!res.ok) break;
+                const body = await res.json();
+                (body.documents || []).forEach(doc => { const o = {}; Object.entries(doc.fields || {}).forEach(([k, x]) => { o[k] = unwrap(x); }); docs.push(o); });
+                token = body.nextPageToken || null;
+            } while (token);
+        } catch (e) { console.warn('Events (Firestore REST) notice:', e.message); }
+    }
+
+    return docs.map(smlcNormalizeEventDoc).filter(Boolean)
+        .sort((a, b) => (new Date(a.start || a.date).getTime() || 0) - (new Date(b.start || b.date).getTime() || 0));
+}
+
 async function loadCommunityBulletinFeed() {
     const scroller = document.getElementById('bulletin-scroller-target');
     if (!scroller) return;
 
     try {
-        const endpoint = DEFAULT_APP_CONFIG.regional_endpoints.apps_script_bulletin_url;
-        const res = await fetch(endpoint + '?feed=true');
-        if (res.ok) {
-            const elements = await res.json();
+        let elements = await smlcLoadFirestoreEvents();
+        if (!elements.length) {
+            try {
+                const endpoint = DEFAULT_APP_CONFIG.regional_endpoints.apps_script_bulletin_url;
+                const res = await fetch(endpoint + '?feed=true');
+                if (res.ok) { const feed = await res.json(); if (Array.isArray(feed)) elements = feed; }
+            } catch (feedErr) { console.warn("Bulletin feed notice:", feedErr.message); }
+        }
+        {
             if (Array.isArray(elements) && elements.length > 0) {
                 window.calendarCachedEvents = elements;
                 applyHighDensityScrollLimits(scroller, elements.length, 500);
@@ -2132,13 +2231,15 @@ async function loadCommunityBulletinFeed() {
                     const winAttrs = win ? `data-start="${win.start.getTime()}" data-end="${win.end.getTime()}" data-allday="${win.allDay ? 1 : 0}"` : '';
                     const finalEventImg = normalizeImageUrl(item.imageUrl || item.image);
 
-                    const singleGoogleUrl = generateGoogleCalendarEventUrl(eventTitle, item.date || item.displayDate, item.time || item.displayTime, eventLoc, rawDetails);
-                    const singleIcalBlob = generateIcalDataBlob(eventTitle, item.date || item.displayDate, item.time || item.displayTime, eventLoc, rawDetails);
+                    const singleGoogleUrl = item.googleLink || generateGoogleCalendarEventUrl(eventTitle, item.date || item.displayDate, item.time || item.displayTime, eventLoc, rawDetails);
+                    const singleIcalBlob = item.icalData ? `data:text/calendar;charset=utf8;base64,${item.icalData}` : generateIcalDataBlob(eventTitle, item.date || item.displayDate, item.time || item.displayTime, eventLoc, rawDetails);
+                    const fileAttachments = toPlainArray(item.attachments).filter(a => a && !a.isImage && a.fileUrl);
+                    const attachmentChips = fileAttachments.length ? `<div class="smlc-event-attachments">${fileAttachments.map(a => `<a href="${escapeHtmlText(a.fileUrl)}" target="_blank" rel="noopener" class="smlc-attachment-chip" data-ga-label="event_attachment">&#128206; ${escapeHtmlText(a.title)}</a>`).join('')}</div>` : '';
                     const turnByTurnNavUrl = buildTurnByTurnNavigationUrl(eventLoc);
 
                     const thumbnailHtml = finalEventImg ? `
                         <div style="float: right; margin: 0 0 10px 12px;">
-                            <img src="${finalEventImg}" alt="" onclick="openCalendarLightboxModal(${idx})" style="width:85px; height:85px; object-fit:cover; border-radius:6px; border:2px solid #222; cursor:pointer; display:block;" onerror="this.parentElement.style.display='none';" />
+                            <img src="${finalEventImg}" alt="${escapeHtmlText(eventTitle)} flyer" title="View flyer" onclick="openCalendarLightboxModal(${idx})" style="width:85px; height:85px; object-fit:cover; border-radius:6px; border:2px solid var(--card-border-color, #222); cursor:zoom-in; display:block;" onerror="this.parentElement.style.display='none';" />
                         </div>
                     ` : '';
 
@@ -2155,6 +2256,7 @@ async function loadCommunityBulletinFeed() {
                                     ${eventLoc} &rarr; Directions
                                 </a>
                             </div>
+                            ${attachmentChips}
                             <div class="smlc-event-desc" style="font-size:13px; color:var(--card-text-secondary, #444); margin-top:4px;">${linkifyRawUrls(rawDetails.substring(0, 110))}${rawDetails.length > 110 ? '...' : ''}</div>
                             
                             <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
@@ -2429,6 +2531,17 @@ function handleSPAHashNavigation() {
             html .partners-horizontal-strip .community-partner-card { flex: 0 1 88%; max-width: 340px; }
             html .partners-horizontal-strip .partner-logo-container { height: 105px; }
         }
+
+        /* ---------- Alt text is for screen readers, search engines and the lightbox only:
+                      never shown as text on the page (e.g. while a picture is loading or broken) ---------- */
+        img { color: transparent; font-size: 0; }
+        #lightbox-target-img { font-size: 0; }
+
+        /* ---------- Event attachments ---------- */
+        .smlc-event-attachments { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }
+        .smlc-attachment-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font: 700 12px 'Oswald', 'Arial Narrow', sans-serif;
+            letter-spacing: .4px; background: rgba(var(--town-primary-rgb, 2,88,163), .12); color: var(--on-card-accent, #0258A3) !important; border: 1px solid currentColor; text-decoration: none; }
+        .smlc-attachment-chip:hover { background: rgba(var(--town-primary-rgb, 2,88,163), .25); }
 
         /* ---------- Menu dropdowns (Firebase menu entries with sub-links) ---------- */
         .smlc-menu-dropdown { position: relative; }
@@ -3217,6 +3330,24 @@ window.smlcWeatherChanged = function () {
     `;
     (document.head || document.documentElement).appendChild(style);
 })();
+
+// ============================================================================
+// EVERY PICTURE OPENS IN THE LIGHTBOX
+// Pictures with their own click action keep it; any other picture on the page opens
+// the lightbox with its title, description, link and its alt text (the alt text is
+// only ever shown there, never on the page itself).
+// ============================================================================
+document.addEventListener('click', (e) => {
+    const img = e.target.closest ? e.target.closest('img') : null;
+    if (!img || typeof fireLightbox !== 'function') return;
+    if (img.onclick || img.getAttribute('onclick') || img.classList.contains('lightbox-triggerable-element')) return;
+    if (img.closest('a, button, [onclick], .menu-bar, .smlc-top-nav, #smlc-bottom-nav, .smlc-bn-sheet, #portal-global-lightbox, #weather-fiveday-forecast-modal, .weather-pill, #portal-weather-current-badge, .scorestream-widget-container, .site-brand-header')) return;
+    if (img.dataset.smlcImgFailed === '1' || !img.currentSrc) return;
+    const card = img.closest('.history-card, .clay-county-news-box, .point-of-interest-card, .article-inner-box, .community-partner-card, .news-matrix-card, section, .main-container');
+    const heading = card ? card.querySelector('h1, h2, h3, h4, .biz-title, .partner-title') : null;
+    const d = img.dataset || {};
+    fireLightbox(img.currentSrc || img.src, d.title || (heading ? heading.textContent.trim() : ''), d.date || '', d.desc || '', d.link || '', img.getAttribute('alt') || d.alt || '');
+});
 
 // === DOM EVENT LISTENERS ===
 window.addEventListener('hashchange', () => {
