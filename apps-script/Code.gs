@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-10-31_v5
+   Active Version: 2026-10-31_v6
    File: Code.gs (Google Apps Script)
    Project: SMLC County Portal Semantic RTDB Sync
    Description: SMLC County Portal Master Parser & Firebase Realtime DB Sync.
@@ -20,6 +20,8 @@
                 - v5: Blank sheet rows skipped (no more empty "LINK" menu items).
                       Menu tab: A Town/label | B Website | C Image | D Alt | E Category.
                       Category "More" -> More dropdown; "town" saved for town rows.
+                - v6: SECTION 5 - Now Hiring jobs from the Adzuna API -> /jobs_board
+                      (Script Properties ADZUNA_APP_ID + ADZUNA_APP_KEY).
    ========================================================================== */
 
 // === SECTION 0: Auto-Sync On Edit Event Listener ===
@@ -654,4 +656,133 @@ function installGasPriceTrigger() {
   });
   ScriptApp.newTrigger("updateGasPricesFromGoogle").timeBased().everyHours(GAS_REFRESH_HOURS).create();
   Logger.log("Gas price refresh scheduled every " + GAS_REFRESH_HOURS + " hours.");
+}
+
+// === SECTION 5: Now Hiring jobs from the Adzuna API ===
+/*
+ * Feeds the Now Hiring page (now-hiring.html) with job openings in and
+ * around Clay County. Saves them to Firebase at /jobs_board.
+ *
+ * SETUP (once)
+ *   1. Project Settings -> Script Properties -> add:
+ *        ADZUNA_APP_ID   = your App ID  (short code on the Adzuna dashboard)
+ *        ADZUNA_APP_KEY  = your App Key (long code)
+ *   2. Run updateJobsFromAdzuna once by hand (check the log).
+ *   3. Run installJobsTrigger once to refresh automatically twice a day.
+ *
+ * COST: at most JOB_SEARCH_CENTERS x JOB_MAX_PAGES calls per run (2 x 2 = 4),
+ *       twice a day = about 250 calls a month.
+ */
+var JOB_SEARCH_CENTERS = ["Louisville, Illinois", "Flora, Illinois"];
+var JOB_RADIUS_KM = 30;           // about 19 miles around each town
+var JOB_RESULTS_PER_PAGE = 50;
+var JOB_MAX_PAGES = 2;
+var JOB_COUNTY_TOWNS = ["Clay City", "Flora", "Louisville", "Sailor Springs", "Xenia", "Iola",
+  "Bible Grove", "Blair", "Harter", "Hoosier", "Larkinsburg", "Oskaloosa", "Pixley", "Songer", "Stanford"];
+
+function jobCleanText_(s) {
+  return String(s || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Which Clay County town the job is in, or "" if it's nearby but outside the county */
+function jobCountyTown_(job) {
+  var area = (job.location && job.location.area) || [];
+  var haystack = (area.join(" | ") + " | " + ((job.location && job.location.display_name) || "")).toLowerCase();
+  for (var i = 0; i < JOB_COUNTY_TOWNS.length; i++) {
+    if (haystack.indexOf(JOB_COUNTY_TOWNS[i].toLowerCase()) !== -1) return JOB_COUNTY_TOWNS[i];
+  }
+  return haystack.indexOf("clay county") !== -1 ? "Clay County" : "";
+}
+
+/** Timer job: pulls jobs from Adzuna and saves them to /jobs_board for the Now Hiring page. */
+function updateJobsFromAdzuna() {
+  var props = PropertiesService.getScriptProperties();
+  var appId = props.getProperty("ADZUNA_APP_ID");
+  var appKey = props.getProperty("ADZUNA_APP_KEY");
+  if (!appId || !appKey) throw new Error("Missing Script Properties ADZUNA_APP_ID and/or ADZUNA_APP_KEY.");
+
+  var byId = {};
+  JOB_SEARCH_CENTERS.forEach(function(center) {
+    for (var page = 1; page <= JOB_MAX_PAGES; page++) {
+      var url = "https://api.adzuna.com/v1/api/jobs/us/search/" + page +
+        "?app_id=" + encodeURIComponent(appId) +
+        "&app_key=" + encodeURIComponent(appKey) +
+        "&results_per_page=" + JOB_RESULTS_PER_PAGE +
+        "&where=" + encodeURIComponent(center) +
+        "&distance=" + JOB_RADIUS_KM +
+        "&sort_by=date&content-type=application/json";
+      var resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+      if (resp.getResponseCode() !== 200) {
+        Logger.log("Adzuna search failed for " + center + " page " + page + ": HTTP " +
+                   resp.getResponseCode() + " " + resp.getContentText().slice(0, 300));
+        break;
+      }
+      var results = JSON.parse(resp.getContentText()).results || [];
+      Logger.log(center + " page " + page + ": " + results.length + " jobs");
+      results.forEach(function(j) {
+        if (!j || !j.id || byId[j.id]) return;
+        var town = jobCountyTown_(j);
+        var predicted = String(j.salary_is_predicted) === "1";
+        byId[j.id] = {
+          id: String(j.id),
+          title: jobCleanText_(j.title),
+          company: jobCleanText_(j.company && j.company.display_name),
+          location: jobCleanText_(j.location && j.location.display_name),
+          town: town,
+          inCounty: !!town,
+          description: jobCleanText_(j.description).slice(0, 400),
+          url: j.redirect_url || "",
+          created: j.created || "",
+          category: jobCleanText_(j.category && j.category.label).replace(/\s*Jobs$/i, ""),
+          contract: j.contract_time || j.contract_type || "",
+          salaryMin: !predicted && j.salary_min ? Math.round(j.salary_min) : null,
+          salaryMax: !predicted && j.salary_max ? Math.round(j.salary_max) : null
+        };
+      });
+      if (results.length < JOB_RESULTS_PER_PAGE) break; // no more pages
+    }
+  });
+
+  var jobs = Object.keys(byId).map(function(k) { return byId[k]; })
+    .filter(function(j) { return j.title && j.url; })
+    .sort(function(a, b) {
+      return (Number(b.inCounty) - Number(a.inCounty)) || (new Date(b.created) - new Date(a.created));
+    });
+
+  if (!jobs.length) {
+    Logger.log("No jobs returned - kept the previous list on the website.");
+    return;
+  }
+
+  var payload = {
+    updatedAt: new Date().toISOString(),
+    source: "Adzuna",
+    count: jobs.length,
+    inCountyCount: jobs.filter(function(j) { return j.inCounty; }).length,
+    jobsJson: JSON.stringify(jobs)
+  };
+  var save = UrlFetchApp.fetch("https://smlc-fuel-monitor-default-rtdb.firebaseio.com/jobs_board.json", {
+    method: "put",
+    contentType: "application/json",
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  });
+  if (save.getResponseCode() === 200) {
+    Logger.log("Saved " + payload.count + " jobs (" + payload.inCountyCount + " in Clay County) to /jobs_board.");
+  } else {
+    Logger.log("Firebase save failed: HTTP " + save.getResponseCode() + " " + save.getContentText());
+  }
+}
+
+/** Run once by hand: refreshes jobs twice a day (replaces any old jobs timer). */
+function installJobsTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function(t) {
+    if (t.getHandlerFunction() === "updateJobsFromAdzuna") ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger("updateJobsFromAdzuna").timeBased().everyHours(12).create();
+  Logger.log("Jobs refresh scheduled every 12 hours.");
 }

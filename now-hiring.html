@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- SMLC Now Hiring | Jobs in and around Clay County, IL | Data: Adzuna via jobs/jobs-sync.js -> Firebase | 2026-10-31 -->
+<!-- SMLC Now Hiring | Jobs in and around Clay County, IL | Data: Adzuna via Apps Script Code.gs SECTION 5 -> Firebase /jobs_board | 2026-10-31 -->
 <html lang="en" data-town="HOME">
 <head>
     <meta charset="UTF-8">
@@ -134,8 +134,7 @@
             databaseURL: "https://smlc-fuel-monitor-default-rtdb.firebaseio.com",
             projectId: "smlc-fuel-monitor"
         };
-        const FIRESTORE_DOC = "https://firestore.googleapis.com/v1/projects/smlc-fuel-monitor/databases/(default)/documents/smlc_jobs/current";
-        const RTDB_BACKUP = FIREBASE_CONFIG.databaseURL + "/jobs_board.json";
+        const RTDB_JOBS = FIREBASE_CONFIG.databaseURL + "/jobs_board.json";
         const CT = "America/Chicago";
         document.documentElement.style.setProperty("--smlc-nav-primary", "#0258A3");
         document.documentElement.style.setProperty("--smlc-nav-secondary", "#FFC10E");
@@ -342,20 +341,12 @@
         townEl.addEventListener("change", render);
 
         async function loadJobs() {
+            // Saved by updateJobsFromAdzuna() in the Sheet's Apps Script (Code.gs SECTION 5)
             let payload = null;
             try {
-                const res = await fetch(FIRESTORE_DOC);
-                if (res.ok) {
-                    const f = (await res.json()).fields || {};
-                    payload = { updatedAt: f.updatedAt && f.updatedAt.stringValue, jobsJson: f.jobsJson && f.jobsJson.stringValue };
-                }
-            } catch (e) { /* try backup */ }
-            if (!payload || !payload.jobsJson) {
-                try {
-                    const res = await fetch(RTDB_BACKUP);
-                    if (res.ok) payload = await res.json();
-                } catch (e) { /* nothing */ }
-            }
+                const res = await fetch(RTDB_JOBS);
+                if (res.ok) payload = await res.json();
+            } catch (e) { /* shown below */ }
             if (!payload || !payload.jobsJson) {
                 statusEl.textContent = "";
                 resultsEl.innerHTML = '<div class="jobs-empty">Job listings are on their way. In the meantime, <a href="https://www.indeed.com/jobs?l=Clay+County%2C+IL" target="_blank" rel="noopener">see all Clay County jobs on Indeed</a>.</div>';
