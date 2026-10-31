@@ -945,6 +945,16 @@ function openCalendarLightboxModal(idx) {
     fireLightbox(finalEventImg, title, metaHeader, rawDetails, '', `${title} flyer`);
 }
 
+/** "Read the full story at wandtv.com ↗" - always shown when the story has a link */
+function smlcNewsSourceLink(story) {
+    const raw = String((story && story.link) || '').trim();
+    if (!/^https?:\/\//i.test(raw) || /google\.com\/alerts\/feeds\//i.test(raw)) return '';
+    let host = '';
+    try { host = new URL(raw).hostname.replace(/^www\./i, ''); } catch (e) { return ''; }
+    const safe = raw.replace(/"/g, '&quot;');
+    return `<a class="news-source-link" href="${safe}" target="_blank" rel="noopener" style="display:inline-block; color:var(--primary); font-weight:bold; margin-top:10px; text-decoration:underline;">Read the full story at ${host} &#8599;</a>`;
+}
+
 function openNewsLightboxModal(idx) {
     const story = window.newsCacheBlock[idx];
     if (!story) return;
@@ -2542,6 +2552,7 @@ async function loadLocalNewsDispatches() {
                             <div style="font-weight:bold; font-size:1rem; margin:6px 0; color:#1a1a1a;">${cleanTitle}</div>
                             <div style="font-size:0.875rem; color:var(--card-text-secondary, #444);">${linkifyRawUrls(displayStory)}</div>
                             ${isLong ? `<div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: var(--primary); font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>` : ''}
+                            ${smlcNewsSourceLink(story)}
                         </div>
                     `;
                 }).join('');

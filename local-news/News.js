@@ -328,6 +328,11 @@ function cleanLink(rawLink) {
     return rawLink;
 }
 
+/** "www.wandtv.com" -> "wandtv.com" (shown as "Read at wandtv.com") */
+function publisherNameFromUrl(url) {
+    try { return new URL(url).hostname.replace(/^www\./i, ""); } catch (e) { return ""; }
+}
+
 function extractImageFromFeed(item) {
     if (item.enclosure && item.enclosure.url) return item.enclosure.url;
     if (item.mediaContent && item.mediaContent.$ && item.mediaContent.$.url) return item.mediaContent.$.url;
@@ -440,6 +445,7 @@ async function fetchAllFeedItems() {
             const feed = await rssParser.parseString(cleanXml);
 
             const skipFallback = source.excerptOnly === true || /wnoi\.com/i.test(source.url);
+            const isGoogleAlert = /google\.com\/alerts\/feeds\//i.test(source.url);
 
             for (const item of feed.items) {
                 const itemTitle = cleanTitle(item.title);
@@ -447,8 +453,22 @@ async function fetchAllFeedItems() {
                 let itemStory = cleanStoryText(item.contentEncoded || item.content || item.contentSnippet || item.summary || item.description || "");
                 const itemSummary = cleanStoryText(item.contentSnippet || item.summary || item.description || item.content || "").slice(0, 500);
                 let itemImage = extractImageFromFeed(item);
+                const itemDate = normalizeDate(item.isoDate || item.pubDate || new Date().toISOString());
+                let itemSourceName = source.name;
 
-                if (!skipFallback && itemStory.length < 100 && itemLink.startsWith("http")) {
+                // Google Alerts feeds only carry a title, a short snippet and a link -
+                // no picture. Visit the real article once to get its preview image
+                // (og:image) and the publisher's name. Only recent items are visited.
+                if (isGoogleAlert && itemLink.startsWith("http") && !/google\.com\//i.test(itemLink)) {
+                    itemSourceName = publisherNameFromUrl(itemLink) || source.name;
+                    const isRecent = new Date(itemDate).getTime() >= Date.now() - MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+                    if (!itemImage && isRecent) {
+                        const scraped = await scrapeWebPageContent(itemLink);
+                        if (scraped.image) itemImage = scraped.image;
+                    }
+                }
+
+                if (!isGoogleAlert && !skipFallback && itemStory.length < 100 && itemLink.startsWith("http")) {
                     console.log(`[HTML FALLBACK] Short snippet for "${itemTitle}". Scraping destination URL...`);
                     const scraped = await scrapeWebPageContent(itemLink);
                     if (scraped.story.length > itemStory.length) {
@@ -462,11 +482,11 @@ async function fetchAllFeedItems() {
                 extractedArticles.push({
                     title: itemTitle,
                     link: itemLink,
-                    date: normalizeDate(item.isoDate || item.pubDate || new Date().toISOString()),
+                    date: itemDate,
                     full_story: itemStory,
                     summary: itemSummary,
                     image: itemImage,
-                    source_name: source.name,
+                    source_name: itemSourceName,
                     source_url: source.url
                 });
             }
