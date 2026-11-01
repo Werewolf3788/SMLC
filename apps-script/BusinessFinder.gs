@@ -227,6 +227,40 @@ function bfAppend_(found, source) {
 }
 
 // ---- Source 1: OpenStreetMap (free, no key) -----------------------------------
+// OpenStreetMap has several public servers; if one is down or refuses Google's
+// servers ("Address unavailable"), the next one is tried.
+var BF_OVERPASS_SERVERS = [
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.private.coffee/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter"
+];
+
+function bfOverpass_(query) {
+  var errors = [];
+  for (var i = 0; i < BF_OVERPASS_SERVERS.length; i++) {
+    var url = BF_OVERPASS_SERVERS[i];
+    try {
+      var resp = UrlFetchApp.fetch(url + "?data=" + encodeURIComponent(query), {
+        method: "get",
+        muteHttpExceptions: true,
+        headers: { "User-Agent": "SMLC-Business-Finder/1.0 (supportmylocalcommunity.com)" }
+      });
+      var code = resp.getResponseCode();
+      var text = resp.getContentText();
+      if (code === 200 && text.charAt(0) === "{") {
+        Logger.log("OpenStreetMap server used: " + url);
+        return JSON.parse(text);
+      }
+      errors.push(url + " -> HTTP " + code);
+    } catch (e) {
+      errors.push(url + " -> " + e.message);
+    }
+    Utilities.sleep(1000);
+  }
+  throw new Error("All OpenStreetMap servers failed. Try again in a few minutes.\n" + errors.join("\n"));
+}
+
 function findBusinessesOSM() {
   var bbox = [BF_BOX.south, BF_BOX.west, BF_BOX.north, BF_BOX.east].join(",");
   var q = '[out:json][timeout:60];(' +
@@ -236,13 +270,10 @@ function findBusinessesOSM() {
     'nwr["name"]["craft"](' + bbox + ');' +
     'nwr["name"]["tourism"~"hotel|motel|guest_house|camp_site|attraction|museum"](' + bbox + ');' +
     ');out center tags;';
-  var resp = UrlFetchApp.fetch("https://overpass-api.de/api/interpreter", {
-    method: "post", payload: { data: q }, muteHttpExceptions: true
-  });
-  if (resp.getResponseCode() !== 200) throw new Error("OpenStreetMap search failed: HTTP " + resp.getResponseCode() + " " + resp.getContentText().slice(0, 200));
+  var json = bfOverpass_(q);
 
   var found = [];
-  (JSON.parse(resp.getContentText()).elements || []).forEach(function(el) {
+  (json.elements || []).forEach(function(el) {
     var t = el.tags || {};
     var street = [t["addr:housenumber"], t["addr:street"]].filter(String).join(" ");
     var city = t["addr:city"] || "";
