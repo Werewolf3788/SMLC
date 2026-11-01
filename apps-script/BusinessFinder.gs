@@ -1,5 +1,6 @@
 /* ==========================================================================
-   Active Version: 2026-10-31_v1
+   Active Version: 2026-10-31_v2  |  Updated: Oct 31, 2026 11:16 PM ET
+   Changes in v2: tries 4 OpenStreetMap servers (fixes "Address unavailable")
    File: BusinessFinder.gs (Google Apps Script - goes in the DIRECTORY sheet)
    Project: Clay County Business Directory - Business Finder
 
@@ -31,6 +32,8 @@
        Check: same address as X
        Check: same name as X (different address) - e.g. another Dollar General
    ========================================================================== */
+
+var BF_VERSION = "v2 - Oct 31, 2026 11:16 PM ET";
 
 // ---- Settings ----------------------------------------------------------------
 var BF_TAB = "Business Finder";
@@ -83,7 +86,13 @@ function addBusinessFinderMenu() {
     .addSeparator()
     .addItem("Copy ticked rows to Master Data", "copyTickedToMasterData")
     .addItem("Re-check duplicates", "recheckDuplicates")
+    .addSeparator()
+    .addItem("Which version is this?", "showBusinessFinderVersion")
     .addToUi();
+}
+
+function showBusinessFinderVersion() {
+  SpreadsheetApp.getUi().alert("Business Finder " + BF_VERSION);
 }
 
 // ---- Shared helpers -----------------------------------------------------------
@@ -262,6 +271,7 @@ function bfOverpass_(query) {
 }
 
 function findBusinessesOSM() {
+  Logger.log("Business Finder " + BF_VERSION);
   var bbox = [BF_BOX.south, BF_BOX.west, BF_BOX.north, BF_BOX.east].join(",");
   var q = '[out:json][timeout:60];(' +
     'nwr["name"]["shop"](' + bbox + ');' +
