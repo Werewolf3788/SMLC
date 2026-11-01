@@ -42,7 +42,7 @@ a { color: var(--link-bright-blue); text-decoration: none; }
 .main-container { width: var(--container-width); max-width: var(--content-max); margin: 0 auto; padding: 32px clamp(12px, 3vw, 60px); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 
-.site-brand-header { width: 100%; background: linear-gradient(180deg, #0C71C3, #0a5da1); overflow: hidden; line-height: 0; }
+.site-brand-header { width: 100%; background: #001B37; overflow: hidden; line-height: 0; }
 .site-brand-header img { width: 100%; display: block; }
 .menu-bar { position: sticky; top: 0; z-index: 1000; background: var(--flora-blue); padding: 8px 0; border-bottom: 4px solid var(--flora-orange); box-shadow: 0 6px 16px rgba(0,0,0,.85); }
 .menu-inner { width: var(--container-width); max-width: var(--content-max); margin: 0 auto; display: flex; justify-content: center; align-items: center; position: relative; padding: 0 12px; }

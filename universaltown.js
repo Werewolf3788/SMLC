@@ -1973,7 +1973,7 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
         trackGa4Event('partner_card_impression', { partner_name: pName, strip: stripKey });
     });
 
-    const slideDuration = isMobileOrTablet ? 3800 : 5000;
+    const slideDuration = 8000;   // 8 seconds on every device so people can read each partner
     const intervalId = setInterval(() => {
         if (isCarouselPaused) return;
 
@@ -2717,10 +2717,8 @@ function handleSPAHashNavigation() {
         /* leave room so snow on top / decorations in the corners of partner cards aren't cut off */
         html.smlc-fx-on .partners-horizontal-strip { padding: 24px 12px 16px; }
 
-        /* ---------- Header: #0C5E75 behind the header image in daytime (light) view ---------- */
-        @media (prefers-color-scheme: light) {
-            .site-brand-header, body.home-bg > header.header { background: #0C5E75 !important; }
-        }
+        /* ---------- Header: navy #001B37 behind the Support My Local Community ribbon (all pages, day and night) ---------- */
+        .site-brand-header, .site-brand-header .header-billboard-link, body.home-bg > header.header { background: #001B37 !important; }
 
         /* ---------- Quick Answers (SEO / AEO) ---------- */
         .smlc-answers { width: var(--container-width, 96%); max-width: var(--content-max, 1680px); margin: 28px auto 36px; padding: 0 clamp(4px, 2vw, 24px); box-sizing: border-box; position: relative; z-index: 1; }
@@ -3635,7 +3633,7 @@ document.addEventListener('keydown', e => {
     style.id = 'smlc-newspaper-menu-styles';
     style.textContent = `
         /* Full-width header image on every page */
-        .site-brand-header, .site-brand-header .header-billboard-link { display: block; width: 100%; background: #fffdf6 !important; }
+        .site-brand-header, .site-brand-header .header-billboard-link { display: block; width: 100%; background: #001B37 !important; }
         .site-brand-header img.header-billboard-img { width: 100% !important; height: auto !important; max-height: none !important; display: block; object-fit: contain; }
 
         /* Town menu image on the "Discover {Town}" pill */
@@ -3742,7 +3740,8 @@ document.addEventListener('keydown', e => {
         }
         /* Night mode: follows the device setting */
         @media (prefers-color-scheme: dark) {
-            html body .menu-bar, html body .header .nav-bar, .site-brand-header, .site-brand-header .header-billboard-link { background: #1c1c1e !important; border-color: #555 !important; }
+            html body .menu-bar, html body .header .nav-bar { background: #1c1c1e !important; border-color: #555 !important; }
+            .site-brand-header, .site-brand-header .header-billboard-link { background: #001B37 !important; }
             html body .menu-bar .menu-links a, html body .nav-links a, .smlc-more-toggle { color: #f4f4f5 !important; }
             .smlc-more-toggle { border-color: #f4f4f5; }
             .smlc-more-list { background: #1c1c1e; border-color: #555; box-shadow: 6px 6px 0 #000; }
@@ -4190,6 +4189,8 @@ function initAccessibility() {
 
 // === DOM EVENT LISTENERS ===
 window.addEventListener('hashchange', () => {
+    // #events, #gas, #history... are section bookmarks (smlc-bookmarks.js), not town switches
+    if (typeof window.smlcIsBookmarkHash === 'function' && window.smlcIsBookmarkHash(window.location.hash)) return;
     handleSPAHashNavigation();
     smlcApplyNavColors();
     window.smlcApplyBranding();

@@ -13,7 +13,7 @@ body {
 /* =========================================
    CHAPTER 2: HEADER & NAVIGATION
    ========================================= */
-.header { background-color: #fffdf6; width: 100%; border: none; }
+.header { background-color: #001B37; width: 100%; border: none; }
 .header-logo { width: 100%; height: auto; display: block; border: none; }
 
 .nav-bar { background-color: #fffdf6; padding: 15px 0; border: none; }
@@ -426,7 +426,8 @@ body {
    ========================================= */
 @media (prefers-color-scheme: dark) {
     body, .home-bg, .discover-clay-county-section, .thankful-section { background-color: #121212 !important; color: #e4e4e7; }
-    .header, .nav-bar, .nav-links { background-color: #1c1c1e !important; }
+    .header { background-color: #001B37 !important; }
+    .nav-bar, .nav-links { background-color: #1c1c1e !important; }
     .nav-links a { color: #f4f4f5 !important; }
     .nav-links a:hover { color: #8fb8ff !important; }
     .nav-links a.active { color: var(--smlc-nav-secondary, #FFC10E) !important; }

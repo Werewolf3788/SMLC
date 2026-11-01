@@ -199,6 +199,8 @@
     <script crossorigin="anonymous" src="//www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <!-- Device language -> automatic translation (no language picker) -->
     <script src="smlc-device-prefs.js"></script>
+    <script defer src="smlc-bookmarks.js"></script>
+    <script defer src="smlc-community.js"></script>
     <script>
         function googleTranslateElementInit() {
             if (window.smlcStartTranslate) window.smlcStartTranslate(); // follows device language; English devices are never translated
@@ -445,6 +447,9 @@
     </div>
 </div>
 
+
+<!-- ========== COMMUNITY CORNER (Where in Clay County? / Trivia / Readers' Choice) - filled by smlc-community.js ========== -->
+<section id="smlc-community-corner" aria-label="Community Corner" hidden></section>
 
 <!-- ========== QUICK ANSWERS (SEO / AEO) ========== -->
 <section class="smlc-answers" id="quick-answers" aria-labelledby="quick-answers-title">
