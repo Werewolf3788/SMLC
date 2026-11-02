@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<!-- SMLC Image Uploader | v3.1 | 2026-11-02 7:05 PM ET (public photo sharing up front; sign-in only for team tools)
+     Authorized users only: sign in with Google (Firebase). Who is authorized = Firebase RTDB /smlc_admins.
+     Saves pictures into the SMLC GitHub repository (images/) through the Sheet's SMLCPhotos.gs web app,
+     so no GitHub token is needed on this device. Also: approve photos shared by the public. -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>SMLC Image Uploader</title>
+    <meta name="color-scheme" content="light dark">
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="../smlc-photos-config.js"></script>
+    <style>
+        :root { --navy: #001B37; --accent: #FFC10E; --ink: #111; --muted: #555; --card: #fff; --bg: #f3f5f8; --line: #d5dbe3; --ok: #137333; --bad: #b3261e; }
+        @media (prefers-color-scheme: dark) { :root { --ink: #ececf0; --muted: #b5b5bd; --card: #1d1d20; --bg: #121214; --line: #3a3f48; --ok: #6fd28a; --bad: #ff8a80; } }
+        * { box-sizing: border-box; }
+        body { margin: 0; font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); }
+        header { background: var(--navy); color: #fff; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+        header h1 { margin: 0; font-size: 1.25rem; }
+        header small { opacity: .85; }
+        main { max-width: 980px; margin: 0 auto; padding: 18px; display: grid; gap: 18px; }
+        .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+        .card h2 { margin: 0 0 10px; font-size: 1.1rem; }
+        label { display: block; font-weight: 600; margin: 10px 0 4px; }
+        input[type=text], input[type=password], input[type=url], select, textarea { width: 100%; font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        @media (max-width: 640px) { .row, .row3 { grid-template-columns: 1fr; } }
+        button { font: inherit; font-weight: 700; border: 0; border-radius: 8px; padding: 10px 16px; cursor: pointer; background: var(--navy); color: #fff; }
+        button.secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+        button.gold { background: var(--accent); color: #111; }
+        button.danger { background: var(--bad); color: #fff; }
+        button:disabled { opacity: .5; cursor: not-allowed; }
+        .hint { color: var(--muted); font-size: .88rem; margin: 4px 0 0; }
+        #drop { border: 3px dashed var(--line); border-radius: 12px; min-height: 200px; display: grid; place-items: center; text-align: center; padding: 18px; cursor: pointer; outline: none; }
+        #drop.hover, #drop:focus-visible { border-color: var(--navy); background: rgba(0, 27, 55, .06); }
+        #drop img { max-width: 100%; max-height: 320px; border-radius: 8px; display: block; margin: 0 auto 8px; background: repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50% / 20px 20px; }
+        .big { font-size: 1.15rem; font-weight: 700; }
+        .result { border-radius: 10px; padding: 12px 14px; margin-top: 12px; word-break: break-word; }
+        .result.ok { background: rgba(19, 115, 51, .12); border: 1px solid var(--ok); }
+        .result.bad { background: rgba(179, 38, 30, .1); border: 1px solid var(--bad); }
+        .copyline { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+        .copyline input { flex: 1; }
+        .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+        .tile { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--card); display: flex; flex-direction: column; }
+        .tile img { width: 100%; height: 110px; object-fit: contain; background: #fff; }
+        .tile div { padding: 6px 8px; font-size: .78rem; word-break: break-all; flex: 1; }
+        .tile button { border-radius: 0; padding: 6px; font-size: .8rem; }
+        .sub { display: grid; grid-template-columns: 180px 1fr; gap: 14px; border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+        .sub img { width: 100%; border-radius: 8px; background: #fff; }
+        @media (max-width: 640px) { .sub { grid-template-columns: 1fr; } }
+        .status { font-size: .9rem; color: var(--muted); }
+        .check { display: flex; gap: 8px; align-items: center; font-weight: 600; margin-top: 12px; }
+        .check input { width: 20px; height: 20px; }
+        [hidden] { display: none !important; }
+        code { background: rgba(127, 127, 127, .15); padding: 1px 5px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<header>
+    <div><h1>SMLC Image Uploader</h1><small>Share town photos &middot; team tools after sign-in</small></div>
+    <div style="display:flex; gap:10px; align-items:center;">
+        <small id="who">Not signed in</small>
+        <button id="signout" class="secondary" style="color:#fff;border-color:#ffffff66" hidden>Sign out</button>
+    </div>
+</header>
+
+<main>
+    <!-- ===== Public: no sign-in ===== -->
+    <section class="card" id="public-card">
+        <h2>📷 Share a photo of your town &mdash; no sign-in needed</h2>
+        <p>Anyone can send photos of Clay County's towns, villages and townships, today or historical.</p>
+        <p><a href="../share-photos.html"><button type="button" class="gold">Share a photo</button></a>
+           <a href="../gallery.html" style="margin-left:8px;"><button type="button" class="secondary">See the Photo Gallery</button></a></p>
+    </section>
+
+    <!-- ===== Sign in (authorized people only) ===== -->
+    <section class="card" id="signin-card">
+        <h2>SMLC team sign-in</h2>
+        <p>Only needed for the full image folder, saving straight to the website's <code>images/</code> folder, and approving shared photos.</p>
+        <button id="signin" class="gold">Sign in with Google</button>
+        <p class="status" id="signin-status"></p>
+    </section>
+
+    <div id="tools" hidden>
+        <!-- ===== Upload ===== -->
+        <section class="card">
+            <h2>Add a picture</h2>
+            <div id="drop" tabindex="0" aria-label="Paste, drop or choose an image">
+                <div id="drop-inner">
+                    <p class="big">Paste an image here (Ctrl+V / &#8984;V)</p>
+                    <p class="hint">or drag it in, or tap to choose a file. Tip: on any website, right-click a picture &rarr; <strong>Copy image</strong>, then paste here.</p>
+                </div>
+            </div>
+            <input type="file" id="file" accept="image/*" hidden>
+
+            <label for="from-url">&hellip;or copy it from a web address</label>
+            <div class="copyline">
+                <input type="url" id="from-url" placeholder="https://example.com/logo.png">
+                <button id="load-url" class="secondary">Load</button>
+            </div>
+
+            <div class="row">
+                <div>
+                    <label for="name">Name</label>
+                    <input type="text" id="name" placeholder="e.g. Flora Carnegie Library 1903">
+                    <p class="hint">Saved as: <code id="filename-preview">&mdash;</code> (everything goes in <code>images/</code>)</p>
+                </div>
+                <div>
+                    <label for="place">Place</label>
+                    <select id="place"></select>
+                    <p class="hint">Pick a place for town and history photos. Leave it on "not a town photo" for logos and ads.</p>
+                </div>
+            </div>
+            <div id="gallery-fields" hidden>
+                <div class="row3">
+                    <div><label for="caption">Caption</label><input type="text" id="caption" placeholder="What is it?"></div>
+                    <div><label for="era">Today or historical?</label>
+                        <select id="era"><option value="Today">Today</option><option value="Historical">Historical</option></select></div>
+                    <div><label for="year">Year (if known)</label><input type="text" id="year" placeholder="e.g. 1950"></div>
+                </div>
+                <label for="credit">Photo credit</label>
+                <input type="text" id="credit" placeholder="e.g. Clay County Genealogical Society">
+                <label class="check"><input type="checkbox" id="add-gallery" checked> Show it in the public Clay County Photo Gallery</label>
+            </div>
+            <div class="row">
+                <div>
+                    <label for="format">Format</label>
+                    <select id="format">
+                        <option value="auto">Automatic (PNG if it has see-through parts, otherwise JPG)</option>
+                        <option value="png">PNG (logos, graphics)</option>
+                        <option value="jpg">JPG (photos, smaller files)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="maxw">Largest width</label>
+                    <select id="maxw">
+                        <option value="1600">1600 px (recommended)</option>
+                        <option value="1200">1200 px</option>
+                        <option value="800">800 px (small logos)</option>
+                        <option value="2400">2400 px (header banners)</option>
+                        <option value="0">Don't resize</option>
+                    </select>
+                </div>
+            </div>
+            <p style="margin-top:14px;"><button id="upload" class="gold" disabled>Save to GitHub</button></p>
+            <div id="result"></div>
+        </section>
+
+        <!-- ===== Approvals ===== -->
+        <section class="card">
+            <h2>Photos waiting for approval</h2>
+            <p class="hint">Photos people shared on the public Share Your Photos page. Nothing shows on the site until you approve it.</p>
+            <p><button id="load-subs" class="secondary">Check for new photos</button></p>
+            <div id="subs"></div>
+        </section>
+
+        <!-- ===== Browse ===== -->
+        <section class="card">
+            <h2>Images already saved</h2>
+            <p class="hint">Click <em>Copy link</em> and paste it into the Sheet's image column.</p>
+            <p><button id="browse" class="secondary">Show all pictures in images/</button></p>
+            <div class="list" id="browse-list"></div>
+        </section>
+    </div>
+</main>
+
+<script>
+(function () {
+    'use strict';
+    var P = window.SMLC_PHOTOS;
+    var REPO = 'Werewolf3788/SMLC', BRANCH = 'Claude-Test';
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = function (v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+
+    P.fillPlaceSelect($('place'), '— not a town photo —');
+
+    // ---------- sign-in ----------
+    var app = firebase.apps.length ? firebase.app() : firebase.initializeApp(P.FIREBASE_CONFIG);
+    var auth = app.auth();
+    var currentUser = null;
+    function emailKey(e) { return String(e || '').toLowerCase().replace(/\./g, ','); }
+
+    $('signin').onclick = function () {
+        $('signin-status').textContent = 'Opening Google sign-in…';
+        auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(function (e) {
+            if (e && e.code === 'auth/popup-blocked') return auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
+            $('signin-status').textContent = '❌ ' + (e && e.code === 'auth/unauthorized-domain'
+                ? 'This web address is not allowed yet. In Firebase: Authentication → Settings → Authorized domains → add werewolf3788.github.io.'
+                : (e && e.message) || 'Sign-in failed.');
+        });
+    };
+    $('signout').onclick = function () { auth.signOut(); };
+
+    auth.onAuthStateChanged(function (user) {
+        currentUser = user;
+        $('tools').hidden = true;
+        $('signout').hidden = !user;
+        $('public-card').hidden = false;
+        if (!user) { $('who').textContent = 'Not signed in'; $('signin-card').hidden = false; $('signin-status').textContent = ''; return; }
+        $('who').textContent = user.email;
+        $('signin-status').textContent = 'Checking your access…';
+        // You can only read your own smlc_admins entry, and only if it exists
+        app.database().ref('smlc_admins/' + emailKey(user.email)).once('value').then(function (s) {
+            if (s.val() === true) {
+                $('signin-card').hidden = true;
+                $('public-card').hidden = true;
+                $('tools').hidden = false;
+                if (!P.ENDPOINT) showResult('bad', 'Almost ready: the Sheet\'s photo script (SMLCPhotos.gs) isn\'t connected yet, so saving won\'t work until its web app address is added to <code>smlc-photos-config.js</code>.');
+                loadBrowse();
+            } else { notAuthorized(user.email); }
+        }).catch(function () { notAuthorized(user.email); });
+    });
+    function notAuthorized(email) {
+        $('signin-card').hidden = false;
+        $('signin-status').innerHTML = '🔒 <strong>' + esc(email) + '</strong> is not on the SMLC team list, so the team tools stay hidden. You can still <a href="../share-photos.html">share a photo</a> without signing in.';
+    }
+    function idToken() { return currentUser ? currentUser.getIdToken() : Promise.reject(new Error('Please sign in.')); }
+
+    // ---------- picking a picture ----------
+    var picked = null;
+    function slug(s) { return String(s || '').toLowerCase().replace(/&/g, ' and ').replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80); }
+    function outExt() { if (!picked) return ''; var f = $('format').value; return f === 'auto' ? (picked.hasAlpha ? 'png' : 'jpg') : f; }
+    function targetPath() { var s = slug($('name').value); return (s && picked) ? 'images/' + s + '.' + outExt() : ''; }
+    function refresh() {
+        $('filename-preview').textContent = targetPath() || '—';
+        $('gallery-fields').hidden = !$('place').value;
+        $('upload').disabled = !(picked && targetPath());
+    }
+    ['name', 'format', 'maxw', 'place'].forEach(function (id) { $(id).addEventListener('input', refresh); $(id).addEventListener('change', refresh); });
+
+    function loadImage(blob) {
+        return new Promise(function (resolve, reject) {
+            var url = URL.createObjectURL(blob), img = new Image();
+            img.onload = function () { resolve({ img: img, url: url }); };
+            img.onerror = function () { reject(new Error('That file is not an image this browser can read.')); };
+            img.src = url;
+        });
+    }
+    function hasAlpha(img) {
+        try {
+            var w = Math.min(img.naturalWidth, 300), h = Math.max(1, Math.round(img.naturalHeight * w / img.naturalWidth));
+            var c = document.createElement('canvas'); c.width = w; c.height = h;
+            var x = c.getContext('2d'); x.drawImage(img, 0, 0, w, h);
+            var d = x.getImageData(0, 0, w, h).data;
+            for (var i = 3; i < d.length; i += 16) if (d[i] < 250) return true;
+        } catch (e) {}
+        return false;
+    }
+    async function usePicked(blob, suggestedName) {
+        showResult('', '');
+        if (!blob || !/^image\//.test(blob.type || 'image/')) { showResult('bad', 'That isn\'t an image.'); return; }
+        try {
+            var r = await loadImage(blob);
+            picked = { blob: blob, w: r.img.naturalWidth, h: r.img.naturalHeight, hasAlpha: hasAlpha(r.img) };
+            $('drop-inner').innerHTML = '<img src="' + r.url + '" alt="Picked image preview"><p class="hint">' + picked.w + ' × ' + picked.h + ' px · ' +
+                Math.round(blob.size / 1024) + ' KB' + (picked.hasAlpha ? ' · has see-through parts' : '') + ' — paste another to replace it</p>';
+            if (suggestedName && !$('name').value) $('name').value = suggestedName.replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ');
+            refresh(); $('name').focus();
+        } catch (e) { showResult('bad', e.message); }
+    }
+    document.addEventListener('paste', function (e) {
+        if ($('tools').hidden) return;
+        var items = (e.clipboardData && e.clipboardData.items) || [];
+        for (var i = 0; i < items.length; i++) {
+            if (items[i].kind === 'file' && /^image\//.test(items[i].type)) { e.preventDefault(); usePicked(items[i].getAsFile(), ''); return; }
+        }
+    });
+    var drop = $('drop');
+    drop.addEventListener('click', function () { $('file').click(); });
+    drop.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); } });
+    $('file').addEventListener('change', function () { if (this.files[0]) usePicked(this.files[0], this.files[0].name); this.value = ''; });
+    ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('hover'); }); });
+    ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('hover'); }); });
+    drop.addEventListener('drop', function (e) { var f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) usePicked(f, f.name); });
+    $('load-url').onclick = async function () {
+        var u = $('from-url').value.trim(); if (!u) return;
+        var m = u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=view&)?id=|thumbnail\?id=)([\w-]+)/);
+        if (m) u = 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w2000';
+        try {
+            var r = await fetch(u, { mode: 'cors' }); if (!r.ok) throw 0;
+            var b = await r.blob(); if (!/^image\//.test(b.type)) throw 0;
+            usePicked(b, decodeURIComponent(u.split('?')[0].split('/').pop() || ''));
+        } catch (e) { showResult('bad', 'That website won\'t let the picture be copied this way. Right-click the picture → <strong>Copy image</strong>, then paste above.'); }
+    };
+
+    // ---------- save ----------
+    async function save(overwrite) {
+        $('upload').disabled = true;
+        showResult('', 'Saving <code>' + esc(targetPath()) + '</code>…');
+        try {
+            var fmt = $('format').value;
+            var img = await P.prepareImage(picked.blob, Number($('maxw').value) || 0, fmt === 'auto' ? undefined : fmt === 'png');
+            var place = $('place').value;
+            var res = await P.call({
+                action: 'upload', idToken: await idToken(), base64: img.base64, mimeType: img.mimeType, ext: img.ext,
+                name: $('name').value, overwrite: !!overwrite,
+                place: place, group: place ? P.groupOf(place) : '', caption: $('caption').value, era: $('era').value,
+                year: $('year').value, credit: $('credit').value, addToGallery: !!place && $('add-gallery').checked
+            });
+            if (res.exists) {
+                if (confirm(res.path + ' already exists.\n\nReplace it with this picture?')) return save(true);
+                showResult('', 'Not saved. Change the name to keep both.'); refresh(); return;
+            }
+            showResult('ok', '✅ Saved <code>' + esc(res.path) + '</code> (' + Math.round(img.bytes / 1024) + ' KB)' +
+                (place && $('add-gallery').checked ? ' and added to the public Gallery' : '') + '. Paste this link into the Sheet:' +
+                '<div class="copyline"><input type="text" readonly value="' + esc(res.link) + '"><button type="button" class="copy-btn">Copy link</button></div>' +
+                (res.replaced ? '<p class="hint">You replaced an existing picture: places showing the old one can take about 5 minutes to switch over.</p>' : ''));
+            $('name').value = ''; $('caption').value = ''; $('year').value = ''; $('credit').value = '';
+            loadBrowse();
+        } catch (e) { showResult('bad', '❌ ' + esc(e.message)); }
+        refresh();
+    }
+    $('upload').onclick = function () { save(false); };
+
+    function showResult(kind, html) { $('result').innerHTML = html ? '<div class="result ' + (kind || '') + '">' + html + '</div>' : ''; }
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest && e.target.closest('.copy-btn');
+        if (!btn) return;
+        var input = btn.parentNode.querySelector('input');
+        var val = input ? input.value : btn.getAttribute('data-copy');
+        (navigator.clipboard ? navigator.clipboard.writeText(val) : Promise.reject()).then(function () {
+            var t = btn.textContent; btn.textContent = 'Copied!'; setTimeout(function () { btn.textContent = t; }, 1400);
+        }).catch(function () { if (input) { input.select(); document.execCommand('copy'); } });
+    });
+
+    // ---------- approvals ----------
+    $('load-subs').onclick = async function () {
+        var box = $('subs');
+        box.innerHTML = '<p class="status">Checking…</p>';
+        try {
+            var res = await P.call({ action: 'listSubmissions', idToken: await idToken() });
+            if (!res.items.length) { box.innerHTML = '<p class="status">No photos waiting. 🎉</p>'; return; }
+            box.innerHTML = res.items.map(function (s) {
+                var opts = $('place').innerHTML.replace('value="' + esc(s.place) + '"', 'value="' + esc(s.place) + '" selected');
+                return '<div class="sub" data-row="' + s.row + '">' +
+                    (s.preview ? '<img src="' + s.preview + '" alt="Shared photo">' : '<div class="status">(no preview)</div>') +
+                    '<div><p class="status">Shared ' + esc(new Date(s.received).toLocaleString()) + (s.name ? ' by ' + esc(s.name) : '') +
+                    (s.email ? ' &lt;' + esc(s.email) + '&gt;' : '') + ' · ' + esc(s.era || '') + (s.year ? ' ' + esc(s.year) : '') + '</p>' +
+                    '<label>Place</label><select class="s-place">' + opts + '</select>' +
+                    '<label>Caption</label><input type="text" class="s-caption" value="' + esc(s.caption) + '">' +
+                    '<label>Photo credit</label><input type="text" class="s-credit" value="' + esc(s.credit || s.name) + '">' +
+                    '<p style="display:flex;gap:8px;margin-top:10px;"><button class="s-approve">Approve</button><button class="s-reject danger">Reject</button></p>' +
+                    '<p class="status s-msg"></p></div></div>';
+            }).join('');
+        } catch (e) { box.innerHTML = '<p class="status">❌ ' + esc(e.message) + '</p>'; }
+    };
+    $('subs').addEventListener('click', async function (e) {
+        var btn = e.target.closest('.s-approve, .s-reject'); if (!btn) return;
+        var card = btn.closest('.sub'), msg = card.querySelector('.s-msg');
+        var approve = btn.classList.contains('s-approve');
+        if (!approve && !confirm('Reject this photo? It will be deleted.')) return;
+        card.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+        msg.textContent = approve ? 'Saving to GitHub and the Gallery…' : 'Rejecting…';
+        try {
+            var res = await P.call({ action: 'review', idToken: await idToken(), row: Number(card.getAttribute('data-row')),
+                decision: approve ? 'approve' : 'reject', place: card.querySelector('.s-place').value,
+                caption: card.querySelector('.s-caption').value, credit: card.querySelector('.s-credit').value });
+            msg.innerHTML = approve ? '✅ Approved and added to the Gallery: <code>' + esc(res.path) + '</code>' : 'Rejected.';
+            if (approve) loadBrowse();
+        } catch (err) { msg.textContent = '❌ ' + err.message; card.querySelectorAll('button').forEach(function (b) { b.disabled = false; }); }
+    });
+
+    // ---------- browse (public GitHub listing, only shown to signed-in users here) ----------
+    function rawUrl(path) { return 'https://raw.githubusercontent.com/' + REPO + '/' + BRANCH + '/' + path.split('/').map(encodeURIComponent).join('/'); }
+    async function loadBrowse() {
+        var box = $('browse-list');
+        box.innerHTML = '<p class="status">Loading…</p>';
+        try {
+            var r = await fetch('https://api.github.com/repos/' + REPO + '/contents/images?ref=' + BRANCH + '&t=' + Date.now(), { cache: 'no-store' });
+            if (!r.ok) throw new Error(r.status === 403 ? 'GitHub is busy (too many lookups this hour). Try again a bit later.' : 'GitHub error ' + r.status);
+            var files = (await r.json()).filter(function (f) { return f.type === 'file' && /\.(png|jpe?g|gif|webp|svg)$/i.test(f.name); });
+            box.innerHTML = files.length ? files.map(function (f) {
+                var link = rawUrl(f.path);
+                return '<div class="tile"><img loading="lazy" src="' + link + '" alt="' + esc(f.name) + '"><div>' + esc(f.name) +
+                    '</div><button type="button" class="copy-btn" data-copy="' + esc(link) + '">Copy link</button></div>';
+            }).join('') : '<p class="status">No pictures yet.</p>';
+        } catch (e) { box.innerHTML = '<p class="status">❌ ' + esc(e.message) + '</p>'; }
+    }
+    $('browse').onclick = loadBrowse;
+})();
+</script>
+</body>
+</html>
