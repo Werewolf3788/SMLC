@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- SMLC Image Uploader | v1 | 2026-11-02 4:30 PM ET
+<!-- SMLC Image Uploader | v2 | 2026-11-02 4:50 PM ET (every picture goes into the one images/ folder)
      Paste / drop / pick an image, give it a name, and it is saved straight into the
      SMLC GitHub repository (images/...). Gives you the link to paste into the Sheet.
      Needs a GitHub token (saved only on the device you use it on). Not linked from the site. -->
@@ -115,18 +115,9 @@
                 <p class="hint">Saved as: <code id="filename-preview">&mdash;</code></p>
             </div>
             <div>
-                <label for="folder">Folder</label>
-                <select id="folder">
-                    <option value="images">images (main folder)</option>
-                    <option value="images/businesses">images/businesses (logos, storefronts)</option>
-                    <option value="images/partners">images/partners</option>
-                    <option value="images/slideshow">images/slideshow</option>
-                    <option value="images/history">images/history</option>
-                    <option value="images/landmarks">images/landmarks</option>
-                    <option value="images/events">images/events (flyers)</option>
-                    <option value="images/community">images/community (Where in Clay County?)</option>
-                    <option value="images/menu">images/menu (menu &amp; header)</option>
-                </select>
+                <label>Folder</label>
+                <p style="margin:6px 0 0;">Every picture goes into <code>images/</code> &mdash; one place for all of them.</p>
+                <input type="hidden" id="folder" value="images">
             </div>
         </div>
         <div class="row">
@@ -158,10 +149,7 @@
     <section class="card">
         <h2>3. Images already saved</h2>
         <p class="hint">Click <em>Copy link</em> and paste it into the Sheet's image column.</p>
-        <div class="copyline" style="margin-bottom:12px;">
-            <select id="browse-folder"></select>
-            <button id="browse" class="secondary">Show</button>
-        </div>
+        <p><button id="browse" class="secondary">Show all pictures in images/</button></p>
         <div class="list" id="browse-list"></div>
     </section>
 </main>
@@ -181,8 +169,6 @@
     $('token').value = store.get('token');
     if (store.get('repo')) $('repo').value = store.get('repo');
     if (store.get('branch')) $('branch').value = store.get('branch');
-    if (store.get('folder')) $('folder').value = store.get('folder');
-    $('browse-folder').innerHTML = $('folder').innerHTML;
 
     function cfg() { return { token: $('token').value.trim(), repo: $('repo').value.trim(), branch: $('branch').value.trim() || 'main' }; }
 
@@ -264,8 +250,7 @@
         refreshUploadButton();
     }
     function refreshUploadButton() { $('upload').disabled = !(picked && targetPath() && cfg().token); }
-    ['name', 'folder', 'format', 'maxw'].forEach(function (id) { $(id).addEventListener('input', refreshPreview); $(id).addEventListener('change', refreshPreview); });
-    $('folder').addEventListener('change', function () { store.set('folder', $('folder').value); });
+    ['name', 'format', 'maxw'].forEach(function (id) { $(id).addEventListener('input', refreshPreview); $(id).addEventListener('change', refreshPreview); });
 
     function loadImage(blob) {
         return new Promise(function (resolve, reject) {
@@ -287,6 +272,7 @@
         return false;
     }
     async function usePicked(blob, suggestedName) {
+        showResult('', '');
         if (!blob || !/^image\//.test(blob.type || 'image/')) { showResult('bad', 'That isn\'t an image.'); return; }
         try {
             var r = await loadImage(blob);
@@ -443,13 +429,14 @@
 
     // ---------- browse ----------
     $('browse').onclick = async function () {
-        var c = cfg(), folder = $('browse-folder').value;
+        var c = cfg(), folder = 'images';
         var box = $('browse-list');
         box.innerHTML = '<p class="status">Loading…</p>';
         try {
             var r = await gh('/repos/' + c.repo + '/contents/' + folder.split('/').map(encodeURIComponent).join('/') + '?ref=' + encodeURIComponent(c.branch));
             if (r.status === 404) { box.innerHTML = '<p class="status">Nothing saved in ' + folder + ' yet.</p>'; return; }
-            if (!r.ok) throw new Error('GitHub error ' + r.status + (r.status === 401 ? ' (connect in step 1)' : ''));
+            if (r.status === 401) throw new Error('Not connected yet: paste your GitHub token in step 1 and click Save & connect.');
+            if (!r.ok) throw new Error('GitHub error ' + r.status);
             var files = (await r.json()).filter(function (f) { return f.type === 'file' && /\.(png|jpe?g|gif|webp|svg)$/i.test(f.name); });
             if (!files.length) { box.innerHTML = '<p class="status">No pictures in ' + folder + '.</p>'; return; }
             box.innerHTML = files.map(function (f) {
