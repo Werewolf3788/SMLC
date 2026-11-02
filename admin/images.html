@@ -217,7 +217,7 @@
     });
     function notAuthorized(email) {
         $('signin-card').hidden = false;
-        $('signin-status').innerHTML = '🔒 <strong>' + esc(email) + '</strong> isn't on the SMLC team list, so the team tools stay hidden. You can still <a href="../share-photos.html">share a photo</a> without signing in.';
+        $('signin-status').innerHTML = '🔒 <strong>' + esc(email) + '</strong> is not on the SMLC team list, so the team tools stay hidden. You can still <a href="../share-photos.html">share a photo</a> without signing in.';
     }
     function idToken() { return currentUser ? currentUser.getIdToken() : Promise.reject(new Error('Please sign in.')); }
 
