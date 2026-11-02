@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- SMLC Image Uploader | v3 | 2026-11-02 6:30 PM ET
+<!-- SMLC Image Uploader | v3.1 | 2026-11-02 7:05 PM ET (public photo sharing up front; sign-in only for team tools)
      Authorized users only: sign in with Google (Firebase). Who is authorized = Firebase RTDB /smlc_admins.
      Saves pictures into the SMLC GitHub repository (images/) through the Sheet's SMLCPhotos.gs web app,
      so no GitHub token is needed on this device. Also: approve photos shared by the public. -->
@@ -62,7 +62,7 @@
 </head>
 <body>
 <header>
-    <div><h1>SMLC Image Uploader</h1><small>Authorized users only</small></div>
+    <div><h1>SMLC Image Uploader</h1><small>Share town photos &middot; team tools after sign-in</small></div>
     <div style="display:flex; gap:10px; align-items:center;">
         <small id="who">Not signed in</small>
         <button id="signout" class="secondary" style="color:#fff;border-color:#ffffff66" hidden>Sign out</button>
@@ -70,10 +70,18 @@
 </header>
 
 <main>
-    <!-- ===== Sign in ===== -->
+    <!-- ===== Public: no sign-in ===== -->
+    <section class="card" id="public-card">
+        <h2>📷 Share a photo of your town &mdash; no sign-in needed</h2>
+        <p>Anyone can send photos of Clay County's towns, villages and townships, today or historical.</p>
+        <p><a href="../share-photos.html"><button type="button" class="gold">Share a photo</button></a>
+           <a href="../gallery.html" style="margin-left:8px;"><button type="button" class="secondary">See the Photo Gallery</button></a></p>
+    </section>
+
+    <!-- ===== Sign in (authorized people only) ===== -->
     <section class="card" id="signin-card">
-        <h2>Sign in</h2>
-        <p>This page is only for SMLC's authorized people. Sign in with your Google account.</p>
+        <h2>SMLC team sign-in</h2>
+        <p>Only needed for the full image folder, saving straight to the website's <code>images/</code> folder, and approving shared photos.</p>
         <button id="signin" class="gold">Sign in with Google</button>
         <p class="status" id="signin-status"></p>
     </section>
@@ -192,6 +200,7 @@
         currentUser = user;
         $('tools').hidden = true;
         $('signout').hidden = !user;
+        $('public-card').hidden = false;
         if (!user) { $('who').textContent = 'Not signed in'; $('signin-card').hidden = false; $('signin-status').textContent = ''; return; }
         $('who').textContent = user.email;
         $('signin-status').textContent = 'Checking your access…';
@@ -199,6 +208,7 @@
         app.database().ref('smlc_admins/' + emailKey(user.email)).once('value').then(function (s) {
             if (s.val() === true) {
                 $('signin-card').hidden = true;
+                $('public-card').hidden = true;
                 $('tools').hidden = false;
                 if (!P.ENDPOINT) showResult('bad', 'Almost ready: the Sheet\'s photo script (SMLCPhotos.gs) isn\'t connected yet, so saving won\'t work until its web app address is added to <code>smlc-photos-config.js</code>.');
                 loadBrowse();
@@ -207,7 +217,7 @@
     });
     function notAuthorized(email) {
         $('signin-card').hidden = false;
-        $('signin-status').innerHTML = '🔒 <strong>' + esc(email) + '</strong> is not authorized for this page. Ask an SMLC administrator to add you, or sign out and use a different Google account.';
+        $('signin-status').innerHTML = '🔒 <strong>' + esc(email) + '</strong> isn't on the SMLC team list, so the team tools stay hidden. You can still <a href="../share-photos.html">share a photo</a> without signing in.';
     }
     function idToken() { return currentUser ? currentUser.getIdToken() : Promise.reject(new Error('Please sign in.')); }
 
