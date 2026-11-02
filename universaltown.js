@@ -1385,7 +1385,9 @@ function bindFirebaseServices() {
 
     try {
         if (typeof firebase === 'undefined') return;
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        // Start the main ([DEFAULT]) Firebase app unless it's already running.
+        // (Other scripts on the page may start their own named apps first.)
+        if (!firebase.apps.some(a => a.name === '[DEFAULT]')) firebase.initializeApp(firebaseConfig);
         
         const db = firebase.database();
 

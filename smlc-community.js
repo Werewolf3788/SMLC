@@ -1,5 +1,5 @@
 /* ==========================================================================
-   File: smlc-community.js  |  v1  |  2026-10-31 11:45 PM ET
+   File: smlc-community.js  |  v1.1  |  2026-11-02 4:40 PM ET  (fix: shares the page's main Firebase app)
    Community Corner: "Where in Clay County?", Town Trivia, Readers' Choice.
 
    CONTENT comes from the SMLC Google Sheet (synced by Code.gs - no Code.gs
@@ -100,8 +100,10 @@
         if (db || DEMO) return db;
         try {
             if (!window.firebase || !firebase.initializeApp) return null;
-            var app = (firebase.apps || []).filter(function (a) { return a.name === 'smlcCommunity'; })[0] ||
-                      firebase.initializeApp(FIREBASE_CONFIG, 'smlcCommunity');
+            // Share the page's main Firebase app; start it (as [DEFAULT]) only if nothing has yet.
+            // Never start a separately named app first: universaltown.js would then skip its own setup.
+            var app = (firebase.apps || []).filter(function (a) { return a.name === '[DEFAULT]'; })[0] ||
+                      firebase.initializeApp(FIREBASE_CONFIG);
             db = app.database();
         } catch (e) { console.warn('Community Corner: Firebase not available', e.message); }
         return db;
