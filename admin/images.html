@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- SMLC Image Uploader | v2 | 2026-11-02 4:50 PM ET (every picture goes into the one images/ folder)
+<!-- SMLC Image Uploader | v2.1 | 2026-11-02 4:55 PM ET (every picture goes into the one images/ folder)
      Paste / drop / pick an image, give it a name, and it is saved straight into the
      SMLC GitHub repository (images/...). Gives you the link to paste into the Sheet.
      Needs a GitHub token (saved only on the device you use it on). Not linked from the site. -->
@@ -391,7 +391,7 @@
             var put = await gh(apiPath, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             if (!put.ok) {
                 var err = await put.json().catch(function () { return {}; });
-                if (put.status === 403 || put.status === 404) throw new Error('GitHub refused the save. The token needs Contents: Read and write on ' + c.repo + '.');
+                if (put.status === 403 || put.status === 404) throw new Error('GitHub refused the save (' + put.status + ': ' + (err.message || 'no details') + '). The token needs Repository access to ' + c.repo + ' and Contents: Read and write.');
                 throw new Error(err.message || ('GitHub error ' + put.status));
             }
             var link = siteUrl(path);
