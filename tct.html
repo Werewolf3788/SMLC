@@ -110,6 +110,22 @@
         .quiz label { display: block; text-align: left; max-width: 420px; margin: .5rem auto; cursor: pointer; }
         #quiz-result { margin-top: 1rem; font-weight: bold; color: var(--blue); min-height: 2em; }
 
+        /* Quick PC check */
+        .checker { text-align: center; background: #f6f8fb; border-radius: 10px; padding: 2rem; }
+        #check-results { text-align: left; max-width: 560px; margin: 1.5rem auto 0; }
+        .check-row {
+            display: flex; gap: .8rem; align-items: flex-start;
+            background: #fff; border-radius: 6px; padding: .7rem 1rem; margin-bottom: .5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,.08);
+        }
+        .check-row .badge { font-size: 1.3rem; line-height: 1.4; }
+        .check-row small { display: block; color: #666; }
+        .check-row.warn { border-left: 4px solid var(--gold); }
+        .check-row.ok { border-left: 4px solid #2e7d32; }
+        .check-row.info { border-left: 4px solid #999; }
+        .check-summary { background: var(--cream); border-radius: 8px; padding: 1rem 1.2rem; margin-top: 1rem; text-align: center; }
+        .fine-print { font-size: .85rem; color: #666; margin-top: 1.2rem; }
+
         /* Testimonials */
         .testimonials { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; }
         blockquote {
@@ -166,7 +182,7 @@
 <header>
     <div class="header-content">
         <h1>Traveling Computer Tech</h1>
-        <img src="logo.png" alt="Traveling Computer Tech Logo" class="header-logo">
+        <img src="https://raw.githubusercontent.com/Werewolf3788/SMLC/Claude-Test/images/traveling-computer-tech-logo.png" alt="Traveling Computer Tech Logo" class="header-logo">
     </div>
     <p class="tagline">On-Site Computer &amp; Web Services — We Come To You!</p>
 </header>
@@ -174,6 +190,7 @@
 <nav>
     <a href="#services">Services</a>
     <a href="#quiz">Is My PC Slow?</a>
+    <a href="#check">PC Check</a>
     <a href="#reviews">Reviews</a>
     <a href="#area">Service Area</a>
     <a href="#book">Book a Visit</a>
@@ -244,6 +261,15 @@
         <p id="quiz-result">Tick a box to see what we'd recommend.</p>
     </div>
 
+    <!-- Browser quick check -->
+    <h2 class="section-title" id="check">Free Quick PC Check</h2>
+    <div class="checker">
+        <p>See what your browser can tell us about your computer in 2 seconds. <strong>Nothing is uploaded or sent anywhere</strong> — the check runs only on your device.</p>
+        <button type="button" class="cta-button" id="run-check">Run Quick Check</button>
+        <div id="check-results" hidden></div>
+        <p class="fine-print">This is a rough look from your web browser only. It can't see hardware age, drive health, updates or viruses — Scott can check all of that in person.</p>
+    </div>
+
     <!-- Replace these with REAL customer quotes (with permission) -->
     <h2 class="section-title" id="reviews">What Customers Say</h2>
     <div class="testimonials">
@@ -299,6 +325,132 @@
 </div>
 
 <script>
+    /* ---------- Quick PC Check ---------- */
+    // Scott: raise these numbers every so often. A browser older than this gets flagged.
+    const MIN_BROWSER = { Chrome: 130, Edge: 130, Firefox: 130, Safari: 17 };
+
+    function detectBrowser() {
+        const ua = navigator.userAgent;
+        let m;
+        if ((m = ua.match(/Edg\/(\d+)/)))      return { name: 'Edge', ver: +m[1] };
+        if ((m = ua.match(/OPR\/(\d+)/)))      return { name: 'Opera', ver: +m[1] };
+        if ((m = ua.match(/Firefox\/(\d+)/)))  return { name: 'Firefox', ver: +m[1] };
+        if ((m = ua.match(/Chrome\/(\d+)/)))   return { name: 'Chrome', ver: +m[1] };
+        if ((m = ua.match(/Version\/(\d+).*Safari/))) return { name: 'Safari', ver: +m[1] };
+        return { name: 'Unknown', ver: 0 };
+    }
+
+    async function detectOS() {
+        const ua = navigator.userAgent;
+        const uad = navigator.userAgentData;
+        if (/Windows/.test(ua)) {
+            // Windows 10 and 11 look identical in the user agent; Chromium browsers can tell them apart.
+            if (uad && uad.getHighEntropyValues) {
+                try {
+                    const h = await uad.getHighEntropyValues(['platformVersion']);
+                    const major = parseInt(h.platformVersion, 10);
+                    if (!isNaN(major)) return { name: major >= 13 ? 'Windows 11' : 'Windows 10', family: 'win', ver: major >= 13 ? 11 : 10 };
+                } catch (e) {}
+            }
+            return { name: 'Windows (10 or 11)', family: 'win', ver: 0 };
+        }
+        if (/Android/.test(ua))              return { name: 'Android', family: 'android' };
+        if (/iPhone|iPad|iPod/.test(ua))     return { name: 'iPhone / iPad', family: 'ios' };
+        if (/Mac OS X/.test(ua))             return { name: 'macOS', family: 'mac' };
+        if (/CrOS/.test(ua))                 return { name: 'ChromeOS', family: 'chromeos' };
+        if (/Linux/.test(ua))                return { name: 'Linux', family: 'linux' };
+        return { name: 'Unknown', family: 'unknown' };
+    }
+
+    function row(kind, icon, title, detail) {
+        return `<div class="check-row ${kind}"><span class="badge">${icon}</span><div><strong>${title}</strong>${detail ? `<small>${detail}</small>` : ''}</div></div>`;
+    }
+
+    document.getElementById('run-check').addEventListener('click', async () => {
+        const out = document.getElementById('check-results');
+        const btn = document.getElementById('run-check');
+        btn.textContent = 'Checking…';
+        let html = '', warnings = 0;
+
+        // Operating system
+        const os = await detectOS();
+        if (os.family === 'win' && os.ver === 10) {
+            warnings++;
+            html += row('warn', '⚠️', 'Operating system: ' + os.name,
+                'Windows 10 no longer gets free security updates (support ended October 2025). Worth talking about an upgrade or extended updates.');
+        } else {
+            html += row('info', '💻', 'Operating system: ' + os.name);
+        }
+
+        // Browser
+        const b = detectBrowser();
+        const min = MIN_BROWSER[b.name];
+        if (min && b.ver < min) {
+            warnings++;
+            html += row('warn', '⚠️', `Browser: ${b.name} ${b.ver}`, 'This looks out of date. Old browsers miss important security fixes.');
+        } else if (min) {
+            html += row('ok', '✅', `Browser: ${b.name} ${b.ver}`, 'Looks reasonably current.');
+        } else {
+            html += row('info', '🌐', 'Browser: ' + b.name + (b.ver ? ' ' + b.ver : ''));
+        }
+
+        // Processor cores
+        const cores = navigator.hardwareConcurrency;
+        if (cores) {
+            if (cores <= 2) {
+                warnings++;
+                html += row('warn', '⚠️', `Processor: about ${cores} cores`, 'That is on the low side and often means an older machine.');
+            } else {
+                html += row('ok', '✅', `Processor: about ${cores} cores`);
+            }
+        }
+
+        // Memory (browsers cap this at 8 GB and round it)
+        if (navigator.deviceMemory) {
+            const gb = navigator.deviceMemory;
+            if (gb <= 4) {
+                warnings++;
+                html += row('warn', '⚠️', `Memory (RAM): about ${gb} GB`, 'Low for today\'s web and programs. A RAM upgrade can make a big difference.');
+            } else {
+                html += row('ok', '✅', `Memory (RAM): ${gb} GB or more`, 'Browsers only report up to 8 GB.');
+            }
+        }
+
+        // Screen
+        html += row('info', '🖥️', `Screen: ${screen.width} × ${screen.height}`);
+
+        // Connection
+        const c = navigator.connection;
+        if (c && c.effectiveType) {
+            const slow = ['slow-2g', '2g', '3g'].includes(c.effectiveType);
+            if (slow) warnings++;
+            html += row(slow ? 'warn' : 'ok', slow ? '⚠️' : '✅',
+                'Connection: ' + c.effectiveType.toUpperCase() + (c.downlink ? ` (~${c.downlink} Mbps)` : ''),
+                slow ? 'That looks slow. Could be Wi-Fi, router or provider.' : '');
+        }
+
+        // Battery (laptops, Chrome/Edge)
+        if (navigator.getBattery) {
+            try {
+                const bat = await navigator.getBattery();
+                html += row('info', '🔋', 'Battery: ' + Math.round(bat.level * 100) + '%' + (bat.charging ? ' (charging)' : ''));
+            } catch (e) {}
+        }
+
+        // Summary
+        const summary = warnings === 0
+            ? 'Nothing obvious from here — but a browser can only see so much. Want a real check-up?'
+            : `We spotted ${warnings} thing${warnings > 1 ? 's' : ''} worth a closer look.`;
+        html += `<div class="check-summary"><p><strong>${summary}</strong></p>
+                 <a class="cta-button" href="tel:6187084450">📞 Call (618) 708-4450</a>
+                 <a class="cta-button secondary" href="#book">Request a Visit</a></div>`;
+
+        out.innerHTML = html;
+        out.hidden = false;
+        btn.textContent = 'Run Again';
+    });
+
+    /* ---------- Slow-PC quiz ---------- */
     const boxes = document.querySelectorAll('.q');
     const result = document.getElementById('quiz-result');
     boxes.forEach(b => b.addEventListener('change', () => {
