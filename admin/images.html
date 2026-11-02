@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- SMLC Image Uploader | v2.1 | 2026-11-02 4:55 PM ET (every picture goes into the one images/ folder)
+<!-- SMLC Image Uploader | v2.2 | 2026-11-02 5:05 PM ET (waits until the picture is published) (every picture goes into the one images/ folder)
      Paste / drop / pick an image, give it a name, and it is saved straight into the
      SMLC GitHub repository (images/...). Gives you the link to paste into the Sheet.
      Needs a GitHub token (saved only on the device you use it on). Not linked from the site. -->
@@ -397,7 +397,8 @@
             var link = siteUrl(path);
             showResult('ok', '✅ Saved <code>' + path + '</code> (' + Math.round(blob.size / 1024) + ' KB). Paste this link into the Sheet:' +
                 '<div class="copyline"><input type="text" readonly value="' + link + '"><button type="button" class="copy-btn">Copy link</button></div>' +
-                '<p class="hint">The picture shows on the site about a minute after saving, once GitHub finishes publishing.</p>');
+                '<p class="hint publish-status">⏳ GitHub is publishing it &mdash; this usually takes about a minute. Don\'t open the link until this says it\'s live, or your browser may remember a "404" for a few minutes.</p>');
+            watchUntilLive(link, $('result').querySelector('.publish-status'));
             addRecent(path);
             $('name').value = ''; refreshPreview();
         } catch (e) {
@@ -405,6 +406,26 @@
         }
         refreshUploadButton();
     };
+
+    // ---------- wait for GitHub Pages to publish ----------
+    // (this page is on the same site, so it can check the new picture's link directly)
+    function watchUntilLive(link, el) {
+        var started = Date.now();
+        function check() {
+            fetch(link + '?published-check=' + Date.now(), { method: 'HEAD', cache: 'no-store' }).then(function (r) {
+                if (r.ok) { el.innerHTML = '✅ <strong>Live now.</strong> The link works on the site.'; return; }
+                retry();
+            }).catch(retry);
+        }
+        function retry() {
+            if (Date.now() - started > 6 * 60 * 1000) {
+                el.innerHTML = '⚠️ Still not published after 6 minutes. Check the repository\'s <strong>Actions</strong> tab for a failed "pages build and deployment".';
+                return;
+            }
+            setTimeout(check, 10000);
+        }
+        setTimeout(check, 15000);
+    }
 
     // ---------- results / copy ----------
     function showResult(kind, html) {
