@@ -1281,9 +1281,13 @@ window.openFiveDayForecastModal = function() {
 //   { school_grade, scorestream_code (widget id), score_widget_script, website }
 // Builds the ScoreStream container itself (only the widget id comes from the database)
 // and then (re)loads ScoreStream's embed script so it finds the new containers.
-// Home page shows every town's widgets.
+// Home view shows the county-wide widget (SCORESTREAM_DEFAULT_WIDGET); a town with no rows falls back to it.
+// Column B examples: "71098" (banner) or "69251 vertical". Column E can hold the full embed code instead.
 // ============================================================================
 const SCORESTREAM_EMBED_SRC = 'https://scorestream.com/apiJsCdn/widgets/embed.js';
+
+// County-wide scoreboard: shown on the home view, and on any town that has no Sports rows of its own.
+const SCORESTREAM_DEFAULT_WIDGET = { id: '71098', type: 'horzScoreboard', label: 'Clay County Scores', website: '' };
 
 function extractScoreStreamWidget(entry) {
     if (!entry) return null;
@@ -1291,7 +1295,11 @@ function extractScoreStreamWidget(entry) {
     const script = String(entry.score_widget_script ?? '');
     let id = null;
     let type = 'horzScoreboard';
-    if (/^\d+$/.test(code)) id = code;
+    // Column B: the widget number from ScoreStream's embed code (data-user-widget-id),
+    // optionally followed by "vertical", e.g. "69251 vertical"
+    const lead = code.match(/^(\d+)\b/);
+    if (lead) id = lead[1];
+    if (/\bvert(ical)?\b/i.test(code)) type = 'vertScoreboard';
     const fromHtml = (code + ' ' + script).match(/data-user-widget-id\s*=\s*["']?(\d+)/i);
     if (!id && fromHtml) id = fromHtml[1];
     const typeMatch = (code + ' ' + script).match(/data-ss_widget_type\s*=\s*["']?([A-Za-z]+)/);
@@ -1328,7 +1336,7 @@ function renderScoreStreamWidgets(container, widgets) {
         return `
             <div class="smlc-sports-block">
                 <div class="smlc-sports-head"><span class="smlc-sports-label">${heading}</span>${link}</div>
-                <div class="scorestream-widget-container" data-ss_widget_type="${w.type}" data-user-widget-id="${w.id}"></div>
+                <div class="scorestream-widget-container" data-ss_widget_type="${w.type}"${/^vert/i.test(w.type) ? ' style="height:600px;"' : ''} data-user-widget-id="${w.id}"></div>
             </div>`;
     }).join('');
     container.style.display = 'block';
@@ -1345,25 +1353,16 @@ function bindFirebaseSportsEngine(db) {
         lastScoreStreamSignature = '';
 
         if (ACTIVE_TOWN.isHome) {
-            activeFbRefSports = db.ref('master_county_data/towns');
-            activeFbRefSports.on('value', (snap) => {
-                const towns = snap.val() || {};
-                const widgets = [];
-                Object.keys(towns).forEach(townName => {
-                    toPlainArray(towns[townName]?.sections?.sports).forEach(entry => {
-                        const w = extractScoreStreamWidget(entry);
-                        if (w) widgets.push({ ...w, townLabel: townName });
-                    });
-                });
-                renderScoreStreamWidgets(sportsContainer, widgets);
-            });
+            // Home: the one county-wide scoreboard (it already shows every school)
+            renderScoreStreamWidgets(sportsContainer, [SCORESTREAM_DEFAULT_WIDGET]);
             return;
         }
 
         activeFbRefSports = db.ref(`master_county_data/towns/${ACTIVE_TOWN.dbTownKey}/sections/sports`);
         activeFbRefSports.on('value', (snap) => {
             const widgets = toPlainArray(snap.val()).map(extractScoreStreamWidget).filter(Boolean);
-            renderScoreStreamWidgets(sportsContainer, widgets);
+            // No Sports rows for this town yet -> show the county-wide scoreboard instead of nothing
+            renderScoreStreamWidgets(sportsContainer, widgets.length ? widgets : [SCORESTREAM_DEFAULT_WIDGET]);
         });
     } catch (err) {
         console.warn("Sports engine notice:", err.message);
