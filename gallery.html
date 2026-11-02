@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<!-- SMLC Clay County Photo Gallery | v1 | 2026-11-02 6:55 PM ET
+     Public. Shows approved photos from the SMLC Sheet's "Gallery" tab (synced to Firebase by Code.gs). -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clay County, IL Photo Gallery: Towns, Villages &amp; History | Support My Local Community</title>
+    <meta name="description" content="Photos of Clay County, Illinois: Flora, Louisville, Clay City, Xenia, Iola, Sailor Springs, unincorporated communities and townships, today and in history.">
+    <link rel="canonical" href="https://werewolf3788.github.io/SMLC/gallery.html">
+    <meta name="theme-color" content="#001B37">
+    <meta name="color-scheme" content="light dark">
+    <meta property="og:title" content="Clay County, IL Photo Gallery">
+    <meta property="og:description" content="Town and historical photos from across Clay County, Illinois.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png">
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/skventuresigns-design/media/main/favicon.png">
+    <script src="smlc-device-prefs.js"></script>
+    <script defer src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FHJNXDB9BB"></script>
+    <script>window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-FHJNXDB9BB');</script>
+    <script src="smlc-photos-config.js"></script>
+    <style>
+        :root { --navy: #001B37; --accent: #FFC10E; --ink: #111; --muted: #555; --card: #fff; --bg: #f3f5f8; --line: #d5dbe3; }
+        @media (prefers-color-scheme: dark) { :root { --ink: #ececf0; --muted: #b5b5bd; --card: #1d1d20; --bg: #121214; --line: #3a3f48; } }
+        * { box-sizing: border-box; }
+        body { margin: 0; font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); }
+        .top { background: var(--navy); color: #fff; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .top a { color: #fff; font-weight: 700; text-decoration: none; }
+        .hero { background: var(--navy); color: #fff; text-align: center; padding: 26px 18px 30px; }
+        .hero h1 { margin: 0 0 6px; font: 900 clamp(1.6rem, 4vw, 2.6rem)/1.1 Georgia, "Times New Roman", serif; }
+        .hero p { margin: 0 0 14px; opacity: .9; }
+        .share-btn { display: inline-block; background: var(--accent); color: #111; font-weight: 800; padding: 10px 18px; border-radius: 10px; text-decoration: none; }
+        main { max-width: 1200px; margin: 0 auto; padding: 18px 16px 40px; }
+        .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+        .chip { font: inherit; font-weight: 700; border: 2px solid var(--navy); background: var(--card); color: var(--ink); border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+        .chip[aria-pressed="true"] { background: var(--navy); color: #fff; }
+        @media (prefers-color-scheme: dark) { .chip { border-color: #6d8fb8; } .chip[aria-pressed="true"] { background: #6d8fb8; color: #000; } }
+        select { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+        .count { color: var(--muted); font-size: .9rem; margin-left: auto; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+        .ph { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; cursor: pointer; padding: 0; text-align: left; font: inherit; color: inherit; }
+        .ph img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: #ddd; }
+        .ph .cap { padding: 8px 10px 10px; }
+        .ph .cap strong { display: block; font-size: .95rem; }
+        .ph .cap span { font-size: .8rem; color: var(--muted); }
+        .tag { display: inline-block; font-size: .7rem; font-weight: 800; background: #6b4f1d; color: #fff; border-radius: 4px; padding: 1px 6px; margin-right: 4px; vertical-align: middle; }
+        .empty { text-align: center; padding: 40px 16px; background: var(--card); border-radius: 12px; border: 1px solid var(--line); }
+        /* lightbox */
+        #lb { position: fixed; inset: 0; background: rgba(0, 0, 0, .92); display: none; z-index: 1000; color: #fff; }
+        #lb.open { display: grid; grid-template-rows: 1fr auto; }
+        #lb figure { margin: 0; display: grid; place-items: center; padding: 50px 60px 10px; min-height: 0; }
+        #lb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        #lb .info { padding: 12px 20px 22px; text-align: center; }
+        #lb .info h2 { margin: 0 0 4px; font-size: 1.15rem; }
+        #lb .info p { margin: 0; opacity: .85; font-size: .9rem; }
+        #lb button { position: absolute; background: rgba(255, 255, 255, .15); color: #fff; border: 0; border-radius: 50%; width: 48px; height: 48px; font-size: 1.6rem; cursor: pointer; }
+        #lb .x { top: 12px; right: 12px; }
+        #lb .prev { left: 10px; top: 50%; }
+        #lb .next { right: 10px; top: 50%; }
+        #lb .shr { top: 12px; right: 70px; font-size: 1rem; width: auto; border-radius: 999px; padding: 0 14px; }
+        @media (max-width: 600px) { #lb figure { padding: 56px 8px 8px; } #lb .prev, #lb .next { top: auto; bottom: 90px; } }
+    </style>
+</head>
+<body>
+<div id="google_translate_element"></div>
+<div class="top"><a href="index.html">&larr; Support My Local Community</a><a href="share-photos.html">Share a photo &rarr;</a></div>
+<section class="hero">
+    <h1>Clay County Photo Gallery</h1>
+    <p>Our towns, villages and townships &mdash; today and through the years.</p>
+    <a class="share-btn" href="share-photos.html">📷 Share your photos</a>
+</section>
+
+<main>
+    <div class="filters" role="group" aria-label="Filter photos">
+        <button class="chip" data-group="" aria-pressed="true">All</button>
+        <button class="chip" data-group="Cities & Villages" aria-pressed="false">Cities &amp; Villages</button>
+        <button class="chip" data-group="Unincorporated Communities" aria-pressed="false">Communities</button>
+        <button class="chip" data-group="Townships" aria-pressed="false">Townships</button>
+        <label for="place-filter" style="position:absolute;left:-9999px">Place</label>
+        <select id="place-filter"></select>
+        <label for="era-filter" style="position:absolute;left:-9999px">Era</label>
+        <select id="era-filter"><option value="">Today &amp; historical</option><option value="Historical">Historical only</option><option value="Today">Today only</option></select>
+        <span class="count" id="count"></span>
+    </div>
+    <div class="grid" id="grid" aria-live="polite"></div>
+</main>
+
+<div id="lb" role="dialog" aria-modal="true" aria-label="Photo viewer">
+    <figure><img id="lb-img" alt=""></figure>
+    <div class="info"><h2 id="lb-title"></h2><p id="lb-meta"></p></div>
+    <button class="x" id="lb-x" aria-label="Close">&times;</button>
+    <button class="shr" id="lb-share" aria-label="Share this photo">Share</button>
+    <button class="prev" id="lb-prev" aria-label="Previous photo">&#8249;</button>
+    <button class="next" id="lb-next" aria-label="Next photo">&#8250;</button>
+</div>
+
+<script>
+(function () {
+    'use strict';
+    var P = window.SMLC_PHOTOS;
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = function (v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+    P.fillPlaceSelect($('place-filter'), 'Every place');
+
+    var all = [], shown = [], group = '', current = -1;
+    var DEMO = /[?&]gallery=demo\b/.test(location.search);
+
+    function idOf(p) { return String(p.image || '').split('/').pop().replace(/\.[a-z0-9]+$/i, '').toLowerCase(); }
+    function truthy(v) { return v === true || /^(true|yes|1|x|✓)$/i.test(String(v || '').trim()); }
+    function title(p) { return p.caption || p.place || 'Clay County'; }
+    function meta(p) {
+        return [p.place, p.era === 'Historical' ? ('Historical' + (p.year ? ', ' + p.year : '')) : (p.year || ''), p.credit ? 'Photo: ' + p.credit : '']
+            .filter(Boolean).join(' · ');
+    }
+
+    function render() {
+        var place = $('place-filter').value, era = $('era-filter').value;
+        shown = all.filter(function (p) {
+            if (group && p.group !== group) return false;
+            if (place && p.place !== place) return false;
+            if (era && p.era !== era) return false;
+            return true;
+        });
+        $('count').textContent = shown.length + ' photo' + (shown.length === 1 ? '' : 's');
+        $('grid').innerHTML = shown.length ? shown.map(function (p, i) {
+            return '<button class="ph" data-i="' + i + '"><img loading="lazy" src="' + esc(p.image) + '" alt="' + esc(title(p) + (p.place ? ', ' + p.place : '')) + '">' +
+                '<div class="cap"><strong>' + (p.era === 'Historical' ? '<span class="tag">' + esc(p.year || 'Historical') + '</span>' : '') + esc(title(p)) + '</strong><span>' + esc(meta(p)) + '</span></div></button>';
+        }).join('') : '<div class="empty" style="grid-column:1/-1"><p><strong>No photos here yet.</strong></p><p>Have one? <a href="share-photos.html' +
+            (place ? '?place=' + encodeURIComponent(place) : '') + '">Share it</a> and it could be the first!</p></div>';
+    }
+    document.querySelectorAll('.chip').forEach(function (c) {
+        c.onclick = function () {
+            group = c.getAttribute('data-group');
+            document.querySelectorAll('.chip').forEach(function (x) { x.setAttribute('aria-pressed', String(x === c)); });
+            render();
+        };
+    });
+    $('place-filter').onchange = render;
+    $('era-filter').onchange = render;
+    $('grid').addEventListener('click', function (e) { var b = e.target.closest('.ph'); if (b) open(Number(b.getAttribute('data-i'))); });
+
+    // ---------- lightbox ----------
+    var lastFocus = null;
+    function open(i) {
+        if (!shown.length) return;
+        current = (i + shown.length) % shown.length;
+        var p = shown[current];
+        $('lb-img').src = p.image; $('lb-img').alt = title(p);
+        $('lb-title').textContent = title(p);
+        $('lb-meta').textContent = meta(p);
+        if (!$('lb').classList.contains('open')) { lastFocus = document.activeElement; $('lb').classList.add('open'); $('lb-x').focus(); }
+        history.replaceState(null, '', '#photo=' + idOf(p));
+    }
+    function close() { $('lb').classList.remove('open'); history.replaceState(null, '', location.pathname + location.search); if (lastFocus) lastFocus.focus(); }
+    $('lb-x').onclick = close;
+    $('lb-prev').onclick = function () { open(current - 1); };
+    $('lb-next').onclick = function () { open(current + 1); };
+    $('lb').addEventListener('click', function (e) { if (e.target === $('lb') || e.target.tagName === 'FIGURE') close(); });
+    document.addEventListener('keydown', function (e) {
+        if (!$('lb').classList.contains('open')) return;
+        if (e.key === 'Escape') close();
+        if (e.key === 'ArrowLeft') open(current - 1);
+        if (e.key === 'ArrowRight') open(current + 1);
+    });
+    var sx = null;
+    $('lb').addEventListener('touchstart', function (e) { sx = e.touches[0].clientX; }, { passive: true });
+    $('lb').addEventListener('touchend', function (e) { if (sx === null) return; var dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 50) open(current + (dx < 0 ? 1 : -1)); sx = null; });
+    $('lb-share').onclick = function () {
+        var p = shown[current], url = location.href;
+        if (navigator.share) navigator.share({ title: title(p) + ' | Clay County Photo Gallery', url: url }).catch(function () {});
+        else if (navigator.clipboard) navigator.clipboard.writeText(url).then(function () { $('lb-share').textContent = 'Link copied'; setTimeout(function () { $('lb-share').textContent = 'Share'; }, 1500); });
+    };
+
+    // ---------- data ----------
+    function load(rows) {
+        all = rows.filter(function (p) { return p && p.image && truthy(p.show); })
+            .map(function (p) {
+                if (!p.group) p.group = P.groupOf(p.place);
+                p.year = p.year ? String(p.year).replace(/T.*$/, '').slice(0, 10) : '';
+                return p;
+            })
+            .sort(function (a, b) { return String(b.added || '').localeCompare(String(a.added || '')); });
+        render();
+        var m = location.hash.match(/photo=([\w-]+)/);
+        if (m) { var i = shown.findIndex(function (p) { return idOf(p) === m[1]; }); if (i >= 0) open(i); }
+    }
+    if (DEMO) {
+        load([
+            { image: 'https://raw.githubusercontent.com/Werewolf3788/SMLC/Claude-Test/images/Old-Flora-Library.jpg', place: 'Flora', caption: 'Flora Carnegie Library', era: 'Historical', year: '1903', credit: 'Our Flora', show: true },
+            { image: 'https://raw.githubusercontent.com/Werewolf3788/SMLC/Claude-Test/images/xenia-sign.jpeg', place: 'Xenia', caption: 'Welcome to Xenia', era: 'Today', credit: 'SMLC', show: true },
+            { image: 'https://raw.githubusercontent.com/Werewolf3788/SMLC/Claude-Test/images/Clay_County_Courthouse_in_Louisville_from_north-northwest.jpg', place: 'Louisville', caption: 'Clay County Courthouse', era: 'Today', credit: 'Wikimedia Commons', show: true },
+            { image: 'https://raw.githubusercontent.com/Werewolf3788/SMLC/Claude-Test/images/steam_locamotive.jpg', place: 'Clay City Township', caption: 'Steam locomotive', era: 'Historical', year: '1920s', show: true }
+        ]);
+        return;
+    }
+    fetch(P.FIREBASE_CONFIG.databaseURL + '/' + P.GALLERY_PATH + '.json')
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (v) { load(!v ? [] : (Array.isArray(v) ? v : Object.keys(v).map(function (k) { return v[k]; }))); })
+        .catch(function () { load([]); });
+})();
+</script>
+</body>
+</html>
