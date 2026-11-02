@@ -167,6 +167,7 @@
             padding: .8rem; border-radius: 5px; font-weight: bold; background: var(--gold);
         }
         .call-bar a.text { background: #2e7d32; }
+        .call-bar a.whatsapp, .cta-button.whatsapp { background: #25D366; }
 
         @media (max-width: 600px) {
             .container { padding: 1rem; }
@@ -202,6 +203,7 @@
         <h2>Expert Tech Support in Effingham &amp; Surrounding Areas</h2>
         <p>With over 15 years in business, we provide reliable, professional service right at your door. No need to unhook your cables or haul your tower across town.</p>
         <a href="tel:6187084450" class="cta-button">📞 Call (618) 708-4450</a>
+        <a href="https://wa.me/16187084450" class="cta-button whatsapp" target="_blank" rel="noopener">WhatsApp Us</a>
         <a href="#book" class="cta-button secondary">Request a Visit</a>
     </section>
 
@@ -311,7 +313,7 @@
 <footer class="site-footer">
     <h3>Contact Us</h3>
     <p>607 W Clark Ave, Effingham, IL 62401</p>
-    <p><strong>Phone:</strong> <a href="tel:6187084450">(618) 708-4450</a></p>
+    <p><strong>Phone / WhatsApp:</strong> <a href="tel:6187084450">(618) 708-4450</a></p>
     <p><em>Available Monday – Saturday by Appointment</em></p>
     <p>Proud to support our community — <a href="#">Support My Local Community</a></p>
     <hr style="width: 50px; margin: 2rem auto; border-color: #444;">
@@ -322,6 +324,7 @@
 <div class="call-bar">
     <a href="tel:6187084450">📞 Call</a>
     <a href="sms:6187084450" class="text">💬 Text</a>
+    <a href="https://wa.me/16187084450" class="whatsapp" target="_blank" rel="noopener">WhatsApp</a>
 </div>
 
 <script>
@@ -360,6 +363,26 @@
         if (/CrOS/.test(ua))                 return { name: 'ChromeOS', family: 'chromeos' };
         if (/Linux/.test(ua))                return { name: 'Linux', family: 'linux' };
         return { name: 'Unknown', family: 'unknown' };
+    }
+
+    // Downloads a test file for up to ~6 seconds and works out Mbps. Returns null if it can't run.
+    async function speedTest() {
+        try {
+            const res = await fetch('https://speed.cloudflare.com/__down?bytes=25000000&r=' + Math.random(), { cache: 'no-store' });
+            const reader = res.body.getReader();
+            const t0 = performance.now();
+            let got = 0;
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                got += value.length;
+                if (performance.now() - t0 > 6000) { reader.cancel(); break; }
+            }
+            const secs = (performance.now() - t0) / 1000;
+            return secs > 0 && got > 0 ? (got * 8) / secs / 1e6 : null;
+        } catch (e) {
+            return null;
+        }
     }
 
     function row(kind, icon, title, detail) {
@@ -412,28 +435,34 @@
                 warnings++;
                 html += row('warn', '⚠️', `Memory (RAM): about ${gb} GB`, 'Low for today\'s web and programs. A RAM upgrade can make a big difference.');
             } else {
-                html += row('ok', '✅', `Memory (RAM): ${gb} GB or more`, 'Browsers only report up to 8 GB.');
+                html += row('ok', '✅', `Memory (RAM): about ${gb} GB`, 'Your browser rounds this number, so the real amount can be higher.');
             }
         }
 
         // Screen
         html += row('info', '🖥️', `Screen: ${screen.width} × ${screen.height}`);
 
-        // Connection
-        const c = navigator.connection;
-        if (c && c.effectiveType) {
-            const slow = ['slow-2g', '2g', '3g'].includes(c.effectiveType);
-            if (slow) warnings++;
-            html += row(slow ? 'warn' : 'ok', slow ? '⚠️' : '✅',
-                'Connection: ' + c.effectiveType.toUpperCase() + (c.downlink ? ` (~${c.downlink} Mbps)` : ''),
-                slow ? 'That looks slow. Could be Wi-Fi, router or provider.' : '');
+        // Internet speed (real download test; the browser's built-in number is capped at 10 Mbps)
+        btn.textContent = 'Testing internet speed…';
+        const mbps = await speedTest();
+        if (mbps === null) {
+            html += row('info', '🌐', 'Internet speed: could not be tested', 'The test may have been blocked by a firewall or ad blocker.');
+        } else if (mbps < 5) {
+            warnings++;
+            html += row('warn', '⚠️', `Internet speed: about ${mbps.toFixed(0)} Mbps down`, 'That looks slow. Could be Wi-Fi, the router or the provider.');
+        } else {
+            html += row('ok', '✅', `Internet speed: about ${mbps.toFixed(0)} Mbps down`, 'Quick estimate from one connection. A full speed test may read higher.');
         }
 
         // Battery (laptops, Chrome/Edge)
         if (navigator.getBattery) {
             try {
                 const bat = await navigator.getBattery();
-                html += row('info', '🔋', 'Battery: ' + Math.round(bat.level * 100) + '%' + (bat.charging ? ' (charging)' : ''));
+                // Desktops report "100%, charging, never drains" - hide that so only real laptops show a battery
+                const looksLikeDesktop = bat.charging && bat.level === 1 && bat.dischargingTime === Infinity;
+                if (!looksLikeDesktop) {
+                    html += row('info', '🔋', 'Battery: ' + Math.round(bat.level * 100) + '%' + (bat.charging ? ' (charging)' : ''));
+                }
             } catch (e) {}
         }
 
