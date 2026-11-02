@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<!-- SMLC Image Uploader | v1 | 2026-11-02 4:30 PM ET
+     Paste / drop / pick an image, give it a name, and it is saved straight into the
+     SMLC GitHub repository (images/...). Gives you the link to paste into the Sheet.
+     Needs a GitHub token (saved only on the device you use it on). Not linked from the site. -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>SMLC Image Uploader</title>
+    <meta name="color-scheme" content="light dark">
+    <style>
+        :root { --navy: #001B37; --accent: #FFC10E; --ink: #111; --muted: #555; --card: #fff; --bg: #f3f5f8; --line: #d5dbe3; --ok: #137333; --bad: #b3261e; }
+        @media (prefers-color-scheme: dark) { :root { --ink: #ececf0; --muted: #b5b5bd; --card: #1d1d20; --bg: #121214; --line: #3a3f48; --ok: #6fd28a; --bad: #ff8a80; } }
+        * { box-sizing: border-box; }
+        body { margin: 0; font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); }
+        header { background: var(--navy); color: #fff; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+        header h1 { margin: 0; font-size: 1.25rem; }
+        header small { opacity: .8; }
+        main { max-width: 980px; margin: 0 auto; padding: 18px; display: grid; gap: 18px; }
+        .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+        .card h2 { margin: 0 0 10px; font-size: 1.1rem; }
+        label { display: block; font-weight: 600; margin: 10px 0 4px; }
+        input[type=text], input[type=password], input[type=url], select { width: 100%; font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 640px) { .row { grid-template-columns: 1fr; } }
+        button, .btn { font: inherit; font-weight: 700; border: 0; border-radius: 8px; padding: 10px 16px; cursor: pointer; background: var(--navy); color: #fff; }
+        button.secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+        button.gold { background: var(--accent); color: #111; }
+        button:disabled { opacity: .5; cursor: not-allowed; }
+        .hint { color: var(--muted); font-size: .88rem; margin: 4px 0 0; }
+        #drop { border: 3px dashed var(--line); border-radius: 12px; min-height: 220px; display: grid; place-items: center; text-align: center; padding: 18px; cursor: pointer; outline: none; }
+        #drop.hover, #drop:focus-visible { border-color: var(--navy); background: rgba(0, 27, 55, .06); }
+        #drop img { max-width: 100%; max-height: 340px; border-radius: 8px; display: block; margin: 0 auto 8px; background: repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50% / 20px 20px; }
+        .big { font-size: 1.15rem; font-weight: 700; }
+        .result { border-radius: 10px; padding: 12px 14px; margin-top: 12px; word-break: break-all; }
+        .result.ok { background: rgba(19, 115, 51, .12); border: 1px solid var(--ok); }
+        .result.bad { background: rgba(179, 38, 30, .1); border: 1px solid var(--bad); }
+        .copyline { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+        .copyline input { flex: 1; }
+        .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+        .tile { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--card); display: flex; flex-direction: column; }
+        .tile img { width: 100%; height: 110px; object-fit: contain; background: #fff; }
+        .tile div { padding: 6px 8px; font-size: .78rem; word-break: break-all; flex: 1; }
+        .tile button { border-radius: 0; padding: 6px; font-size: .8rem; }
+        .status { font-size: .9rem; color: var(--muted); }
+        details summary { cursor: pointer; font-weight: 700; }
+        code { background: rgba(127, 127, 127, .15); padding: 1px 5px; border-radius: 4px; }
+        ol li { margin: 4px 0; }
+    </style>
+</head>
+<body>
+<header>
+    <div><h1>SMLC Image Uploader</h1><small>Paste a picture, name it, save it to the SMLC repository</small></div>
+    <small id="who">Not connected</small>
+</header>
+
+<main>
+    <!-- ===== Token ===== -->
+    <section class="card" id="token-card">
+        <h2>1. Connect to GitHub (one time per device)</h2>
+        <details id="token-help">
+            <summary>How to get a token (2 minutes)</summary>
+            <ol>
+                <li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a> (Fine-grained token).</li>
+                <li>Token name: <code>SMLC images</code>. Expiration: up to you (1 year is fine).</li>
+                <li>Repository access: <strong>Only select repositories</strong> &rarr; <strong>Werewolf3788/SMLC</strong>.</li>
+                <li>Permissions &rarr; Repository permissions &rarr; <strong>Contents: Read and write</strong>. Nothing else.</li>
+                <li>Click <strong>Generate token</strong>, copy it, and paste it below.</li>
+            </ol>
+            <p class="hint">The token is saved only in this browser on this device. It never goes into the website code. Anyone using this device's browser could use it, so only save it on your own computer or phone.</p>
+        </details>
+        <label for="token">GitHub token</label>
+        <input type="password" id="token" placeholder="github_pat_..." autocomplete="off">
+        <div class="row">
+            <div>
+                <label for="repo">Repository</label>
+                <input type="text" id="repo" value="Werewolf3788/SMLC">
+            </div>
+            <div>
+                <label for="branch">Branch (the live site)</label>
+                <input type="text" id="branch" value="Claude-Test">
+            </div>
+        </div>
+        <p style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button id="save-token">Save &amp; connect</button>
+            <button id="forget-token" class="secondary">Forget token on this device</button>
+        </p>
+        <p class="status" id="token-status"></p>
+    </section>
+
+    <!-- ===== Upload ===== -->
+    <section class="card">
+        <h2>2. Add a picture</h2>
+        <div id="drop" tabindex="0" aria-label="Paste, drop or choose an image">
+            <div id="drop-inner">
+                <p class="big">Paste an image here (Ctrl+V / &#8984;V)</p>
+                <p class="hint">or drag it in, or tap to choose a file. Tip: on any website, right-click a picture &rarr; <strong>Copy image</strong>, then paste here.</p>
+            </div>
+        </div>
+        <input type="file" id="file" accept="image/*" hidden>
+
+        <label for="from-url">&hellip;or copy it from a web address</label>
+        <div class="copyline">
+            <input type="url" id="from-url" placeholder="https://example.com/logo.png">
+            <button id="load-url" class="secondary">Load</button>
+        </div>
+        <p class="hint">Some websites block this. If it fails, open the picture, right-click &rarr; Copy image, and paste above instead.</p>
+
+        <div class="row">
+            <div>
+                <label for="name">Name</label>
+                <input type="text" id="name" placeholder="e.g. Caseys Flora logo">
+                <p class="hint">Saved as: <code id="filename-preview">&mdash;</code></p>
+            </div>
+            <div>
+                <label for="folder">Folder</label>
+                <select id="folder">
+                    <option value="images">images (main folder)</option>
+                    <option value="images/businesses">images/businesses (logos, storefronts)</option>
+                    <option value="images/partners">images/partners</option>
+                    <option value="images/slideshow">images/slideshow</option>
+                    <option value="images/history">images/history</option>
+                    <option value="images/landmarks">images/landmarks</option>
+                    <option value="images/events">images/events (flyers)</option>
+                    <option value="images/community">images/community (Where in Clay County?)</option>
+                    <option value="images/menu">images/menu (menu &amp; header)</option>
+                </select>
+            </div>
+        </div>
+        <div class="row">
+            <div>
+                <label for="format">Format</label>
+                <select id="format">
+                    <option value="auto">Automatic (PNG if it has see-through parts, otherwise JPG)</option>
+                    <option value="png">PNG (logos, graphics)</option>
+                    <option value="jpg">JPG (photos, smaller files)</option>
+                    <option value="original">Keep the original file as-is</option>
+                </select>
+            </div>
+            <div>
+                <label for="maxw">Largest width</label>
+                <select id="maxw">
+                    <option value="1600">1600 px (recommended)</option>
+                    <option value="1200">1200 px</option>
+                    <option value="800">800 px (small logos)</option>
+                    <option value="2400">2400 px (header banners)</option>
+                    <option value="0">Don't resize</option>
+                </select>
+            </div>
+        </div>
+        <p style="margin-top:14px;"><button id="upload" class="gold" disabled>Save to GitHub</button></p>
+        <div id="result"></div>
+    </section>
+
+    <!-- ===== Browse ===== -->
+    <section class="card">
+        <h2>3. Images already saved</h2>
+        <p class="hint">Click <em>Copy link</em> and paste it into the Sheet's image column.</p>
+        <div class="copyline" style="margin-bottom:12px;">
+            <select id="browse-folder"></select>
+            <button id="browse" class="secondary">Show</button>
+        </div>
+        <div class="list" id="browse-list"></div>
+    </section>
+</main>
+
+<script>
+(function () {
+    'use strict';
+    var SITE_BASE = 'https://werewolf3788.github.io/SMLC/';
+    var $ = function (id) { return document.getElementById(id); };
+    var store = {
+        get: function (k) { try { return localStorage.getItem('smlc-img:' + k) || ''; } catch (e) { return ''; } },
+        set: function (k, v) { try { localStorage.setItem('smlc-img:' + k, v); } catch (e) {} },
+        del: function (k) { try { localStorage.removeItem('smlc-img:' + k); } catch (e) {} }
+    };
+
+    // ---------- settings ----------
+    $('token').value = store.get('token');
+    if (store.get('repo')) $('repo').value = store.get('repo');
+    if (store.get('branch')) $('branch').value = store.get('branch');
+    if (store.get('folder')) $('folder').value = store.get('folder');
+    $('browse-folder').innerHTML = $('folder').innerHTML;
+
+    function cfg() { return { token: $('token').value.trim(), repo: $('repo').value.trim(), branch: $('branch').value.trim() || 'main' }; }
+
+    function gh(path, opts) {
+        var c = cfg();
+        opts = opts || {};
+        opts.headers = Object.assign({
+            'Accept': 'application/vnd.github+json',
+            'Authorization': 'Bearer ' + c.token,
+            'X-GitHub-Api-Version': '2022-11-28'
+        }, opts.headers || {});
+        return fetch('https://api.github.com' + path, opts);
+    }
+
+    async function connect(quiet) {
+        var c = cfg();
+        if (!c.token) { $('token-status').textContent = 'Paste a token first.'; return false; }
+        $('token-status').textContent = 'Checking…';
+        try {
+            var r = await gh('/repos/' + c.repo);
+            if (r.status === 401) throw new Error('GitHub says this token is not valid (or it expired).');
+            if (r.status === 404) throw new Error('This token cannot see ' + c.repo + '. Make sure the token includes that repository.');
+            var info = await r.json();
+            var canWrite = info.permissions ? (info.permissions.push || info.permissions.admin) : true;
+            var b = await gh('/repos/' + c.repo + '/branches/' + encodeURIComponent(c.branch));
+            if (b.status === 404) throw new Error('Branch "' + c.branch + '" was not found.');
+            $('token-status').textContent = canWrite === false
+                ? '⚠️ Connected, but this token can only READ. Give it Contents: Read and write.'
+                : '✅ Connected to ' + c.repo + ' (' + c.branch + ').';
+            $('who').textContent = 'Connected: ' + c.repo + ' · ' + c.branch;
+            $('token-help').open = false;
+            refreshUploadButton();
+            return true;
+        } catch (e) {
+            $('token-status').textContent = '❌ ' + e.message;
+            $('who').textContent = 'Not connected';
+            return false;
+        }
+    }
+    $('save-token').onclick = function () {
+        var c = cfg();
+        store.set('token', c.token); store.set('repo', c.repo); store.set('branch', c.branch);
+        connect();
+    };
+    $('forget-token').onclick = function () {
+        store.del('token'); $('token').value = '';
+        $('token-status').textContent = 'Token removed from this device.';
+        $('who').textContent = 'Not connected';
+        refreshUploadButton();
+    };
+    if (store.get('token')) connect(true); else $('token-help').open = true;
+
+    // ---------- picking an image ----------
+    var picked = null;   // { blob, type, name, w, h, hasAlpha }
+
+    function slug(s) {
+        return String(s || '').toLowerCase()
+            .replace(/&/g, ' and ').replace(/['’]/g, '')
+            .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
+    }
+    function outExt() {
+        if (!picked) return '';
+        var f = $('format').value;
+        if (f === 'original') {
+            var m = (picked.type || '').match(/image\/(png|jpeg|jpg|gif|webp|svg\+xml)/);
+            return m ? (m[1] === 'jpeg' ? 'jpg' : m[1] === 'svg+xml' ? 'svg' : m[1]) : 'png';
+        }
+        if (f === 'auto') return picked.hasAlpha ? 'png' : 'jpg';
+        return f;
+    }
+    function targetPath() {
+        var s = slug($('name').value);
+        if (!s || !picked) return '';
+        return $('folder').value + '/' + s + '.' + outExt();
+    }
+    function refreshPreview() {
+        var p = targetPath();
+        $('filename-preview').textContent = p || '—';
+        refreshUploadButton();
+    }
+    function refreshUploadButton() { $('upload').disabled = !(picked && targetPath() && cfg().token); }
+    ['name', 'folder', 'format', 'maxw'].forEach(function (id) { $(id).addEventListener('input', refreshPreview); $(id).addEventListener('change', refreshPreview); });
+    $('folder').addEventListener('change', function () { store.set('folder', $('folder').value); });
+
+    function loadImage(blob) {
+        return new Promise(function (resolve, reject) {
+            var url = URL.createObjectURL(blob);
+            var img = new Image();
+            img.onload = function () { resolve({ img: img, url: url }); };
+            img.onerror = function () { reject(new Error('That file is not an image this browser can read.')); };
+            img.src = url;
+        });
+    }
+    function detectAlpha(img) {
+        try {
+            var w = Math.min(img.naturalWidth, 400), h = Math.round(img.naturalHeight * w / img.naturalWidth) || 1;
+            var c = document.createElement('canvas'); c.width = w; c.height = h;
+            var x = c.getContext('2d'); x.drawImage(img, 0, 0, w, h);
+            var d = x.getImageData(0, 0, w, h).data;
+            for (var i = 3; i < d.length; i += 16) if (d[i] < 250) return true;
+        } catch (e) { /* cross-origin images can't be checked */ }
+        return false;
+    }
+    async function usePicked(blob, suggestedName) {
+        if (!blob || !/^image\//.test(blob.type || 'image/')) { showResult('bad', 'That isn\'t an image.'); return; }
+        try {
+            var r = await loadImage(blob);
+            picked = { blob: blob, type: blob.type, w: r.img.naturalWidth, h: r.img.naturalHeight, hasAlpha: detectAlpha(r.img) };
+            $('drop-inner').innerHTML = '<img src="' + r.url + '" alt="Picked image preview"><p class="hint">' +
+                picked.w + ' × ' + picked.h + ' px · ' + Math.round(blob.size / 1024) + ' KB' + (picked.hasAlpha ? ' · has see-through parts' : '') +
+                ' — paste another to replace it</p>';
+            if (suggestedName && !$('name').value) $('name').value = suggestedName.replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ');
+            $('result').innerHTML = '';
+            refreshPreview();
+            $('name').focus();
+        } catch (e) { showResult('bad', e.message); }
+    }
+
+    document.addEventListener('paste', function (e) {
+        var items = (e.clipboardData && e.clipboardData.items) || [];
+        for (var i = 0; i < items.length; i++) {
+            if (items[i].kind === 'file' && /^image\//.test(items[i].type)) {
+                e.preventDefault();
+                usePicked(items[i].getAsFile(), '');
+                return;
+            }
+        }
+        // pasted text that is an image link
+        var text = e.clipboardData && e.clipboardData.getData('text');
+        if (text && /^https?:\/\/\S+$/i.test(text.trim()) && document.activeElement !== $('from-url') && document.activeElement !== $('name')) {
+            $('from-url').value = text.trim();
+            loadFromUrl();
+        }
+    });
+    var drop = $('drop');
+    drop.addEventListener('click', function () { $('file').click(); });
+    drop.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); } });
+    $('file').addEventListener('change', function () { if (this.files[0]) usePicked(this.files[0], this.files[0].name); this.value = ''; });
+    ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('hover'); }); });
+    ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('hover'); }); });
+    drop.addEventListener('drop', function (e) {
+        var f = e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) { usePicked(f, f.name); return; }
+        var url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text');
+        if (url) { $('from-url').value = url.trim(); loadFromUrl(); }
+    });
+
+    function driveDirect(u) {
+        var m = u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=view&)?id=|thumbnail\?id=)([\w-]+)/);
+        return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w2000' : u;
+    }
+    async function loadFromUrl() {
+        var u = $('from-url').value.trim();
+        if (!u) return;
+        showResult('', 'Loading…');
+        try {
+            var r = await fetch(driveDirect(u), { mode: 'cors' });
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            var blob = await r.blob();
+            if (!/^image\//.test(blob.type)) throw new Error('not an image');
+            var guess = decodeURIComponent((u.split('?')[0].split('/').pop() || ''));
+            await usePicked(blob, guess);
+        } catch (e) {
+            showResult('bad', 'That website won\'t let the picture be copied this way. Open the picture in a new tab, right-click it → <strong>Copy image</strong>, then click the box above and paste.');
+        }
+    }
+    $('load-url').onclick = loadFromUrl;
+
+    // ---------- converting ----------
+    async function prepareBlob() {
+        var fmt = outExt();
+        if ($('format').value === 'original') return picked.blob;
+        var maxw = Number($('maxw').value) || 0;
+        var r = await loadImage(picked.blob);
+        var w = picked.w, h = picked.h;
+        if (maxw && w > maxw) { h = Math.round(h * maxw / w); w = maxw; }
+        var c = document.createElement('canvas'); c.width = w; c.height = h;
+        var x = c.getContext('2d');
+        if (fmt === 'jpg') { x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); }   // JPG has no see-through
+        x.imageSmoothingQuality = 'high';
+        x.drawImage(r.img, 0, 0, w, h);
+        return new Promise(function (resolve) {
+            c.toBlob(function (b) { resolve(b); }, fmt === 'jpg' ? 'image/jpeg' : 'image/png', 0.86);
+        });
+    }
+    function toBase64(blob) {
+        return new Promise(function (resolve, reject) {
+            var fr = new FileReader();
+            fr.onload = function () { resolve(String(fr.result).split(',')[1]); };
+            fr.onerror = reject;
+            fr.readAsDataURL(blob);
+        });
+    }
+    function siteUrl(path) { return SITE_BASE + path.split('/').map(encodeURIComponent).join('/'); }
+
+    // ---------- upload ----------
+    $('upload').onclick = async function () {
+        var c = cfg(), path = targetPath();
+        if (!path) return;
+        $('upload').disabled = true;
+        showResult('', 'Saving <code>' + path + '</code>…');
+        try {
+            var apiPath = '/repos/' + c.repo + '/contents/' + path.split('/').map(encodeURIComponent).join('/');
+            var existing = await gh(apiPath + '?ref=' + encodeURIComponent(c.branch));
+            var sha = null;
+            if (existing.status === 200) {
+                sha = (await existing.json()).sha;
+                if (!confirm(path + ' already exists.\n\nReplace it with this picture?')) { showResult('', 'Not saved. Change the name to keep both.'); refreshUploadButton(); return; }
+            } else if (existing.status === 401) {
+                throw new Error('Not connected: check the token in step 1.');
+            }
+            var blob = await prepareBlob();
+            if (blob.size > 25 * 1024 * 1024) throw new Error('That picture is over 25 MB. Choose a smaller "Largest width".');
+            var body = {
+                message: (sha ? 'Replace ' : 'Add ') + path + ' (SMLC Image Uploader)',
+                content: await toBase64(blob),
+                branch: c.branch
+            };
+            if (sha) body.sha = sha;
+            var put = await gh(apiPath, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            if (!put.ok) {
+                var err = await put.json().catch(function () { return {}; });
+                if (put.status === 403 || put.status === 404) throw new Error('GitHub refused the save. The token needs Contents: Read and write on ' + c.repo + '.');
+                throw new Error(err.message || ('GitHub error ' + put.status));
+            }
+            var link = siteUrl(path);
+            showResult('ok', '✅ Saved <code>' + path + '</code> (' + Math.round(blob.size / 1024) + ' KB). Paste this link into the Sheet:' +
+                '<div class="copyline"><input type="text" readonly value="' + link + '"><button type="button" class="copy-btn">Copy link</button></div>' +
+                '<p class="hint">The picture shows on the site about a minute after saving, once GitHub finishes publishing.</p>');
+            addRecent(path);
+            $('name').value = ''; refreshPreview();
+        } catch (e) {
+            showResult('bad', '❌ ' + e.message);
+        }
+        refreshUploadButton();
+    };
+
+    // ---------- results / copy ----------
+    function showResult(kind, html) {
+        $('result').innerHTML = html ? '<div class="result ' + (kind || '') + '">' + html + '</div>' : '';
+    }
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.copy-btn');
+        if (!btn) return;
+        var input = btn.parentNode.querySelector('input');
+        var val = input ? input.value : btn.getAttribute('data-copy');
+        (navigator.clipboard ? navigator.clipboard.writeText(val) : Promise.reject()).then(function () {
+            var t = btn.textContent; btn.textContent = 'Copied!'; setTimeout(function () { btn.textContent = t; }, 1400);
+        }).catch(function () { if (input) { input.select(); document.execCommand('copy'); } });
+    });
+
+    function addRecent(path) {
+        var list = [];
+        try { list = JSON.parse(store.get('recent') || '[]'); } catch (e) {}
+        list = [path].concat(list.filter(function (p) { return p !== path; })).slice(0, 24);
+        store.set('recent', JSON.stringify(list));
+    }
+
+    // ---------- browse ----------
+    $('browse').onclick = async function () {
+        var c = cfg(), folder = $('browse-folder').value;
+        var box = $('browse-list');
+        box.innerHTML = '<p class="status">Loading…</p>';
+        try {
+            var r = await gh('/repos/' + c.repo + '/contents/' + folder.split('/').map(encodeURIComponent).join('/') + '?ref=' + encodeURIComponent(c.branch));
+            if (r.status === 404) { box.innerHTML = '<p class="status">Nothing saved in ' + folder + ' yet.</p>'; return; }
+            if (!r.ok) throw new Error('GitHub error ' + r.status + (r.status === 401 ? ' (connect in step 1)' : ''));
+            var files = (await r.json()).filter(function (f) { return f.type === 'file' && /\.(png|jpe?g|gif|webp|svg)$/i.test(f.name); });
+            if (!files.length) { box.innerHTML = '<p class="status">No pictures in ' + folder + '.</p>'; return; }
+            box.innerHTML = files.map(function (f) {
+                var link = siteUrl(f.path);
+                return '<div class="tile"><img loading="lazy" src="' + f.download_url + '" alt="' + f.name.replace(/"/g, '') + '"><div>' + f.name +
+                    '</div><button type="button" class="copy-btn" data-copy="' + link + '">Copy link</button></div>';
+            }).join('');
+        } catch (e) { box.innerHTML = '<p class="status">❌ ' + e.message + '</p>'; }
+    };
+})();
+</script>
+</body>
+</html>
