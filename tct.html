@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traveling Computer Tech | Computer Repair in Effingham, IL</title>
+    <meta name="description" content="On-site computer repair, virus removal, Wi-Fi and web design in Effingham, IL and surrounding areas. 15+ years in business. We come to you!">
+
+    <!-- Local SEO: helps Google understand the business -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "Traveling Computer Tech",
+      "telephone": "+1-618-708-4450",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "607 W Clark Ave",
+        "addressLocality": "Effingham",
+        "addressRegion": "IL",
+        "postalCode": "62401"
+      },
+      "openingHours": "Mo-Sa",
+      "description": "On-site computer repair and web services."
+    }
+    </script>
+
+    <style>
+        :root {
+            --blue: #003366;
+            --blue-dark: #00264d;
+            --gold: #d4a017;
+            --cream: #fcf6de;
+            --text: #333;
+        }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background: #fff;
+            color: var(--text);
+            line-height: 1.6;
+            padding-bottom: 70px; /* room for mobile call bar */
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+            color: white;
+            padding: 2rem 1rem 1.5rem;
+        }
+        .header-content {
+            max-width: 1000px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: center; gap: 20px;
+        }
+        header h1 { margin: 0; font-size: 2.5rem; }
+        .header-logo { max-height: 80px; width: auto; }
+        .tagline { text-align: center; margin: 10px 0 0; }
+
+        nav { background: var(--blue-dark); text-align: center; padding: .6rem; position: sticky; top: 0; z-index: 10; }
+        nav a { color: #fff; text-decoration: none; margin: 0 .8rem; font-weight: 600; font-size: .95rem; }
+        nav a:hover { color: var(--gold); }
+
+        .container { max-width: 1000px; margin: auto; padding: 2rem; }
+        h2.section-title { text-align: center; color: var(--blue); margin-top: 3.5rem; }
+        h2.section-title::after {
+            content: ""; display: block; width: 60px; height: 3px;
+            background: var(--gold); margin: .5rem auto 0;
+        }
+
+        /* Hero */
+        .hero { text-align: center; padding: 2.5rem 1rem 1rem; }
+        .cta-button {
+            display: inline-block; background: var(--gold); color: white;
+            padding: 1rem 2rem; text-decoration: none; border-radius: 5px;
+            font-weight: bold; font-size: 1.2rem; margin: 1rem .4rem 0;
+            border: none; cursor: pointer; transition: transform .15s, box-shadow .15s;
+        }
+        .cta-button:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,.2); }
+        .cta-button.secondary { background: var(--blue); }
+
+        /* Trust strip */
+        .trust {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem; margin: 2rem 0; text-align: center;
+        }
+        .trust div { background: var(--cream); padding: 1rem; border-radius: 8px; }
+        .trust strong { display: block; font-size: 1.6rem; color: var(--blue); }
+
+        /* Cards */
+        .services {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.5rem; margin-top: 2rem;
+        }
+        .card {
+            background: white; padding: 1.8rem; border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,.1); text-align: center;
+            transition: transform .2s;
+        }
+        .card:hover { transform: translateY(-4px); }
+        .card .icon { font-size: 2.2rem; }
+        .card h3 { color: var(--blue); border-bottom: 2px solid var(--cream); padding-bottom: 10px; }
+        .card ul { text-align: left; display: inline-block; padding-left: 1.2rem; }
+
+        /* Quiz */
+        .quiz {
+            background: var(--cream); border-radius: 10px; padding: 2rem; text-align: center;
+        }
+        .quiz label { display: block; text-align: left; max-width: 420px; margin: .5rem auto; cursor: pointer; }
+        #quiz-result { margin-top: 1rem; font-weight: bold; color: var(--blue); min-height: 2em; }
+
+        /* Testimonials */
+        .testimonials { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; }
+        blockquote {
+            margin: 0; background: #f6f8fb; border-left: 4px solid var(--gold);
+            padding: 1.2rem; border-radius: 6px;
+        }
+        blockquote footer { background: none; color: #666; padding: 0; margin: .6rem 0 0; text-align: left; font-size: .9rem; }
+
+        /* Service area */
+        .towns { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center; }
+        .towns span { background: var(--blue); color: white; padding: .3rem .9rem; border-radius: 999px; font-size: .9rem; }
+
+        /* Scam alert */
+        .alert {
+            border: 2px solid #c0392b; background: #fdecea; border-radius: 8px; padding: 1.2rem 1.5rem;
+        }
+        .alert h3 { margin-top: 0; color: #c0392b; }
+
+        /* Form */
+        form { max-width: 520px; margin: 0 auto; display: grid; gap: .8rem; }
+        input, select, textarea {
+            width: 100%; padding: .8rem; border: 1px solid #ccc; border-radius: 5px; font: inherit;
+        }
+
+        /* Footer */
+        footer.site-footer {
+            background: #222; color: white; text-align: center;
+            padding: 3rem 1rem; margin-top: 4rem;
+        }
+        footer.site-footer a { color: var(--gold); }
+
+        /* Sticky mobile call bar */
+        .call-bar {
+            display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
+            background: var(--blue); padding: .6rem; gap: .6rem;
+        }
+        .call-bar a {
+            flex: 1; text-align: center; color: white; text-decoration: none;
+            padding: .8rem; border-radius: 5px; font-weight: bold; background: var(--gold);
+        }
+        .call-bar a.text { background: #2e7d32; }
+
+        @media (max-width: 600px) {
+            .container { padding: 1rem; }
+            .header-content { flex-direction: column; text-align: center; }
+            header h1 { font-size: 2rem; }
+            .call-bar { display: flex; }
+            nav a { margin: 0 .4rem; font-size: .85rem; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-content">
+        <h1>Traveling Computer Tech</h1>
+        <img src="logo.png" alt="Traveling Computer Tech Logo" class="header-logo">
+    </div>
+    <p class="tagline">On-Site Computer &amp; Web Services — We Come To You!</p>
+</header>
+
+<nav>
+    <a href="#services">Services</a>
+    <a href="#quiz">Is My PC Slow?</a>
+    <a href="#reviews">Reviews</a>
+    <a href="#area">Service Area</a>
+    <a href="#book">Book a Visit</a>
+</nav>
+
+<div class="container">
+
+    <section class="hero">
+        <h2>Expert Tech Support in Effingham &amp; Surrounding Areas</h2>
+        <p>With over 15 years in business, we provide reliable, professional service right at your door. No need to unhook your cables or haul your tower across town.</p>
+        <a href="tel:6187084450" class="cta-button">📞 Call (618) 708-4450</a>
+        <a href="#book" class="cta-button secondary">Request a Visit</a>
+    </section>
+
+    <div class="trust">
+        <div><strong>15+</strong> Years in Business</div>
+        <div><strong>🚐</strong> We Come To You</div>
+        <div><strong>Mon–Sat</strong> By Appointment</div>
+        <div><strong>Local</strong> Effingham Owned</div>
+    </div>
+
+    <h2 class="section-title" id="services">What We Fix</h2>
+    <div class="services">
+        <div class="card">
+            <div class="icon">🖥️</div>
+            <h3>Repair &amp; Tune-Ups</h3>
+            <p>Laptops and desktops that are slow, crashing, or just acting weird.</p>
+            <ul>
+                <li>Virus &amp; Spyware Removal</li>
+                <li>Screen &amp; Part Replacements</li>
+                <li>System Tune-ups</li>
+                <li>Data Recovery</li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="icon">📶</div>
+            <h3>Home &amp; Office Setup</h3>
+            <p>Get everything talking to each other the way it should.</p>
+            <ul>
+                <li>Wi-Fi &amp; Router Help</li>
+                <li>Printer Setup</li>
+                <li>New Computer Setup</li>
+                <li>Backups &amp; Moving to a New PC</li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="icon">🌐</div>
+            <h3>Web Design &amp; Support</h3>
+            <p>Modern, mobile-friendly websites for small businesses.</p>
+            <ul>
+                <li>New Website Builds</li>
+                <li>Hosting &amp; Domain Help</li>
+                <li>Site Updates &amp; Security</li>
+                <li>Google Business Profile Setup</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Fun: mini quiz -->
+    <h2 class="section-title" id="quiz">Is My Computer Too Slow?</h2>
+    <div class="quiz">
+        <p>Check everything that sounds familiar:</p>
+        <label><input type="checkbox" class="q"> It takes forever to start up</label>
+        <label><input type="checkbox" class="q"> Pop-ups show up when I'm not browsing</label>
+        <label><input type="checkbox" class="q"> The fan is loud and it runs hot</label>
+        <label><input type="checkbox" class="q"> Programs freeze or crash</label>
+        <label><input type="checkbox" class="q"> My browser homepage changed on its own</label>
+        <p id="quiz-result">Tick a box to see what we'd recommend.</p>
+    </div>
+
+    <!-- Replace these with REAL customer quotes (with permission) -->
+    <h2 class="section-title" id="reviews">What Customers Say</h2>
+    <div class="testimonials">
+        <blockquote>“Placeholder: replace with a real customer review.”<footer>— Customer name, Effingham</footer></blockquote>
+        <blockquote>“Placeholder: replace with a real customer review.”<footer>— Customer name, Mattoon</footer></blockquote>
+        <blockquote>“Placeholder: replace with a real customer review.”<footer>— Customer name, Altamont</footer></blockquote>
+    </div>
+
+    <!-- Edit the towns to match where Scott actually travels -->
+    <h2 class="section-title" id="area">Where We Travel</h2>
+    <div class="towns">
+        <span>Effingham</span><span>Altamont</span><span>Teutopolis</span>
+        <span>Mattoon</span><span>Dieterich</span><span>Beecher City</span>
+        <span>Shumway</span><span>Montrose</span><span>…and nearby!</span>
+    </div>
+
+    <h2 class="section-title">Scam Alert Corner</h2>
+    <div class="alert">
+        <h3>⚠️ Heads up</h3>
+        <p><strong>Pop-up says “Your computer is infected, call this number”?</strong> It's a scam. Close the browser, restart, and never give a stranger remote access. Not sure? Call us first — it's free to ask.</p>
+    </div>
+
+    <h2 class="section-title" id="book">Request a Visit</h2>
+    <!-- Sign up free at formspree.io, then replace YOUR_FORM_ID so requests are emailed to Scott -->
+    <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+        <input type="text" name="name" placeholder="Your name" required>
+        <input type="tel" name="phone" placeholder="Phone number" required>
+        <input type="text" name="town" placeholder="Town">
+        <select name="day">
+            <option value="">Best day for a visit</option>
+            <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+            <option>Thursday</option><option>Friday</option><option>Saturday</option>
+        </select>
+        <textarea name="problem" rows="4" placeholder="What's going on with your computer?"></textarea>
+        <button type="submit" class="cta-button">Send Request</button>
+    </form>
+</div>
+
+<footer class="site-footer">
+    <h3>Contact Us</h3>
+    <p>607 W Clark Ave, Effingham, IL 62401</p>
+    <p><strong>Phone:</strong> <a href="tel:6187084450">(618) 708-4450</a></p>
+    <p><em>Available Monday – Saturday by Appointment</em></p>
+    <p>Proud to support our community — <a href="#">Support My Local Community</a></p>
+    <hr style="width: 50px; margin: 2rem auto; border-color: #444;">
+    <p>&copy; 2026 Traveling Computer Tech. All Rights Reserved.</p>
+</footer>
+
+<!-- Sticky call/text bar for phones -->
+<div class="call-bar">
+    <a href="tel:6187084450">📞 Call</a>
+    <a href="sms:6187084450" class="text">💬 Text</a>
+</div>
+
+<script>
+    const boxes = document.querySelectorAll('.q');
+    const result = document.getElementById('quiz-result');
+    boxes.forEach(b => b.addEventListener('change', () => {
+        const n = [...boxes].filter(x => x.checked).length;
+        if (n === 0) result.textContent = 'Tick a box to see what we\'d recommend.';
+        else if (n <= 2) result.textContent = 'Sounds like a quick tune-up. Give Scott a call!';
+        else result.textContent = 'Sounds like it needs a full check-up (possibly malware). Call (618) 708-4450 and we\'ll come take a look.';
+    }));
+</script>
+
+</body>
+</html>
