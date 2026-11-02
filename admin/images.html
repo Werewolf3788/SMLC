@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- SMLC Image Uploader | v2.2 | 2026-11-02 5:05 PM ET (waits until the picture is published) (every picture goes into the one images/ folder)
+<!-- SMLC Image Uploader | v2.3 | 2026-11-02 5:30 PM ET (Copy link gives the raw.githubusercontent.com link) (every picture goes into the one images/ folder)
      Paste / drop / pick an image, give it a name, and it is saved straight into the
      SMLC GitHub repository (images/...). Gives you the link to paste into the Sheet.
      Needs a GitHub token (saved only on the device you use it on). Not linked from the site. -->
@@ -363,6 +363,11 @@
         });
     }
     function siteUrl(path) { return SITE_BASE + path.split('/').map(encodeURIComponent).join('/'); }
+    // Raw GitHub link: works the moment the picture is saved (no publishing wait)
+    function rawUrl(path) {
+        var c = cfg();
+        return 'https://raw.githubusercontent.com/' + c.repo + '/' + encodeURIComponent(c.branch) + '/' + path.split('/').map(encodeURIComponent).join('/');
+    }
 
     // ---------- upload ----------
     $('upload').onclick = async function () {
@@ -394,11 +399,10 @@
                 if (put.status === 403 || put.status === 404) throw new Error('GitHub refused the save (' + put.status + ': ' + (err.message || 'no details') + '). The token needs Repository access to ' + c.repo + ' and Contents: Read and write.');
                 throw new Error(err.message || ('GitHub error ' + put.status));
             }
-            var link = siteUrl(path);
-            showResult('ok', '✅ Saved <code>' + path + '</code> (' + Math.round(blob.size / 1024) + ' KB). Paste this link into the Sheet:' +
+            var link = rawUrl(path);
+            showResult('ok', '✅ Saved <code>' + path + '</code> (' + Math.round(blob.size / 1024) + ' KB). Paste this link into the Sheet &mdash; it works right away:' +
                 '<div class="copyline"><input type="text" readonly value="' + link + '"><button type="button" class="copy-btn">Copy link</button></div>' +
-                '<p class="hint publish-status">⏳ GitHub is publishing it &mdash; this usually takes about a minute. Don\'t open the link until this says it\'s live, or your browser may remember a "404" for a few minutes.</p>');
-            watchUntilLive(link, $('result').querySelector('.publish-status'));
+                (sha ? '<p class="hint">You replaced an existing picture: places that already showed the old one can take up to about 5 minutes to switch over.</p>' : ''));
             addRecent(path);
             $('name').value = ''; refreshPreview();
         } catch (e) {
@@ -461,7 +465,7 @@
             var files = (await r.json()).filter(function (f) { return f.type === 'file' && /\.(png|jpe?g|gif|webp|svg)$/i.test(f.name); });
             if (!files.length) { box.innerHTML = '<p class="status">No pictures in ' + folder + '.</p>'; return; }
             box.innerHTML = files.map(function (f) {
-                var link = siteUrl(f.path);
+                var link = rawUrl(f.path);
                 return '<div class="tile"><img loading="lazy" src="' + f.download_url + '" alt="' + f.name.replace(/"/g, '') + '"><div>' + f.name +
                     '</div><button type="button" class="copy-btn" data-copy="' + link + '">Copy link</button></div>';
             }).join('');
