@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-11-02_v1.1  |  Updated: Nov 2, 2026 8:05 PM ET
+   Active Version: 2026-11-02_v1.2  |  Updated: Nov 2, 2026 8:10 PM ET
    File: SMLCPhotos.gs (Google Apps Script - goes in the SMLC Sheet, next to Code.gs)
    Project: SMLC Photos - signed-in uploader, public photo sharing, approvals, gallery
 
@@ -31,7 +31,7 @@
      3. After changing this file later: Deploy -> Manage deployments -> edit -> Version: New version.
    ========================================================================== */
 
-var PH_VERSION = "v1.1 - Nov 2, 2026 8:05 PM ET";
+var PH_VERSION = "v1.2 - Nov 2, 2026 8:10 PM ET";
 var PH_REPO = "Werewolf3788/SMLC";
 var PH_BRANCH = "Claude-Test";                 // the branch the live site is published from
 var PH_FOLDER = "images";
@@ -43,6 +43,26 @@ var PH_SUB_HEADERS = ["Received", "Status", "Place", "Group", "Caption", "Era", 
                       "Drive File ID", "Reviewed By", "Reviewed On", "Image Link"];
 var PH_MAX_PUBLIC_PER_DAY = 60;
 var PH_MAX_BYTES = 9 * 1024 * 1024;
+
+// ---- one-click token setup -------------------------------------------------------------
+/** Run this once from the Apps Script editor (pick it in the function list, click Run).
+ *  A box opens in the Google Sheet: paste the GitHub token and click OK.
+ *  It is stored privately in this script's Script Properties - never in the code. */
+function saveGitHubToken() {
+  var ui = SpreadsheetApp.getUi();
+  var res = ui.prompt("SMLC Photos - GitHub token",
+    "Paste the GitHub token (starts with github_pat_) and click OK.\nIt is stored privately in this Sheet's script, not in the website.",
+    ui.ButtonSet.OK_CANCEL);
+  if (res.getSelectedButton() !== ui.Button.OK) return;
+  var t = String(res.getResponseText() || "").trim();
+  if (!/^(github_pat_|ghp_)/.test(t)) { ui.alert("That doesn't look like a GitHub token (it should start with github_pat_)."); return; }
+  PropertiesService.getScriptProperties().setProperty("SMLC_GITHUB_TOKEN", t);
+  var check = UrlFetchApp.fetch("https://api.github.com/repos/" + PH_REPO, {
+    muteHttpExceptions: true, headers: { "Authorization": "Bearer " + t, "Accept": "application/vnd.github+json" } });
+  ui.alert(check.getResponseCode() === 200
+    ? "Saved. The token works with " + PH_REPO + "."
+    : "Saved, but GitHub answered " + check.getResponseCode() + " - check the token has access to " + PH_REPO + ".");
+}
 
 // ---- entry point ---------------------------------------------------------------
 function doPost(e) {
