@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-11-02_v1  |  Updated: Nov 2, 2026 6:10 PM ET
+   Active Version: 2026-11-02_v1.1  |  Updated: Nov 2, 2026 8:05 PM ET
    File: SMLCPhotos.gs (Google Apps Script - goes in the SMLC Sheet, next to Code.gs)
    Project: SMLC Photos - signed-in uploader, public photo sharing, approvals, gallery
 
@@ -22,7 +22,8 @@
 
    SETUP (once)
      1. Project Settings -> Script Properties -> add:
-          GITHUB_TOKEN   = fine-grained token, Werewolf3788/SMLC only, Contents: Read and write
+          SMLC_GITHUB_TOKEN = fine-grained token, Werewolf3788/SMLC only, Contents: Read and write
+                              (Apps Script Script Properties - NOT GitHub's Secrets page)
           NOTIFY_EMAILS  = (optional) emails to tell about new public photos, comma separated
      2. Deploy -> New deployment -> type "Web app"
           Execute as: Me      Who has access: Anyone
@@ -30,7 +31,7 @@
      3. After changing this file later: Deploy -> Manage deployments -> edit -> Version: New version.
    ========================================================================== */
 
-var PH_VERSION = "v1 - Nov 2, 2026 6:10 PM ET";
+var PH_VERSION = "v1.1 - Nov 2, 2026 8:05 PM ET";
 var PH_REPO = "Werewolf3788/SMLC";
 var PH_BRANCH = "Claude-Test";                 // the branch the live site is published from
 var PH_FOLDER = "images";
@@ -101,8 +102,9 @@ function phWhoAmI_(req) {
 
 // ---- GitHub ---------------------------------------------------------------------
 function phGitHubToken_() {
-  var t = PropertiesService.getScriptProperties().getProperty("GITHUB_TOKEN");
-  if (!t) throw new Error("GITHUB_TOKEN is missing in Script Properties.");
+  var props = PropertiesService.getScriptProperties();
+  var t = props.getProperty("SMLC_GITHUB_TOKEN") || props.getProperty("GITHUB_TOKEN");
+  if (!t) throw new Error("SMLC_GITHUB_TOKEN is missing (Apps Script -> Project Settings -> Script Properties).");
   return t;
 }
 function phApiPath_(path) { return "https://api.github.com/repos/" + PH_REPO + "/contents/" + path.split("/").map(encodeURIComponent).join("/"); }
@@ -138,7 +140,7 @@ function phCommit_(path, base64, message, sha) {
   var code = r.getResponseCode();
   if (code !== 200 && code !== 201) {
     var msg = ""; try { msg = JSON.parse(r.getContentText()).message; } catch (e) {}
-    throw new Error("GitHub refused the save (" + code + (msg ? ": " + msg : "") + "). Check GITHUB_TOKEN has Contents: Read and write.");
+    throw new Error("GitHub refused the save (" + code + (msg ? ": " + msg : "") + "). Check SMLC_GITHUB_TOKEN has Contents: Read and write.");
   }
   return phRawUrl_(path);
 }
