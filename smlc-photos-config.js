@@ -7,7 +7,7 @@
    ========================================================================== */
 window.SMLC_PHOTOS = {
     // Web app address of SMLCPhotos.gs (Apps Script -> Deploy -> Web app -> copy the /exec link)
-    ENDPOINT: '',
+    ENDPOINT: 'https://script.google.com/macros/s/AKfycbzG4zE4Bz-j65KfrhJIWFShYeGV1jNmzaXRUn0BR1GH1TZpSpQxMh3i36KWZH6UQlsZiw/exec',
 
     FIREBASE_CONFIG: {
         apiKey: "AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg",
