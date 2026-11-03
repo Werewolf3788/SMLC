@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-11-02_v6.4  |  Updated: Nov 2, 2026 8:55 PM ET
+   Active Version: 2026-11-02_v6.5  |  Updated: Nov 2, 2026 9:00 PM ET
    File: Code.gs (Google Apps Script)
    Project: SMLC County Portal Semantic RTDB Sync
    Description: SMLC County Portal Master Parser & Firebase Realtime DB Sync.
@@ -28,6 +28,7 @@
                       under that town in Firebase (towns/<Town>/sections/gallery).
                 - v6.3: Gallery tab gets an "Alt" column (picture description for screen readers).
                 - v6.4: File names don't repeat the town ("Flora water tower" -> flora-water-tower.jpg).
+                - v6.5: setupSMLCPhotos() - run once to approve permissions and test everything.
    ========================================================================== */
 
 // === SECTION 0: Auto-Sync On Edit Event Listener ===
@@ -698,7 +699,7 @@ function installGasPriceTrigger() {
      3. After changing this file later: Deploy -> Manage deployments -> edit -> Version: New version.
    ========================================================================== */
 
-var PH_VERSION = "v1.6 - Nov 2, 2026 8:55 PM ET (no repeated town in file names)";
+var PH_VERSION = "v1.7 - Nov 2, 2026 9:00 PM ET";
 var PH_REPO = "Werewolf3788/SMLC";
 var PH_BRANCH = "Claude-Test";                 // the branch the live site is published from
 var PH_FOLDER = "images";
@@ -729,6 +730,23 @@ function saveGitHubToken() {
   ui.alert(check.getResponseCode() === 200
     ? "Saved. The token works with " + PH_REPO + "."
     : "Saved, but GitHub answered " + check.getResponseCode() + " - check the token has access to " + PH_REPO + ".");
+}
+
+/** Run this ONCE from the editor (choose it in the function list, click Run).
+ *  Google asks you to approve the permissions the photo page needs (GitHub, Drive, Sheets, email),
+ *  then it checks each part and shows the result in the Execution log. */
+function setupSMLCPhotos() {
+  var out = [];
+  try { phGitHubToken_(); out.push("GitHub key: found"); } catch (e) { out.push("GitHub key: MISSING - run saveGitHubToken"); }
+  try {
+    var r = phGh_("https://api.github.com/repos/" + PH_REPO);
+    out.push("GitHub access: " + (r.getResponseCode() === 200 ? "OK" : "HTTP " + r.getResponseCode()));
+  } catch (e) { out.push("GitHub access: " + e.message); }
+  try { phSubmissionsFolder_(); out.push("Private Drive folder: OK"); } catch (e) { out.push("Drive folder: " + e.message); }
+  try { phSubmissionsSheet_(); out.push("Private submissions sheet: OK"); } catch (e) { out.push("Submissions sheet: " + e.message); }
+  try { out.push("Email quota left today: " + MailApp.getRemainingDailyQuota()); } catch (e) { out.push("Email: " + e.message); }
+  Logger.log("SMLC Photos " + PH_VERSION + "\n" + out.join("\n") +
+    "\n\nNext: Deploy -> Manage deployments -> pencil -> Version: New version -> Deploy (Who has access: Anyone).");
 }
 
 // ---- entry point ---------------------------------------------------------------
