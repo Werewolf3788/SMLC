@@ -123,6 +123,8 @@
                         <select id="era"><option value="Today">Today</option><option value="Historical">Historical</option></select></div>
                     <div><label for="year">Year (if known)</label><input type="text" id="year" placeholder="e.g. 1950"></div>
                 </div>
+                <label for="alt">Alt description <span style="font-weight:400">(what the picture shows, for screen readers)</span></label>
+                <input type="text" id="alt" maxlength="300" placeholder="e.g. Yellow brick library with arched doorway">
                 <label for="credit">Photo credit</label>
                 <input type="text" id="credit" placeholder="e.g. Clay County Genealogical Society">
                 <label class="check"><input type="checkbox" id="add-gallery" checked> Show it in the public Clay County Photo Gallery</label>
@@ -299,7 +301,7 @@
             var res = await P.call({
                 action: 'upload', idToken: await idToken(), base64: img.base64, mimeType: img.mimeType, ext: img.ext,
                 name: $('name').value, overwrite: !!overwrite,
-                place: place, group: place ? P.groupOf(place) : '', caption: $('caption').value, era: $('era').value,
+                place: place, group: place ? P.groupOf(place) : '', caption: $('caption').value, alt: $('alt').value, era: $('era').value,
                 year: $('year').value, credit: $('credit').value, addToGallery: !!place && $('add-gallery').checked
             });
             if (res.exists) {
@@ -310,7 +312,7 @@
                 (place && $('add-gallery').checked ? ' and added to the public Gallery' : '') + '. Paste this link into the Sheet:' +
                 '<div class="copyline"><input type="text" readonly value="' + esc(res.link) + '"><button type="button" class="copy-btn">Copy link</button></div>' +
                 (res.replaced ? '<p class="hint">You replaced an existing picture: places showing the old one can take about 5 minutes to switch over.</p>' : ''));
-            $('name').value = ''; $('caption').value = ''; $('year').value = ''; $('credit').value = '';
+            $('name').value = ''; $('caption').value = ''; $('alt').value = ''; $('year').value = ''; $('credit').value = '';
             loadBrowse();
         } catch (e) { showResult('bad', '❌ ' + esc(e.message)); }
         refresh();

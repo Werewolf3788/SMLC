@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- SMLC Clay County Photo Gallery | v1.1 | 2026-11-02 8:25 PM ET (reads each town's gallery)
+<!-- SMLC Clay County Photo Gallery | v1.2 | 2026-11-02 8:30 PM ET (uses alt descriptions)
      Public. Shows approved photos from the SMLC Sheet's "Gallery" tab (synced to Firebase by Code.gs). -->
 <html lang="en">
 <head>
@@ -123,7 +123,7 @@
         });
         $('count').textContent = shown.length + ' photo' + (shown.length === 1 ? '' : 's');
         $('grid').innerHTML = shown.length ? shown.map(function (p, i) {
-            return '<button class="ph" data-i="' + i + '"><img loading="lazy" src="' + esc(p.image) + '" alt="' + esc(title(p) + (p.place ? ', ' + p.place : '')) + '">' +
+            return '<button class="ph" data-i="' + i + '"><img loading="lazy" src="' + esc(p.image) + '" alt="' + esc(p.alt || (title(p) + (p.place ? ', ' + p.place : ''))) + '">' +
                 '<div class="cap"><strong>' + (p.era === 'Historical' ? '<span class="tag">' + esc(p.year || 'Historical') + '</span>' : '') + esc(title(p)) + '</strong><span>' + esc(meta(p)) + '</span></div></button>';
         }).join('') : '<div class="empty" style="grid-column:1/-1"><p><strong>No photos here yet.</strong></p><p>Have one? <a href="share-photos.html' +
             (place ? '?place=' + encodeURIComponent(place) : '') + '">Share it</a> and it could be the first!</p></div>';
@@ -145,7 +145,7 @@
         if (!shown.length) return;
         current = (i + shown.length) % shown.length;
         var p = shown[current];
-        $('lb-img').src = p.image; $('lb-img').alt = title(p);
+        $('lb-img').src = p.image; $('lb-img').alt = p.alt || title(p);
         $('lb-title').textContent = title(p);
         $('lb-meta').textContent = meta(p);
         if (!$('lb').classList.contains('open')) { lastFocus = document.activeElement; $('lb').classList.add('open'); $('lb-x').focus(); }

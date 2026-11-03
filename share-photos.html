@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- SMLC Share Your Photos | v1.1 | 2026-11-02 8:20 PM ET (photos go straight into the Gallery)
+<!-- SMLC Share Your Photos | v1.2 | 2026-11-02 8:30 PM ET (alt description)
      Public: anyone can send a photo of their town or a historical picture.
      Photos go to SMLC for review (SMLCPhotos.gs) and only appear in the Gallery once approved. -->
 <html lang="en">
@@ -72,6 +72,9 @@
 
         <label for="caption">What is it? <span class="opt">(for example: "Flora depot" or "4th of July parade")</span></label>
         <input type="text" id="caption" maxlength="200">
+
+        <label for="alt">Describe the picture <span class="opt">(for people who can't see it, e.g. "Red brick church with a white steeple on a sunny day")</span></label>
+        <textarea id="alt" maxlength="300"></textarea>
 
         <div class="row">
             <div>
@@ -157,14 +160,14 @@
             var place = $('place').value;
             await P.call({
                 action: 'submit', base64: img.base64, mimeType: img.mimeType,
-                place: place, group: P.groupOf(place), caption: $('caption').value, era: $('era').value, year: $('year').value,
+                place: place, group: P.groupOf(place), caption: $('caption').value, alt: $('alt').value, era: $('era').value, year: $('year').value,
                 credit: $('credit').value, name: $('name').value, email: $('email').value,
                 consent: $('consent').checked, hp: $('website').value
             });
             if (typeof gtag === 'function') gtag('event', 'photo_shared', { place: place, era: $('era').value });
             show('ok', '✅ <strong>Thank you!</strong> Your photo is now in the <a href="gallery.html">Clay County Photo Gallery</a> (it can take a moment to show up). Want to share another?');
             photo = null; $('drop-inner').innerHTML = '<strong>Tap to choose another photo</strong>';
-            $('caption').value = ''; $('year').value = '';
+            $('caption').value = ''; $('alt').value = ''; $('year').value = '';
         } catch (err) {
             show('bad', '❌ ' + String(err.message).replace(/</g, '&lt;'));
         }

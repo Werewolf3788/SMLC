@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-11-02_v6.2  |  Updated: Nov 2, 2026 8:25 PM ET
+   Active Version: 2026-11-02_v6.3  |  Updated: Nov 2, 2026 8:30 PM ET
    File: Code.gs (Google Apps Script)
    Project: SMLC County Portal Semantic RTDB Sync
    Description: SMLC County Portal Master Parser & Firebase Realtime DB Sync.
@@ -26,6 +26,7 @@
                       To remove one: untick Show on the Gallery tab.
                 - v6.2: Gallery Column A = the town the person picked, so each photo is saved
                       under that town in Firebase (towns/<Town>/sections/gallery).
+                - v6.3: Gallery tab gets an "Alt" column (picture description for screen readers).
    ========================================================================== */
 
 // === SECTION 0: Auto-Sync On Edit Event Listener ===
@@ -696,14 +697,14 @@ function installGasPriceTrigger() {
      3. After changing this file later: Deploy -> Manage deployments -> edit -> Version: New version.
    ========================================================================== */
 
-var PH_VERSION = "v1.4 - Nov 2, 2026 8:25 PM ET (gallery saved under each town)";
+var PH_VERSION = "v1.5 - Nov 2, 2026 8:30 PM ET (alt descriptions)";
 var PH_REPO = "Werewolf3788/SMLC";
 var PH_BRANCH = "Claude-Test";                 // the branch the live site is published from
 var PH_FOLDER = "images";
 var PH_FIREBASE_API_KEY = "AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg";   // public web key (same as the website)
 var PH_RTDB = "https://smlc-fuel-monitor-default-rtdb.firebaseio.com";
 var PH_GALLERY_TAB = "Gallery";
-var PH_GALLERY_HEADERS = ["Town", "Image", "Place", "Group", "Caption", "Era", "Year", "Credit", "Show", "Added", "Source"];
+var PH_GALLERY_HEADERS = ["Town", "Image", "Place", "Group", "Caption", "Era", "Year", "Credit", "Show", "Added", "Source", "Alt"];
 var PH_SUB_HEADERS = ["Received", "Status", "Place", "Group", "Caption", "Era", "Year", "Credit", "Submitted By", "Email",
                       "Drive File ID", "Reviewed By", "Reviewed On", "Image Link"];
 var PH_MAX_PUBLIC_PER_DAY = 60;
@@ -844,11 +845,18 @@ function phGalleryAdd_(row) {
     sh = ss.insertSheet(PH_GALLERY_TAB);
     sh.getRange(1, 1, 1, PH_GALLERY_HEADERS.length).setValues([PH_GALLERY_HEADERS]).setFontWeight("bold");
     sh.setFrozenRows(1);
-    sh.getRange(1, 9).setNote("Untick Show to hide a photo from the public Gallery page.");
   }
-  var values = PH_GALLERY_HEADERS.map(function (h) { return row[h] !== undefined ? row[h] : ""; });
+  // Match columns by their header names, and add any missing headers (e.g. "Alt") at the end
+  var lastCol = Math.max(sh.getLastColumn(), 1);
+  var head = sh.getRange(1, 1, 1, lastCol).getValues()[0].map(function (h) { return String(h).trim(); });
+  PH_GALLERY_HEADERS.forEach(function (h) {
+    if (head.indexOf(h) === -1) { head.push(h); sh.getRange(1, head.length).setValue(h).setFontWeight("bold"); }
+  });
+  var values = head.map(function (h) { return row[h] !== undefined ? row[h] : ""; });
   sh.appendRow(values);
-  sh.getRange(sh.getLastRow(), 9).insertCheckboxes().setValue(row.Show !== false);
+  var showCol = head.indexOf("Show") + 1;
+  sh.getRange(1, showCol).setNote("Untick Show to hide a photo from the public Gallery page.");
+  sh.getRange(sh.getLastRow(), showCol).insertCheckboxes().setValue(row.Show !== false);
   // Send it to Firebase now (Code.gs). Edits made by a script don't fire the On edit trigger.
   if (typeof pushMasterDataToFirebase === "function") {
     try { pushMasterDataToFirebase(); } catch (e) { Logger.log("Firebase sync after gallery add failed: " + e); }
@@ -871,7 +879,7 @@ function phUpload_(req) {
   if (req.addToGallery) {
     phGalleryAdd_({
       Town: phTownCol_(req.place), Image: link, Place: req.place || "", Group: req.group || "", Caption: req.caption || "",
-      Era: req.era || "", Year: req.year || "", Credit: req.credit || "", Show: true, Added: new Date(), Source: "Uploaded by " + u.email
+      Era: req.era || "", Year: req.year || "", Credit: req.credit || "", Show: true, Added: new Date(), Source: "Uploaded by " + u.email, Alt: String(req.alt || "").slice(0, 300)
     });
   }
   return { path: path, link: link, replaced: !!sha };
@@ -926,7 +934,7 @@ function phSubmit_(req) {
   var link = phCommit_(path, req.base64, "Add " + path + " (shared by the public)");
   phGalleryAdd_({
     Town: phTownCol_(place), Image: link, Place: place, Group: clean(req.group, 80), Caption: caption, Era: clean(req.era, 20),
-    Year: clean(req.year, 20), Credit: credit, Show: true, Added: new Date(), Source: "Shared by the public"
+    Year: clean(req.year, 20), Credit: credit, Show: true, Added: new Date(), Source: "Shared by the public", Alt: clean(req.alt, 300)
   });
 
   // Private record (who sent what) - kept out of the synced sheet so emails never go public
@@ -989,7 +997,7 @@ function phReview_(req) {
 
   phGalleryAdd_({
     Town: phTownCol_(place), Image: link, Place: place, Group: r[3], Caption: caption, Era: r[5], Year: r[6],
-    Credit: credit, Show: true, Added: new Date(), Source: "Shared by the public"
+    Credit: credit, Show: true, Added: new Date(), Source: "Shared by the public", Alt: req.alt || ""
   });
   sh.getRange(rowNum, 2).setValue("Approved");
   sh.getRange(rowNum, 12, 1, 3).setValues([[u.email, new Date(), link]]);
