@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- SMLC Share Your Photos | v1 | 2026-11-02 6:45 PM ET
+<!-- SMLC Share Your Photos | v1.1 | 2026-11-02 8:20 PM ET (photos go straight into the Gallery)
      Public: anyone can send a photo of their town or a historical picture.
      Photos go to SMLC for review (SMLCPhotos.gs) and only appear in the Gallery once approved. -->
 <html lang="en">
@@ -102,7 +102,7 @@
         <label class="check"><input type="checkbox" id="consent"> I took this photo or have permission to share it, and it's OK for Support My Local Community to show it on this website.</label>
 
         <ul class="rules">
-            <li>Every photo is reviewed before it appears.</li>
+            <li>Your photo goes into the Gallery right away. SMLC can remove anything that doesn't belong.</li>
             <li>Please don't send photos of other people's children or of anyone who hasn't agreed to be shown.</li>
             <li>Historical photos are welcome! If you know who took it or where it came from, add it as the credit.</li>
         </ul>
@@ -162,7 +162,7 @@
                 consent: $('consent').checked, hp: $('website').value
             });
             if (typeof gtag === 'function') gtag('event', 'photo_shared', { place: place, era: $('era').value });
-            show('ok', '✅ <strong>Thank you!</strong> Your photo was sent. Once it\'s reviewed it will appear in the <a href="gallery.html">Clay County Photo Gallery</a>. Want to share another?');
+            show('ok', '✅ <strong>Thank you!</strong> Your photo is now in the <a href="gallery.html">Clay County Photo Gallery</a> (it can take a moment to show up). Want to share another?');
             photo = null; $('drop-inner').innerHTML = '<strong>Tap to choose another photo</strong>';
             $('caption').value = ''; $('year').value = '';
         } catch (err) {

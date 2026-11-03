@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-11-02_v6  |  Updated: Nov 2, 2026 8:15 PM ET
+   Active Version: 2026-11-02_v6.1  |  Updated: Nov 2, 2026 8:20 PM ET
    File: Code.gs (Google Apps Script)
    Project: SMLC County Portal Semantic RTDB Sync
    Description: SMLC County Portal Master Parser & Firebase Realtime DB Sync.
@@ -22,6 +22,8 @@
                       Category "More" -> More dropdown; "town" saved for town rows.
                 - v6: SECTION 5 added at the bottom = SMLC Photos (photo uploads + public sharing).
                       Everything above SECTION 5 is unchanged from v5.
+                - v6.1: Photos shared by the public go straight to the site (no approval).
+                      To remove one: untick Show on the Gallery tab.
    ========================================================================== */
 
 // === SECTION 0: Auto-Sync On Edit Event Listener ===
@@ -692,7 +694,7 @@ function installGasPriceTrigger() {
      3. After changing this file later: Deploy -> Manage deployments -> edit -> Version: New version.
    ========================================================================== */
 
-var PH_VERSION = "v1.2 - Nov 2, 2026 8:10 PM ET";
+var PH_VERSION = "v1.3 - Nov 2, 2026 8:20 PM ET (public photos publish right away)";
 var PH_REPO = "Werewolf3788/SMLC";
 var PH_BRANCH = "Claude-Test";                 // the branch the live site is published from
 var PH_FOLDER = "images";
@@ -907,23 +909,31 @@ function phSubmit_(req) {
 
   var clean = function (s, n) { return String(s || "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, n || 300); };
   var mime = /^image\/(png|jpeg|gif|webp)$/.test(req.mimeType || "") ? req.mimeType : "image/jpeg";
-  var blob = Utilities.newBlob(Utilities.base64Decode(req.base64), mime,
-    phSlug_(req.place + " " + (req.caption || "photo")) + "." + (mime === "image/png" ? "png" : "jpg"));
-  var file = phSubmissionsFolder_().createFile(blob);
+  var ext = mime === "image/png" ? "png" : "jpg";
+  var place = clean(req.place, 80), caption = clean(req.caption, 300);
+  var credit = clean(req.credit, 120) || clean(req.name, 120);
 
-  phSubmissionsSheet_().appendRow([new Date(), "Pending", clean(req.place, 80), clean(req.group, 80), clean(req.caption, 300),
-    clean(req.era, 20), clean(req.year, 20), clean(req.credit, 120), clean(req.name, 120), clean(req.email, 160),
-    file.getId(), "", "", ""]);
+  // Publish right away: save into images/ (named after the town) and add it to the Gallery tab
+  var path = phFreePath_(phSlug_(place + " " + (caption || "photo")), ext);
+  var link = phCommit_(path, req.base64, "Add " + path + " (shared by the public)");
+  phGalleryAdd_({
+    Town: "Global", Image: link, Place: place, Group: clean(req.group, 80), Caption: caption, Era: clean(req.era, 20),
+    Year: clean(req.year, 20), Credit: credit, Show: true, Added: new Date(), Source: "Shared by the public"
+  });
+
+  // Private record (who sent what) - kept out of the synced sheet so emails never go public
+  phSubmissionsSheet_().appendRow([new Date(), "Published", place, clean(req.group, 80), caption,
+    clean(req.era, 20), clean(req.year, 20), credit, clean(req.name, 120), clean(req.email, 160), "", "", "", link]);
 
   var notify = props.getProperty("NOTIFY_EMAILS");
   if (notify) {
     try {
-      MailApp.sendEmail(notify, "New SMLC photo to review: " + clean(req.place, 80),
-        "A new photo was shared for " + clean(req.place, 80) + (req.caption ? " (" + clean(req.caption, 120) + ")" : "") +
-        ".\n\nReview it in the SMLC Image Uploader (sign in) under Photos waiting for approval.");
+      MailApp.sendEmail(notify, "New photo on SMLC: " + place,
+        "A photo was just added to the Clay County Photo Gallery for " + place + (caption ? " (" + caption + ")" : "") + ".\n\n" + link +
+        "\n\nTo take it down: open the SMLC Sheet -> Gallery tab -> untick Show on that row.");
     } catch (e) { Logger.log("Notify email failed: " + e); }
   }
-  return { received: true };
+  return { received: true, published: true, link: link };
 }
 
 function phListSubmissions_(req) {
