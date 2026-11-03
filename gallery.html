@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- SMLC Clay County Photo Gallery | v1 | 2026-11-02 6:55 PM ET
+<!-- SMLC Clay County Photo Gallery | v1.1 | 2026-11-02 8:25 PM ET (reads each town's gallery)
      Public. Shows approved photos from the SMLC Sheet's "Gallery" tab (synced to Firebase by Code.gs). -->
 <html lang="en">
 <head>
@@ -193,10 +193,18 @@
         ]);
         return;
     }
-    fetch(P.FIREBASE_CONFIG.databaseURL + '/' + P.GALLERY_PATH + '.json')
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (v) { load(!v ? [] : (Array.isArray(v) ? v : Object.keys(v).map(function (k) { return v[k]; }))); })
-        .catch(function () { load([]); });
+    // Photos are filed under each town (towns/<Town>/sections/gallery) plus county-wide (global)
+    var base = P.FIREBASE_CONFIG.databaseURL + '/master_county_data/';
+    var paths = ['global/sections/gallery'];
+    P.PLACE_GROUPS.forEach(function (g) { g.places.forEach(function (pl) { if (pl.value !== 'Clay County') paths.push('towns/' + encodeURIComponent(pl.value) + '/sections/gallery'); }); });
+    function asList(v) { return !v ? [] : (Array.isArray(v) ? v : Object.keys(v).map(function (k) { return v[k]; })); }
+    Promise.all(paths.map(function (path) {
+        return fetch(base + path + '.json').then(function (r) { return r.ok ? r.json() : null; }).then(asList).catch(function () { return []; });
+    })).then(function (lists) {
+        var seen = {}, rows = [];
+        lists.forEach(function (l) { l.forEach(function (p) { if (p && p.image && !seen[p.image]) { seen[p.image] = 1; if (!p.place && p.town && p.town !== 'Global') p.place = p.town; rows.push(p); } }); });
+        load(rows);
+    });
 })();
 </script>
 </body>

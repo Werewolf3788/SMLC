@@ -20,7 +20,8 @@ window.SMLC_PHOTOS = {
         measurementId: "G-TJRXX8TCT4"
     },
 
-    // Where approved gallery photos live (synced from the Sheet's "Gallery" tab by Code.gs)
+    // Gallery photos (Sheet "Gallery" tab, Column A = town) are synced by Code.gs to
+    // master_county_data/towns/<Town>/sections/gallery  (county-wide ones: global/sections/gallery)
     GALLERY_PATH: 'master_county_data/global/sections/gallery',
 
     // Places, grouped. "value" is what is saved; the label adds the type.

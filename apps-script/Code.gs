@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-11-02_v6.1  |  Updated: Nov 2, 2026 8:20 PM ET
+   Active Version: 2026-11-02_v6.2  |  Updated: Nov 2, 2026 8:25 PM ET
    File: Code.gs (Google Apps Script)
    Project: SMLC County Portal Semantic RTDB Sync
    Description: SMLC County Portal Master Parser & Firebase Realtime DB Sync.
@@ -24,6 +24,8 @@
                       Everything above SECTION 5 is unchanged from v5.
                 - v6.1: Photos shared by the public go straight to the site (no approval).
                       To remove one: untick Show on the Gallery tab.
+                - v6.2: Gallery Column A = the town the person picked, so each photo is saved
+                      under that town in Firebase (towns/<Town>/sections/gallery).
    ========================================================================== */
 
 // === SECTION 0: Auto-Sync On Edit Event Listener ===
@@ -694,7 +696,7 @@ function installGasPriceTrigger() {
      3. After changing this file later: Deploy -> Manage deployments -> edit -> Version: New version.
    ========================================================================== */
 
-var PH_VERSION = "v1.3 - Nov 2, 2026 8:20 PM ET (public photos publish right away)";
+var PH_VERSION = "v1.4 - Nov 2, 2026 8:25 PM ET (gallery saved under each town)";
 var PH_REPO = "Werewolf3788/SMLC";
 var PH_BRANCH = "Claude-Test";                 // the branch the live site is published from
 var PH_FOLDER = "images";
@@ -829,6 +831,12 @@ function phCommit_(path, base64, message, sha) {
 }
 
 // ---- Gallery tab (in this sheet; Code.gs syncs it) --------------------------------------
+/** Column A of the Gallery tab: the town picked, so Code.gs files the photo under that town.
+ *  County-wide photos go under Global. */
+function phTownCol_(place) {
+  var p = String(place || "").trim();
+  return (!p || p.toLowerCase() === "clay county") ? "Global" : p;
+}
 function phGalleryAdd_(row) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sh = ss.getSheetByName(PH_GALLERY_TAB);
@@ -862,7 +870,7 @@ function phUpload_(req) {
 
   if (req.addToGallery) {
     phGalleryAdd_({
-      Town: "Global", Image: link, Place: req.place || "", Group: req.group || "", Caption: req.caption || "",
+      Town: phTownCol_(req.place), Image: link, Place: req.place || "", Group: req.group || "", Caption: req.caption || "",
       Era: req.era || "", Year: req.year || "", Credit: req.credit || "", Show: true, Added: new Date(), Source: "Uploaded by " + u.email
     });
   }
@@ -917,7 +925,7 @@ function phSubmit_(req) {
   var path = phFreePath_(phSlug_(place + " " + (caption || "photo")), ext);
   var link = phCommit_(path, req.base64, "Add " + path + " (shared by the public)");
   phGalleryAdd_({
-    Town: "Global", Image: link, Place: place, Group: clean(req.group, 80), Caption: caption, Era: clean(req.era, 20),
+    Town: phTownCol_(place), Image: link, Place: place, Group: clean(req.group, 80), Caption: caption, Era: clean(req.era, 20),
     Year: clean(req.year, 20), Credit: credit, Show: true, Added: new Date(), Source: "Shared by the public"
   });
 
@@ -980,7 +988,7 @@ function phReview_(req) {
   var link = phCommit_(path, Utilities.base64Encode(blob.getBytes()), "Add " + path + " (shared photo approved by " + u.email + ")");
 
   phGalleryAdd_({
-    Town: "Global", Image: link, Place: place, Group: r[3], Caption: caption, Era: r[5], Year: r[6],
+    Town: phTownCol_(place), Image: link, Place: place, Group: r[3], Caption: caption, Era: r[5], Year: r[6],
     Credit: credit, Show: true, Added: new Date(), Source: "Shared by the public"
   });
   sh.getRange(rowNum, 2).setValue("Approved");
