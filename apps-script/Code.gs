@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-11-02_v6.3  |  Updated: Nov 2, 2026 8:30 PM ET
+   Active Version: 2026-11-02_v6.4  |  Updated: Nov 2, 2026 8:55 PM ET
    File: Code.gs (Google Apps Script)
    Project: SMLC County Portal Semantic RTDB Sync
    Description: SMLC County Portal Master Parser & Firebase Realtime DB Sync.
@@ -27,6 +27,7 @@
                 - v6.2: Gallery Column A = the town the person picked, so each photo is saved
                       under that town in Firebase (towns/<Town>/sections/gallery).
                 - v6.3: Gallery tab gets an "Alt" column (picture description for screen readers).
+                - v6.4: File names don't repeat the town ("Flora water tower" -> flora-water-tower.jpg).
    ========================================================================== */
 
 // === SECTION 0: Auto-Sync On Edit Event Listener ===
@@ -697,7 +698,7 @@ function installGasPriceTrigger() {
      3. After changing this file later: Deploy -> Manage deployments -> edit -> Version: New version.
    ========================================================================== */
 
-var PH_VERSION = "v1.5 - Nov 2, 2026 8:30 PM ET (alt descriptions)";
+var PH_VERSION = "v1.6 - Nov 2, 2026 8:55 PM ET (no repeated town in file names)";
 var PH_REPO = "Werewolf3788/SMLC";
 var PH_BRANCH = "Claude-Test";                 // the branch the live site is published from
 var PH_FOLDER = "images";
@@ -810,6 +811,11 @@ function phRawUrl_(path) {
 function phSlug_(s) {
   return String(s || "").toLowerCase().replace(/&/g, " and ").replace(/['’]/g, "")
     .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+}
+/** "flora" + "Flora water tower" -> "flora-water-tower" (town only added when the name doesn't start with it) */
+function phTownSlug_(place, name) {
+  var t = phSlug_(String(place || "").replace(/\s+township$/i, "")), n = phSlug_(name || "photo");
+  return (t && n.indexOf(t) !== 0) ? (t + "-" + n).slice(0, 80) : n;
 }
 /** First free name: flora-depot.jpg, flora-depot-2.jpg, ... */
 function phFreePath_(base, ext) {
@@ -930,7 +936,7 @@ function phSubmit_(req) {
   var credit = clean(req.credit, 120) || clean(req.name, 120);
 
   // Publish right away: save into images/ (named after the town) and add it to the Gallery tab
-  var path = phFreePath_(phSlug_(place + " " + (caption || "photo")), ext);
+  var path = phFreePath_(phTownSlug_(place, caption), ext);
   var link = phCommit_(path, req.base64, "Add " + path + " (shared by the public)");
   phGalleryAdd_({
     Town: phTownCol_(place), Image: link, Place: place, Group: clean(req.group, 80), Caption: caption, Era: clean(req.era, 20),
@@ -992,7 +998,7 @@ function phReview_(req) {
   var credit = req.credit !== undefined ? req.credit : (r[7] || r[8]);
   var blob = file.getBlob();
   var ext = /png/i.test(blob.getContentType()) ? "png" : "jpg";
-  var path = phFreePath_(phSlug_(place + " " + (caption || "photo")), ext);
+  var path = phFreePath_(phTownSlug_(place, caption), ext);
   var link = phCommit_(path, Utilities.base64Encode(blob.getBytes()), "Add " + path + " (shared photo approved by " + u.email + ")");
 
   phGalleryAdd_({

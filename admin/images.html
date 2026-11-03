@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<!-- SMLC Image Uploader | v2.3 | 2026-11-02 5:30 PM ET (Copy link gives the raw.githubusercontent.com link) (every picture goes into the one images/ folder)
-     Paste / drop / pick an image, give it a name, and it is saved straight into the
-     SMLC GitHub repository (images/...). Gives you the link to paste into the Sheet.
-     Needs a GitHub token (saved only on the device you use it on). Not linked from the site. -->
+<!-- SMLC Image Uploader | v4 | 2026-11-02 8:50 PM ET
+     PUBLIC: anyone can paste a picture, name it, pick the town and save it - no GitHub key.
+       Saving goes through the SMLC Sheet's script (Code.gs SECTION 5), which holds the key privately.
+     TEAM (optional GitHub key, saved only on that device): see every picture in images/ and save
+       pictures that aren't town photos (logos, ads). -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -10,6 +11,7 @@
     <meta name="robots" content="noindex, nofollow">
     <title>SMLC Image Uploader</title>
     <meta name="color-scheme" content="light dark">
+    <script src="../smlc-photos-config.js"></script>
     <style>
         :root { --navy: #001B37; --accent: #FFC10E; --ink: #111; --muted: #555; --card: #fff; --bg: #f3f5f8; --line: #d5dbe3; --ok: #137333; --bad: #b3261e; }
         @media (prefers-color-scheme: dark) { :root { --ink: #ececf0; --muted: #b5b5bd; --card: #1d1d20; --bg: #121214; --line: #3a3f48; --ok: #6fd28a; --bad: #ff8a80; } }
@@ -52,14 +54,82 @@
 </head>
 <body>
 <header>
-    <div><h1>SMLC Image Uploader</h1><small>Paste a picture, name it, save it to the SMLC repository</small></div>
-    <small id="who">Not connected</small>
+    <div><h1>SMLC Image Uploader</h1><small>Paste a picture, name it, pick the town &mdash; no sign-in needed</small></div>
+    <small id="who"></small>
 </header>
 
 <main>
+    <!-- ===== Upload ===== -->
+    <section class="card">
+        <h2>Add a picture</h2>
+        <div id="drop" tabindex="0" aria-label="Paste, drop or choose an image">
+            <div id="drop-inner">
+                <p class="big">Paste an image here (Ctrl+V / &#8984;V)</p>
+                <p class="hint">or drag it in, or tap to choose a file. Tip: on any website, right-click a picture &rarr; <strong>Copy image</strong>, then paste here.</p>
+            </div>
+        </div>
+        <input type="file" id="file" accept="image/*" hidden>
+
+        <label for="from-url">&hellip;or copy it from a web address</label>
+        <div class="copyline">
+            <input type="url" id="from-url" placeholder="https://example.com/logo.png">
+            <button id="load-url" class="secondary">Load</button>
+        </div>
+        <p class="hint">Some websites block this. If it fails, open the picture, right-click &rarr; Copy image, and paste above instead.</p>
+
+        <div class="row">
+            <div>
+                <label for="name">Name</label>
+                <input type="text" id="name" placeholder="e.g. Caseys Flora logo">
+                <p class="hint">Saved as: <code id="filename-preview">&mdash;</code></p>
+            </div>
+            <div>
+                <label for="place">Town</label>
+                <select id="place"></select>
+                <input type="hidden" id="folder" value="images">
+                <p class="hint">The picture is filed under this town.</p>
+            </div>
+        </div>
+        <div class="row">
+            <div>
+                <label for="format">Format</label>
+                <select id="format">
+                    <option value="auto">Automatic (PNG if it has see-through parts, otherwise JPG)</option>
+                    <option value="png">PNG (logos, graphics)</option>
+                    <option value="jpg">JPG (photos, smaller files)</option>
+                    <option value="original">Keep the original file as-is</option>
+                </select>
+            </div>
+            <div>
+                <label for="maxw">Largest width</label>
+                <select id="maxw">
+                    <option value="1600">1600 px (recommended)</option>
+                    <option value="1200">1200 px</option>
+                    <option value="800">800 px (small logos)</option>
+                    <option value="2400">2400 px (header banners)</option>
+                    <option value="0">Don't resize</option>
+                </select>
+            </div>
+        </div>
+        <label for="alt">Describe the picture <span class="hint" style="display:inline">(optional, for people who can't see it)</span></label>
+        <input type="text" id="alt" maxlength="300" placeholder="e.g. Yellow brick library with an arched doorway">
+        <label style="display:flex;gap:8px;align-items:flex-start;margin-top:12px;"><input type="checkbox" id="consent" style="width:20px;height:20px;margin-top:2px;"> I took this picture or have permission to share it on Support My Local Community.</label>
+        <p style="margin-top:14px;"><button id="upload" class="gold" disabled>Save picture</button></p>
+        <div id="result"></div>
+    </section>
+
+    <!-- ===== Browse ===== -->
+    <section class="card" id="browse-card" hidden>
+        <h2>Images already saved <span class="hint" style="display:inline">(SMLC team)</span></h2>
+        <p class="hint">Click <em>Copy link</em> and paste it into the Sheet's image column. Needs the team GitHub key below.</p>
+        <p><button id="browse" class="secondary">Show all pictures in images/</button></p>
+        <div class="list" id="browse-list"></div>
+    </section>
     <!-- ===== Token ===== -->
     <section class="card" id="token-card">
-        <h2>1. Connect to GitHub (one time per device)</h2>
+        <details id="team-box">
+        <summary>SMLC team only: GitHub key</summary>
+        <p class="hint">Not needed to add pictures. Only for seeing every picture in the folder and saving pictures that aren't town photos (logos, ads).</p>
         <details id="token-help">
             <summary>How to get a token (2 minutes)</summary>
             <ol>
@@ -88,70 +158,9 @@
             <button id="forget-token" class="secondary">Forget token on this device</button>
         </p>
         <p class="status" id="token-status"></p>
+        </details>
     </section>
 
-    <!-- ===== Upload ===== -->
-    <section class="card">
-        <h2>2. Add a picture</h2>
-        <div id="drop" tabindex="0" aria-label="Paste, drop or choose an image">
-            <div id="drop-inner">
-                <p class="big">Paste an image here (Ctrl+V / &#8984;V)</p>
-                <p class="hint">or drag it in, or tap to choose a file. Tip: on any website, right-click a picture &rarr; <strong>Copy image</strong>, then paste here.</p>
-            </div>
-        </div>
-        <input type="file" id="file" accept="image/*" hidden>
-
-        <label for="from-url">&hellip;or copy it from a web address</label>
-        <div class="copyline">
-            <input type="url" id="from-url" placeholder="https://example.com/logo.png">
-            <button id="load-url" class="secondary">Load</button>
-        </div>
-        <p class="hint">Some websites block this. If it fails, open the picture, right-click &rarr; Copy image, and paste above instead.</p>
-
-        <div class="row">
-            <div>
-                <label for="name">Name</label>
-                <input type="text" id="name" placeholder="e.g. Caseys Flora logo">
-                <p class="hint">Saved as: <code id="filename-preview">&mdash;</code></p>
-            </div>
-            <div>
-                <label>Folder</label>
-                <p style="margin:6px 0 0;">Every picture goes into <code>images/</code> &mdash; one place for all of them.</p>
-                <input type="hidden" id="folder" value="images">
-            </div>
-        </div>
-        <div class="row">
-            <div>
-                <label for="format">Format</label>
-                <select id="format">
-                    <option value="auto">Automatic (PNG if it has see-through parts, otherwise JPG)</option>
-                    <option value="png">PNG (logos, graphics)</option>
-                    <option value="jpg">JPG (photos, smaller files)</option>
-                    <option value="original">Keep the original file as-is</option>
-                </select>
-            </div>
-            <div>
-                <label for="maxw">Largest width</label>
-                <select id="maxw">
-                    <option value="1600">1600 px (recommended)</option>
-                    <option value="1200">1200 px</option>
-                    <option value="800">800 px (small logos)</option>
-                    <option value="2400">2400 px (header banners)</option>
-                    <option value="0">Don't resize</option>
-                </select>
-            </div>
-        </div>
-        <p style="margin-top:14px;"><button id="upload" class="gold" disabled>Save to GitHub</button></p>
-        <div id="result"></div>
-    </section>
-
-    <!-- ===== Browse ===== -->
-    <section class="card">
-        <h2>3. Images already saved</h2>
-        <p class="hint">Click <em>Copy link</em> and paste it into the Sheet's image column.</p>
-        <p><button id="browse" class="secondary">Show all pictures in images/</button></p>
-        <div class="list" id="browse-list"></div>
-    </section>
 </main>
 
 <script>
@@ -164,6 +173,10 @@
         set: function (k, v) { try { localStorage.setItem('smlc-img:' + k, v); } catch (e) {} },
         del: function (k) { try { localStorage.removeItem('smlc-img:' + k); } catch (e) {} }
     };
+
+    var P = window.SMLC_PHOTOS;
+    P.fillPlaceSelect($('place'), 'Choose the town…');
+    var connected = false;
 
     // ---------- settings ----------
     $('token').value = store.get('token');
@@ -198,13 +211,17 @@
             $('token-status').textContent = canWrite === false
                 ? '⚠️ Connected, but this token can only READ. Give it Contents: Read and write.'
                 : '✅ Connected to ' + c.repo + ' (' + c.branch + ').';
-            $('who').textContent = 'Connected: ' + c.repo + ' · ' + c.branch;
+            $('who').textContent = 'SMLC team: connected';
             $('token-help').open = false;
+            connected = canWrite !== false;
+            $('browse-card').hidden = false;
+            $('place').options[0].textContent = connected ? '— not a town photo (team) —' : 'Choose the town…';
             refreshUploadButton();
             return true;
         } catch (e) {
             $('token-status').textContent = '❌ ' + e.message;
-            $('who').textContent = 'Not connected';
+            $('who').textContent = '';
+            connected = false; $('browse-card').hidden = true;
             return false;
         }
     }
@@ -216,10 +233,11 @@
     $('forget-token').onclick = function () {
         store.del('token'); $('token').value = '';
         $('token-status').textContent = 'Token removed from this device.';
-        $('who').textContent = 'Not connected';
+        $('who').textContent = '';
+        connected = false; $('browse-card').hidden = true;
         refreshUploadButton();
     };
-    if (store.get('token')) connect(true); else $('token-help').open = true;
+    if (store.get('token')) connect(true);
 
     // ---------- picking an image ----------
     var picked = null;   // { blob, type, name, w, h, hasAlpha }
@@ -249,8 +267,9 @@
         $('filename-preview').textContent = p || '—';
         refreshUploadButton();
     }
-    function refreshUploadButton() { $('upload').disabled = !(picked && targetPath() && cfg().token); }
-    ['name', 'format', 'maxw'].forEach(function (id) { $(id).addEventListener('input', refreshPreview); $(id).addEventListener('change', refreshPreview); });
+    // Team (key connected): any picture. Everyone else: must pick a town and tick the permission box.
+    function refreshUploadButton() { $('upload').disabled = !(picked && targetPath() && (connected || ($('place').value && $('consent').checked))); }
+    ['name', 'format', 'maxw', 'place', 'consent'].forEach(function (id) { $(id).addEventListener('input', refreshPreview); $(id).addEventListener('change', refreshPreview); });
 
     function loadImage(blob) {
         return new Promise(function (resolve, reject) {
@@ -371,6 +390,7 @@
 
     // ---------- upload ----------
     $('upload').onclick = async function () {
+        if (!connected) return publicSave();
         var c = cfg(), path = targetPath();
         if (!path) return;
         $('upload').disabled = true;
@@ -410,6 +430,28 @@
         }
         refreshUploadButton();
     };
+
+    // ---------- public save (no key): through the SMLC Sheet's script ----------
+    async function publicSave() {
+        $('upload').disabled = true;
+        showResult('', 'Saving your picture…');
+        try {
+            var blob = await prepareBlob();
+            var b64 = await toBase64(blob);
+            var place = $('place').value;
+            var res = await P.call({
+                action: 'submit', base64: b64, mimeType: blob.type || 'image/jpeg',
+                place: place, group: P.groupOf(place), caption: $('name').value, alt: $('alt').value,
+                era: 'Today', consent: $('consent').checked
+            });
+            showResult('ok', '✅ Saved and added to ' + place + '\'s photos. Here is the link:' +
+                '<div class="copyline"><input type="text" readonly value="' + (res.link || '') + '"><button type="button" class="copy-btn">Copy link</button></div>');
+            $('name').value = ''; $('alt').value = ''; refreshPreview();
+        } catch (e) {
+            showResult('bad', '❌ ' + e.message);
+        }
+        refreshUploadButton();
+    }
 
     // ---------- wait for GitHub Pages to publish ----------
     // (this page is on the same site, so it can check the new picture's link directly)
