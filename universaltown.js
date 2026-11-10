@@ -330,6 +330,16 @@ function normalizeImageUrl(rawUrl) {
     return url.replace(/^https?:/, '');
 }
 
+// Partner images: a relative path such as ./images/AE-28.png (or just AE-28.png)
+// is treated as coming from S&K Venture Signs. Full links are left alone.
+const SMLC_PARTNER_IMAGE_BASE = 'https://skventuresigns.com/images/';
+function resolvePartnerImage(raw) {
+    if (!raw || typeof raw !== 'string') return raw;
+    const u = raw.trim();
+    if (!u || /^(https?:)?\/\//i.test(u) || /^(data|blob):/i.test(u)) return u;
+    return SMLC_PARTNER_IMAGE_BASE + u.replace(/^\.?\/?(images\/)?/i, '').replace(/ /g, '%20');
+}
+
 function escapeJsString(str) {
     if (!str && str !== 0) return "";
     return String(str)
@@ -1972,7 +1982,7 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
     let hoverStartTime = 0;
 
     const createPartnerMarkup = (partner, slotIdx) => {
-        const imgUrl = normalizeImageUrl(partner.imageUrl || partner.image1);
+        const imgUrl = normalizeImageUrl(resolvePartnerImage(partner.imageUrl || partner.image1));
         const name = partner.name || 'Local Community Partner';
         const rawUrl = partner.website || '#';
         const link = attachUtmParameters(rawUrl);
