@@ -1844,6 +1844,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
 
                 window.historyCachedTimeline = historyList;
                 applyHighDensityScrollLimits(historyTarget, historyList.length, 520);
+                historyTarget.classList.toggle('timeline-five-across', historyList.length >= 5);
 
                 historyTarget.innerHTML = historyList.map((evt, idx) => {
                     const desc = evt.description || "";
