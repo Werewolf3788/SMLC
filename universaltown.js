@@ -4383,6 +4383,13 @@ window.addEventListener('DOMContentLoaded', () => {
         .fuel-monitor-billboard-card .many-grades .price-box { padding: 8px; }
         .fuel-monitor-billboard-card .many-grades .price-type-label { margin-bottom: 6px; }
         .fuel-monitor-billboard-card .many-grades .led-digits { font-size: clamp(2rem, 4.5vw, 2.8rem); }
+        /* 3 or more prices: two across (a lone last one spans the row). Phones keep one per row. */
+        @media (min-width: 768px) {
+            .fuel-monitor-billboard-card .fuel-pricing-grid.many-grades { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(88px, auto); gap: 10px; }
+            .fuel-monitor-billboard-card .many-grades .price-box:last-child:nth-child(odd) { grid-column: 1 / -1; }
+            .fuel-monitor-billboard-card .many-grades .led-digits { font-size: clamp(1.5rem, 2.3vw, 2.2rem); }
+            .fuel-monitor-billboard-card .many-grades .price-type-label { font-size: .8rem; letter-spacing: 2px; }
+        }
         .fuel-monitor-billboard-card .fuel-station-info { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 12px; margin: 2px 0 12px; font-size: .78rem; line-height: 1.4; text-align: center; opacity: .9; }
         .fuel-monitor-billboard-card .fuel-station-info a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
         .fuel-monitor-billboard-card .price-value-diesel { color: #ff2a2a; text-shadow: 0 0 6px rgba(255,42,42,.85), 0 0 18px rgba(255,42,42,.45); }
