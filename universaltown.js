@@ -1903,8 +1903,16 @@ function bindFirebasePartnersEngine(db) {
             const uniquePartners = [];
             const seenNames = new Set();
 
+            // Hide partners that are not active or whose expiration date has passed
+            const todayIso = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })();
+            const partnerIsLive = (p) => {
+                if (p.status !== undefined && String(p.status).trim().toLowerCase() !== 'active') return false;
+                if (p.expirationDate && String(p.expirationDate).trim() < todayIso) return false;
+                return true;
+            };
+
             rawPool.forEach(p => {
-                if (p && (p.name || p.imageUrl || p.image1)) {
+                if (p && partnerIsLive(p) && (p.name || p.imageUrl || p.image1)) {
                     const key = (p.name || '').trim().toLowerCase();
                     if (!seenNames.has(key)) {
                         seenNames.add(key);

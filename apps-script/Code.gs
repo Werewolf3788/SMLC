@@ -42,17 +42,30 @@ function onEditTrigger(e) {
   pushMasterDataToFirebase();
 }
 
-// === SECTION 0.1: Color the Partners tab rows by town ===
-// Background = the town's secondary color, font = the town's primary color
-// (taken from each town's CSS). Rows with no matching town (e.g. Global) are left plain.
-// Runs automatically on every edit; you can also run colorPartnersByTown() by hand.
+// === SECTION 0.1: Partners tab helpers (expiration dates + row colors by town) ===
+function partnerTodayIso_() {
+  return Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
+}
+// Returns "yyyy-MM-dd" for a date cell or date text, or "" when the cell is empty/unreadable.
+function partnerExpiryIso_(v) {
+  if (v === "" || v === null || v === undefined) return "";
+  var d = (v instanceof Date) ? v : new Date(String(v).trim());
+  if (isNaN(d.getTime())) return "";
+  return Utilities.formatDate(d, Session.getScriptTimeZone(), "yyyy-MM-dd");
+}
+
+// Background = the town's secondary color, font = its primary color (from each town's CSS).
+// The whole used row (A:F) is colored. A row with several towns (commas) or an unknown town
+// stays standard white/black. Runs on every edit; you can also run colorPartnersByTown() by hand.
 var PARTNER_TOWN_COLORS = {
+  "global":         { bg: "#1E293B", font: "#FFC10E" },  // Gold on Slate (all of Clay County)
   "flora":          { bg: "#FE4E02", font: "#0258A3" },  // Royal Blue on Wolf Orange
   "louisville":     { bg: "#FFC10E", font: "#EB1C24" },  // Red on Gold
   "clay city":      { bg: "#F2F2F2", font: "#0C2890" },  // Navy on Light Gray
   "xenia":          { bg: "#FFC10E", font: "#1C5640" },  // Green on Gold
   "sailor springs": { bg: "#FFC10E", font: "#4A154B" }   // Purple on Gold
 };
+var PARTNER_COLOR_COLS = 6;  // A..F
 
 function colorPartnersByTown() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Partners");
@@ -62,12 +75,13 @@ function colorPartnersByTown() {
   var towns = sheet.getRange(2, 1, last - 1, 1).getValues();
   var bgs = [], fonts = [];
   for (var i = 0; i < towns.length; i++) {
-    var c = PARTNER_TOWN_COLORS[String(towns[i][0]).trim().toLowerCase()];
+    var name = String(towns[i][0]).trim().toLowerCase();
+    var c = name.indexOf(",") >= 0 ? null : PARTNER_TOWN_COLORS[name];
     var bgRow = [], fontRow = [];
-    for (var k = 0; k < 5; k++) { bgRow.push(c ? c.bg : null); fontRow.push(c ? c.font : null); }
+    for (var k = 0; k < PARTNER_COLOR_COLS; k++) { bgRow.push(c ? c.bg : null); fontRow.push(c ? c.font : null); }
     bgs.push(bgRow); fonts.push(fontRow);
   }
-  var range = sheet.getRange(2, 1, towns.length, 5);
+  var range = sheet.getRange(2, 1, towns.length, PARTNER_COLOR_COLS);
   range.setBackgrounds(bgs);
   range.setFontColors(fonts);
 }
@@ -184,22 +198,29 @@ function processFullCountyDataset() {
       // Skip empty/blank rows on localized town tabs
       if (!rawLocation) return;
 
-      var isExplicitGlobal = (rawLocation.toLowerCase() === "global");
-      var targetContainer;
+      // Partners rows may list several towns in Column A, separated by commas
+      var locations = (tabName === "Partners")
+        ? rawLocation.split(",").map(function(t) { return t.trim(); }).filter(function(t) { return t; })
+        : [rawLocation];
 
-      // Route data to global root or specific town container
-      if (isExplicitGlobal || isGlobalTab) {
-        targetContainer = result.global;
-      } else {
-        var townName = sanitizeFirebaseKey(rawLocation);
-        if (!result.towns[townName]) {
-          result.towns[townName] = { town: rawLocation, sections: {} };
+      locations.forEach(function(loc) {
+        var isExplicitGlobal = (loc.toLowerCase() === "global");
+        var targetContainer;
+
+        // Route data to global root or specific town container
+        if (isExplicitGlobal || isGlobalTab) {
+          targetContainer = result.global;
+        } else {
+          var townName = sanitizeFirebaseKey(loc);
+          if (!result.towns[townName]) {
+            result.towns[townName] = { town: loc, sections: {} };
+          }
+          targetContainer = result.towns[townName];
         }
-        targetContainer = result.towns[townName];
-      }
 
-      /* === SECTION 2.2: Map Row Data to Semantic Node === */
-      mapTabToSemanticNodes(targetContainer, tabName, headers, row);
+        /* === SECTION 2.2: Map Row Data to Semantic Node === */
+        mapTabToSemanticNodes(targetContainer, tabName, headers, row);
+      });
     });
   });
 
@@ -284,14 +305,21 @@ function mapTabToSemanticNodes(containerObj, tabName, headers, row) {
   }
 
   // PARTNERS TAB -> sec.partners
-  // Col A: Town (0) | Col B: Business Name (1) | Col C: Website (2) | Col D: Image (3) | Col E: ALT (4)
+  // Col A: Town(s) (0) | Col B: Name (1) | Col C: Status (2) | Col D: Image URL (3) | Col E: Expiration Date (4) | Col F: Website (5)
+  // Only rows whose Status is "active" and whose Expiration Date has not passed are sent to the site.
+  // Col A may hold several towns separated by commas (handled in processFullCountyDataset).
   else if (tabName === "Partners") {
+    if (String(row[2]).trim().toLowerCase() !== "active") return;
+    var expIso = partnerExpiryIso_(row[4]);
+    if (expIso && expIso < partnerTodayIso_()) return;
     if (!sec["partners"]) sec["partners"] = [];
     sec["partners"].push({
       name: row[1] || "",
-      website: row[2] || "",
+      website: row[5] || "",
       imageUrl: formatGoogleDriveUrl(row[3]),
-      alt: row[4] || row[1] || ""
+      alt: row[1] || "",
+      status: "active",
+      expirationDate: expIso
     });
   }
 
