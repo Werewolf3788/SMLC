@@ -1096,6 +1096,17 @@ function saIsExpired_(text, todayIso) {
   return iso < todayIso;
 }
 
+/** Last row that really has a business name/town in it (getLastRow can be far lower than that if cells below hold stray formatting or formulas). */
+function saLastDataRow_(sheet) {
+  var n = sheet.getLastRow();
+  if (n < 1) return 0;
+  var vals = sheet.getRange(1, 1, n, 2).getValues();
+  for (var i = vals.length - 1; i >= 0; i--) {
+    if (String(vals[i][0]).trim() !== "" || String(vals[i][1]).trim() !== "") return i + 1;
+  }
+  return 0;
+}
+
 /** Reads Scott's published ads and refreshes the "S&K Signs" rows in the Partners tab. */
 function importSignAdsToPartners() {
   var resp = UrlFetchApp.fetch(SA_SOURCE, { muteHttpExceptions: true });
@@ -1189,7 +1200,7 @@ function importSignAdsToPartners() {
 
   // New ads go at the bottom, with the preview picture formula if you have that column
   if (fresh.length) {
-    var start = sheet.getLastRow() + 1;
+    var start = saLastDataRow_(sheet) + 1;      // right under your last partner, not at the bottom of the sheet
     var block = fresh.map(function (w) {
       var row = [w.town, w.name, "", w.url, w.name];
       while (row.length < srcCol - 1) row.push("");
