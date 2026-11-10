@@ -2165,6 +2165,9 @@ function initializeFirebaseGasMonitor(db) {
     }
 }
 
+// Unlit LED segments: every digit shown as an "8" behind the real number (e.g. 4.47 -> 8.88)
+function ledGhost(v) { const t = String(v == null ? '' : v); return /[0-9]/.test(t) ? t.replace(/[0-9]/g, '8') : '8.88'; }
+
 function startGasRotator(data, stationConfigs, stationIds, container) {
     if (gasMonitorRotator) { clearInterval(gasMonitorRotator); gasMonitorRotator = null; }
     let currentIdx = 0;
@@ -2193,8 +2196,8 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
                 <div class="station-meta-title">${config.name}${config.stationTown && !String(config.name).toUpperCase().includes(String(config.stationTown).toUpperCase()) ? ` (${config.stationTown})` : ''}</div>
             </div>
             <div class="fuel-pricing-grid">
-                <div class="price-box"><span class="price-type-label">REGULAR</span><span class="price-value-regular">${regPrice}</span></div>
-                <div class="price-box"><span class="price-type-label">DIESEL</span><span class="price-value-diesel">${dslPrice}</span></div>
+                <div class="price-box"><span class="price-type-label">REGULAR</span><span class="price-value-regular led-digits" data-ghost="${ledGhost(regPrice)}">${regPrice}</span></div>
+                <div class="price-box"><span class="price-type-label">DIESEL</span><span class="price-value-diesel led-digits" data-ghost="${ledGhost(dslPrice)}">${dslPrice}</span></div>
             </div>
             <div class="sync-timestamp-label">Updated: ${updateDate} &bull; Click to Update</div>
         `;
@@ -4338,4 +4341,28 @@ window.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('scroll', () => { clearTimeout(saveTimer); saveTimer = setTimeout(savePosition, 150); }, { passive: true });
     window.addEventListener('pagehide', savePosition);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') savePosition(); });
+})();
+
+
+// === FUEL PRICES: stacked LED-style numbers ===
+// Regular on top, Diesel underneath, big seven-segment digits (DSEG7 Classic, SIL Open Font License,
+// loaded from jsDelivr; falls back to a monospace font if it can't load).
+(function smlcLedFuelPrices() {
+    const style = document.createElement('style');
+    style.id = 'smlc-led-fuel-style';
+    style.textContent = `
+        @font-face { font-family: 'DSEG7-Classic'; font-weight: 700; font-style: normal; font-display: swap;
+            src: url('https://cdn.jsdelivr.net/npm/dseg@0.46.0/fonts/DSEG7-Classic/DSEG7Classic-Bold.woff2') format('woff2'); }
+        .fuel-monitor-billboard-card .fuel-pricing-grid { grid-template-columns: 1fr; grid-auto-rows: minmax(110px, 1fr); flex: 1 1 auto; gap: 14px; }
+        .fuel-monitor-billboard-card .price-box { display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 14px 8px; background: #050505; border: 2px solid #1c1c1c; box-shadow: inset 0 0 18px rgba(0,0,0,.95); }
+        .fuel-monitor-billboard-card .price-type-label { margin-bottom: 10px; letter-spacing: 3px; }
+        .fuel-monitor-billboard-card .led-digits { position: relative; display: inline-block; line-height: 1; letter-spacing: .05em;
+            font-family: 'DSEG7-Classic', 'Courier New', monospace; font-weight: 700; font-size: clamp(2.6rem, 6vw, 4rem); }
+        .fuel-monitor-billboard-card .led-digits::before { content: attr(data-ghost); position: absolute; left: 0; top: 0;
+            opacity: .09; text-shadow: none; pointer-events: none; }
+        .fuel-monitor-billboard-card .price-value-regular { color: #39ff14; text-shadow: 0 0 6px rgba(57,255,20,.85), 0 0 18px rgba(57,255,20,.45); }
+        .fuel-monitor-billboard-card .price-value-diesel { color: #ff2a2a; text-shadow: 0 0 6px rgba(255,42,42,.85), 0 0 18px rgba(255,42,42,.45); }
+    `;
+    (document.head || document.documentElement).appendChild(style);
 })();
