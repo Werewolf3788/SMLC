@@ -2218,8 +2218,9 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
 
     const updatePortalUrl = cleanRawUrl(DEFAULT_APP_CONFIG.regional_endpoints.gas_widget);
 
-    const renderStation = () => {
-        const id = stationIds[currentIdx];
+    // Each station's panel is built once (not rebuilt every 5 seconds) so the page translator
+    // can translate all of them; rotating just shows one panel at a time.
+    const buildPane = (id) => {
         const config = stationConfigs[id];
         const info = data[id] || {};
 
@@ -2245,10 +2246,7 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
         const updateDate = info.date || info.updated || "Pending";
         const logoSrc = config.logo ? (window.smlcLogoUrl ? window.smlcLogoUrl(config.logo) : '') : '';
 
-        container.style.cursor = "pointer";
-        container.onclick = () => window.open(attachUtmParameters(updatePortalUrl), '_blank');
-
-        container.innerHTML = `
+        return `
             <div class="sidebar-widget-title">${config.display.toUpperCase()} FUEL INDEX MONITOR</div>
             <div class="fuel-station-header">
                 ${logoSrc ? `<div class="station-logo-frame"><img src="${logoSrc}" alt="" onerror="this.parentElement.style.display='none';"></div>` : ''}
@@ -2260,12 +2258,17 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
             </div>
             <div class="sync-timestamp-label">Updated: ${updateDate} &bull; Click to Update</div>
         `;
-        currentIdx = (currentIdx + 1) % stationIds.length;
     };
 
-    renderStation();
-    if (stationIds.length > 1) {
-        gasMonitorRotator = setInterval(renderStation, 5000);
+    container.style.cursor = "pointer";
+    container.onclick = () => window.open(attachUtmParameters(updatePortalUrl), '_blank');
+    container.innerHTML = stationIds.map((id, i) => `<div class="gas-pane"${i ? ' hidden' : ''}>${buildPane(id)}</div>`).join('');
+    const panes = Array.from(container.querySelectorAll(':scope > .gas-pane'));
+    if (panes.length > 1) {
+        gasMonitorRotator = setInterval(() => {
+            currentIdx = (currentIdx + 1) % panes.length;
+            panes.forEach((el, i) => { el.hidden = i !== currentIdx; });
+        }, 5000);
     }
 }
 
@@ -4410,6 +4413,8 @@ window.addEventListener('DOMContentLoaded', () => {
     const style = document.createElement('style');
     style.id = 'smlc-led-fuel-style';
     style.textContent = `
+        .gas-pane { display: contents; }
+        .gas-pane[hidden] { display: none !important; }
         @font-face { font-family: 'DSEG7-Classic'; font-weight: 700; font-style: normal; font-display: swap;
             src: url('https://cdn.jsdelivr.net/npm/dseg@0.46.0/fonts/DSEG7-Classic/DSEG7Classic-Bold.woff2') format('woff2'); }
         .fuel-monitor-billboard-card .fuel-pricing-grid { grid-template-columns: 1fr; grid-auto-rows: minmax(110px, 1fr); flex: 1 1 auto; gap: 14px; }
