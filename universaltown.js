@@ -1289,12 +1289,8 @@ window.openFiveDayForecastModal = function() {
 
 // ============================================================================
 // SPORTS SCOREBOARD ENGINE (ScoreStream widgets)
-// Reads: /master_county_data/towns/{Town}/sections/sports/[n]
-//   { school_grade, scorestream_code (widget id), score_widget_script, website }
-// Builds the ScoreStream container itself (only the widget id comes from the database)
-// and then (re)loads ScoreStream's embed script so it finds the new containers.
-// Home view shows the county-wide widget (SCORESTREAM_DEFAULT_WIDGET); a town with no rows falls back to it.
-// Column B examples: "71098" (banner) or "69251 vertical". Column E can hold the full embed code instead.
+// Only Flora and Louisville have a scoreboard (see SPORTS_WIDGETS below). Other towns show nothing.
+// Builds the ScoreStream container itself and then (re)loads ScoreStream's embed script so it finds it.
 // ============================================================================
 const SCORESTREAM_EMBED_SRC = 'https://scorestream.com/apiJsCdn/widgets/embed.js';
 
