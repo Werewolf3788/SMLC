@@ -108,8 +108,14 @@
     function idOf(p) { return String(p.image || '').split('/').pop().replace(/\.[a-z0-9]+$/i, '').toLowerCase(); }
     function truthy(v) { return v === true || /^(true|yes|1|x|✓)$/i.test(String(v || '').trim()); }
     function title(p) { return p.caption || p.place || 'Clay County'; }
+    // "March 4, 1925" / "March 1925" / "March 4" / "1925" - month and day are optional
+    function dateText(p) {
+        var md = [p.month, p.month ? p.day : ''].filter(Boolean).join(' ');
+        return [md, p.year].filter(Boolean).join(md && p.year ? (p.day ? ', ' : ' ') : '');
+    }
     function meta(p) {
-        return [p.place, p.era === 'Historical' ? ('Historical' + (p.year ? ', ' + p.year : '')) : (p.year || ''), p.credit ? 'Photo: ' + p.credit : '']
+        var when = dateText(p);
+        return [p.place, p.era === 'Historical' ? ('Historical' + (when ? ', ' + when : '')) : when, p.credit ? 'Photo: ' + p.credit : '']
             .filter(Boolean).join(' · ');
     }
 
@@ -177,6 +183,8 @@
             .map(function (p) {
                 if (!p.group) p.group = P.groupOf(p.place);
                 p.year = p.year ? String(p.year).replace(/T.*$/, '').slice(0, 10) : '';
+                p.month = p.month ? String(p.month).trim() : '';
+                p.day = p.day ? String(p.day).trim() : '';
                 return p;
             })
             .sort(function (a, b) { return String(b.added || '').localeCompare(String(a.added || '')); });

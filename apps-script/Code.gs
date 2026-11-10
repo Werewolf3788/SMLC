@@ -706,7 +706,8 @@ var PH_FOLDER = "images";
 var PH_FIREBASE_API_KEY = "AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg";   // public web key (same as the website)
 var PH_RTDB = "https://smlc-fuel-monitor-default-rtdb.firebaseio.com";
 var PH_GALLERY_TAB = "Gallery";
-var PH_GALLERY_HEADERS = ["Town", "Image", "Place", "Group", "Caption", "Era", "Year", "Credit", "Show", "Added", "Source", "Alt"];
+var PH_GALLERY_HEADERS = ["Town", "Image", "Place", "Group", "Caption", "Era", "Year", "Credit", "Show", "Added", "Source", "Alt", "Month", "Day"];
+var PH_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 var PH_SUB_HEADERS = ["Received", "Status", "Place", "Group", "Caption", "Era", "Year", "Credit", "Submitted By", "Email",
                       "Drive File ID", "Reviewed By", "Reviewed On", "Image Link"];
 var PH_MAX_PUBLIC_PER_DAY = 60;
@@ -952,13 +953,18 @@ function phSubmit_(req) {
   var ext = mime === "image/png" ? "png" : "jpg";
   var place = clean(req.place, 80), caption = clean(req.caption, 300);
   var credit = clean(req.credit, 120) || clean(req.name, 120);
+  // Month and day are optional. Day is only kept when a month was chosen.
+  var month = PH_MONTHS.indexOf(clean(req.month, 20)) >= 0 ? clean(req.month, 20) : "";
+  var dayNum = Number(clean(req.day, 2));
+  var day = (month && dayNum >= 1 && dayNum <= 31) ? String(Math.floor(dayNum)) : "";
 
   // Publish right away: save into images/ (named after the town) and add it to the Gallery tab
   var path = phFreePath_(phTownSlug_(place, caption), ext);
   var link = phCommit_(path, req.base64, "Add " + path + " (shared by the public)");
   phGalleryAdd_({
     Town: phTownCol_(place), Image: link, Place: place, Group: clean(req.group, 80), Caption: caption, Era: clean(req.era, 20),
-    Year: clean(req.year, 20), Credit: credit, Show: true, Added: new Date(), Source: "Shared by the public", Alt: clean(req.alt, 300)
+    Year: clean(req.year, 20), Credit: credit, Show: true, Added: new Date(), Source: "Shared by the public", Alt: clean(req.alt, 300),
+    Month: month, Day: day
   });
 
   // Private record (who sent what) - kept out of the synced sheet so emails never go public

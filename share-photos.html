@@ -87,6 +87,17 @@
             </div>
         </div>
 
+        <div class="row">
+            <div>
+                <label for="month">Month <span class="opt">(optional)</span></label>
+                <select id="month"><option value="">Not sure / skip</option></select>
+            </div>
+            <div>
+                <label for="day">Day <span class="opt">(optional)</span></label>
+                <select id="day" disabled><option value="">Not sure / skip</option></select>
+            </div>
+        </div>
+
         <label for="credit">Who took the photo? <span class="opt">(shown as the photo credit)</span></label>
         <input type="text" id="credit" maxlength="120">
 
@@ -119,6 +130,22 @@
 (function () {
     'use strict';
     var P = window.SMLC_PHOTOS;
+
+    // Optional month + day (day list follows the month; Feb allows 29 since the year may be unknown)
+    var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var DAYS_IN = [31,29,31,30,31,30,31,31,30,31,30,31];
+    (function () {
+        var m = document.getElementById('month');
+        MONTHS.forEach(function (name) { var o = document.createElement('option'); o.value = name; o.textContent = name; m.appendChild(o); });
+    })();
+    function fillDays() {
+        var mi = MONTHS.indexOf(document.getElementById('month').value), d = document.getElementById('day');
+        d.innerHTML = '<option value="">Not sure / skip</option>';
+        d.disabled = mi < 0;
+        if (mi < 0) return;
+        for (var n = 1; n <= DAYS_IN[mi]; n++) { var o = document.createElement('option'); o.value = String(n); o.textContent = String(n); d.appendChild(o); }
+    }
+    document.getElementById('month').addEventListener('change', fillDays);
     var $ = function (id) { return document.getElementById(id); };
     P.fillPlaceSelect($('place'), 'Choose a town, village or township…');
     var params = new URLSearchParams(location.search);
@@ -160,14 +187,14 @@
             var place = $('place').value;
             await P.call({
                 action: 'submit', base64: img.base64, mimeType: img.mimeType,
-                place: place, group: P.groupOf(place), caption: $('caption').value, alt: $('alt').value, era: $('era').value, year: $('year').value,
+                place: place, group: P.groupOf(place), caption: $('caption').value, alt: $('alt').value, era: $('era').value, year: $('year').value, month: $('month').value, day: $('day').value,
                 credit: $('credit').value, name: $('name').value, email: $('email').value,
                 consent: $('consent').checked, hp: $('website').value
             });
             if (typeof gtag === 'function') gtag('event', 'photo_shared', { place: place, era: $('era').value });
             show('ok', '✅ <strong>Thank you!</strong> Your photo is now in the <a href="gallery.html">Clay County Photo Gallery</a> (it can take a moment to show up). Want to share another?');
             photo = null; $('drop-inner').innerHTML = '<strong>Tap to choose another photo</strong>';
-            $('caption').value = ''; $('alt').value = ''; $('year').value = '';
+            $('caption').value = ''; $('alt').value = ''; $('year').value = ''; $('month').value = ''; fillDays();
         } catch (err) {
             show('bad', '❌ ' + String(err.message).replace(/</g, '&lt;'));
         }
