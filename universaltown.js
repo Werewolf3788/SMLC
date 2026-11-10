@@ -1610,6 +1610,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
 
         let townSectionsData = {};
         let globalSectionsData = {};
+        const linkedGalleryData = {};   // linked town name -> its gallery rows
 
         const renderResolvedSections = () => {
             // --- 1. POINT OF INTEREST IN DISCOVER SPOTLIGHT (Guaranteed Image Rendering) ---
@@ -1660,11 +1661,40 @@ function bindFirebaseSemanticSectionsEngine(db) {
                 ? (Array.isArray(globalSectionsData.slideshow.items) ? globalSectionsData.slideshow.items : Object.values(globalSectionsData.slideshow.items))
                 : [];
 
-            const blendedSlides = [];
-            const maxLen = Math.max(townSlides.length, globalSlides.length);
-            for (let i = 0; i < maxLen; i++) {
-                if (townSlides[i]) blendedSlides.push(townSlides[i]);
-                if (globalSlides[i]) blendedSlides.push(globalSlides[i]);
+            // Photos shared/uploaded for this town (Gallery tab -> towns/<Town>/sections/gallery),
+            // including any linked towns (e.g. Louisville page also shows Bible Grove / Hoosier photos)
+            const asList = (v) => v ? (Array.isArray(v) ? v : Object.values(v)) : [];
+            const isShown = (v) => v === true || /^(true|yes|1|x|✓)$/i.test(String(v == null ? '' : v).trim());
+            const seenImages = new Set();
+            const townGallerySlides = [townSectionsData.gallery, ...Object.values(linkedGalleryData)]
+                .flatMap(asList)
+                .filter(g => g && g.image && isShown(g.show))
+                .sort((a, b) => String(b.added || '').localeCompare(String(a.added || '')))
+                .map(g => ({
+                    title: g.caption || g.place || 'Community Photo',
+                    imageUrl: g.image,
+                    alt: g.alt || g.caption || g.place || 'Community photo',
+                    website: ''
+                }));
+
+            let blendedSlides = [];
+            if (ACTIVE_TOWN.isHome) {
+                // Clay County home page: unchanged (global slideshow)
+                const maxLen = Math.max(townSlides.length, globalSlides.length);
+                for (let i = 0; i < maxLen; i++) {
+                    if (townSlides[i]) blendedSlides.push(townSlides[i]);
+                    if (globalSlides[i]) blendedSlides.push(globalSlides[i]);
+                }
+            } else {
+                // Town page: the town's own Slideshow-tab items + its uploaded photos.
+                // A town with neither yet falls back to the Clay County (global) slideshow.
+                const own = [...townSlides, ...townGallerySlides].filter(sl => {
+                    const key = String(sl.imageUrl || sl.image || '');
+                    if (!key || seenImages.has(key)) return false;
+                    seenImages.add(key);
+                    return true;
+                });
+                blendedSlides = own.length > 0 ? own : globalSlides;
             }
 
             const viewport = document.getElementById('flora-slideshow') || document.getElementById('xenia-slideshow') || document.querySelector('.slider-viewport');
@@ -1840,6 +1870,14 @@ function bindFirebaseSemanticSectionsEngine(db) {
         activeFbRefGlobalSections.on('value', (snap) => {
             globalSectionsData = snap.val() || {};
             renderResolvedSections();
+        });
+
+        // Linked towns (e.g. Bible Grove, Hoosier on the Louisville page): include their uploaded photos
+        (ACTIVE_TOWN.linkedTownNames || []).filter(n => n && n !== townName && n !== ACTIVE_TOWN.primaryName).forEach(n => {
+            db.ref(`master_county_data/towns/${n}/sections/gallery`).on('value', (snap) => {
+                linkedGalleryData[n] = snap.val();
+                renderResolvedSections();
+            });
         });
     } catch(err) {
         console.warn("Semantic sections engine error:", err.message);
