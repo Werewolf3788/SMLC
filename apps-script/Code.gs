@@ -1039,3 +1039,110 @@ function phReview_(req) {
   sh.getRange(rowNum, 12, 1, 3).setValues([[u.email, new Date(), link]]);
   return { approved: true, link: link, path: path };
 }
+
+// === SECTION 6: Sign Ads from S&K Venture Signs (read-only copy with full image links) ===
+/*
+ * WHAT IT DOES
+ *   Scott's sign sheet publishes its ads to a public file, playlist.json, on his GitHub.
+ *   importSignAds() reads that file (it never opens or changes his Sheet or his script) and
+ *   writes the ads for Clay City, Xenia, Xenia TV and Flora TV into a tab called "Sign Ads"
+ *   in THIS sheet, turning "./images/X.png" into "https://skventuresigns.com/images/X.png".
+ *
+ *   Only the "Sign Ads" tab is ever rewritten. Expired ads are left out.
+ *   Column A is the town, so Code.gs files each row under that town in Firebase
+ *   (towns/<Town>/sections/sign_ads) like every other tab.
+ *
+ * SETUP
+ *   Run importSignAds once by hand (approve the permissions), then run
+ *   installSignAdsTrigger once to keep it up to date automatically.
+ */
+var SA_SOURCE = "https://raw.githubusercontent.com/skventuresigns-design/skventuresigns/main/playlist.json";
+var SA_SITE = "https://skventuresigns.com/";
+var SA_TAB = "Sign Ads";
+var SA_HEADERS = ["Town", "Screen", "Name", "Image URL", "Type", "Seconds", "Expires"];
+// Scott's tab name (lower case, as it appears in playlist.json) -> [Town, Screen]
+var SA_SCREENS = {
+  "clay city": ["Clay City", "Billboard"],
+  "xenia":     ["Xenia", "Billboard"],
+  "xeniatv":   ["Xenia", "TV"],
+  "floratv":   ["Flora", "TV"]
+};
+var SA_REFRESH_HOURS = 6;
+
+/** "./images/X.png" -> "https://skventuresigns.com/images/X.png". Full links are left alone. */
+function saFullUrl_(path) {
+  var p = String(path || "").trim();
+  if (!p) return "";
+  if (/^https?:\/\//i.test(p)) return p;
+  return SA_SITE + p.replace(/^\.?\//, "").replace(/ /g, "%20");
+}
+
+/** true when the ad's expiration date is before today (Central). Unreadable dates keep the ad. */
+function saIsExpired_(text, todayIso) {
+  var t = String(text || "").trim();
+  if (!t) return false;
+  var iso = /^\d{4}-\d{2}-\d{2}$/.test(t) ? t : null;
+  if (!iso) {
+    var d = new Date(t);
+    if (isNaN(d.getTime())) return false;
+    iso = Utilities.formatDate(d, "America/Chicago", "yyyy-MM-dd");
+  }
+  return iso < todayIso;
+}
+
+/** Reads Scott's published ads and rewrites the "Sign Ads" tab. Safe to run any time. */
+function importSignAds() {
+  var resp = UrlFetchApp.fetch(SA_SOURCE, { muteHttpExceptions: true });
+  if (resp.getResponseCode() !== 200) {
+    throw new Error("Couldn't read the S&K playlist (HTTP " + resp.getResponseCode() + "). Nothing was changed.");
+  }
+  var locations = (JSON.parse(resp.getContentText()).locations) || {};
+  var today = Utilities.formatDate(new Date(), "America/Chicago", "yyyy-MM-dd");
+  var rows = [];
+
+  Object.keys(SA_SCREENS).forEach(function (key) {
+    var ads = locations[key];
+    if (!ads) { Logger.log("No '" + key + "' tab in the S&K playlist - skipped."); return; }
+    ads.forEach(function (ad) {
+      var url = saFullUrl_(ad.imageUrl);
+      if (!url || saIsExpired_(ad.expirationDate, today)) return;
+      rows.push([
+        SA_SCREENS[key][0], SA_SCREENS[key][1], String(ad.advertiser || "").trim(), url,
+        /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url) ? "Video" : (/\.html?(\?|$)/i.test(url) ? "Page" : "Image"),
+        Number(ad.duration) > 0 ? Number(ad.duration) : 8,
+        String(ad.expirationDate || "").trim()
+      ]);
+    });
+  });
+
+  // Never wipe the tab if the feed came back empty
+  if (!rows.length) throw new Error("The S&K playlist had no ads for these screens. Nothing was changed.");
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(SA_TAB) || ss.insertSheet(SA_TAB);
+  var all = [SA_HEADERS].concat(rows);
+
+  // Only write (and re-sync to Firebase) when something actually changed
+  var existing = sheet.getLastRow() > 0
+    ? sheet.getRange(1, 1, sheet.getLastRow(), SA_HEADERS.length).getValues()
+    : [];
+  if (JSON.stringify(existing) === JSON.stringify(all)) { Logger.log("Sign Ads already up to date (" + rows.length + " ads)."); return; }
+
+  sheet.clearContents();
+  sheet.getRange(1, 1, all.length, SA_HEADERS.length).setValues(all);
+  sheet.getRange(1, 1, 1, SA_HEADERS.length).setFontWeight("bold");
+  sheet.setFrozenRows(1);
+  sheet.getRange(1, 4).setNote("Copied automatically from S&K Venture Signs (playlist.json). Don't edit this tab - it is rewritten each time.");
+  SpreadsheetApp.flush();
+  Logger.log("Sign Ads updated: " + rows.length + " ads.");
+  pushMasterDataToFirebase();   // edits made by a script don't fire the On edit trigger
+}
+
+/** Run once by hand: keeps the Sign Ads tab up to date (replaces any old copy of this timer). */
+function installSignAdsTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === "importSignAds") ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger("importSignAds").timeBased().everyHours(SA_REFRESH_HOURS).create();
+  Logger.log("Sign Ads refresh scheduled every " + SA_REFRESH_HOURS + " hours.");
+}
