@@ -2577,6 +2577,8 @@ async function loadCommunityBulletinFeed() {
                     const fileAttachments = toPlainArray(item.attachments).filter(a => a && !a.isImage && a.fileUrl);
                     const attachmentChips = fileAttachments.length ? `<div class="smlc-event-attachments">${fileAttachments.map(a => `<a href="${escapeHtmlText(a.fileUrl)}" target="_blank" rel="noopener" class="smlc-attachment-chip" data-ga-label="event_attachment">&#128206; ${escapeHtmlText(a.title)}</a>`).join('')}</div>` : '';
                     const turnByTurnNavUrl = buildTurnByTurnNavigationUrl(eventLoc);
+                    // Only offer "Read Details" when the popup would show something the card doesn't (description, flyer or attachments)
+                    const hasMoreToRead = !!(String(rawDetails).trim() || finalEventImg || toPlainArray(item.attachments).some(a => a && a.fileUrl));
 
                     const thumbnailHtml = finalEventImg ? `
                         <div style="float: right; margin: 0 0 10px 12px;">
@@ -2601,8 +2603,8 @@ async function loadCommunityBulletinFeed() {
                             <div class="smlc-event-desc" style="font-size:0.8125rem; color:var(--card-text-secondary, #444); margin-top:4px;">${linkifyRawUrls(rawDetails.substring(0, 110))}${rawDetails.length > 110 ? '...' : ''}</div>
                             
                             <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                                <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:var(--primary); font-weight:bold; cursor:pointer; font-size:0.75rem; text-decoration:underline;">Read Details &rarr;</div>
-                                <span style="color:var(--card-muted, #999); font-size:0.6875rem;">|</span>
+                                ${hasMoreToRead ? `<div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:var(--primary); font-weight:bold; cursor:pointer; font-size:0.75rem; text-decoration:underline;">Read Details &rarr;</div>
+                                <span style="color:var(--card-muted, #999); font-size:0.6875rem;">|</span>` : ''}
                                 <a href="${singleGoogleUrl}" target="_blank" rel="noopener" style="font-size:0.6875rem; color:#1a73e8; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_google" aria-label="Add ${escapeHtmlText(eventTitle)} to Google Calendar">+ Google Cal</a>
                                 <span style="color:var(--card-muted, #999); font-size:0.6875rem;">|</span>
                                 <a href="#" role="button" onclick="return smlcAddEventToIcs(${idx});" style="font-size:0.6875rem; color:#1e7e34; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_ical" aria-label="Add ${escapeHtmlText(eventTitle)} to Apple or Outlook calendar">+ Apple / Outlook</a>
