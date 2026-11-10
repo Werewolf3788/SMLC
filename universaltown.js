@@ -2117,7 +2117,13 @@ function initializeFirebaseGasMonitor(db) {
 
     const render = () => {
         if (townStations === null || priceData === null) return;
-        const list = townStations.length > 0 ? townStations : fallbackIds.map(id => ({ id, title: '' }));
+        // Only show stations that belong to this page's towns (gasKey). A Gas_Widget row for Xenia that carries
+        // another town's station number (e.g. Clay City's Casey's) is ignored; unknown station numbers are kept.
+        const ownStations = townStations.filter(st => {
+            const known = stationConfigs[st.id];
+            return !known || ACTIVE_TOWN.isHome || targetTowns.includes(known.town);
+        });
+        const list = ownStations.length > 0 ? ownStations : fallbackIds.map(id => ({ id, title: '' }));
         if (list.length === 0) { notAvailable("Fuel prices aren't available for this town yet."); return; }
         const configs = {};
         list.forEach(st => {
