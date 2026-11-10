@@ -1121,23 +1121,30 @@ function importSignAdsToPartners() {
     if (!marked) mineNames[String(r[0]).trim().toLowerCase() + "|" + String(r[1]).trim().toLowerCase()] = true;
   });
 
+  var stats = [];   // per screen: why ads were (not) used - shown in the log and in any error
   Object.keys(SA_SCREENS).forEach(function (key) {
     var ads = locations[key];
-    if (!ads) { Logger.log("No '" + key + "' tab in the S&K playlist - skipped."); return; }
+    if (!ads) { stats.push(key + ": no such tab in the S&K playlist"); return; }
+    var st = { total: ads.length, used: 0, noPicture: 0, expired: 0, notImage: 0, skipped: 0, yours: 0, repeat: 0 };
     ads.forEach(function (ad) {
-      var url = saFullUrl_(ad.imageUrl);
-      var name = String(ad.advertiser || "").trim();
-      if (!url || !name || saIsExpired_(ad.expirationDate, today)) return;
-      if (!/\.(png|jpe?g|gif|webp|avif|svg)(\?|$)/i.test(url)) return;      // videos / pages can't be a partner picture
-      if (skip.indexOf(name.toLowerCase()) !== -1) return;
+      var url = saFullUrl_(ad && ad.imageUrl);
+      var name = String((ad && ad.advertiser) || "").trim();
+      if (!url || !name) { st.noPicture++; return; }
+      if (saIsExpired_(ad.expirationDate, today)) { st.expired++; return; }
+      if (!/\.(png|jpe?g|gif|webp|avif|svg)(\?|$)/i.test(url)) { st.notImage++; return; }   // videos / pages can't be a partner picture
+      if (skip.indexOf(name.toLowerCase()) !== -1) { st.skipped++; return; }
       var town = SA_SCREENS[key];
       var nameKey = town.toLowerCase() + "|" + name.toLowerCase();
-      if (mineNames[nameKey] || seen[nameKey]) return;                       // yours wins; same ad on two screens counts once
+      if (mineNames[nameKey]) { st.yours++; return; }                        // yours wins
+      if (seen[nameKey]) { st.repeat++; return; }                            // same ad on two screens counts once
       seen[nameKey] = { town: town, name: name, url: url };
       wanted.push(seen[nameKey]);
+      st.used++;
     });
+    stats.push(key + ": " + JSON.stringify(st) + (ads[0] ? " first=" + JSON.stringify(ads[0]) : ""));
   });
-  if (!wanted.length) throw new Error("The S&K playlist had no usable ads for these screens. Nothing was changed.");
+  Logger.log("S&K playlist check (updated " + (JSON.parse(resp.getContentText()).lastUpdated || "?") + ")\n" + stats.join("\n"));
+  if (!wanted.length) throw new Error("The S&K playlist had no usable ads for these screens. Nothing was changed.\n" + stats.join("\n"));
 
   // Find (or add) the "Source" column, to the right of your existing columns
   var srcCol = srcCol0;
