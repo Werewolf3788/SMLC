@@ -566,15 +566,12 @@ function updateGasPricesFromGoogle() {
     }
 
     var prices = ((JSON.parse(resp.getContentText()).fuelOptions) || {}).fuelPrices || [];
-    var regular = null, diesel = null, midgrade = null, premium = null, e85 = null, newest = null;
+    var regular = null, diesel = null, newest = null;
     prices.forEach(function(p) {
       if (!p.price) return;
       var value = Number(p.price.units || 0) + Number(p.price.nanos || 0) / 1e9;
       if (p.type === "REGULAR_UNLEADED") regular = value;
       else if (p.type === "DIESEL") diesel = value;
-      else if (p.type === "MIDGRADE") midgrade = value;
-      else if (p.type === "PREMIUM") premium = value;
-      else if (p.type === "E85") e85 = value;
       else return;
       if (p.updateTime && (!newest || p.updateTime > newest)) newest = p.updateTime;
     });
@@ -584,7 +581,7 @@ function updateGasPricesFromGoogle() {
     // Also feed the live billboard at /fuel_prices/<station_id> (Col C)
     var stationId = String(row[GAS_COL.STATION_ID] || "").trim();
     if (stationId && (regular !== null || diesel !== null)) {
-      pushToBillboard_(stationId, regular, diesel, newest, midgrade, premium, e85);
+      pushToBillboard_(stationId, regular, diesel, newest);
     }
 
     if (regular !== null) {
@@ -609,11 +606,11 @@ function updateGasPricesFromGoogle() {
 
 /**
  * Writes Google's price into /fuel_prices/<stationId> in the same shape the
- * billboard and the community update form use: { reg, mid, pre, dsl, date }.
+ * billboard and the community update form use: { reg, dsl, date }.
  * Only overwrites when Google's price is NEWER than what's there, so a price
  * someone typed in through the update form is never replaced by an older one.
  */
-function pushToBillboard_(stationId, regular, diesel, googleUpdateIso, midgrade, premium, e85) {
+function pushToBillboard_(stationId, regular, diesel, googleUpdateIso) {
   var base = "https://smlc-fuel-monitor-default-rtdb.firebaseio.com/fuel_prices/" + encodeURIComponent(stationId) + ".json";
   var googleTime = googleUpdateIso ? new Date(googleUpdateIso) : new Date();
 
@@ -635,9 +632,6 @@ function pushToBillboard_(stationId, regular, diesel, googleUpdateIso, midgrade,
   };
   if (regular !== null) update.reg = regular.toFixed(2);
   if (diesel !== null) update.dsl = diesel.toFixed(2);
-  if (midgrade) update.mid = midgrade.toFixed(2);
-  if (premium) update.pre = premium.toFixed(2);
-  if (e85) update.e85 = e85.toFixed(2);
 
   var resp = UrlFetchApp.fetch(base, {
     method: "patch",
@@ -712,8 +706,7 @@ var PH_FOLDER = "images";
 var PH_FIREBASE_API_KEY = "AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg";   // public web key (same as the website)
 var PH_RTDB = "https://smlc-fuel-monitor-default-rtdb.firebaseio.com";
 var PH_GALLERY_TAB = "Gallery";
-var PH_GALLERY_HEADERS = ["Town", "Image", "Place", "Group", "Caption", "Era", "Year", "Credit", "Show", "Added", "Source", "Alt", "Month", "Day"];
-var PH_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+var PH_GALLERY_HEADERS = ["Town", "Image", "Place", "Group", "Caption", "Era", "Year", "Credit", "Show", "Added", "Source", "Alt"];
 var PH_SUB_HEADERS = ["Received", "Status", "Place", "Group", "Caption", "Era", "Year", "Credit", "Submitted By", "Email",
                       "Drive File ID", "Reviewed By", "Reviewed On", "Image Link"];
 var PH_MAX_PUBLIC_PER_DAY = 60;
@@ -959,18 +952,13 @@ function phSubmit_(req) {
   var ext = mime === "image/png" ? "png" : "jpg";
   var place = clean(req.place, 80), caption = clean(req.caption, 300);
   var credit = clean(req.credit, 120) || clean(req.name, 120);
-  // Month and day are optional. Day is only kept when a month was chosen.
-  var month = PH_MONTHS.indexOf(clean(req.month, 20)) >= 0 ? clean(req.month, 20) : "";
-  var dayNum = Number(clean(req.day, 2));
-  var day = (month && dayNum >= 1 && dayNum <= 31) ? String(Math.floor(dayNum)) : "";
 
   // Publish right away: save into images/ (named after the town) and add it to the Gallery tab
   var path = phFreePath_(phTownSlug_(place, caption), ext);
   var link = phCommit_(path, req.base64, "Add " + path + " (shared by the public)");
   phGalleryAdd_({
     Town: phTownCol_(place), Image: link, Place: place, Group: clean(req.group, 80), Caption: caption, Era: clean(req.era, 20),
-    Year: clean(req.year, 20), Credit: credit, Show: true, Added: new Date(), Source: "Shared by the public", Alt: clean(req.alt, 300),
-    Month: month, Day: day
+    Year: clean(req.year, 20), Credit: credit, Show: true, Added: new Date(), Source: "Shared by the public", Alt: clean(req.alt, 300)
   });
 
   // Private record (who sent what) - kept out of the synced sheet so emails never go public
