@@ -1,5 +1,5 @@
 /* === SECTION: File Header & Config === */
-// Active Version: v1.9.3 | Timestamp: 2026-10-31_06:51:00 EDT
+// Active Version: v1.9.4 | Timestamp: 2026-11-10_10:25:00 EST
 // Description: Multi-Source Local News Scraper with XML Sanitizer, Cloudflare Bypass & Strict Clay County Filtering
 
 import { initializeApp } from "firebase/app";
@@ -51,6 +51,7 @@ const rssParser = new Parser({
 const STORE_FULL_STORY = false;
 const EXCERPT_LENGTH = 400;
 const MAX_AGE_DAYS = 7;
+const TAG_SCAN_LENGTH = 1500;
 
 /* === SECTION: Area Rules === */
 const AREA_RULES = {
@@ -204,6 +205,8 @@ const AREA_IDS = {
 };
 
 const COLLEGE_REGEX = /\b(college|university|lake land|olney central|SIU|SIUE|EIU)\b/i;
+// Matches county lists such as "Clay and Effingham counties" or "Clay, Effingham, ..., and White counties"
+const COUNTY_LIST_REGEX = /\bclay\b(?:\s*,\s*[A-Za-z]+)*,?\s*(?:and\s+)?[A-Za-z]+\s+counties\b/i;
 const OTHER_STATES_REGEX = /\b(alabama|alaska|arizona|arkansas|california|colorado|connecticut|delaware|florida|georgia|hawaii|idaho|indiana|iowa|kansas|kentucky|louisiana|maine|maryland|massachusetts|michigan|minnesota|mississippi|missouri|montana|nebraska|nevada|new hampshire|new jersey|new mexico|new york|north carolina|north dakota|ohio|oklahoma|oregon|pennsylvania|rhode island|south carolina|south dakota|tennessee|texas|utah|vermont|virginia|wisconsin|wyoming)\b/i;
 
 function escapeRegex(s) {
@@ -220,7 +223,7 @@ function resolveStoryTags(title, summary) {
     const lower = text.toLowerCase();
 
     const hasIllinois = /\billinois\b/i.test(text) || /,\s*IL\b/.test(text);
-    const hasCounty = /\bclay\s*county\b/i.test(text);
+    const hasCounty = /\bclay\s*county\b/i.test(text) || COUNTY_LIST_REGEX.test(text);
     const hasContext = hasIllinois || hasCounty;
     const wrongState = OTHER_STATES_REGEX.test(text) && !hasIllinois;
 
@@ -248,7 +251,7 @@ function resolveStoryTags(title, summary) {
     }
 
     if (COLLEGE_REGEX.test(text)) return null;
-    if (hits.has("Clay County")) return ["Clay County"];
+    if (hits.has("Clay County") || COUNTY_LIST_REGEX.test(text)) return ["Clay County"];
 
     return null;
 }
@@ -482,6 +485,7 @@ async function fetchAllFeedItems() {
                         full_story: htmlData.story,
                         summary: htmlData.story.slice(0, 500),
                         image: htmlData.image,
+                        is_page: true,
                         source_name: source.name,
                         source_url: source.url
                     });
@@ -616,7 +620,12 @@ async function runScraper() {
         }
         processedKeys.add(docId);
 
-        const tags = resolveStoryTags(title, item.summary || "");
+        // RSS items: scan summary + start of story so towns mentioned past the first 500 chars are caught.
+        // Scraped index pages (is_page) stay summary-only so unrelated page text can't tag them.
+        const tagText = item.is_page
+            ? (item.summary || "")
+            : `${item.summary || ""} ${(story || "").slice(0, TAG_SCAN_LENGTH)}`;
+        const tags = resolveStoryTags(title, tagText);
         if (!tags) {
             irrelevantCount++;
             continue;

@@ -1343,10 +1343,28 @@ function renderScoreStreamWidgets(container, widgets) {
     loadScoreStreamEmbed();
 }
 
+// Fixed ScoreStream widgets for the most active sports towns (grade school + high school combined
+// in one widget each). Towns listed here ignore the database sports entries; an empty list hides
+// the scoreboard on that page. Towns not listed still read from the database as before.
+const SPORTS_WIDGET_OVERRIDES = {
+    'Flora':      [{ id: '68602', type: 'horzScoreboard', label: 'Flora Scores', website: '' }],
+    'Louisville': [{ id: '68601', type: 'horzScoreboard', label: 'Louisville Scores', website: '' }],
+    'Clay City':  []
+};
+
 function bindFirebaseSportsEngine(db) {
-    if (!db) return;
     const sportsContainer = document.getElementById('town-sports-scoreboard-target');
     if (!sportsContainer) return;
+
+    const fixedWidgets = !ACTIVE_TOWN.isHome && SPORTS_WIDGET_OVERRIDES[ACTIVE_TOWN.dbTownKey];
+    if (fixedWidgets) {
+        if (activeFbRefSports) { activeFbRefSports.off(); activeFbRefSports = null; }
+        lastScoreStreamSignature = '';
+        renderScoreStreamWidgets(sportsContainer, fixedWidgets);
+        return;
+    }
+
+    if (!db) return;
 
     try {
         if (activeFbRefSports) activeFbRefSports.off();
@@ -2721,17 +2739,6 @@ function handleSPAHashNavigation() {
         /* ---------- Header: navy #001B37 behind the Support My Local Community ribbon (all pages, day and night) ---------- */
         .site-brand-header, .site-brand-header .header-billboard-link, body.home-bg > header.header { background: #001B37 !important; }
 
-        /* ---------- Quick Answers (SEO / AEO) ---------- */
-        .smlc-answers { width: var(--container-width, 96%); max-width: var(--content-max, 1680px); margin: 28px auto 36px; padding: 0 clamp(4px, 2vw, 24px); box-sizing: border-box; position: relative; z-index: 1; }
-        .smlc-answers-inner { background: var(--card-surface-bg, #fffdf5); color: var(--card-text-primary, #1a1a1a); border: 2px solid var(--card-border-color, #222);
-            box-shadow: 6px 6px 0 var(--card-shadow-color, #000); border-radius: 8px; padding: clamp(18px, 3vw, 34px); }
-        .smlc-answers-title { margin: 0 0 10px; font: 900 clamp(1.5rem, 3vw, 2.2rem)/1.15 'Playfair Display', Georgia, serif; color: var(--on-card-accent, var(--primary, #0258A3)); }
-        .smlc-answers-lead { margin: 0 0 22px; max-width: 75ch; font-size: clamp(1rem, 1.3vw, 1.12rem); line-height: 1.65; color: var(--card-text-secondary, #333); }
-        .smlc-answers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 14px 28px; }
-        .smlc-answer { padding: 14px 0 0; border-top: 2px solid var(--card-border-color, #222); }
-        .smlc-answer-q { margin: 0 0 6px; font: 700 clamp(1.02rem, 1.3vw, 1.15rem)/1.3 'Playfair Display', Georgia, serif; color: var(--card-text-primary, #1a1a1a); }
-        .smlc-answer-a { margin: 0; font-size: 0.9375rem; line-height: 1.6; color: var(--card-text-secondary, #333); }
-        .smlc-answer-a a, .smlc-answers-lead a { color: var(--on-card-accent, #0258A3); text-decoration: underline; word-break: break-word; }
 
         /* ---------- ScoreStream sports widgets ---------- */
         .smlc-sports-block { margin: 0 0 16px; }
@@ -3420,7 +3427,7 @@ window.smlcWeatherChanged = function () {
     if (document.getElementById('smlc-fx-styles')) return;
     const style = document.createElement('style');
     style.id = 'smlc-fx-styles';
-    const CARDS = '.smlc-answers-inner, .clay-county-news-box, .news-clipping-wrapper, .newspaper-feed-chassis, .fuel-monitor-billboard-card, .point-of-interest-card, .article-card-chassis, .history-card, .proclamation-card-box, .et_pb_module_heading, .community-partner-card, .slideshow-box';
+    const CARDS = '.clay-county-news-box, .news-clipping-wrapper, .newspaper-feed-chassis, .fuel-monitor-billboard-card, .point-of-interest-card, .article-card-chassis, .history-card, .proclamation-card-box, .et_pb_module_heading, .community-partner-card, .slideshow-box';
     const cardList = (suffix) => CARDS.split(',').map(s => s.trim())
         .filter(sel => !(suffix === '::after' && sel === '.et_pb_module_heading'))
         .map(sel => `html.smlc-fx-on ${sel}${suffix}`).join(',\n');
@@ -4152,7 +4159,7 @@ function initAccessibility() {
         html.smlc-hc body :is(button, summary, .portal-pill-btn, .weather-pill, .directory-tile-link, .event-clipping-btn, .fb-action-btn, .spotlight-btn, .town-directory-interactive-btn, .smlc-bn-btn, .smlc-bn-row) {
             background: #000 !important; color: #fff !important; border: 2px solid #fff !important; text-shadow: none !important; box-shadow: none !important; }
         html.smlc-hc body .portal-pill-btn.active, html.smlc-hc body .portal-pill-btn[aria-selected="true"] { background: #fff !important; color: #000 !important; }
-        html.smlc-hc body :is(.clay-county-news-box, .news-clipping-wrapper, .newspaper-feed-chassis, .news-matrix-card, .fuel-monitor-billboard-card, .point-of-interest-card, .article-inner-box, .history-card, .proclamation-card-box, .community-partner-card, .smlc-answers-inner, .et_pb_module_heading, .lightbox-modal-window, .smlc-bn-sheet, .smlc-a11y-card) {
+        html.smlc-hc body :is(.clay-county-news-box, .news-clipping-wrapper, .newspaper-feed-chassis, .news-matrix-card, .fuel-monitor-billboard-card, .point-of-interest-card, .article-inner-box, .history-card, .proclamation-card-box, .community-partner-card, .et_pb_module_heading, .lightbox-modal-window, .smlc-bn-sheet, .smlc-a11y-card) {
             border: 2px solid #fff !important; outline: none !important; }
         html.smlc-hc body .smlc-event-status { background: #fff !important; color: #000 !important; box-shadow: none !important; animation: none !important; }
         html.smlc-hc body *::before, html.smlc-hc body *::after { text-shadow: none; }
