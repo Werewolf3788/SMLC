@@ -1355,48 +1355,24 @@ function renderScoreStreamWidgets(container, widgets) {
     loadScoreStreamEmbed();
 }
 
-// Fixed ScoreStream widgets for the most active sports towns (grade school + high school combined
-// in one widget each). Towns listed here ignore the database sports entries; an empty list hides
-// the scoreboard on that page. Towns not listed still read from the database as before.
-const SPORTS_WIDGET_OVERRIDES = {
-    'Flora':      [{ id: '68602', type: 'horzScoreboard', label: 'Flora Scores', website: '' }],
-    'Louisville': [{ id: '68601', type: 'horzScoreboard', label: 'Louisville Scores', website: '' }],
-    'Clay City':  []
+// Sports scoreboards: only Flora and Louisville (the most active sports towns) show one.
+// Each is a single ScoreStream widget with grade school + high school combined. Every other town page
+// shows no sports section; the Clay County home page shows both. The database sports entries are no longer used.
+const SPORTS_WIDGETS = {
+    'Flora':      { id: '68602', type: 'horzScoreboard', label: 'Flora Scores', website: '' },
+    'Louisville': { id: '68601', type: 'horzScoreboard', label: 'Louisville Scores', website: '' }
 };
 
 function bindFirebaseSportsEngine(db) {
     const sportsContainer = document.getElementById('town-sports-scoreboard-target');
     if (!sportsContainer) return;
 
-    const fixedWidgets = !ACTIVE_TOWN.isHome && SPORTS_WIDGET_OVERRIDES[ACTIVE_TOWN.dbTownKey];
-    if (fixedWidgets) {
-        if (activeFbRefSports) { activeFbRefSports.off(); activeFbRefSports = null; }
-        lastScoreStreamSignature = '';
-        renderScoreStreamWidgets(sportsContainer, fixedWidgets);
-        return;
-    }
-
-    if (!db) return;
-
-    try {
-        if (activeFbRefSports) activeFbRefSports.off();
-        lastScoreStreamSignature = '';
-
-        if (ACTIVE_TOWN.isHome) {
-            // Home: the one county-wide scoreboard (it already shows every school)
-            renderScoreStreamWidgets(sportsContainer, [SCORESTREAM_DEFAULT_WIDGET]);
-            return;
-        }
-
-        activeFbRefSports = db.ref(`master_county_data/towns/${ACTIVE_TOWN.dbTownKey}/sections/sports`);
-        activeFbRefSports.on('value', (snap) => {
-            const widgets = toPlainArray(snap.val()).map(extractScoreStreamWidget).filter(Boolean);
-            // No Sports rows for this town yet -> show the county-wide scoreboard instead of nothing
-            renderScoreStreamWidgets(sportsContainer, widgets.length ? widgets : [SCORESTREAM_DEFAULT_WIDGET]);
-        });
-    } catch (err) {
-        console.warn("Sports engine notice:", err.message);
-    }
+    if (activeFbRefSports) { activeFbRefSports.off(); activeFbRefSports = null; }
+    lastScoreStreamSignature = '';
+    const widgets = ACTIVE_TOWN.isHome
+        ? Object.values(SPORTS_WIDGETS)
+        : (SPORTS_WIDGETS[ACTIVE_TOWN.dbTownKey] ? [SPORTS_WIDGETS[ACTIVE_TOWN.dbTownKey]] : []);
+    renderScoreStreamWidgets(sportsContainer, widgets);
 }
 
 // === FIREBASE DATABASE INITIALIZATION ===
