@@ -498,22 +498,6 @@ html.smlc-header-scrolled .smlc-menu-logo { display: inline-flex; animation: sml
 @keyframes smlcLivePulse { 0%,100% { box-shadow: 0 0 6px rgba(255,31,142,.5); } 50% { box-shadow: 0 0 16px rgba(255,31,142,.95); } }
 @media (prefers-reduced-motion: reduce) { .event-status.status-live { animation: none; } }
 
-/* Quick Answers (SEO / AEO) */
-.smlc-answers { width: 92%; max-width: 1400px; margin: 36px auto; }
-.smlc-answers-inner { background: #fffdf5; color: #1a1a1a; border: 2px solid #222; box-shadow: 6px 6px 0 #000; border-radius: 8px; padding: clamp(18px, 3vw, 34px); }
-.smlc-answers-title { margin: 0 0 10px; font: 900 clamp(1.5rem, 3vw, 2.2rem)/1.15 "Times New Roman", Georgia, serif; color: #0258A3; }
-.smlc-answers-lead { margin: 0 0 22px; max-width: 75ch; font-size: 1.05rem; line-height: 1.65; color: #333; }
-.smlc-answers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 14px 28px; }
-.smlc-answer { padding: 14px 0 0; border-top: 2px solid #222; }
-.smlc-answer-q { margin: 0 0 6px; font: 700 1.1rem/1.3 "Times New Roman", Georgia, serif; color: #1a1a1a; }
-.smlc-answer-a { margin: 0; font-size: 15px; line-height: 1.6; color: #333; }
-.smlc-answer-a a, .smlc-answers-lead a { color: #0258A3; text-decoration: underline; word-break: break-word; }
 @media (prefers-color-scheme: dark) {
     .nav-bar { border-color: #555; }
-    .smlc-answers-inner { background: #1c1c1e; color: #f4f4f5; border-color: #555; }
-    .smlc-answers-title { color: #9ccfff; }
-    .smlc-answers-lead, .smlc-answer-a { color: #d4d4d8; }
-    .smlc-answer-q { color: #f4f4f5; }
-    .smlc-answer { border-color: #555; }
-    .smlc-answer-a a, .smlc-answers-lead a { color: #9ccfff; }
 }
