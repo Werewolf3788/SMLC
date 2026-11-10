@@ -870,11 +870,16 @@ function markImageMissingIfEmpty(imgElement) {
     if (imgElement && !imgElement.getAttribute('src')) showImageUnavailable(imgElement);
 }
 
+// Video links (mp4/webm/mov) are shown as a muted looping clip instead of an image.
+function isVideoUrl(u) { return /\.(mp4|webm|mov)(\?.*)?$/i.test(String(u || '').trim()); }
+
 function closeLightbox(event) {
     const overlay = document.getElementById('portal-global-lightbox');
     if (!overlay) return;
     if (!event || event.target === overlay || event.target.classList.contains('lightbox-close-btn') || event.target.tagName === 'BUTTON') {
         overlay.style.display = 'none';
+        const lv = document.getElementById('lightbox-target-video');
+        if (lv) { try { lv.pause(); } catch (e) {} lv.removeAttribute('src'); lv.load && lv.load(); }
     }
 }
 
@@ -890,7 +895,23 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = ""
     const cleanAlt = altText || '';
     const cleanTargetUrl = targetUrl || '';
 
-    if (imgSrc && targetImg) {
+    let lightVideo = document.getElementById('lightbox-target-video');
+    if (imgSrc && targetImg && isVideoUrl(imgSrc)) {
+        if (!lightVideo) {
+            lightVideo = document.createElement('video');
+            lightVideo.id = 'lightbox-target-video';
+            lightVideo.controls = true; lightVideo.loop = true; lightVideo.muted = true; lightVideo.playsInline = true;
+            lightVideo.style.cssText = 'max-width:100%; max-height:70vh; display:block; margin:0 auto;';
+            targetImg.parentElement.insertBefore(lightVideo, targetImg);
+        }
+        targetImg.style.display = 'none';
+        lightVideo.style.display = 'block';
+        lightVideo.src = imgSrc.replace(/^\/\//, 'https://');
+        lightVideo.play && lightVideo.play().catch(() => {});
+        if (targetImg.parentElement) targetImg.parentElement.style.display = 'block';
+    } else if (imgSrc && targetImg) {
+        if (lightVideo) { try { lightVideo.pause(); } catch (e) {} lightVideo.style.display = 'none'; }
+        targetImg.style.display = '';
         safeSetImageSource(targetImg, normalizeImageUrl(imgSrc) || imgSrc, null, cleanAlt || cleanTitle);
         if (targetImg.parentElement) targetImg.parentElement.style.display = 'block';
     } else if (targetImg && targetImg.parentElement) {
@@ -2000,7 +2021,9 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
         return `
             <div class="community-partner-card" data-partner-name="${escapeJsString(name)}" style="transition: transform 0.35s ease, opacity 0.35s ease;">
                 <div class="partner-logo-container">
-                    <img class="partner-logo-asset" src="${imgUrl}" alt="${escapeJsString(altText)} logo" loading="lazy" onclick="fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')" style="cursor:pointer;">
+                    ${isVideoUrl(imgUrl)
+                        ? `<video class="partner-logo-asset" src="${imgUrl.replace(/^\/\//, 'https://')}" aria-label="${escapeJsString(altText)}" autoplay muted loop playsinline preload="metadata" onclick="fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')" style="cursor:pointer;"></video>`
+                        : `<img class="partner-logo-asset" src="${imgUrl}" alt="${escapeJsString(altText)} logo" loading="lazy" onclick="fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')" style="cursor:pointer;">`}
                 </div>
                 <h3 class="partner-title">${name}</h3>
                 ${partner.website ? `<a class="directory-tile-link" href="${link}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} data-ga-label="partner_cta">Visit Partner &rarr;</a>` : ''}

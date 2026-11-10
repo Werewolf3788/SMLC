@@ -96,7 +96,7 @@ a { color: var(--link-bright-blue); text-decoration: none; }
 .partners-horizontal-strip:empty { display: none; }
 .community-partner-card { flex: 0 1 230px; min-width: 170px; max-width: 240px; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; text-align: center; background: var(--card-surface-bg); color: var(--card-text-primary); border: 2px solid var(--card-border-color); border-radius: 8px; box-shadow: 4px 4px 0 var(--card-shadow-color); transition: transform .25s, opacity .25s; }
 .partner-logo-container { height: 85px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px; }
-.partner-logo-asset, .partner-logo-container img { max-width: 95%; max-height: 75px; width: auto; height: auto; object-fit: contain; cursor: pointer; }
+.partner-logo-asset, .partner-logo-container img, .partner-logo-container video { max-width: 95%; max-height: 75px; width: auto; height: auto; object-fit: contain; cursor: pointer; }
 .partner-title { margin: 8px 0 6px; font: 700 0.9375rem/1.2 var(--font-head); color: var(--card-text-primary); }
 .directory-tile-link { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 12px; background: var(--flora-blue); color: #fff; border: 2px solid var(--flora-orange); border-radius: 6px; font: 700 0.8125rem var(--font-label); text-transform: uppercase; letter-spacing: .5px; }
 .directory-tile-link:hover { background: var(--flora-orange); }
