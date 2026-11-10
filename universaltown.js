@@ -2354,8 +2354,22 @@ function smlcCleanEventText(t) {
     return String(t || '').replace(/^\s*Visit ourflora\.com for more details\.?\s*$/i, '');
 }
 
+// Google gives all-day events as midnight in the calendar's own time zone (e.g. Nov 11 00:00 Eastern = Nov 10 11 PM Central),
+// which made them show a day early. The UTC date of that instant is the true calendar date for any US zone,
+// so rebuild start/end as Central midnight of that date.
+function smlcAllDayCentralDate(iso) {
+    const t = new Date(iso);
+    return centralWallTimeToDate(t.getUTCFullYear(), t.getUTCMonth() + 1, t.getUTCDate());
+}
+
 function smlcNormalizeEventDoc(d) {
     if (!d || !(d.title || d.name)) return null;
+    if (d.isAllDay === true && d.start && !isNaN(new Date(d.start).getTime())) {
+        const s0 = smlcAllDayCentralDate(d.start);
+        let e0 = d.end && !isNaN(new Date(d.end).getTime()) ? smlcAllDayCentralDate(d.end) : null;
+        if (!e0 || e0 <= s0) e0 = new Date(s0.getTime() + 24 * 3600000);
+        d = { ...d, start: s0.toISOString(), end: e0.toISOString() };
+    }
     const attachments = toPlainArray(d.attachments).filter(a => a && (a.fileUrl || a.url)).map(a => ({
         title: a.title || 'Attachment', fileUrl: a.fileUrl || a.url, mimeType: a.mimeType || '', isImage: smlcIsImageAttachment(a)
     }));

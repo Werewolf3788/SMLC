@@ -731,8 +731,10 @@
             let end = ev.end && !isNaN(new Date(ev.end).getTime()) ? new Date(ev.end) : null;
             const allDay = ev.isAllDay === true;
             if (allDay) {
-                const ymd = centralYmd(ev.start);
-                if (ymd) start = centralWallTimeToDate(ymd.y, ymd.m, ymd.d);
+                // Google's all-day start is midnight in the calendar's zone; its UTC date is the real date
+                const u = new Date(ev.start);
+                start = centralWallTimeToDate(u.getUTCFullYear(), u.getUTCMonth() + 1, u.getUTCDate());
+                if (end) { const ue = new Date(ev.end); end = centralWallTimeToDate(ue.getUTCFullYear(), ue.getUTCMonth() + 1, ue.getUTCDate()); }
                 if (!end || end <= start) end = new Date(start.getTime() + 24 * HOUR);
             }
             if (!end || end <= start) end = new Date(start.getTime() + 2 * HOUR);
