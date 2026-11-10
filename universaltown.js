@@ -2097,9 +2097,9 @@ function initializeFirebaseGasMonitor(db) {
         "48101": { town: "flora", display: "Flora", name: "HUCK'S", logo: "Hucks.png" },      
         "128128": { town: "flora", display: "Flora", name: "MACH 1", logo: "Mach 1.png" },    
         "120226": { town: "flora", display: "Flora", name: "FAST STOP", logo: "Fast stop.png" },  
-        "48026": { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" }, 
-        "171711": { town: "clay-city", display: "Clay City", name: "CASEY'S", logo: "Casey's.png" }, 
-        "181818": { town: "xenia", display: "Xenia", name: "KNAPP'S", logo: "Knapps.png" }   
+        "87817": { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" }, 
+        "48026": { town: "clay-city", display: "Clay City", name: "CASEY'S", logo: "Casey's.png" }, 
+        "171711": { town: "xenia", display: "Xenia", name: "CITGO", logo: "Citgo.png" }   
     };
 
     // Which stations to show for this town:
