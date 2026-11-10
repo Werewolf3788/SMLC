@@ -2820,12 +2820,12 @@ function handleSPAHashNavigation() {
             gap: 16px; overflow: hidden !important; padding: 4px 8px 10px; scrollbar-width: none; }
         html .partners-horizontal-strip::-webkit-scrollbar { display: none; }
         html .partners-horizontal-strip .community-partner-card { flex: 1 1 0; min-width: 0; max-width: 260px; margin: 0; box-sizing: border-box; }
-        html .partners-horizontal-strip .partner-logo-container { height: 90px; width: 100%; box-sizing: border-box; }
-        html .partners-horizontal-strip .partner-logo-container img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
+        html .partners-horizontal-strip .partner-logo-container { height: 130px; width: 100%; box-sizing: border-box; background: transparent; border: 0; padding: 0; overflow: visible; }
+        html .partners-horizontal-strip .partner-logo-container :is(img, video) { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; border-radius: 4px; }
         html .partners-horizontal-strip .partner-title { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
         @media (max-width: 767px) {
             html .partners-horizontal-strip .community-partner-card { flex: 0 1 88%; max-width: 340px; }
-            html .partners-horizontal-strip .partner-logo-container { height: 105px; }
+            html .partners-horizontal-strip .partner-logo-container { height: 150px; }
         }
 
         /* ---------- Alt text is for screen readers, search engines and the lightbox only:
