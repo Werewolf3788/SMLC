@@ -1199,6 +1199,32 @@ function bindFirebaseWeatherForecastEngine(db) {
     }
 }
 
+// "Feels like" number color, following the usual weather-map scale (degrees F):
+// below 0 = purple/pink/white, 0-50 = blue to teal, 50-70 = green, 70-90 = yellow to orange, 90+ = red to dark maroon.
+// Colors are kept bright enough to read on the dark weather chip.
+const SMLC_FEELS_STOPS = [
+    [-20, '#ffffff'], [-10, '#ff8ad8'], [-1, '#a855f7'],
+    [0, '#3f6fff'], [25, '#3aa0ff'], [40, '#22d3ee'],
+    [50, '#34d399'], [60, '#4ade80'], [69, '#a3e635'],
+    [70, '#facc15'], [80, '#fbbf24'], [89, '#fb923c'],
+    [90, '#f87171'], [100, '#ef4444'], [110, '#dc2626'], [120, '#b4163a']
+];
+function smlcFeelsColor(f) {
+    const stops = SMLC_FEELS_STOPS;
+    if (!isFinite(f)) return '';
+    if (f <= stops[0][0]) return stops[0][1];
+    if (f >= stops[stops.length - 1][0]) return stops[stops.length - 1][1];
+    const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+    for (let i = 1; i < stops.length; i++) {
+        if (f <= stops[i][0]) {
+            const [t0, c0] = stops[i - 1], [t1, c1] = stops[i];
+            const k = (f - t0) / (t1 - t0), a = hex(c0), b = hex(c1);
+            return '#' + a.map((v, j) => Math.round(v + (b[j] - v) * k).toString(16).padStart(2, '0')).join('');
+        }
+    }
+    return '';
+}
+
 function renderNavbarWeatherWidget(current) {
     let widgetEl = document.getElementById('portal-weather-current-badge');
     const navBarTarget = document.getElementById('dynamic-menu-links')?.parentElement 
@@ -1236,6 +1262,7 @@ function renderNavbarWeatherWidget(current) {
         current.temperatureApparent, current.realFeel, current.realFeelTemperature, current.heatIndex, current.windChill]
         .find(v => v !== undefined && v !== null && v !== '' && isFinite(parseFloat(v)));
     const feelsLike = feelsRaw !== undefined ? `Feels like ${Math.round(parseFloat(feelsRaw))}°` : '';
+    const feelsColor = feelsRaw !== undefined ? smlcFeelsColor(parseFloat(feelsRaw)) : '#fff';
 
     widgetEl.innerHTML = `
         <style>
@@ -1250,7 +1277,7 @@ function renderNavbarWeatherWidget(current) {
         ${iconUrl ? `<img src="${iconUrl}" alt="" class="weather-icon-img" onerror="this.style.display='none';">` : ''}
         <span class="weather-temp-num">${temp}</span>
         <span class="weather-desk-text">&bull; ${condition}</span>
-        ${feelsLike ? `<span class="weather-desk-text" style="font-size:0.6875rem; color:var(--town-accent, var(--flora-orange, #ff9800)); margin-left:2px;">${feelsLike}</span>` : ''}
+        ${feelsLike ? `<span class="weather-desk-text" style="font-size:0.6875rem; font-weight:bold; color:${feelsColor}; margin-left:2px;">${feelsLike}</span>` : ''}
     `;
     widgetEl.title = `Current Weather${feelsLike ? ' | ' + feelsLike : ''} | Updated: ${updatedCdt}`;
 
