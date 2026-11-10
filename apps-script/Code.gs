@@ -1050,10 +1050,13 @@ function phReview_(req) {
  *
  *   Partners columns: A Town | B Business Name | C Website | D Image | E ALT   (as before)
  *   Column "Source" (added on the right) says "S&K Signs" on the rows this adds.
+ *   Type a Website (or change the ALT) on any of those rows and it is KEPT on every refresh.
+ *   If Scott later takes an ad down, its row is removed - unless you gave it a Website,
+ *   in which case it becomes one of your own rows.
  *
  *   - Rows YOU typed into Partners are never changed or deleted. Only rows marked "S&K Signs"
- *     are refreshed. If you already have a partner with the same name in that town, the
- *     S&K one is skipped.
+ *     are refreshed (their picture). If you already have a partner with the same name in that
+ *     town, the S&K one is skipped. Your "Images from D" preview column is filled in for new rows.
  *   - Videos and web pages are skipped (a partner card needs a picture). Expired ads are skipped.
  *   - The same ad on more than one screen (Xenia Billboard + Xenia TV) is added once.
  *   - To leave an advertiser out, add its name to SA_SKIP_NAMES below.
@@ -1106,27 +1109,18 @@ function importSignAdsToPartners() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SA_PARTNERS_TAB);
   if (!sheet) throw new Error("There is no '" + SA_PARTNERS_TAB + "' tab. Nothing was changed.");
 
-  // Find (or add) the "Source" column, to the right of your existing columns
-  var lastCol = Math.max(sheet.getLastColumn(), 5);
-  var head = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(function (h) { return String(h).trim().toLowerCase(); });
-  var srcCol = head.indexOf("source") + 1;
-  if (!srcCol) {
-    srcCol = lastCol + 1;
-    sheet.getRange(1, srcCol).setValue("Source").setNote("Rows marked '" + SA_MARK + "' are copied automatically from S&K Venture Signs and refreshed. Rows without it are yours and are never touched.");
-  }
-
-  // What is in Partners now: remember YOUR names per town, and the rows we added earlier
-  var lastRow = sheet.getLastRow();
-  var existing = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, srcCol).getValues() : [];
-  var mine = {}, oldRows = [], oldRowNums = [];
-  existing.forEach(function (r, i) {
-    var key = String(r[0]).trim().toLowerCase() + "|" + String(r[1]).trim().toLowerCase();
-    if (String(r[srcCol - 1]).trim() === SA_MARK) { oldRows.push(r.slice(0, 5)); oldRowNums.push(i + 2); }
-    else mine[key] = true;
+  // Build the rows we want FIRST, so a problem with the feed never touches your sheet
+  var wanted = [], seen = {}, mineNames = {};
+  var lastRow0 = sheet.getLastRow();
+  var lastCol0 = Math.max(sheet.getLastColumn(), 5);
+  var head0 = sheet.getRange(1, 1, 1, lastCol0).getValues()[0].map(function (h) { return String(h).trim().toLowerCase(); });
+  var srcCol0 = head0.indexOf("source") + 1;
+  var rows0 = lastRow0 > 1 ? sheet.getRange(2, 1, lastRow0 - 1, Math.max(lastCol0, srcCol0)).getValues() : [];
+  rows0.forEach(function (r) {
+    var marked = srcCol0 && String(r[srcCol0 - 1]).trim() === SA_MARK;
+    if (!marked) mineNames[String(r[0]).trim().toLowerCase() + "|" + String(r[1]).trim().toLowerCase()] = true;
   });
 
-  // Build the rows we want
-  var wanted = [], seen = {};
   Object.keys(SA_SCREENS).forEach(function (key) {
     var ads = locations[key];
     if (!ads) { Logger.log("No '" + key + "' tab in the S&K playlist - skipped."); return; }
@@ -1138,24 +1132,74 @@ function importSignAdsToPartners() {
       if (skip.indexOf(name.toLowerCase()) !== -1) return;
       var town = SA_SCREENS[key];
       var nameKey = town.toLowerCase() + "|" + name.toLowerCase();
-      if (mine[nameKey] || seen[nameKey]) return;                            // yours wins; same ad on two screens counts once
-      seen[nameKey] = true;
-      wanted.push([town, name, "", url, name]);
+      if (mineNames[nameKey] || seen[nameKey]) return;                       // yours wins; same ad on two screens counts once
+      seen[nameKey] = { town: town, name: name, url: url };
+      wanted.push(seen[nameKey]);
     });
   });
-
-  // Never wipe the earlier rows if the feed came back empty
   if (!wanted.length) throw new Error("The S&K playlist had no usable ads for these screens. Nothing was changed.");
 
-  if (JSON.stringify(oldRows) === JSON.stringify(wanted)) { Logger.log("Partners already up to date (" + wanted.length + " S&K ads)."); return; }
+  // Find (or add) the "Source" column, to the right of your existing columns
+  var srcCol = srcCol0;
+  if (!srcCol) {
+    srcCol = lastCol0 + 1;
+    sheet.getRange(1, srcCol).setValue("Source").setNote("Rows marked '" + SA_MARK + "' are copied automatically from S&K Venture Signs. " +
+      "Type a Website (or change the ALT) on one and it is kept. Rows without the mark are yours and are never touched.");
+  }
+  var previewCol = head0.map(function (h) { return h.indexOf("images from d") === 0; }).indexOf(true) + 1;   // your "Images from D" preview column
 
-  // Remove ONLY the rows we added before (bottom-up so row numbers stay right), then add the fresh ones at the end
-  for (var i = oldRowNums.length - 1; i >= 0; i--) sheet.deleteRow(oldRowNums[i]);
-  var start = sheet.getLastRow() + 1;
-  var block = wanted.map(function (r) { var row = r.slice(); while (row.length < srcCol - 1) row.push(""); row.push(SA_MARK); return row; });
-  sheet.getRange(start, 1, block.length, srcCol).setValues(block);
+  // Rows we added earlier
+  var lastRow = sheet.getLastRow();
+  var width = Math.max(srcCol, sheet.getLastColumn());
+  var rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, width).getValues() : [];
+  var old = {}, oldList = [];
+  rows.forEach(function (r, i) {
+    if (String(r[srcCol - 1]).trim() !== SA_MARK) return;
+    var key = String(r[0]).trim().toLowerCase() + "|" + String(r[1]).trim().toLowerCase();
+    old[key] = { row: i + 2, website: String(r[2] || "").trim(), image: String(r[3] || "").trim() };
+    oldList.push(key);
+  });
+
+  var changed = false, fresh = [], stillWanted = {};
+  wanted.forEach(function (w) {
+    var key = w.town.toLowerCase() + "|" + w.name.toLowerCase();
+    stillWanted[key] = true;
+    var o = old[key];
+    if (!o) { fresh.push(w); return; }
+    if (o.image !== w.url) { sheet.getRange(o.row, 4).setValue(w.url); changed = true; }   // new picture only; your Website / ALT are kept
+  });
+
+  // Ads Scott took down: delete the row, unless you added a Website to it - then it becomes yours
+  var removeRows = [];
+  oldList.forEach(function (key) {
+    if (stillWanted[key]) return;
+    var o = old[key];
+    if (o.website) sheet.getRange(o.row, srcCol).setValue("");
+    else removeRows.push(o.row);
+    changed = true;
+  });
+  removeRows.sort(function (a, b) { return b - a; }).forEach(function (n) { sheet.deleteRow(n); });
+
+  // New ads go at the bottom, with the preview picture formula if you have that column
+  if (fresh.length) {
+    var start = sheet.getLastRow() + 1;
+    var block = fresh.map(function (w) {
+      var row = [w.town, w.name, "", w.url, w.name];
+      while (row.length < srcCol - 1) row.push("");
+      row.push(SA_MARK);
+      return row;
+    });
+    sheet.getRange(start, 1, block.length, srcCol).setValues(block);
+    if (previewCol) {
+      var formulas = fresh.map(function (w, i) { return ["=IMAGE(D" + (start + i) + ")"]; });
+      sheet.getRange(start, previewCol, formulas.length, 1).setFormulas(formulas);
+    }
+    changed = true;
+  }
+
+  if (!changed) { Logger.log("Partners already up to date (" + wanted.length + " S&K ads)."); return; }
   SpreadsheetApp.flush();
-  Logger.log("Partners updated: " + wanted.length + " S&K ads (your own partners were not touched).");
+  Logger.log("Partners updated: " + fresh.length + " new S&K ads added, " + wanted.length + " in total (your own partners were not touched).");
   pushMasterDataToFirebase();   // edits made by a script don't fire the On edit trigger
 }
 
