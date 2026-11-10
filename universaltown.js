@@ -1310,10 +1310,28 @@ function renderScoreStreamWidgets(container, widgets) {
     loadScoreStreamEmbed();
 }
 
+// Fixed ScoreStream widgets for the most active sports towns (grade school + high school combined
+// in one widget each). Towns listed here ignore the database sports entries; an empty list hides
+// the scoreboard on that page. Towns not listed still read from the database as before.
+const SPORTS_WIDGET_OVERRIDES = {
+    'Flora':      [{ id: '68602', type: 'horzScoreboard', label: 'Flora Scores', website: '' }],
+    'Louisville': [{ id: '68601', type: 'horzScoreboard', label: 'Louisville Scores', website: '' }],
+    'Clay City':  []
+};
+
 function bindFirebaseSportsEngine(db) {
-    if (!db) return;
     const sportsContainer = document.getElementById('town-sports-scoreboard-target');
     if (!sportsContainer) return;
+
+    const fixedWidgets = !ACTIVE_TOWN.isHome && SPORTS_WIDGET_OVERRIDES[ACTIVE_TOWN.dbTownKey];
+    if (fixedWidgets) {
+        if (activeFbRefSports) { activeFbRefSports.off(); activeFbRefSports = null; }
+        lastScoreStreamSignature = '';
+        renderScoreStreamWidgets(sportsContainer, fixedWidgets);
+        return;
+    }
+
+    if (!db) return;
 
     try {
         if (activeFbRefSports) activeFbRefSports.off();
