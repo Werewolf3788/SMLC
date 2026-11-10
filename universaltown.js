@@ -2186,14 +2186,14 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
 
         const infoBits = [];
         if (config.address) {
-            const maps = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent([config.name, config.address, config.city].filter(Boolean).join(", "));
-            infoBits.push(`<a href="${maps}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${config.address}${config.city ? ', ' + config.city : ''}</a>`);
+            const maps = window.smlcMapsUrl({ name: config.name, address: config.address, city: config.city });
+            infoBits.push(`<a href="${maps}"${/^https?:/.test(maps) ? ' target="_blank" rel="noopener"' : ''} onclick="event.stopPropagation()">${config.address}${config.city ? ', ' + config.city : ''}</a>`);
         }
         if (config.phone) infoBits.push(`<a href="tel:+1${String(config.phone).replace(/\D/g, '')}" onclick="event.stopPropagation()">${config.phone}</a>`);
         if (config.hours) infoBits.push(`<span>${config.hours}</span>`);
 
         const updateDate = info.date || info.updated || "Pending";
-        const safeLogo = config.logo ? encodeURIComponent(config.logo) : '';
+        const logoSrc = config.logo ? (window.smlcLogoUrl ? window.smlcLogoUrl(config.logo) : '') : '';
 
         container.style.cursor = "pointer";
         container.onclick = () => window.open(attachUtmParameters(updatePortalUrl), '_blank');
@@ -2201,7 +2201,7 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
         container.innerHTML = `
             <div class="sidebar-widget-title">${config.display.toUpperCase()} FUEL INDEX MONITOR</div>
             <div class="fuel-station-header">
-                ${safeLogo ? `<div class="station-logo-frame"><img src="//raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/${safeLogo}" alt="" onerror="this.parentElement.style.display='none';"></div>` : ''}
+                ${logoSrc ? `<div class="station-logo-frame"><img src="${logoSrc}" alt="" onerror="this.parentElement.style.display='none';"></div>` : ''}
                 <div class="station-meta-title">${config.name}${config.stationTown && !String(config.name).toUpperCase().includes(String(config.stationTown).toUpperCase()) ? ` (${config.stationTown})` : ''}</div>
             </div>
             ${infoBits.length ? `<div class="fuel-station-info">${infoBits.join('')}</div>` : ''}

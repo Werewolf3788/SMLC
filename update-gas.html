@@ -517,6 +517,7 @@
         .gas-slide.many-grades .town-header { margin-bottom: 4px; }
         .gas-slide.many-grades .led-red, .gas-slide.many-grades .led-grn { font-size: clamp(1.3rem, 5.5vw, 2rem); }
         .gas-slide.many-grades .update-tag { margin-top: 4px; }
+        .tap-link { text-decoration: underline; cursor: pointer; }
         .update-tag {
             color: var(--brand-gold);
             font-size: 9px;
@@ -924,7 +925,6 @@
         ids.forEach(id => {
             const config = stationConfigs[id];
             const info = data[id] || { date: "PENDING" };
-            const safeLogo = encodeURIComponent(config.logo);
             const logoClass = config.whiteBg ? "station-logo logo-bg-white" : "station-logo";
             const num = v => (!v || v === "0") ? "---" : esc(v);
             // Regular + Diesel always show; Midgrade / Premium only when a price has been posted
@@ -935,14 +935,14 @@
                     <span class="price-label">${g.label}</span>
                     <span class="${ledClass[g.key]}">${num(info[g.key])}</span>
                 </div>`).join('');
-            const details = [config.address, config.phone, config.hours].filter(Boolean).map(esc).join(' &bull; ');
+            const details = [config.address && `<span class="tap-link" data-map="${id}">${esc(config.address)}</span>`, config.phone && `<span class="tap-link" data-tel="${esc(config.phone)}">${esc(config.phone)}</span>`, config.hours && esc(config.hours)].filter(Boolean).join(' &bull; ');
 
             const slide = document.createElement('div');
             slide.className = 'gas-slide' + (rows.length > 2 ? ' many-grades' : '');
             slide.innerHTML = `
                 <div class="town-header">${config.display.toUpperCase()}, IL</div>
                 <div class="logo-container">
-                    <img src="https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/${safeLogo}"
+                    <img src="${esc(window.smlcLogoUrl(config.logo))}"
                          class="${logoClass}"
                          loading="lazy"
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
@@ -971,6 +971,16 @@
             window.fuelRotator = setInterval(cycle, 6000);
         }
     }
+
+    // Address / phone inside the preview: open the visitor's maps app or dialer (the preview itself is a link)
+    screen.addEventListener('click', e => {
+        const t = e.target.closest('.tap-link');
+        if (!t) return;
+        e.preventDefault(); e.stopPropagation();
+        if (t.dataset.tel) { window.location.href = window.smlcTelUrl(t.dataset.tel); return; }
+        const cfg = stationConfigs[t.dataset.map];
+        if (cfg) window.open(window.smlcMapsUrl(cfg), '_blank');
+    });
 
     db.ref('fuel_prices').on('value', (snap) => {
         const val = snap.val();

@@ -591,7 +591,7 @@
                     if (!id || seen[id]) return;
                     seen[id] = 1;
                     const known = GAS_STATIONS[id] || {};
-                    list.push({ id, display: known.display || town, name: String(e.title || known.name || ("Station " + id)).trim(), logo: known.logo || "", whiteBg: known.whiteBg, address: known.address || "", phone: known.phone || "" });
+                    list.push({ id, display: known.display || town, name: String(e.title || known.name || ("Station " + id)).trim(), logo: known.logo || "", whiteBg: known.whiteBg, address: known.address || "", city: known.city || "", phone: known.phone || "" });
                 });
             });
             if (list.length) return list;
@@ -611,13 +611,13 @@
                 slide.className = "gas-slide";
                 slide.innerHTML =
                     '<div class="gas-town">' + esc(cfg.display.toUpperCase()) + ', IL</div>' +
-                    '<div class="gas-logo">' + (cfg.logo ? '<img src="' + GAS_LOGO_BASE + encodeURIComponent(cfg.logo) + '" alt="' + esc(cfg.name) + '"' + (cfg.whiteBg ? ' class="white-bg"' : '') + '>' : '<div class="gas-logo-text">' + esc(cfg.name) + '</div>') + '</div>' +
+                    '<div class="gas-logo">' + (cfg.logo ? '<img src="' + window.smlcLogoUrl(cfg.logo) + '" alt="' + esc(cfg.name) + '"' + (cfg.whiteBg ? ' class="white-bg"' : '') + '>' : '<div class="gas-logo-text">' + esc(cfg.name) + '</div>') + '</div>' +
                     '<div class="gas-row"><span class="gas-label">REGULAR</span><span class="gas-price reg">' + reg + '</span></div>' +
                     (info.mid && info.mid !== "0" ? '<div class="gas-row"><span class="gas-label">MIDGRADE</span><span class="gas-price reg">' + esc(info.mid) + '</span></div>' : '') +
                     (info.pre && info.pre !== "0" ? '<div class="gas-row"><span class="gas-label">PREMIUM</span><span class="gas-price reg">' + esc(info.pre) + '</span></div>' : '') +
                     (info.e85 && info.e85 !== "0" ? '<div class="gas-row"><span class="gas-label">E85</span><span class="gas-price reg">' + esc(info.e85) + '</span></div>' : '') +
                     '<div class="gas-row"><span class="gas-label">DIESEL</span><span class="gas-price dsl">' + dsl + '</span></div>' +
-                    (cfg.address ? '<div class="gas-updated">' + esc(cfg.address) + (cfg.phone ? ' &bull; ' + esc(cfg.phone) : '') + '</div>' : '') +
+                    (cfg.address || cfg.phone ? '<div class="gas-updated gas-contact">' + (cfg.address ? '<a href="' + esc(window.smlcMapsUrl(cfg)) + '"' + (/^https?:/.test(window.smlcMapsUrl(cfg)) ? ' target="_blank" rel="noopener"' : '') + '>' + esc(cfg.address) + '</a>' : '') + (cfg.address && cfg.phone ? ' &bull; ' : '') + (cfg.phone ? '<a href="' + window.smlcTelUrl(cfg.phone) + '">' + esc(cfg.phone) + '</a>' : '') + '</div>' : '') +
                     '<div class="gas-updated">Updated: ' + esc(info.date || "Pending") + '</div>';
                 const logo = slide.querySelector(".gas-logo img");
                 if (logo) logo.onerror = () => {
