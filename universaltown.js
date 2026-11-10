@@ -1944,8 +1944,11 @@ function bindFirebasePartnersEngine(db) {
 
             if (uniquePartners.length === 0) return;
 
-            const upperPool = [...uniquePartners];
-            const lowerPool = [...uniquePartners].reverse();
+            // Videos are pinned in the top strip; only images go through the rotating carousels.
+            const videoPartners = uniquePartners.filter(isPartnerVideo);
+            const imagePartners = uniquePartners.filter(p => !isPartnerVideo(p));
+            const upperPool = [...imagePartners];
+            const lowerPool = [...imagePartners].reverse();
             if (lowerPool.length > 2) {
                 const shiftCount = Math.floor(lowerPool.length / 2);
                 for (let i = 0; i < shiftCount; i++) {
@@ -1953,8 +1956,11 @@ function bindFirebasePartnersEngine(db) {
                 }
             }
 
-            if (topGrid) renderCarouselPartnerRotator(topGrid, upperPool, 'top_strip', 0);
-            if (bottomGrid) renderCarouselPartnerRotator(bottomGrid, lowerPool, 'bottom_strip', 2);
+            if (topGrid) renderCarouselPartnerRotator(topGrid, upperPool, 'top_strip', 0, videoPartners);
+            if (bottomGrid) {
+                if (lowerPool.length) renderCarouselPartnerRotator(bottomGrid, lowerPool, 'bottom_strip', 2);
+                else bottomGrid.innerHTML = '';
+            }
         };
 
         activeFbRefPartnersTown = db.ref(`master_county_data/towns/${townName}/sections/partners`);
@@ -1993,8 +1999,13 @@ function partnerCardsThatFit(containerElement, poolSize) {
     return Math.max(1, Math.min(fit, poolSize, SMLC_PARTNER_MAX));
 }
 
-function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, seedOffset = 0) {
-    if (!containerElement || !partnerPool.length) return;
+// Video partners are pinned (always shown, never rotated); only image partners rotate.
+function isPartnerVideo(p) {
+    return !!p && isVideoUrl(resolvePartnerImage(p.imageUrl || p.image1 || ''));
+}
+
+function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, seedOffset = 0, pinnedPool = []) {
+    if (!containerElement || (!partnerPool.length && !pinnedPool.length)) return;
 
     if (stripKey === 'top_strip' && topCarouselInterval) {
         clearInterval(topCarouselInterval);
@@ -2006,11 +2017,11 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
     }
 
     const isMobileOrTablet = window.innerWidth < 768;
-    let poolIndex = seedOffset % partnerPool.length;
+    let poolIndex = seedOffset % (partnerPool.length || 1);
     let isCarouselPaused = false;
     let hoverStartTime = 0;
 
-    const createPartnerMarkup = (partner, slotIdx) => {
+    const createPartnerMarkup = (partner, slotIdx, pinned) => {
         const imgUrl = normalizeImageUrl(resolvePartnerImage(partner.imageUrl || partner.image1));
         const name = partner.name || 'Local Community Partner';
         const rawUrl = partner.website || '#';
@@ -2019,7 +2030,7 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
         const altText = partner.alt || name;
 
         return `
-            <div class="community-partner-card" data-partner-name="${escapeJsString(name)}" style="transition: transform 0.35s ease, opacity 0.35s ease;">
+            <div class="community-partner-card"${pinned ? ' data-pinned="1"' : ''} data-partner-name="${escapeJsString(name)}" style="transition: transform 0.35s ease, opacity 0.35s ease;">
                 <div class="partner-logo-container">
                     ${isVideoUrl(imgUrl)
                         ? `<video class="partner-logo-asset" src="${imgUrl.replace(/^\/\//, 'https://')}" aria-label="${escapeJsString(altText)}" autoplay muted loop playsinline preload="metadata" onclick="fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')" style="cursor:pointer;"></video>`
@@ -2031,21 +2042,27 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
         `;
     };
 
-    let visibleCount = partnerCardsThatFit(containerElement, partnerPool.length);
+    const totalSize = () => partnerPool.length + pinnedPool.length;
+    let visibleCount = partnerCardsThatFit(containerElement, totalSize());
+    // Pinned (video) cards take their slots first; the remaining slots rotate through the images.
+    const pinnedSlots = () => Math.min(pinnedPool.length, isMobileOrTablet ? 1 : (partnerPool.length ? Math.max(1, visibleCount - 1) : visibleCount));
+    const rotatingSlots = () => partnerPool.length ? Math.min(partnerPool.length, isMobileOrTablet ? 1 : Math.max(1, visibleCount - pinnedSlots())) : 0;
+    const rotatingMarkup = () => {
+        const out = [];
+        for (let i = 0; i < rotatingSlots(); i++) out.push(createPartnerMarkup(partnerPool[(poolIndex + i) % partnerPool.length], i, false));
+        return out.join('');
+    };
     const drawCards = () => {
-        const cards = [];
-        for (let i = 0; i < visibleCount; i++) {
-            const p = partnerPool[(poolIndex + i) % partnerPool.length];
-            cards.push(createPartnerMarkup(p, i));
-        }
-        containerElement.innerHTML = cards.join('');
+        const pinnedHtml = pinnedPool.slice(0, pinnedSlots()).map((p, i) => createPartnerMarkup(p, i, true)).join('');
+        containerElement.classList.toggle('has-pinned', !!pinnedHtml);
+        containerElement.innerHTML = pinnedHtml + rotatingMarkup();
     };
     drawCards();
 
     // Re-fit when the strip changes width (window resize, rotate, sidebar, zoom)
     if (smlcPartnerStripObservers[stripKey]) smlcPartnerStripObservers[stripKey].disconnect();
     smlcPartnerRefitters[stripKey] = () => {
-        const next = partnerCardsThatFit(containerElement, partnerPool.length);
+        const next = partnerCardsThatFit(containerElement, totalSize());
         if (next !== visibleCount) { visibleCount = next; drawCards(); }
     };
     if (typeof ResizeObserver === 'function') {
@@ -2053,7 +2070,7 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
         const ro = new ResizeObserver(() => {
             clearTimeout(fitTimer);
             fitTimer = setTimeout(() => {
-                const next = partnerCardsThatFit(containerElement, partnerPool.length);
+                const next = partnerCardsThatFit(containerElement, totalSize());
                 if (next !== visibleCount) { visibleCount = next; drawCards(); }
             }, 120);
         });
@@ -2096,30 +2113,21 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
     const intervalId = setInterval(() => {
         if (isCarouselPaused) return;
 
+        if (!partnerPool.length) return;   // only pinned videos: nothing to rotate
         poolIndex = (poolIndex + 1) % partnerPool.length;
-        const nextPartner = partnerPool[poolIndex];
 
-        const cards = containerElement.querySelectorAll('.community-partner-card');
-        if (cards.length > 0) {
-            cards.forEach(c => {
+        const rotCards = containerElement.querySelectorAll('.community-partner-card:not([data-pinned])');
+        if (rotCards.length > 0) {
+            rotCards.forEach(c => {
                 c.style.opacity = '0.3';
                 c.style.transform = 'scale(0.96)';
             });
 
             setTimeout(() => {
-                if (isMobileOrTablet) {
-                    containerElement.innerHTML = createPartnerMarkup(nextPartner, 0);
-                } else {
-                    const newCards = [];
-                    for (let i = 0; i < visibleCount; i++) {
-                        const p = partnerPool[(poolIndex + i) % partnerPool.length];
-                        newCards.push(createPartnerMarkup(p, i));
-                    }
-                    containerElement.innerHTML = newCards.join('');
-                }
+                containerElement.querySelectorAll('.community-partner-card:not([data-pinned])').forEach(c => c.remove());
+                containerElement.insertAdjacentHTML('beforeend', rotatingMarkup());
 
-                const updatedCards = containerElement.querySelectorAll('.community-partner-card');
-                updatedCards.forEach(c => {
+                containerElement.querySelectorAll('.community-partner-card:not([data-pinned])').forEach(c => {
                     c.style.opacity = '1';
                     c.style.transform = 'scale(1)';
                     const pName = c.getAttribute('data-partner-name');
@@ -2826,6 +2834,7 @@ function handleSPAHashNavigation() {
         @media (max-width: 767px) {
             html .partners-horizontal-strip .community-partner-card { flex: 0 1 88%; max-width: 340px; }
             html .partners-horizontal-strip .partner-logo-container { height: 150px; }
+            html .partners-horizontal-strip.has-pinned { flex-wrap: wrap; justify-content: center; }
         }
 
         /* ---------- Alt text is for screen readers, search engines and the lightbox only:
