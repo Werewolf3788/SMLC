@@ -578,6 +578,9 @@
         }
 
         let gasTimer = null;
+        let gasFitObserver = null;
+        let gasFitFn = () => {};
+        window.addEventListener("resize", () => gasFitFn());
         // Which stations to show = every town's /master_county_data/towns/{Town}/sections/gas_widget
         // list ({ station_id, title }), same as the town pages. Built-in list is only the backup.
         const GAS_TOWNS = ["Clay City", "Flora", "Louisville", "Sailor Springs", "Xenia"];
@@ -597,6 +600,8 @@
             if (list.length) return list;
             return Object.keys(GAS_STATIONS).map(id => Object.assign({ id }, GAS_STATIONS[id]));
         }
+        // Unlit LED segments: every digit shown as an "8" behind the real number
+        function ledGhost(v) { const t = String(v == null ? "" : v); return /[0-9]/.test(t) ? t.replace(/[0-9]/g, "8") : "8.88"; }
         function renderGas(data) {
             if (data !== undefined) lastPrices = data;
             data = lastPrices;
@@ -607,16 +612,19 @@
                 const info = (data && data[id]) || {};
                 const reg = info.reg ? esc(info.reg) : "---";
                 const dsl = (!info.dsl || info.dsl === "0") ? "---" : esc(info.dsl);
+                // Regular and Diesel always show; Midgrade / Premium / E85 only when a price is posted
+                const grades = [["REGULAR", "regular", reg]];
+                if (info.mid && info.mid !== "0") grades.push(["MIDGRADE", "midgrade", info.mid]);
+                if (info.pre && info.pre !== "0") grades.push(["PREMIUM", "premium", info.pre]);
+                if (info.e85 && info.e85 !== "0") grades.push(["E85", "e85", info.e85]);
+                grades.push(["DIESEL", "diesel", dsl]);
                 const slide = document.createElement("div");
                 slide.className = "gas-slide";
                 slide.innerHTML =
                     '<div class="gas-town">' + esc(cfg.display.toUpperCase()) + ', IL</div>' +
                     '<div class="gas-logo">' + (cfg.logo ? '<img src="' + window.smlcLogoUrl(cfg.logo) + '" alt="' + esc(cfg.name) + '"' + (cfg.whiteBg ? ' class="white-bg"' : '') + '>' : '<div class="gas-logo-text">' + esc(cfg.name) + '</div>') + '</div>' +
-                    '<div class="gas-row"><span class="gas-label">REGULAR</span><span class="gas-price reg">' + reg + '</span></div>' +
-                    (info.mid && info.mid !== "0" ? '<div class="gas-row"><span class="gas-label">MIDGRADE</span><span class="gas-price reg">' + esc(info.mid) + '</span></div>' : '') +
-                    (info.pre && info.pre !== "0" ? '<div class="gas-row"><span class="gas-label">PREMIUM</span><span class="gas-price reg">' + esc(info.pre) + '</span></div>' : '') +
-                    (info.e85 && info.e85 !== "0" ? '<div class="gas-row"><span class="gas-label">E85</span><span class="gas-price reg">' + esc(info.e85) + '</span></div>' : '') +
-                    '<div class="gas-row"><span class="gas-label">DIESEL</span><span class="gas-price dsl">' + dsl + '</span></div>' +
+                    '<div class="gas-grid' + (grades.length > 2 ? ' many' : '') + '">' + grades.map(g =>
+                        '<div class="gas-tile"><span class="gas-label">' + g[0] + '</span><span class="gas-led led-' + g[1] + '" data-ghost="' + ledGhost(g[2]) + '">' + esc(g[2]) + '</span></div>').join("") + '</div>' +
                     (cfg.address || cfg.phone ? '<div class="gas-updated gas-contact">' + (cfg.address ? '<a href="' + esc(window.smlcMapsUrl(cfg)) + '"' + (/^https?:/.test(window.smlcMapsUrl(cfg)) ? ' target="_blank" rel="noopener"' : '') + '>' + esc(cfg.address) + '</a>' : '') + (cfg.address && cfg.phone ? ' &bull; ' : '') + (cfg.phone ? '<a href="' + window.smlcTelUrl(cfg.phone) + '">' + esc(cfg.phone) + '</a>' : '') + '</div>' : '') +
                     '<div class="gas-updated">Updated: ' + esc(info.date || "Pending") + '</div>';
                 const logo = slide.querySelector(".gas-logo img");
@@ -630,7 +638,12 @@
             });
             const slides = screen.querySelectorAll(".gas-slide");
             let i = 0;
-            const show = () => { slides.forEach(s => s.classList.remove("active")); slides[i].classList.add("active"); i = (i + 1) % slides.length; };
+            // The screen is exactly as tall as the station on show (no cut-off, no empty space)
+            const fit = () => { const a = screen.querySelector(".gas-slide.active"); if (a) screen.style.height = a.offsetHeight + "px"; };
+            if (gasFitObserver) gasFitObserver.disconnect();
+            if (typeof ResizeObserver === "function") { gasFitObserver = new ResizeObserver(fit); slides.forEach(s => gasFitObserver.observe(s)); }
+            gasFitFn = fit;
+            const show = () => { slides.forEach(s => s.classList.remove("active")); slides[i].classList.add("active"); i = (i + 1) % slides.length; fit(); };
             if (gasTimer) clearInterval(gasTimer);
             if (slides.length) { show(); gasTimer = setInterval(show, 6000); }
         }
@@ -687,6 +700,44 @@
             }
             return false;
         };
+        // ---- event start/end the same way the town pages work it out (Central time, all-day aware) ----
+        function tzOffsetMs(date, tz) {
+            const parts = new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" }).formatToParts(date);
+            const m = {}; parts.forEach(p => { m[p.type] = p.value; });
+            return Date.UTC(+m.year, +m.month - 1, +m.day, (+m.hour) % 24, +m.minute, +m.second) - Math.floor(date.getTime() / 1000) * 1000;
+        }
+        function centralWallTimeToDate(y, mo, d) {
+            const guess = Date.UTC(y, mo - 1, d, 0, 0);
+            const off1 = tzOffsetMs(new Date(guess), CT);
+            let t = guess - off1;
+            const off2 = tzOffsetMs(new Date(t), CT);
+            if (off2 !== off1) t = guess - off2;
+            return new Date(t);
+        }
+        function centralYmd(raw) {
+            if (!raw) return null;
+            const str = String(raw).trim();
+            const plain = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (plain) return { y: +plain[1], m: +plain[2], d: +plain[3] };
+            const dt = new Date(str);
+            if (isNaN(dt.getTime())) return null;
+            const m = {}; new Intl.DateTimeFormat("en-US", { timeZone: CT, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(dt).forEach(p => { m[p.type] = p.value; });
+            return { y: +m.year, m: +m.month, d: +m.day };
+        }
+        function eventWindow(ev) {
+            if (!ev || !ev.start || isNaN(new Date(ev.start).getTime())) return null;
+            const HOUR = 3600000;
+            let start = new Date(ev.start);
+            let end = ev.end && !isNaN(new Date(ev.end).getTime()) ? new Date(ev.end) : null;
+            const allDay = ev.isAllDay === true;
+            if (allDay) {
+                const ymd = centralYmd(ev.start);
+                if (ymd) start = centralWallTimeToDate(ymd.y, ymd.m, ymd.d);
+                if (!end || end <= start) end = new Date(start.getTime() + 24 * HOUR);
+            }
+            if (!end || end <= start) end = new Date(start.getTime() + 2 * HOUR);
+            return { start, end, allDay };
+        }
         function statusFor(start, end, allDay) {
             const now = Date.now(), s = start.getTime(), en = end.getTime();
             const mins = ms => { const m = Math.ceil(ms / 60000); return m >= 60 ? "1 HR" : m <= 1 ? "1 MIN" : m + " MIN"; };
@@ -713,11 +764,12 @@
             list.innerHTML = "";
             window.smlcHomeEvents = [];
             events.forEach((ev, idx) => {
-                const start = new Date(ev.start);
-                const end = ev.end ? new Date(ev.end) : new Date(start.getTime() + 2 * 3600000);
-                const allDay = !!ev.isAllDay;
+                const win = eventWindow(ev);
+                const start = win ? win.start : new Date(ev.start);
+                const end = win ? win.end : new Date(start.getTime() + 2 * 3600000);
+                const allDay = win ? win.allDay : false;
                 const dateText = isNaN(start) ? (ev.dateText || "") :
-                    start.toLocaleDateString("en-US", { timeZone: allDay ? "UTC" : CT, month: "short", day: "numeric", year: "numeric" });
+                    start.toLocaleDateString("en-US", { timeZone: CT, month: "short", day: "numeric", year: "numeric" });
                 const timeText = ev.timeText || (isNaN(start) ? "" : allDay ? "All Day" :
                     start.toLocaleTimeString("en-US", { timeZone: CT, hour: "numeric", minute: "2-digit" }));
                 const where = ev.location || "Clay County, IL";
@@ -746,7 +798,7 @@
                 const now = Date.now();
                 const docs = await firestoreList("smlc_events", 1);
                 const events = docs
-                    .filter(e => e && e.title && new Date(e.end || e.start).getTime() >= now)
+                    .filter(e => { const w = e && e.title && eventWindow(e); return w ? w.end.getTime() >= now : !!(e && e.title && new Date(e.end || e.start).getTime() >= now); })
                     .sort((a, b) => new Date(a.start) - new Date(b.start))
                     .slice(0, 5)
                     .map(e => ({ title: e.title, start: e.start, end: e.end, isAllDay: e.isAllDay, location: e.addr,

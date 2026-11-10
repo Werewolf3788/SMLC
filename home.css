@@ -366,24 +366,43 @@ body {
 
 /* --- Gas price billboard inside a newspaper box --- */
 .gas-clipping .gas-screen {
-    position: relative; width: 100%; aspect-ratio: 16 / 11; background: #000;
+    position: relative; box-sizing: content-box; background: #000; min-height: 140px;
     border: 6px solid #2a2a2a; border-radius: 8px; overflow: hidden; margin-bottom: 15px;
+    transition: height .4s ease;   /* JS sets the height to fit the station being shown */
 }
 .gas-slide {
-    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    opacity: 0; transition: opacity .8s ease-in-out; padding: 10px;
+    position: absolute; top: 0; left: 0; right: 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center;
+    opacity: 0; visibility: hidden; transition: opacity .8s ease-in-out; padding: 12px 10px 10px;
 }
-.gas-slide.active { opacity: 1; }
-.gas-town { color: #ffc929; font-size: clamp(14px, 3vw, 20px); font-weight: bold; letter-spacing: 2px; margin-bottom: 6px; text-shadow: 0 0 8px rgba(255,201,41,.6); }
-.gas-logo { height: 52px; width: 100%; max-width: 180px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
+.gas-slide.active { opacity: 1; visibility: visible; }
+.gas-town { color: #ffc929; font-size: clamp(14px, 3vw, 20px); font-weight: bold; letter-spacing: 2px; margin-bottom: 4px; text-shadow: 0 0 8px rgba(255,201,41,.6); }
+.gas-logo { height: 44px; width: 100%; max-width: 180px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
 .gas-logo img { max-height: 100%; max-width: 100%; object-fit: contain; border-radius: 4px; }
 .gas-logo img.white-bg { background: #fff; padding: 4px 10px; }
 .gas-logo-text { color: #fff; font-size: 16px; font-weight: 900; border: 1px solid #444; padding: 4px 12px; text-transform: uppercase; }
-.gas-row { width: 88%; display: flex; justify-content: space-between; align-items: center; }
-.gas-label { color: #ffc929; font-size: 13px; font-weight: bold; letter-spacing: 1px; font-family: sans-serif; }
-.gas-price { font-family: 'Courier New', Courier, monospace; font-size: clamp(1.6rem, 6vw, 2.4rem); font-weight: bold; }
-.gas-price.reg { color: #ff3b3b; text-shadow: 0 0 12px #ff0000; }
-.gas-price.dsl { color: #39ff14; text-shadow: 0 0 12px #228b22; }
+@font-face { font-family: 'DSEG7-Classic'; font-weight: 700; font-style: normal; font-display: swap;
+    src: url('https://cdn.jsdelivr.net/npm/dseg@0.46.0/fonts/DSEG7-Classic/DSEG7Classic-Bold.woff2') format('woff2'); }
+/* LED price tiles: one grade per tile; 3+ grades go two across (phones: one per row, label left / price right) */
+.gas-grid { width: 100%; display: grid; grid-template-columns: 1fr; gap: 8px; }
+.gas-tile { display: flex; align-items: center; justify-content: space-between; gap: 10px; box-sizing: border-box;
+    padding: 6px 12px; background: #050505; border: 2px solid #1c1c1c; border-radius: 4px; box-shadow: inset 0 0 14px rgba(0,0,0,.95); }
+.gas-label { color: #ffc929; font-size: 12px; font-weight: bold; letter-spacing: 2px; font-family: sans-serif; }
+.gas-led { position: relative; display: inline-block; line-height: 1; letter-spacing: .05em; white-space: nowrap;
+    font-family: 'DSEG7-Classic', 'Courier New', monospace; font-weight: 700; font-size: clamp(1.7rem, 7vw, 2.3rem); }
+.gas-led::before { content: attr(data-ghost); position: absolute; left: 0; top: 0; opacity: .09; text-shadow: none; pointer-events: none; }
+.gas-led.led-regular { color: #39ff14; text-shadow: 0 0 6px rgba(57,255,20,.85), 0 0 16px rgba(57,255,20,.4); }
+.gas-led.led-midgrade { color: #ffc929; text-shadow: 0 0 6px rgba(255,201,41,.85), 0 0 16px rgba(255,201,41,.4); }
+.gas-led.led-premium { color: #39d5ff; text-shadow: 0 0 6px rgba(57,213,255,.85), 0 0 16px rgba(57,213,255,.4); }
+.gas-led.led-e85 { color: #c77dff; text-shadow: 0 0 6px rgba(199,125,255,.85), 0 0 16px rgba(199,125,255,.4); }
+.gas-led.led-diesel { color: #ff2a2a; text-shadow: 0 0 6px rgba(255,42,42,.85), 0 0 16px rgba(255,42,42,.4); }
+.gas-grid.many .gas-tile { padding: 5px 10px; }
+.gas-grid.many .gas-led { font-size: clamp(1.4rem, 6vw, 1.9rem); }
+@media (min-width: 768px) {
+    .gas-grid.many { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .gas-grid.many .gas-tile { flex-direction: column; justify-content: center; gap: 4px; padding: 7px 6px; }
+    .gas-grid.many .gas-tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
+    .gas-grid.many .gas-led { font-size: clamp(1.3rem, 2.2vw, 1.8rem); }
+}
 .gas-updated { color: #ffc929; font-size: 10px; margin-top: 6px; opacity: .75; text-transform: uppercase; font-family: sans-serif; }
 .gas-status { color: #ffc929; font-weight: bold; font-size: 13px; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
 
@@ -503,8 +522,5 @@ html.smlc-header-scrolled .smlc-menu-logo { display: inline-flex; animation: sml
     .nav-bar { border-color: #555; }
 }
 
-/* Fuel monitor: shrink prices when a station shows Midgrade / Premium too */
-.gas-slide:has(.gas-row:nth-of-type(4)) .gas-price { font-size: clamp(1.1rem, 4vw, 1.6rem); }
-.gas-slide:has(.gas-row:nth-of-type(4)) .gas-logo { height: 38px; margin-bottom: 4px; }
 
 .gas-contact a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
