@@ -1200,6 +1200,11 @@ function renderNavbarWeatherWidget(current) {
     const condition = current.condition || 'Clear';
     const iconUrl = normalizeImageUrl(current.icon);
     const updatedCdt = formatToCentralTime(current.updatedAt);
+    // "Real feel": the weather feed may call it any of these; shows nothing if the feed has none
+    const feelsRaw = [current.feelsLike, current.feels_like, current.feelsLikeTemp, current.apparentTemperature,
+        current.temperatureApparent, current.realFeel, current.realFeelTemperature, current.heatIndex, current.windChill]
+        .find(v => v !== undefined && v !== null && v !== '' && isFinite(parseFloat(v)));
+    const feelsLike = feelsRaw !== undefined ? `Feels like ${Math.round(parseFloat(feelsRaw))}°` : '';
 
     widgetEl.innerHTML = `
         <style>
@@ -1214,12 +1219,12 @@ function renderNavbarWeatherWidget(current) {
         ${iconUrl ? `<img src="${iconUrl}" alt="" class="weather-icon-img" onerror="this.style.display='none';">` : ''}
         <span class="weather-temp-num">${temp}</span>
         <span class="weather-desk-text">&bull; ${condition}</span>
-        <span class="weather-desk-text" style="font-size:0.6875rem; color:var(--town-accent, var(--flora-orange, #ff9800)); margin-left:2px;">(5-Day &rarr;)</span>
+        ${feelsLike ? `<span class="weather-desk-text" style="font-size:0.6875rem; color:var(--town-accent, var(--flora-orange, #ff9800)); margin-left:2px;">${feelsLike}</span>` : ''}
     `;
-    widgetEl.title = `Current Weather | Updated: ${updatedCdt} | Click to view 5-day forecast`;
+    widgetEl.title = `Current Weather${feelsLike ? ' | ' + feelsLike : ''} | Updated: ${updatedCdt}`;
 
     // Also fill the Weather pill on the page and the phone "More" menu
-    window.smlcCurrentWeather = { temp, condition };
+    window.smlcCurrentWeather = { temp, condition, feelsLike };
     const pillTemp = document.getElementById('weather-pill-temp');
     const pillIcon = document.getElementById('weather-pill-icon');
     const pillDetail = document.getElementById('weather-pill-detail');

@@ -264,7 +264,6 @@ a { color: var(--link-bright-blue); text-decoration: none; }
 .site-global-footer-matrix { padding: 28px 0 24px; text-align: center; background: #000; border-top: 4px solid var(--flora-orange); }
 .footer-simple-inner { max-width: 900px; margin: 0 auto; padding: 0 16px; }
 .site-global-footer-matrix p { margin: 6px 0; font-size: 0.9375rem; color: #fff; }
-#footer-build-version-stamp { font: 700 0.75rem monospace; color: var(--flora-orange); }
 #back-to-top-anchor { position: fixed; right: 16px; bottom: 16px; z-index: 500; min-width: 44px; min-height: 44px; background: #222; color: #fff; border: 1px solid var(--flora-orange); border-radius: 4px; cursor: pointer; }
 
 @media (min-width: 2200px) { body { font-size: 1.125rem; } :root { --content-max: 1900px; } }
