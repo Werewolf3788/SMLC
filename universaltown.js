@@ -4294,3 +4294,70 @@ window.addEventListener('DOMContentLoaded', () => {
     initAccessibility();
     smlcSetupScrollLogo();
 });
+
+// === KEEP MY PLACE ON REFRESH (pill + scroll position) ===
+// The browser's own scroll restore runs while the page is still short (news, partners and photos load
+// afterwards), so it dropped people at the bottom / in the middle of the Events pill. Instead we remember,
+// per page and per tab session, which pill was open and how far down the page was, then put both back
+// once the content has loaded. A fresh visit (nothing remembered) starts at the top on the first pill.
+(function smlcKeepPlaceOnRefresh() {
+    try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch (e) {}
+    const KEY = 'smlc-view:' + location.pathname;
+    const read = () => { try { return JSON.parse(sessionStorage.getItem(KEY) || 'null') || {}; } catch (e) { return {}; } };
+    const write = (o) => { try { sessionStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} };
+    let state = read();
+    let ready = false;          // don't save the scroll position until the saved one has been restored
+
+    window.addEventListener('DOMContentLoaded', () => {
+        // 1. Remember pill changes (the page's own switchPortalPill does the switching)
+        if (typeof window.switchPortalPill === 'function') {
+            const original = window.switchPortalPill;
+            window.switchPortalPill = function (btn, panelId) {
+                original.apply(this, arguments);
+                state.pill = panelId;
+                state.y = null;      // new pill = new place; the page scrolls to the pill bar itself
+                write(state);
+            };
+        }
+
+        // 2. Re-open the remembered pill (same class changes as switchPortalPill, but no scrolling)
+        if (state.pill && document.getElementById(state.pill)) {
+            const btn = Array.from(document.querySelectorAll('.portal-pill-btn'))
+                .find(b => (b.getAttribute('onclick') || '').indexOf("'" + state.pill + "'") !== -1);
+            if (btn) {
+                document.querySelectorAll('.portal-pill-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.portal-tab-panel').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(state.pill).classList.add('active');
+            }
+        }
+
+        // 3. Put the scroll position back once the page is tall enough (content loads in after the first paint)
+        const targetY = Number(state.y) || 0;
+        const hasHash = !!window.location.hash && window.location.hash.length > 1;
+        if (!targetY || hasHash) { ready = true; return; }
+        let userMoved = false, tries = 0;
+        const stop = () => { userMoved = true; };
+        ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(ev => window.addEventListener(ev, stop, { passive: true, once: true }));
+        const attempt = () => {
+            if (userMoved) { ready = true; return; }
+            const max = document.documentElement.scrollHeight - window.innerHeight;
+            if (max >= targetY - 2 || tries >= 24) {
+                window.scrollTo(0, Math.min(targetY, Math.max(max, 0)));
+                // content above can still grow a little; re-apply once if the person hasn't scrolled
+                setTimeout(() => { if (!userMoved) window.scrollTo(0, targetY); ready = true; }, 1500);
+                return;
+            }
+            tries++;
+            setTimeout(attempt, 250);
+        };
+        attempt();
+    });
+
+    // 4. Save the position while scrolling and when leaving / refreshing
+    let saveTimer = null;
+    const savePosition = () => { if (!ready) return; state.y = Math.round(window.scrollY || window.pageYOffset || 0); write(state); };
+    window.addEventListener('scroll', () => { clearTimeout(saveTimer); saveTimer = setTimeout(savePosition, 150); }, { passive: true });
+    window.addEventListener('pagehide', savePosition);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') savePosition(); });
+})();
