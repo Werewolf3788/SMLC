@@ -54,7 +54,7 @@ a { color: var(--link-bright-blue); text-decoration: none; }
 .mobile-nav-toggle-btn { display: none; align-items: center; gap: 8px; min-width: 48px; min-height: 48px; padding: 8px 14px; background: rgba(0,0,0,.45); border: 2px solid var(--flora-orange); border-radius: 6px; color: #fff; font: 700 0.875rem var(--font-label); text-transform: uppercase; letter-spacing: 1px; cursor: pointer; }
 .hamburger-icon-group { display: flex; flex-direction: column; justify-content: space-between; width: 22px; height: 16px; }
 .hamburger-bar { height: 3px; background: #fff; border-radius: 2px; display: block; }
-.translate-box-header { position: absolute; right: 12px; display: inline-flex; align-items: center; background: rgba(0,0,0,.4); border: 1px solid var(--flora-orange); border-radius: 6px; padding: 4px 8px; }
+.translate-box-header { position: absolute; right: 12px; display: inline-flex; align-items: center; background: none; border: 0; border-radius: 0; padding: 0; }
 .goog-te-gadget-simple { background: transparent !important; border: 0 !important; font-size: 0.8125rem !important; padding: 0 !important; }
 .goog-te-gadget-simple span, .goog-te-gadget-simple a { color: #fff !important; }
 .goog-te-gadget-icon { display: none !important; }
