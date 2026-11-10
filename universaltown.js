@@ -3088,7 +3088,6 @@ function renderBottomNav() {
         <ul class="smlc-bn-list">${groups.towns.map(linkHtml).join('') || '<li class="smlc-bn-empty">Loading towns...</li>'}</ul>`;
 
     const moreSheet = document.getElementById('smlc-bn-sheet-more');
-    const keepTranslate = moreSheet.querySelector('#google_translate_element');
     moreSheet.innerHTML = `
         <div class="smlc-bn-sheet-title">More</div>
         <ul class="smlc-bn-list">
@@ -3096,9 +3095,7 @@ function renderBottomNav() {
             ${groups.more.map(linkHtml).join('')}
             <li><button type="button" class="smlc-bn-row" onclick="openSmlcAccessibilityPanel()"><span aria-hidden="true">&#9855;</span><span>Accessibility</span></button></li>
             <li><button type="button" class="smlc-bn-row smlc-fx-toggle" onclick="toggleSmlcEffects()" aria-pressed="true"><span aria-hidden="true">&#10052;</span><span>Weather Effects</span><span class="smlc-bn-row-detail smlc-fx-toggle-state">On</span></button></li>
-        </ul>
-        <div class="smlc-bn-translate-slot"><div class="smlc-bn-sheet-title">Language</div><div id="smlc-bn-translate-target"></div></div>`;
-    if (keepTranslate) moreSheet.querySelector('#smlc-bn-translate-target').appendChild(keepTranslate);
+        </ul>`;
     document.getElementById('smlc-bn-weather-row').addEventListener('click', () => {
         closeBottomNavSheets();
         if (typeof window.openFiveDayForecastModal === 'function') window.openFiveDayForecastModal();
@@ -3115,7 +3112,6 @@ function updateBottomNavWeather() {
 }
 
 // Move the Google Translate box into the More sheet on phones, and back on desktop.
-let smlcTranslateHome = null;
 function applyBottomNavMode() {
     const mq = window.matchMedia(SMLC_BOTTOM_NAV_QUERY);
     const on = mq.matches;
@@ -3124,12 +3120,6 @@ function applyBottomNavMode() {
     if (topHeader) topHeader.classList.add('smlc-top-nav');
     if (!on) closeBottomNavSheets();
 
-    const tr = document.getElementById('google_translate_element');
-    const slot = document.getElementById('smlc-bn-translate-target');
-    if (!tr) return;
-    if (!smlcTranslateHome && !tr.closest('.smlc-bn-sheet')) smlcTranslateHome = { parent: tr.parentElement, next: tr.nextSibling };
-    if (on && slot && tr.parentElement !== slot) slot.appendChild(tr);
-    if (!on && smlcTranslateHome && tr.parentElement !== smlcTranslateHome.parent) smlcTranslateHome.parent.insertBefore(tr, smlcTranslateHome.next);
 }
 
 (function watchBottomNavMode() {
@@ -4165,6 +4155,9 @@ window.openSmlcAccessibilityPanel = function () {
                         <button type="button" data-a11y-text="2" aria-pressed="false">Larger</button>
                     </div>
                 </fieldset>
+                <fieldset class="smlc-a11y-group"><legend>Language</legend>
+                    <select id="smlc-a11y-lang" class="smlc-a11y-select notranslate" translate="no" aria-label="Language"><option value="">Match my device (automatic)</option><option value="en">English</option><option value="es">Español</option><option value="zh-CN">中文（简体）</option><option value="zh-TW">中文（繁體）</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="pt">Português</option><option value="ru">Русский</option><option value="ar">العربية</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="vi">Tiếng Việt</option><option value="hi">हिन्दी</option><option value="tl">Filipino</option></select>
+                </fieldset>
                 <label class="smlc-a11y-switch"><input type="checkbox" data-a11y="contrast"><span>High contrast</span></label>
                 <label class="smlc-a11y-switch"><input type="checkbox" data-a11y="underline"><span>Underline all links</span></label>
                 <label class="smlc-a11y-switch"><input type="checkbox" data-a11y="readable"><span>Easy-to-read font</span></label>
@@ -4180,6 +4173,11 @@ window.openSmlcAccessibilityPanel = function () {
             smlcA11yPrefs.text = +b.dataset.a11yText; smlcSaveA11yPrefs(); smlcApplyA11yPrefs();
             smlcAnnounce(`Text size ${b.textContent}`);
         }));
+        const langSel = panel.querySelector('#smlc-a11y-lang');
+        if (langSel) {
+            langSel.value = window.SMLC_LANGUAGE_OVERRIDE || '';
+            langSel.addEventListener('change', () => { if (typeof window.smlcSetLanguage === 'function') window.smlcSetLanguage(langSel.value); });
+        }
         panel.querySelectorAll('input[data-a11y]').forEach(inp => inp.addEventListener('change', () => {
             const key = inp.dataset.a11y;
             if (key === 'effects') {
@@ -4305,6 +4303,7 @@ function initAccessibility() {
         .smlc-a11y-intro { margin: 6px 0 14px; color: #d4d4d8; font-size: .95rem; line-height: 1.5; }
         .smlc-a11y-group { border: 0; margin: 0 0 12px; padding: 0; }
         .smlc-a11y-group legend { font: 700 .85rem 'Oswald', sans-serif; letter-spacing: 1px; text-transform: uppercase; color: #bdbdc4; margin-bottom: 6px; }
+        .smlc-a11y-select { width: 100%; min-height: 44px; background: #1f1f23; color: #fff; border: 1px solid #444; border-radius: 8px; padding: 0 10px; font: 600 .95rem 'Oswald', sans-serif; }
         .smlc-a11y-seg { display: flex; gap: 6px; }
         .smlc-a11y-seg button { flex: 1; min-height: 44px; background: #1f1f23; color: #fff; border: 1px solid #444; border-radius: 8px; font: 700 .95rem 'Oswald', sans-serif; cursor: pointer; }
         .smlc-a11y-seg button[aria-pressed="true"] { background: var(--town-accent, #FFC10E); color: var(--town-on-accent, #000); border-color: var(--town-accent, #FFC10E); }

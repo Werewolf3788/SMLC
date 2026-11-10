@@ -52,7 +52,15 @@
         });
     }
 
-    var target = googleLangFromDevice();
+    // A visitor can pick a language in Accessibility; "" means follow the device.
+    var override = '';
+    try { override = localStorage.getItem('smlc-language') || ''; } catch (e) {}
+    window.SMLC_LANGUAGE_OVERRIDE = override;
+    window.smlcSetLanguage = function (code) {
+        try { if (code) localStorage.setItem('smlc-language', code); else localStorage.removeItem('smlc-language'); } catch (e) {}
+        location.reload();
+    };
+    var target = override || googleLangFromDevice();
     var current = (document.cookie.match(/(?:^|;\s*)googtrans=([^;]*)/) || [])[1] || '';
 
     var EXPIRED = 'Thu, 01 Jan 1970 00:00:00 GMT';
@@ -86,6 +94,20 @@
         if (!(window.google && window.google.translate && window.google.translate.TranslateElement)) return;
         window.smlcEnsureTranslateElement();
         new window.google.translate.TranslateElement({ pageLanguage: PAGE_LANGUAGE, autoDisplay: false }, 'google_translate_element');
+        // Backup: if the cookie alone did not switch the page, select the language on Google's
+        // (hidden) language list, which is the same thing a visitor would do by hand.
+        var tries = 0;
+        (function pick() {
+            var sel = document.querySelector('select.goog-te-combo');
+            if (sel) {
+                if (sel.value !== target) {
+                    sel.value = target;
+                    sel.dispatchEvent(new Event('change'));
+                }
+                return;
+            }
+            if (++tries < 60) setTimeout(pick, 250);
+        })();
     };
     window.googleTranslateElementInit = window.smlcStartTranslate;
 
