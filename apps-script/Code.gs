@@ -1040,33 +1040,36 @@ function phReview_(req) {
   return { approved: true, link: link, path: path };
 }
 
-// === SECTION 6: Sign Ads from S&K Venture Signs (read-only copy with full image links) ===
+// === SECTION 6: S&K Venture Signs advertisers -> Partners tab (read-only copy with full image links) ===
 /*
  * WHAT IT DOES
  *   Scott's sign sheet publishes its ads to a public file, playlist.json, on his GitHub.
- *   importSignAds() reads that file (it never opens or changes his Sheet or his script) and
- *   writes the ads for Clay City, Xenia, Xenia TV and Flora TV into a tab called "Sign Ads"
- *   in THIS sheet, turning "./images/X.png" into "https://skventuresigns.com/images/X.png".
+ *   importSignAdsToPartners() reads that file (it never opens or changes his Sheet or his script)
+ *   and adds the ads for Clay City, Xenia, Xenia TV and Flora TV to the PARTNERS tab of this
+ *   sheet, turning "./images/X.png" into "https://skventuresigns.com/images/X.png".
  *
- *   Only the "Sign Ads" tab is ever rewritten. Expired ads are left out.
- *   Column A is the town, so Code.gs files each row under that town in Firebase
- *   (towns/<Town>/sections/sign_ads) like every other tab.
+ *   Partners columns: A Town | B Business Name | C Website | D Image | E ALT   (as before)
+ *   Column "Source" (added on the right) says "S&K Signs" on the rows this adds.
+ *
+ *   - Rows YOU typed into Partners are never changed or deleted. Only rows marked "S&K Signs"
+ *     are refreshed. If you already have a partner with the same name in that town, the
+ *     S&K one is skipped.
+ *   - Videos and web pages are skipped (a partner card needs a picture). Expired ads are skipped.
+ *   - The same ad on more than one screen (Xenia Billboard + Xenia TV) is added once.
+ *   - To leave an advertiser out, add its name to SA_SKIP_NAMES below.
  *
  * SETUP
- *   Run importSignAds once by hand (approve the permissions), then run
+ *   Run importSignAdsToPartners once by hand (approve the permissions), then run
  *   installSignAdsTrigger once to keep it up to date automatically.
  */
 var SA_SOURCE = "https://raw.githubusercontent.com/skventuresigns-design/skventuresigns/main/playlist.json";
 var SA_SITE = "https://skventuresigns.com/";
-var SA_TAB = "Sign Ads";
-var SA_HEADERS = ["Town", "Screen", "Name", "Image URL", "Type", "Seconds", "Expires"];
-// Scott's tab name (lower case, as it appears in playlist.json) -> [Town, Screen]
-var SA_SCREENS = {
-  "clay city": ["Clay City", "Billboard"],
-  "xenia":     ["Xenia", "Billboard"],
-  "xeniatv":   ["Xenia", "TV"],
-  "floratv":   ["Flora", "TV"]
-};
+var SA_PARTNERS_TAB = "Partners";
+var SA_MARK = "S&K Signs";
+// Scott's tab name (lower case, as it appears in playlist.json) -> Town in your sheet
+var SA_SCREENS = { "clay city": "Clay City", "xenia": "Xenia", "xeniatv": "Xenia", "floratv": "Flora" };
+// Advertiser names (any capitalization) you do NOT want as partners, e.g. ["SK Promote", "Wanted"]
+var SA_SKIP_NAMES = [];
 var SA_REFRESH_HOURS = 6;
 
 /** "./images/X.png" -> "https://skventuresigns.com/images/X.png". Full links are left alone. */
@@ -1090,59 +1093,77 @@ function saIsExpired_(text, todayIso) {
   return iso < todayIso;
 }
 
-/** Reads Scott's published ads and rewrites the "Sign Ads" tab. Safe to run any time. */
-function importSignAds() {
+/** Reads Scott's published ads and refreshes the "S&K Signs" rows in the Partners tab. */
+function importSignAdsToPartners() {
   var resp = UrlFetchApp.fetch(SA_SOURCE, { muteHttpExceptions: true });
   if (resp.getResponseCode() !== 200) {
     throw new Error("Couldn't read the S&K playlist (HTTP " + resp.getResponseCode() + "). Nothing was changed.");
   }
   var locations = (JSON.parse(resp.getContentText()).locations) || {};
   var today = Utilities.formatDate(new Date(), "America/Chicago", "yyyy-MM-dd");
-  var rows = [];
+  var skip = SA_SKIP_NAMES.map(function (n) { return String(n).trim().toLowerCase(); });
 
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SA_PARTNERS_TAB);
+  if (!sheet) throw new Error("There is no '" + SA_PARTNERS_TAB + "' tab. Nothing was changed.");
+
+  // Find (or add) the "Source" column, to the right of your existing columns
+  var lastCol = Math.max(sheet.getLastColumn(), 5);
+  var head = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(function (h) { return String(h).trim().toLowerCase(); });
+  var srcCol = head.indexOf("source") + 1;
+  if (!srcCol) {
+    srcCol = lastCol + 1;
+    sheet.getRange(1, srcCol).setValue("Source").setNote("Rows marked '" + SA_MARK + "' are copied automatically from S&K Venture Signs and refreshed. Rows without it are yours and are never touched.");
+  }
+
+  // What is in Partners now: remember YOUR names per town, and the rows we added earlier
+  var lastRow = sheet.getLastRow();
+  var existing = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, srcCol).getValues() : [];
+  var mine = {}, oldRows = [], oldRowNums = [];
+  existing.forEach(function (r, i) {
+    var key = String(r[0]).trim().toLowerCase() + "|" + String(r[1]).trim().toLowerCase();
+    if (String(r[srcCol - 1]).trim() === SA_MARK) { oldRows.push(r.slice(0, 5)); oldRowNums.push(i + 2); }
+    else mine[key] = true;
+  });
+
+  // Build the rows we want
+  var wanted = [], seen = {};
   Object.keys(SA_SCREENS).forEach(function (key) {
     var ads = locations[key];
     if (!ads) { Logger.log("No '" + key + "' tab in the S&K playlist - skipped."); return; }
     ads.forEach(function (ad) {
       var url = saFullUrl_(ad.imageUrl);
-      if (!url || saIsExpired_(ad.expirationDate, today)) return;
-      rows.push([
-        SA_SCREENS[key][0], SA_SCREENS[key][1], String(ad.advertiser || "").trim(), url,
-        /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url) ? "Video" : (/\.html?(\?|$)/i.test(url) ? "Page" : "Image"),
-        Number(ad.duration) > 0 ? Number(ad.duration) : 8,
-        String(ad.expirationDate || "").trim()
-      ]);
+      var name = String(ad.advertiser || "").trim();
+      if (!url || !name || saIsExpired_(ad.expirationDate, today)) return;
+      if (!/\.(png|jpe?g|gif|webp|avif|svg)(\?|$)/i.test(url)) return;      // videos / pages can't be a partner picture
+      if (skip.indexOf(name.toLowerCase()) !== -1) return;
+      var town = SA_SCREENS[key];
+      var nameKey = town.toLowerCase() + "|" + name.toLowerCase();
+      if (mine[nameKey] || seen[nameKey]) return;                            // yours wins; same ad on two screens counts once
+      seen[nameKey] = true;
+      wanted.push([town, name, "", url, name]);
     });
   });
 
-  // Never wipe the tab if the feed came back empty
-  if (!rows.length) throw new Error("The S&K playlist had no ads for these screens. Nothing was changed.");
+  // Never wipe the earlier rows if the feed came back empty
+  if (!wanted.length) throw new Error("The S&K playlist had no usable ads for these screens. Nothing was changed.");
 
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(SA_TAB) || ss.insertSheet(SA_TAB);
-  var all = [SA_HEADERS].concat(rows);
+  if (JSON.stringify(oldRows) === JSON.stringify(wanted)) { Logger.log("Partners already up to date (" + wanted.length + " S&K ads)."); return; }
 
-  // Only write (and re-sync to Firebase) when something actually changed
-  var existing = sheet.getLastRow() > 0
-    ? sheet.getRange(1, 1, sheet.getLastRow(), SA_HEADERS.length).getValues()
-    : [];
-  if (JSON.stringify(existing) === JSON.stringify(all)) { Logger.log("Sign Ads already up to date (" + rows.length + " ads)."); return; }
-
-  sheet.clearContents();
-  sheet.getRange(1, 1, all.length, SA_HEADERS.length).setValues(all);
-  sheet.getRange(1, 1, 1, SA_HEADERS.length).setFontWeight("bold");
-  sheet.setFrozenRows(1);
-  sheet.getRange(1, 4).setNote("Copied automatically from S&K Venture Signs (playlist.json). Don't edit this tab - it is rewritten each time.");
+  // Remove ONLY the rows we added before (bottom-up so row numbers stay right), then add the fresh ones at the end
+  for (var i = oldRowNums.length - 1; i >= 0; i--) sheet.deleteRow(oldRowNums[i]);
+  var start = sheet.getLastRow() + 1;
+  var block = wanted.map(function (r) { var row = r.slice(); while (row.length < srcCol - 1) row.push(""); row.push(SA_MARK); return row; });
+  sheet.getRange(start, 1, block.length, srcCol).setValues(block);
   SpreadsheetApp.flush();
-  Logger.log("Sign Ads updated: " + rows.length + " ads.");
+  Logger.log("Partners updated: " + wanted.length + " S&K ads (your own partners were not touched).");
   pushMasterDataToFirebase();   // edits made by a script don't fire the On edit trigger
 }
 
-/** Run once by hand: keeps the Sign Ads tab up to date (replaces any old copy of this timer). */
+/** Run once by hand: keeps the S&K rows in Partners up to date (replaces any old copy of this timer). */
 function installSignAdsTrigger() {
   ScriptApp.getProjectTriggers().forEach(function (t) {
-    if (t.getHandlerFunction() === "importSignAds") ScriptApp.deleteTrigger(t);
+    if (t.getHandlerFunction() === "importSignAdsToPartners" || t.getHandlerFunction() === "importSignAds") ScriptApp.deleteTrigger(t);
   });
-  ScriptApp.newTrigger("importSignAds").timeBased().everyHours(SA_REFRESH_HOURS).create();
-  Logger.log("Sign Ads refresh scheduled every " + SA_REFRESH_HOURS + " hours.");
+  ScriptApp.newTrigger("importSignAdsToPartners").timeBased().everyHours(SA_REFRESH_HOURS).create();
+  Logger.log("S&K partner refresh scheduled every " + SA_REFRESH_HOURS + " hours.");
 }
