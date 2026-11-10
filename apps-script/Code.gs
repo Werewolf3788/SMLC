@@ -38,7 +38,38 @@
  */
 function onEditTrigger(e) {
   Logger.log("Change detected in spreadsheet. Initiating automatic Firebase sync...");
+  try { colorPartnersByTown(); } catch (err) { Logger.log("Partner colors skipped: " + err); }
   pushMasterDataToFirebase();
+}
+
+// === SECTION 0.1: Color the Partners tab rows by town ===
+// Background = the town's secondary color, font = the town's primary color
+// (taken from each town's CSS). Rows with no matching town (e.g. Global) are left plain.
+// Runs automatically on every edit; you can also run colorPartnersByTown() by hand.
+var PARTNER_TOWN_COLORS = {
+  "flora":          { bg: "#FE4E02", font: "#0258A3" },  // Royal Blue on Wolf Orange
+  "louisville":     { bg: "#FFC10E", font: "#EB1C24" },  // Red on Gold
+  "clay city":      { bg: "#F2F2F2", font: "#0C2890" },  // Navy on Light Gray
+  "xenia":          { bg: "#FFC10E", font: "#1C5640" },  // Green on Gold
+  "sailor springs": { bg: "#FFC10E", font: "#4A154B" }   // Purple on Gold
+};
+
+function colorPartnersByTown() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Partners");
+  if (!sheet) return;
+  var last = sheet.getLastRow();
+  if (last < 2) return;
+  var towns = sheet.getRange(2, 1, last - 1, 1).getValues();
+  var bgs = [], fonts = [];
+  for (var i = 0; i < towns.length; i++) {
+    var c = PARTNER_TOWN_COLORS[String(towns[i][0]).trim().toLowerCase()];
+    var bgRow = [], fontRow = [];
+    for (var k = 0; k < 5; k++) { bgRow.push(c ? c.bg : null); fontRow.push(c ? c.font : null); }
+    bgs.push(bgRow); fonts.push(fontRow);
+  }
+  var range = sheet.getRange(2, 1, towns.length, 5);
+  range.setBackgrounds(bgs);
+  range.setFontColors(fonts);
 }
 
 // === SECTION 1: Master Runner & Firebase Publisher ===
