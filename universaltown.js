@@ -1944,23 +1944,11 @@ function bindFirebasePartnersEngine(db) {
 
             if (uniquePartners.length === 0) return;
 
-            // Videos are pinned in the top strip; only images go through the rotating carousels.
+            // Videos are pinned in the first strip; images rotate. The two strips show different
+            // partners (5 cards max each): the second strip continues where the first one stops.
             const videoPartners = uniquePartners.filter(isPartnerVideo);
             const imagePartners = uniquePartners.filter(p => !isPartnerVideo(p));
-            const upperPool = [...imagePartners];
-            const lowerPool = [...imagePartners].reverse();
-            if (lowerPool.length > 2) {
-                const shiftCount = Math.floor(lowerPool.length / 2);
-                for (let i = 0; i < shiftCount; i++) {
-                    lowerPool.push(lowerPool.shift());
-                }
-            }
-
-            if (topGrid) renderCarouselPartnerRotator(topGrid, upperPool, 'top_strip', 0, videoPartners);
-            if (bottomGrid) {
-                if (lowerPool.length) renderCarouselPartnerRotator(bottomGrid, lowerPool, 'bottom_strip', 2);
-                else bottomGrid.innerHTML = '';
-            }
+            renderCarouselPartnerRotator(topGrid, bottomGrid, imagePartners, videoPartners);
         };
 
         activeFbRefPartnersTown = db.ref(`master_county_data/towns/${townName}/sections/partners`);
@@ -1986,7 +1974,7 @@ function bindFirebasePartnersEngine(db) {
 // re-fitting when the window is resized. No scrollbars, logos never stretched.
 const SMLC_PARTNER_CARD_MIN = 176;   // px a card needs to look right (5 fit at 1024px+)
 const SMLC_PARTNER_GAP = 16;
-const SMLC_PARTNER_MAX = 7;
+const SMLC_PARTNER_MAX = 5;
 const smlcPartnerStripObservers = {};
 const smlcPartnerRefitters = {};
 window.smlcRefitPartnerStrips = () => Object.values(smlcPartnerRefitters).forEach(fn => { try { fn(); } catch (e) {} });
@@ -2004,141 +1992,142 @@ function isPartnerVideo(p) {
     return !!p && isVideoUrl(resolvePartnerImage(p.imageUrl || p.image1 || ''));
 }
 
-function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, seedOffset = 0, pinnedPool = []) {
-    if (!containerElement || (!partnerPool.length && !pinnedPool.length)) return;
+function smlcPartnerCardMarkup(partner, pinned) {
+    const imgUrl = normalizeImageUrl(resolvePartnerImage(partner.imageUrl || partner.image1));
+    const name = partner.name || 'Local Community Partner';
+    const rawUrl = partner.website || '#';
+    const link = attachUtmParameters(rawUrl);
+    const linkTargetAttr = resolveLinkTarget(rawUrl);
+    const altText = partner.alt || name;
+    const open = `fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')`;
 
-    if (stripKey === 'top_strip' && topCarouselInterval) {
-        clearInterval(topCarouselInterval);
-        topCarouselInterval = null;
-    }
-    if (stripKey === 'bottom_strip' && bottomCarouselInterval) {
-        clearInterval(bottomCarouselInterval);
-        bottomCarouselInterval = null;
-    }
+    return `
+        <div class="community-partner-card"${pinned ? ' data-pinned="1"' : ''} data-partner-name="${escapeJsString(name)}" style="transition: transform 0.35s ease, opacity 0.35s ease;">
+            <div class="partner-logo-container">
+                ${isVideoUrl(imgUrl)
+                    ? `<video class="partner-logo-asset" src="${imgUrl.replace(/^\/\//, 'https://')}" aria-label="${escapeJsString(altText)}" autoplay muted loop playsinline preload="metadata" onclick="${open}" style="cursor:pointer;"></video>`
+                    : `<img class="partner-logo-asset" src="${imgUrl}" alt="${escapeJsString(altText)} logo" loading="lazy" onclick="${open}" style="cursor:pointer;">`}
+            </div>
+            <h3 class="partner-title">${name}</h3>
+            ${partner.website ? `<a class="directory-tile-link" href="${link}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} data-ga-label="partner_cta">Visit Partner &rarr;</a>` : ''}
+        </div>
+    `;
+}
 
-    const isMobileOrTablet = window.innerWidth < 768;
-    let poolIndex = seedOffset % (partnerPool.length || 1);
+// Two partner strips, 5 cards max each, one shared rotation:
+//  - first strip: pinned videos, then images from the current spot in the image list
+//  - second strip: the NEXT images in the list, i.e. partners that are not in the first strip
+//  - every 8 seconds both strips move forward by one image
+function renderCarouselPartnerRotator(firstEl, secondEl, images, videos) {
+    if (topCarouselInterval) { clearInterval(topCarouselInterval); topCarouselInterval = null; }
+    if (bottomCarouselInterval) { clearInterval(bottomCarouselInterval); bottomCarouselInterval = null; }
+    const anchor = firstEl || secondEl;
+    if (!anchor) return;
+    const n = images.length;
+    if (!n && !(videos && videos.length)) return;
+    videos = videos || [];
+
+    let idx = 0;
     let isCarouselPaused = false;
     let hoverStartTime = 0;
+    const isMobile = () => window.innerWidth < 768;
+    const capacity = () => isMobile() ? 1 : partnerCardsThatFit(anchor, SMLC_PARTNER_MAX);
 
-    const createPartnerMarkup = (partner, slotIdx, pinned) => {
-        const imgUrl = normalizeImageUrl(resolvePartnerImage(partner.imageUrl || partner.image1));
-        const name = partner.name || 'Local Community Partner';
-        const rawUrl = partner.website || '#';
-        const link = attachUtmParameters(rawUrl);
-        const linkTargetAttr = resolveLinkTarget(rawUrl);
-        const altText = partner.alt || name;
-
-        return `
-            <div class="community-partner-card"${pinned ? ' data-pinned="1"' : ''} data-partner-name="${escapeJsString(name)}" style="transition: transform 0.35s ease, opacity 0.35s ease;">
-                <div class="partner-logo-container">
-                    ${isVideoUrl(imgUrl)
-                        ? `<video class="partner-logo-asset" src="${imgUrl.replace(/^\/\//, 'https://')}" aria-label="${escapeJsString(altText)}" autoplay muted loop playsinline preload="metadata" onclick="fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')" style="cursor:pointer;"></video>`
-                        : `<img class="partner-logo-asset" src="${imgUrl}" alt="${escapeJsString(altText)} logo" loading="lazy" onclick="fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')" style="cursor:pointer;">`}
-                </div>
-                <h3 class="partner-title">${name}</h3>
-                ${partner.website ? `<a class="directory-tile-link" href="${link}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} data-ga-label="partner_cta">Visit Partner &rarr;</a>` : ''}
-            </div>
-        `;
+    const layout = () => {
+        const cap = capacity();
+        const pinned = videos.length ? Math.min(videos.length, isMobile() ? 1 : (n ? Math.max(1, cap - 1) : cap)) : 0;
+        const firstRot = n ? Math.min(n, isMobile() ? 1 : Math.max(1, cap - pinned)) : 0;
+        const secondRot = n ? Math.max(0, Math.min(cap, n - firstRot)) : 0;
+        return { pinned, firstRot, secondRot };
     };
-
-    const totalSize = () => partnerPool.length + pinnedPool.length;
-    let visibleCount = partnerCardsThatFit(containerElement, totalSize());
-    // Pinned (video) cards take their slots first; the remaining slots rotate through the images.
-    const pinnedSlots = () => Math.min(pinnedPool.length, isMobileOrTablet ? 1 : (partnerPool.length ? Math.max(1, visibleCount - 1) : visibleCount));
-    const rotatingSlots = () => partnerPool.length ? Math.min(partnerPool.length, isMobileOrTablet ? 1 : Math.max(1, visibleCount - pinnedSlots())) : 0;
-    const rotatingMarkup = () => {
-        const out = [];
-        for (let i = 0; i < rotatingSlots(); i++) out.push(createPartnerMarkup(partnerPool[(poolIndex + i) % partnerPool.length], i, false));
-        return out.join('');
+    const window_ = (start, count) => {
+        let out = '';
+        for (let i = 0; i < count; i++) out += smlcPartnerCardMarkup(images[(start + i) % n], false);
+        return out;
     };
-    const drawCards = () => {
-        const pinnedHtml = pinnedPool.slice(0, pinnedSlots()).map((p, i) => createPartnerMarkup(p, i, true)).join('');
-        containerElement.classList.toggle('has-pinned', !!pinnedHtml);
-        containerElement.innerHTML = pinnedHtml + rotatingMarkup();
+    const setSecondVisible = (on) => {
+        if (!secondEl) return;
+        const wrap = secondEl.closest('.widescreen-strip-container') || secondEl;
+        wrap.style.display = on ? '' : 'none';
     };
-    drawCards();
+    const drawAll = () => {
+        const L = layout();
+        if (firstEl) {
+            const pinnedHtml = videos.slice(0, L.pinned).map(v => smlcPartnerCardMarkup(v, true)).join('');
+            firstEl.classList.toggle('has-pinned', !!pinnedHtml);
+            firstEl.innerHTML = pinnedHtml + window_(idx, L.firstRot);
+        }
+        if (secondEl) {
+            secondEl.innerHTML = L.secondRot ? window_(idx + L.firstRot, L.secondRot) : '';
+            setSecondVisible(L.secondRot > 0);
+        }
+        [firstEl, secondEl].forEach(el => el && el.querySelectorAll('.community-partner-card').forEach(card => {
+            trackGa4Event('partner_card_impression', { partner_name: card.getAttribute('data-partner-name'), strip: el === firstEl ? 'top_strip' : 'bottom_strip' });
+        }));
+    };
+    drawAll();
 
     // Re-fit when the strip changes width (window resize, rotate, sidebar, zoom)
-    if (smlcPartnerStripObservers[stripKey]) smlcPartnerStripObservers[stripKey].disconnect();
-    smlcPartnerRefitters[stripKey] = () => {
-        const next = partnerCardsThatFit(containerElement, totalSize());
-        if (next !== visibleCount) { visibleCount = next; drawCards(); }
-    };
+    let lastCap = capacity();
+    const refit = () => { const c = capacity(); if (c !== lastCap) { lastCap = c; drawAll(); } };
+    smlcPartnerRefitters.pair = refit;
+    if (smlcPartnerStripObservers.pair) smlcPartnerStripObservers.pair.disconnect();
     if (typeof ResizeObserver === 'function') {
         let fitTimer = null;
-        const ro = new ResizeObserver(() => {
-            clearTimeout(fitTimer);
-            fitTimer = setTimeout(() => {
-                const next = partnerCardsThatFit(containerElement, totalSize());
-                if (next !== visibleCount) { visibleCount = next; drawCards(); }
-            }, 120);
-        });
-        ro.observe(containerElement.parentElement || containerElement);
-        smlcPartnerStripObservers[stripKey] = ro;
+        const ro = new ResizeObserver(() => { clearTimeout(fitTimer); fitTimer = setTimeout(refit, 120); });
+        ro.observe(anchor.parentElement || anchor);
+        smlcPartnerStripObservers.pair = ro;
     }
 
-    const onPauseEnter = () => {
-        isCarouselPaused = true;
-        hoverStartTime = Date.now();
-    };
-
+    const onPauseEnter = () => { isCarouselPaused = true; hoverStartTime = Date.now(); };
     const onPauseLeave = () => {
         isCarouselPaused = false;
         if (hoverStartTime > 0) {
             const durationSec = Math.round((Date.now() - hoverStartTime) / 1000);
-            const activeCard = containerElement.querySelector('.community-partner-card');
-            const pName = activeCard ? activeCard.getAttribute('data-partner-name') : 'Unknown';
+            const activeCard = anchor.querySelector('.community-partner-card');
             if (durationSec >= 1) {
                 trackGa4Event('partner_engagement_time', {
-                    partner_name: pName,
+                    partner_name: activeCard ? activeCard.getAttribute('data-partner-name') : 'Unknown',
                     seconds_viewed: durationSec
                 });
             }
             hoverStartTime = 0;
         }
     };
-
-    containerElement.addEventListener('mouseenter', onPauseEnter);
-    containerElement.addEventListener('mouseleave', onPauseLeave);
-    containerElement.addEventListener('touchstart', onPauseEnter, { passive: true });
-    containerElement.addEventListener('touchend', onPauseLeave);
-
-    containerElement.querySelectorAll('.community-partner-card').forEach(card => {
-        const pName = card.getAttribute('data-partner-name');
-        trackGa4Event('partner_card_impression', { partner_name: pName, strip: stripKey });
+    [firstEl, secondEl].forEach(el => {
+        if (!el || el.dataset.partnerHoverBound) return;
+        el.dataset.partnerHoverBound = '1';
+        el.addEventListener('mouseenter', onPauseEnter);
+        el.addEventListener('mouseleave', onPauseLeave);
+        el.addEventListener('touchstart', onPauseEnter, { passive: true });
+        el.addEventListener('touchend', onPauseLeave);
     });
 
+    if (n <= 1) return;   // nothing to rotate
     const slideDuration = 8000;   // 8 seconds on every device so people can read each partner
-    const intervalId = setInterval(() => {
+    topCarouselInterval = setInterval(() => {
         if (isCarouselPaused) return;
+        idx = (idx + 1) % n;
+        const L = layout();
+        const fading = [];
+        if (firstEl) firstEl.querySelectorAll('.community-partner-card:not([data-pinned])').forEach(c => fading.push(c));
+        if (secondEl) secondEl.querySelectorAll('.community-partner-card').forEach(c => fading.push(c));
+        fading.forEach(c => { c.style.opacity = '0.3'; c.style.transform = 'scale(0.96)'; });
 
-        if (!partnerPool.length) return;   // only pinned videos: nothing to rotate
-        poolIndex = (poolIndex + 1) % partnerPool.length;
-
-        const rotCards = containerElement.querySelectorAll('.community-partner-card:not([data-pinned])');
-        if (rotCards.length > 0) {
-            rotCards.forEach(c => {
-                c.style.opacity = '0.3';
-                c.style.transform = 'scale(0.96)';
-            });
-
-            setTimeout(() => {
-                containerElement.querySelectorAll('.community-partner-card:not([data-pinned])').forEach(c => c.remove());
-                containerElement.insertAdjacentHTML('beforeend', rotatingMarkup());
-
-                containerElement.querySelectorAll('.community-partner-card:not([data-pinned])').forEach(c => {
-                    c.style.opacity = '1';
-                    c.style.transform = 'scale(1)';
-                    const pName = c.getAttribute('data-partner-name');
-                    trackGa4Event('partner_card_impression', { partner_name: pName, strip: stripKey });
-                });
-            }, 300);
-        }
+        setTimeout(() => {
+            if (firstEl) {
+                firstEl.querySelectorAll('.community-partner-card:not([data-pinned])').forEach(c => c.remove());
+                firstEl.insertAdjacentHTML('beforeend', window_(idx, L.firstRot));
+            }
+            if (secondEl) {
+                secondEl.innerHTML = L.secondRot ? window_(idx + L.firstRot, L.secondRot) : '';
+            }
+            [firstEl, secondEl].forEach(el => el && el.querySelectorAll('.community-partner-card:not([data-pinned])').forEach(c => {
+                c.style.opacity = '1'; c.style.transform = 'scale(1)';
+                trackGa4Event('partner_card_impression', { partner_name: c.getAttribute('data-partner-name'), strip: el === firstEl ? 'top_strip' : 'bottom_strip' });
+            }));
+        }, 300);
     }, slideDuration);
-
-    if (stripKey === 'top_strip') topCarouselInterval = intervalId;
-    if (stripKey === 'bottom_strip') bottomCarouselInterval = intervalId;
 }
 
 // === FUEL MONITOR BILLBOARD ===
