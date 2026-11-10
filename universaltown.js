@@ -207,7 +207,7 @@ const TOWN_ALIAS_MAP = {
         primaryName: "Sailor Springs", 
         dbTownKey: "Sailor Springs", 
         jsonKey: "sailor_springs", 
-        gasKey: ["louisville", "clay-city"], 
+        gasKey: [], 
         historyKey: "sailor_springs", 
         areaId: 5,
         linkedAreaIds: [5],
@@ -2145,6 +2145,13 @@ function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, s
 function initializeFirebaseGasMonitor(db) {
     const gasContainer = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
     if (!gasContainer) return;
+    // A town with no gas station of its own gets no fuel widget
+    if (!ACTIVE_TOWN.isHome && Array.isArray(ACTIVE_TOWN.gasKey) && ACTIVE_TOWN.gasKey.length === 0) {
+        const grid = gasContainer.parentElement;
+        gasContainer.remove();
+        if (grid) grid.style.gridTemplateColumns = '1fr';
+        return;
+    }
 
     // Station list lives in smlc-stations.js (shared with update-gas.html and the home page)
     const stationConfigs = window.SMLC_STATIONS || {};
