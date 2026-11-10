@@ -296,6 +296,18 @@ function cleanRawUrl(urlStr) {
         .replace("/edit/", "/");
 }
 
+// Called by a slideshow <img> when its picture fails to load (expired/blocked link): hide that slide
+window.smlcSlideImageFailed = function (img) {
+    const slide = img && img.closest ? img.closest('.slider-slide') : null;
+    if (!slide) return;
+    slide.dataset.broken = '1';
+    slide.style.display = 'none';
+    slide.style.opacity = '0';
+    slide.style.zIndex = '0';
+    const viewport = slide.parentElement;
+    if (viewport) viewport.dispatchEvent(new Event('smlc-slide-broken'));
+};
+
 function normalizeImageUrl(rawUrl) {
     if (!rawUrl || typeof rawUrl !== 'string') return null;
     let url = rawUrl.trim();
@@ -1668,7 +1680,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
 
                     return `
                         <div class="slider-slide ${idx === 0 ? 'active' : ''}" style="position: absolute; inset: 0; opacity: ${idx === 0 ? 1 : 0}; transition: opacity 0.8s ease-in-out; z-index: ${idx === 0 ? 2 : 1};">
-                            ${imgUrl ? `<img src="${imgUrl}" alt="${safeAlt}" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'COMMUNITY VIEW', '${safeAlt}', '${safeWeb}', '${safeAlt}')" style="width:100%; height:100%; object-fit:contain; background-color:#0a0a0a; cursor:pointer;">` : `<div class="smlc-img-unavailable" role="img" aria-label="${SMLC_IMG_NOTICE_TEXT}"><span class="smlc-img-unavailable-icon" aria-hidden="true">&#9888;</span><span>${SMLC_IMG_NOTICE_TEXT}</span></div>`}
+                            ${imgUrl ? `<img src="${imgUrl}" alt="${safeAlt}" onerror="smlcSlideImageFailed(this)" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'COMMUNITY VIEW', '${safeAlt}', '${safeWeb}', '${safeAlt}')" style="width:100%; height:100%; object-fit:contain; background-color:#0a0a0a; cursor:pointer;">` : `<div class="smlc-img-unavailable" role="img" aria-label="${SMLC_IMG_NOTICE_TEXT}"><span class="smlc-img-unavailable-icon" aria-hidden="true">&#9888;</span><span>${SMLC_IMG_NOTICE_TEXT}</span></div>`}
                             ${captionTitle ? `<div class="slider-caption">${captionTitle}</div>` : ''}
                         </div>
                     `;
@@ -1678,6 +1690,27 @@ function bindFirebaseSemanticSectionsEngine(db) {
                 if (slides.length > 1) {
                     let currentSlideIdx = 0;
                     let isSlideshowPaused = false;
+                    const isBroken = (i) => slides[i].dataset.broken === '1';
+
+                    // Move to the next slide whose image loaded (skips dead/expired links, e.g. Facebook CDN 403s)
+                    const advanceSlide = () => {
+                        let next = currentSlideIdx;
+                        for (let step = 0; step < slides.length; step++) {
+                            next = (next + 1) % slides.length;
+                            if (!isBroken(next)) break;
+                        }
+                        if (isBroken(next) || next === currentSlideIdx) return;
+                        slides[currentSlideIdx].style.opacity = "0";
+                        slides[currentSlideIdx].style.zIndex = "1";
+                        currentSlideIdx = next;
+                        slides[currentSlideIdx].style.opacity = "1";
+                        slides[currentSlideIdx].style.zIndex = "2";
+                    };
+
+                    // If the slide currently on screen fails to load, jump away from it right away
+                    viewport.addEventListener('smlc-slide-broken', () => {
+                        if (isBroken(currentSlideIdx)) advanceSlide();
+                    });
 
                     viewport.addEventListener('mouseenter', () => { isSlideshowPaused = true; });
                     viewport.addEventListener('mouseleave', () => { isSlideshowPaused = false; });
@@ -1687,11 +1720,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
                     if (globalSlideshowTicker) clearInterval(globalSlideshowTicker);
                     globalSlideshowTicker = setInterval(() => {
                         if (isSlideshowPaused) return;
-                        slides[currentSlideIdx].style.opacity = "0";
-                        slides[currentSlideIdx].style.zIndex = "1";
-                        currentSlideIdx = (currentSlideIdx + 1) % slides.length;
-                        slides[currentSlideIdx].style.opacity = "1";
-                        slides[currentSlideIdx].style.zIndex = "2";
+                        advanceSlide();
                     }, 4000);
                 }
             }
