@@ -1623,9 +1623,15 @@ function bindFirebaseSemanticSectionsEngine(db) {
             const poiDescEl = document.getElementById('point-of-interest-landmark-desc') || document.getElementById('right-card-meta-desc1');
 
             if (poiTitleEl && poi.title) poiTitleEl.innerText = poi.title;
-            if (poiAboutEl && poi.about_text) poiAboutEl.innerText = poi.about_text;
+            // Paragraph 1 (sheet column G) shows first, Paragraph 2 (column H) under it.
+            // Strip a stray label pasted into a cell, e.g.  Description2": "Louisville, IL ...
+            const cleanParagraph = (t) => String(t == null ? '' : t)
+                .replace(/^\s*(?:Description|Paragraph)\s*\d*\s*["\u201d]?\s*:\s*["\u201c]?\s*/i, '')
+                .replace(/["\u201d]\s*$/, '')
+                .trim();
+            if (poiAboutEl && poi.about_text) poiAboutEl.innerText = cleanParagraph(poi.about_text);
             if (poiDescEl) {
-                if (poi.landmark_description) poiDescEl.innerHTML = linkifyRawUrls(poi.landmark_description);
+                if (poi.landmark_description) poiDescEl.innerHTML = linkifyRawUrls(cleanParagraph(poi.landmark_description));
                 else if (/^\s*Loading/i.test(poiDescEl.textContent)) poiDescEl.style.display = 'none';
             }
 

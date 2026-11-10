@@ -192,8 +192,8 @@ a { color: var(--link-bright-blue); text-decoration: none; }
 .point-of-interest-img-wrap { margin: 0; }
 .point-of-interest-img-wrap img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border: 2px solid #333; border-radius: 6px; cursor: pointer; display: block; }
 .point-of-interest-caption { margin-top: 8px; text-align: center; font: 700 0.9375rem var(--font-label); color: #fff; }
-.point-of-interest-about-text { margin: 14px 0 0; line-height: 1.6; color: #eee; font-style: italic; }
-.point-of-interest-desc { flex-grow: 1; margin: 12px 0 0; padding-top: 14px; border-top: 1px dashed rgba(255,255,255,.2); line-height: 1.7; color: #ddd; }
+.point-of-interest-desc { margin: 12px 0 0; padding-top: 14px; border-top: 1px dashed rgba(255,255,255,.2); line-height: 1.7; color: #ddd; }
+.point-of-interest-about-text { flex-grow: 1; margin: 12px 0 0; line-height: 1.7; color: #ddd; }
 
 .article-card-chassis { padding: 0 !important; width: 100%; height: 100%; }
 .article-inner-box { height: 100%; overflow: hidden; background: var(--card-article-bg); color: var(--card-text-primary); border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,.6); font-family: var(--font-body); }
