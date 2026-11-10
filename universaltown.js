@@ -2019,6 +2019,37 @@ function isPartnerVideo(p) {
     return !!p && isVideoUrl(resolvePartnerImage(p.imageUrl || p.image1 || ''));
 }
 
+// Phones (iOS Safari especially) ignore the autoplay/muted attributes on videos added with innerHTML,
+// and pause videos that scroll off screen, which left partner videos frozen on the first frame.
+// Set the properties directly, call play(), and resume on visibility / first touch.
+const smlcVideoObserver = (typeof IntersectionObserver === 'function')
+    ? new IntersectionObserver(entries => entries.forEach(en => { if (en.isIntersecting) smlcPlayVideo(en.target); }), { threshold: 0.25 })
+    : null;
+function smlcPlayVideo(v) {
+    if (!v || v.ended) return;
+    v.muted = true; v.defaultMuted = true; v.loop = true;
+    v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+    const pr = v.play();
+    if (pr && typeof pr.catch === 'function') pr.catch(() => {});
+}
+function smlcKickPartnerVideos(root) {
+    (root || document).querySelectorAll('video.partner-logo-asset').forEach(v => {
+        if (v.dataset.kicked) { smlcPlayVideo(v); return; }
+        v.dataset.kicked = '1';
+        v.addEventListener('loadeddata', () => smlcPlayVideo(v));
+        v.addEventListener('canplay', () => smlcPlayVideo(v));
+        v.addEventListener('pause', () => { if (!v.ended && !document.hidden && v.dataset.userPaused !== '1') setTimeout(() => smlcPlayVideo(v), 300); });
+        if (smlcVideoObserver) smlcVideoObserver.observe(v);
+        smlcPlayVideo(v);
+    });
+}
+if (!window.smlcVideoGestureBound) {
+    window.smlcVideoGestureBound = true;
+    const again = () => smlcKickPartnerVideos(document);
+    ['touchstart', 'pointerdown', 'scroll', 'click'].forEach(ev => window.addEventListener(ev, again, { passive: true, once: true }));
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) again(); });
+}
+
 function smlcPartnerCardMarkup(partner, pinned) {
     const imgUrl = normalizeImageUrl(resolvePartnerImage(partner.imageUrl || partner.image1));
     const name = partner.name || 'Local Community Partner';
@@ -2032,7 +2063,7 @@ function smlcPartnerCardMarkup(partner, pinned) {
         <div class="community-partner-card"${pinned ? ' data-pinned="1"' : ''} data-partner-name="${escapeJsString(name)}" style="transition: transform 0.35s ease, opacity 0.35s ease;">
             <div class="partner-logo-container">
                 ${isVideoUrl(imgUrl)
-                    ? `<video class="partner-logo-asset" src="${imgUrl.replace(/^\/\//, 'https://')}" aria-label="${escapeJsString(altText)}" autoplay muted loop playsinline preload="metadata" onclick="${open}" style="cursor:pointer;"></video>`
+                    ? `<video class="partner-logo-asset" src="${imgUrl.replace(/^\/\//, 'https://')}" aria-label="${escapeJsString(altText)}" autoplay muted loop playsinline webkit-playsinline preload="auto" onclick="${open}" style="cursor:pointer;"></video>`
                     : `<img class="partner-logo-asset" src="${imgUrl}" alt="${escapeJsString(altText)} logo" loading="lazy" onclick="${open}" style="cursor:pointer;">`}
             </div>
             <h3 class="partner-title">${name}</h3>
@@ -2093,10 +2124,12 @@ function renderCarouselPartnerRotator(firstEl, secondEl, images, videos) {
         }));
     };
     drawAll();
+    smlcKickPartnerVideos(anchor.parentElement || document);
+    setTimeout(() => smlcKickPartnerVideos(document), 800);
 
     // Re-fit when the strip changes width (window resize, rotate, sidebar, zoom)
     let lastCap = capacity();
-    const refit = () => { const c = capacity(); if (c !== lastCap) { lastCap = c; drawAll(); } };
+    const refit = () => { const c = capacity(); if (c !== lastCap) { lastCap = c; drawAll(); smlcKickPartnerVideos(document); } };
     smlcPartnerRefitters.pair = refit;
     if (smlcPartnerStripObservers.pair) smlcPartnerStripObservers.pair.disconnect();
     if (typeof ResizeObserver === 'function') {
