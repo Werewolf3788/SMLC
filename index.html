@@ -25,7 +25,8 @@
     <meta name="geo.placename" content="Clay County, Illinois">
     <meta name="geo.position" content="38.75;-88.49">
     <meta name="ICBM" content="38.75, -88.49">
-    <script type="application/ld+json">
+    <script src="smlc-stations.js"></script>
+<script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@graph": [
@@ -384,15 +385,7 @@
         const NAV_SECONDARY = "#FFC10E"; // Home page secondary color
         const NEWS_PAGE_SIZE = 12;
 
-        const GAS_STATIONS = {
-            "48100":  { display: "Flora",      name: "CASEY'S",   logo: "Casey's.png" },
-            "48101":  { display: "Flora",      name: "HUCK'S",    logo: "Hucks.png" },
-            "128128": { display: "Flora",      name: "MACH 1",    logo: "Mach 1.png", whiteBg: true },
-            "120226": { display: "Flora",      name: "FAST STOP", logo: "Fast stop.png" },
-            "87817":  { display: "Louisville", name: "CASEY'S",   logo: "Casey's.png" },
-            "48026":  { display: "Clay City",  name: "CASEY'S",   logo: "Casey's.png" },
-            "171711": { display: "Xenia",      name: "CITGO",     logo: "Citgo.png" }
-        };
+        const GAS_STATIONS = window.SMLC_STATIONS || {};   // shared list: smlc-stations.js
         const GAS_LOGO_BASE = "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/";
 
         /* ===================== HELPERS ===================== */
@@ -598,7 +591,7 @@
                     if (!id || seen[id]) return;
                     seen[id] = 1;
                     const known = GAS_STATIONS[id] || {};
-                    list.push({ id, display: known.display || town, name: String(e.title || known.name || ("Station " + id)).trim(), logo: known.logo || "", whiteBg: known.whiteBg });
+                    list.push({ id, display: known.display || town, name: String(e.title || known.name || ("Station " + id)).trim(), logo: known.logo || "", whiteBg: known.whiteBg, address: known.address || "", phone: known.phone || "" });
                 });
             });
             if (list.length) return list;
@@ -620,7 +613,10 @@
                     '<div class="gas-town">' + esc(cfg.display.toUpperCase()) + ', IL</div>' +
                     '<div class="gas-logo">' + (cfg.logo ? '<img src="' + GAS_LOGO_BASE + encodeURIComponent(cfg.logo) + '" alt="' + esc(cfg.name) + '"' + (cfg.whiteBg ? ' class="white-bg"' : '') + '>' : '<div class="gas-logo-text">' + esc(cfg.name) + '</div>') + '</div>' +
                     '<div class="gas-row"><span class="gas-label">REGULAR</span><span class="gas-price reg">' + reg + '</span></div>' +
+                    (info.mid && info.mid !== "0" ? '<div class="gas-row"><span class="gas-label">MIDGRADE</span><span class="gas-price reg">' + esc(info.mid) + '</span></div>' : '') +
+                    (info.pre && info.pre !== "0" ? '<div class="gas-row"><span class="gas-label">PREMIUM</span><span class="gas-price reg">' + esc(info.pre) + '</span></div>' : '') +
                     '<div class="gas-row"><span class="gas-label">DIESEL</span><span class="gas-price dsl">' + dsl + '</span></div>' +
+                    (cfg.address ? '<div class="gas-updated">' + esc(cfg.address) + (cfg.phone ? ' &bull; ' + esc(cfg.phone) : '') + '</div>' : '') +
                     '<div class="gas-updated">Updated: ' + esc(info.date || "Pending") + '</div>';
                 const logo = slide.querySelector(".gas-logo img");
                 if (logo) logo.onerror = () => {

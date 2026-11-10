@@ -513,6 +513,10 @@
             text-shadow: 0 0 15px #228b22;
         }
 
+        .gas-slide.many-grades .logo-container { height: clamp(30px, 8vw, 46px); margin-bottom: 6px; }
+        .gas-slide.many-grades .town-header { margin-bottom: 4px; }
+        .gas-slide.many-grades .led-red, .gas-slide.many-grades .led-grn { font-size: clamp(1.3rem, 5.5vw, 2rem); }
+        .gas-slide.many-grades .update-tag { margin-top: 4px; }
         .update-tag {
             color: var(--brand-gold);
             font-size: 9px;
@@ -634,21 +638,6 @@
                     <label for="station-selector">Select a Station to Update:</label>
                     <select id="station-selector">
                         <option value="">-- Choose a Station --</option>
-                        <optgroup label="Flora, IL">
-                            <option value="48100">Flora - Casey's</option>
-                            <option value="48101">Flora - Huck's</option>
-                            <option value="128128">Flora - Mach 1</option>
-                            <option value="120226">Flora - Fast Stop</option>
-                        </optgroup>
-                        <optgroup label="Louisville, IL">
-                            <option value="87817">Louisville - Casey's</option>
-                        </optgroup>
-                        <optgroup label="Xenia, IL">
-                            <option value="171711">Xenia - Citgo</option>
-                        </optgroup>
-                        <optgroup label="Clay City, IL">
-                            <option value="48026">Clay City - Casey's</option>
-                        </optgroup>
                     </select>
                 </div>
 
@@ -680,6 +669,7 @@
         </div> </div>
 </div>
 
+<script src="smlc-stations.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
@@ -699,25 +689,10 @@
     const masterApp = firebase.initializeApp(firebaseConfig, 'SMLCSharedFuelSystem_' + Math.random().toString(36).substr(2, 9));
     const db = masterApp.database();
 
-    const stationConfigs = {
-        "48100": { town: "flora", display: "Flora", name: "CASEY'S", logo: "Casey's.png" },     
-        "48101": { town: "flora", display: "Flora", name: "HUCK'S", logo: "Hucks.png" },      
-        "128128": { town: "flora", display: "Flora", name: "MACH 1", logo: "Mach 1.png" },    
-        "120226": { town: "flora", display: "Flora", name: "FAST STOP", logo: "Fast stop.png" },  
-        "87817": { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" }, 
-        "171711": { town: "xenia", display: "Xenia", name: "CITGO", logo: "Citgo.png" },      
-        "48026": { town: "clay-city", display: "Clay City", name: "CASEY'S", logo: "Casey's.png" }  
-    };
-
-    const stations = [
-        { id: "48100", name: "Flora - Casey's" },
-        { id: "48101", name: "Flora - Huck's" },
-        { id: "128128", name: "Flora - Mach 1" },
-        { id: "120226", name: "Flora - Fast Stop" },
-        { id: "87817", name: "Louisville - Casey's" },
-        { id: "171711", name: "Xenia - Citgo" },
-        { id: "48026", name: "Clay City - Casey's" }
-    ];
+    // Station list comes from smlc-stations.js (shared with every other page)
+    const stationConfigs = window.SMLC_STATIONS;
+    const GRADES = window.SMLC_GRADES;
+    const stations = Object.keys(stationConfigs).map(id => ({ id, name: stationConfigs[id].display + ' - ' + stationConfigs[id].name.replace(/\b(\w)(\w*)/g, (m, f, r) => f + r.toLowerCase()).replace(/'S\b/, "'s") }));
 
     // ===== Site Menu (from master_county_data/global/menu) =====
     // Each item: { name, website, imageUrl, alt } - written by Code.gs from the "Menu" tab
@@ -835,15 +810,35 @@
     let lastDataHash = null;
     let isInitialLoad = true;
 
+    // Dropdown, grouped by town
+    const townOrder = [];
+    ['Flora', 'Louisville', 'Xenia', 'Clay City'].forEach(d => townOrder.push(d));
+    stations.forEach(st => { const d = stationConfigs[st.id].display; if (!townOrder.includes(d)) townOrder.push(d); });
+    townOrder.forEach(d => {
+        const grp = document.createElement('optgroup');
+        grp.label = d + ', IL';
+        stations.filter(st => stationConfigs[st.id].display === d).forEach(st => {
+            const o = document.createElement('option');
+            o.value = st.id; o.textContent = st.name;
+            grp.appendChild(o);
+        });
+        selector.appendChild(grp);
+    });
+
+    const GRADE_FIELD = { reg: 'Regular Price', mid: 'Midgrade Price', pre: 'Premium Price', dsl: 'Diesel Price' };
+
     // Build Form Interface Objects
     stations.forEach(s => {
+        const cfg = stationConfigs[s.id];
+        const grades = GRADES.filter(g => (cfg.grades || ['reg', 'dsl']).includes(g.key));
+        const info = [cfg.address && (cfg.address + (cfg.city ? ', ' + cfg.city : '')), cfg.phone, cfg.hours].filter(Boolean).map(esc).join(' &bull; ');
         const card = document.createElement('div');
         card.className = 'admin-card';
         card.id = `card-${s.id}`;
         card.innerHTML = `
-            <strong style="font-size: 18px;">${s.name}</strong>
-            <label class="input-label">Regular Price</label><input type="text" id="reg-${s.id}">
-            <label class="input-label">Diesel Price</label><input type="text" id="dsl-${s.id}">
+            <strong style="font-size: 18px;">${esc(s.name)}</strong>
+            ${info ? `<div style="font-size:12px; color:#777; margin-top:4px;">${info}</div>` : ''}
+            ${grades.map(g => `<label class="input-label">${GRADE_FIELD[g.key]}${(g.key === 'mid' || g.key === 'pre') ? ' (leave blank if none)' : ''}</label><input type="text" inputmode="decimal" id="${g.key}-${s.id}">`).join('')}
             <label class="input-label">Last Timestamp (CST)</label><input type="text" id="date-${s.id}" readonly style="background:#eee">
             <div class="status-area" id="area-${s.id}"><span class="dot"></span> <span id="msg-${s.id}">Ready to sync</span></div>
             <button class="update-btn" id="btn-${s.id}">Submit Price Update</button>
@@ -852,35 +847,34 @@
 
         db.ref('fuel_prices/' + s.id).on('value', snap => {
             const data = snap.val();
-            if(data) {
-                document.getElementById(`reg-${s.id}`).value = data.reg;
-                document.getElementById(`dsl-${s.id}`).value = data.dsl;
-                document.getElementById(`date-${s.id}`).value = data.date;
+            if (data) {
+                grades.forEach(g => { document.getElementById(`${g.key}-${s.id}`).value = data[g.key] || ''; });
+                document.getElementById(`date-${s.id}`).value = data.date || '';
                 document.getElementById(`area-${s.id}`).classList.add('synced');
             }
         });
 
         document.getElementById(`btn-${s.id}`).onclick = function() {
-            const reg = document.getElementById(`reg-${s.id}`).value;
-            const dsl = document.getElementById(`dsl-${s.id}`).value;
             const msg = document.getElementById(`msg-${s.id}`);
+            const update = {};
+            grades.forEach(g => { update[g.key] = document.getElementById(`${g.key}-${s.id}`).value.trim(); });
 
             const now = new Date();
-            const timestamp = now.toLocaleString('en-US', { 
+            update.date = now.toLocaleString('en-US', {
                 timeZone: 'America/Chicago',
                 month: 'numeric',
                 day: 'numeric',
                 year: 'numeric'
-            }) + " @ " + now.toLocaleString('en-US', { 
+            }) + " @ " + now.toLocaleString('en-US', {
                 timeZone: 'America/Chicago',
-                hour: 'numeric', 
+                hour: 'numeric',
                 minute: '2-digit',
-                hour12: true 
+                hour12: true
             }) + " CST";
 
             msg.innerText = "Sending Update...";
 
-            db.ref('fuel_prices/' + s.id).update({ reg, dsl, date: timestamp })
+            db.ref('fuel_prices/' + s.id).update(update)
                 .then(() => { msg.innerText = "Contribution Accepted!"; })
                 .catch(err => { msg.innerText = "Error!"; console.error(err); });
         };
@@ -929,30 +923,34 @@
 
         ids.forEach(id => {
             const config = stationConfigs[id];
-            const info = data[id] || { reg: "---", dsl: "---", date: "PENDING" };
+            const info = data[id] || { date: "PENDING" };
             const safeLogo = encodeURIComponent(config.logo);
-            const logoClass = (id === "128128") ? "station-logo logo-bg-white" : "station-logo";
-            
+            const logoClass = config.whiteBg ? "station-logo logo-bg-white" : "station-logo";
+            const num = v => (!v || v === "0") ? "---" : esc(v);
+            // Regular + Diesel always show; Midgrade / Premium only when a price has been posted
+            const rows = window.SMLC_GRADES.filter(g => g.key === 'reg' || g.key === 'dsl' || (info[g.key] && info[g.key] !== "0"));
+            const ledClass = { reg: 'led-grn', mid: 'led-grn', pre: 'led-grn', dsl: 'led-red' };
+            const priceRows = rows.map(g => `
+                <div class="price-row">
+                    <span class="price-label">${g.label}</span>
+                    <span class="${ledClass[g.key]}">${num(info[g.key])}</span>
+                </div>`).join('');
+            const details = [config.address, config.phone, config.hours].filter(Boolean).map(esc).join(' &bull; ');
+
             const slide = document.createElement('div');
-            slide.className = 'gas-slide';
+            slide.className = 'gas-slide' + (rows.length > 2 ? ' many-grades' : '');
             slide.innerHTML = `
                 <div class="town-header">${config.display.toUpperCase()}, IL</div>
                 <div class="logo-container">
-                    <img src="https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/${safeLogo}" 
-                         class="${logoClass}" 
+                    <img src="https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/${safeLogo}"
+                         class="${logoClass}"
                          loading="lazy"
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    <div class="logo-fallback" style="display:none;">${config.name}</div>
+                    <div class="logo-fallback" style="display:none;">${esc(config.name)}</div>
                 </div>
-                <div class="price-row">
-                    <span class="price-label">REGULAR</span>
-                    <span class="led-red">${esc(info.reg)}</span>
-                </div>
-                <div class="price-row">
-                    <span class="price-label">DIESEL</span>
-                    <span class="led-grn">${(info.dsl === "0" || !info.dsl) ? "---" : esc(info.dsl)}</span>
-                </div>
-                <div class="update-tag">Updated: ${esc(info.date)}</div>
+                ${priceRows}
+                ${details ? `<div class="update-tag">${details}</div>` : ''}
+                <div class="update-tag">Updated: ${esc(info.date || "PENDING")}</div>
             `;
             screen.appendChild(slide);
         });

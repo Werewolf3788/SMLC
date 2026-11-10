@@ -566,12 +566,14 @@ function updateGasPricesFromGoogle() {
     }
 
     var prices = ((JSON.parse(resp.getContentText()).fuelOptions) || {}).fuelPrices || [];
-    var regular = null, diesel = null, newest = null;
+    var regular = null, diesel = null, midgrade = null, premium = null, newest = null;
     prices.forEach(function(p) {
       if (!p.price) return;
       var value = Number(p.price.units || 0) + Number(p.price.nanos || 0) / 1e9;
       if (p.type === "REGULAR_UNLEADED") regular = value;
       else if (p.type === "DIESEL") diesel = value;
+      else if (p.type === "MIDGRADE") midgrade = value;
+      else if (p.type === "PREMIUM") premium = value;
       else return;
       if (p.updateTime && (!newest || p.updateTime > newest)) newest = p.updateTime;
     });
@@ -581,7 +583,7 @@ function updateGasPricesFromGoogle() {
     // Also feed the live billboard at /fuel_prices/<station_id> (Col C)
     var stationId = String(row[GAS_COL.STATION_ID] || "").trim();
     if (stationId && (regular !== null || diesel !== null)) {
-      pushToBillboard_(stationId, regular, diesel, newest);
+      pushToBillboard_(stationId, regular, diesel, newest, midgrade, premium);
     }
 
     if (regular !== null) {
@@ -606,11 +608,11 @@ function updateGasPricesFromGoogle() {
 
 /**
  * Writes Google's price into /fuel_prices/<stationId> in the same shape the
- * billboard and the community update form use: { reg, dsl, date }.
+ * billboard and the community update form use: { reg, mid, pre, dsl, date }.
  * Only overwrites when Google's price is NEWER than what's there, so a price
  * someone typed in through the update form is never replaced by an older one.
  */
-function pushToBillboard_(stationId, regular, diesel, googleUpdateIso) {
+function pushToBillboard_(stationId, regular, diesel, googleUpdateIso, midgrade, premium) {
   var base = "https://smlc-fuel-monitor-default-rtdb.firebaseio.com/fuel_prices/" + encodeURIComponent(stationId) + ".json";
   var googleTime = googleUpdateIso ? new Date(googleUpdateIso) : new Date();
 
@@ -632,6 +634,8 @@ function pushToBillboard_(stationId, regular, diesel, googleUpdateIso) {
   };
   if (regular !== null) update.reg = regular.toFixed(2);
   if (diesel !== null) update.dsl = diesel.toFixed(2);
+  if (midgrade) update.mid = midgrade.toFixed(2);
+  if (premium) update.pre = premium.toFixed(2);
 
   var resp = UrlFetchApp.fetch(base, {
     method: "patch",

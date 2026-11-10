@@ -2092,15 +2092,8 @@ function initializeFirebaseGasMonitor(db) {
     const gasContainer = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
     if (!gasContainer) return;
 
-    const stationConfigs = {
-        "48100": { town: "flora", display: "Flora", name: "CASEY'S", logo: "Casey's.png" },      
-        "48101": { town: "flora", display: "Flora", name: "HUCK'S", logo: "Hucks.png" },      
-        "128128": { town: "flora", display: "Flora", name: "MACH 1", logo: "Mach 1.png" },    
-        "120226": { town: "flora", display: "Flora", name: "FAST STOP", logo: "Fast stop.png" },  
-        "87817": { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" }, 
-        "48026": { town: "clay-city", display: "Clay City", name: "CASEY'S", logo: "Casey's.png" }, 
-        "171711": { town: "xenia", display: "Xenia", name: "CITGO", logo: "Citgo.png" }   
-    };
+    // Station list lives in smlc-stations.js (shared with update-gas.html and the home page)
+    const stationConfigs = window.SMLC_STATIONS || {};
 
     // Which stations to show for this town:
     //   1st choice: /master_county_data/towns/{Town}/sections/gas_widget/[n] { station_id, title }
@@ -2133,7 +2126,8 @@ function initializeFirebaseGasMonitor(db) {
                 display: ACTIVE_TOWN.isHome ? (known.display || 'Clay County') : (ACTIVE_TOWN.primaryName || known.display || ''),
                 name: st.title || known.name || `Station ${st.id}`,
                 stationTown: known.display || '',
-                logo: known.logo || ''
+                logo: known.logo || '',
+                address: known.address || '', city: known.city || '', phone: known.phone || '', hours: known.hours || ''
             };
         });
         startGasRotator(priceData || {}, configs, list.map(st => st.id), gasContainer);
@@ -2179,9 +2173,23 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
         const config = stationConfigs[id];
         const info = data[id] || {};
 
-        const regPrice = info.reg || info.regular || info.price || "---";
-        let dslPrice = info.dsl || info.diesel || "---";
-        if (dslPrice === "0" || !dslPrice) dslPrice = "---";
+        const num = v => (!v || v === "0") ? "---" : v;
+        const regPrice = num(info.reg || info.regular || info.price);
+        const dslPrice = num(info.dsl || info.diesel);
+        // Regular + Diesel always show; Midgrade / Premium only when a price is posted
+        const midPrice = num(info.mid), prePrice = num(info.pre);
+        const rows = [['REGULAR', 'regular', regPrice]];
+        if (midPrice !== '---') rows.push(['MIDGRADE', 'midgrade', midPrice]);
+        if (prePrice !== '---') rows.push(['PREMIUM', 'premium', prePrice]);
+        rows.push(['DIESEL', 'diesel', dslPrice]);
+
+        const infoBits = [];
+        if (config.address) {
+            const maps = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent([config.name, config.address, config.city].filter(Boolean).join(", "));
+            infoBits.push(`<a href="${maps}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${config.address}${config.city ? ', ' + config.city : ''}</a>`);
+        }
+        if (config.phone) infoBits.push(`<a href="tel:+1${String(config.phone).replace(/\D/g, '')}" onclick="event.stopPropagation()">${config.phone}</a>`);
+        if (config.hours) infoBits.push(`<span>${config.hours}</span>`);
 
         const updateDate = info.date || info.updated || "Pending";
         const safeLogo = config.logo ? encodeURIComponent(config.logo) : '';
@@ -2195,9 +2203,9 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
                 ${safeLogo ? `<div class="station-logo-frame"><img src="//raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/${safeLogo}" alt="" onerror="this.parentElement.style.display='none';"></div>` : ''}
                 <div class="station-meta-title">${config.name}${config.stationTown && !String(config.name).toUpperCase().includes(String(config.stationTown).toUpperCase()) ? ` (${config.stationTown})` : ''}</div>
             </div>
-            <div class="fuel-pricing-grid">
-                <div class="price-box"><span class="price-type-label">REGULAR</span><span class="price-value-regular led-digits" data-ghost="${ledGhost(regPrice)}">${regPrice}</span></div>
-                <div class="price-box"><span class="price-type-label">DIESEL</span><span class="price-value-diesel led-digits" data-ghost="${ledGhost(dslPrice)}">${dslPrice}</span></div>
+            ${infoBits.length ? `<div class="fuel-station-info">${infoBits.join('')}</div>` : ''}
+            <div class="fuel-pricing-grid${rows.length > 2 ? ' many-grades' : ''}">
+                ${rows.map(r => `<div class="price-box"><span class="price-type-label">${r[0]}</span><span class="price-value-${r[1]} led-digits" data-ghost="${ledGhost(r[2])}">${r[2]}</span></div>`).join('')}
             </div>
             <div class="sync-timestamp-label">Updated: ${updateDate} &bull; Click to Update</div>
         `;
@@ -4362,6 +4370,14 @@ window.addEventListener('DOMContentLoaded', () => {
         .fuel-monitor-billboard-card .led-digits::before { content: attr(data-ghost); position: absolute; left: 0; top: 0;
             opacity: .09; text-shadow: none; pointer-events: none; }
         .fuel-monitor-billboard-card .price-value-regular { color: #39ff14; text-shadow: 0 0 6px rgba(57,255,20,.85), 0 0 18px rgba(57,255,20,.45); }
+        .fuel-monitor-billboard-card .price-value-midgrade { color: #ffc929; text-shadow: 0 0 6px rgba(255,201,41,.85), 0 0 18px rgba(255,201,41,.45); }
+        .fuel-monitor-billboard-card .price-value-premium { color: #39d5ff; text-shadow: 0 0 6px rgba(57,213,255,.85), 0 0 18px rgba(57,213,255,.45); }
+        .fuel-monitor-billboard-card .fuel-pricing-grid.many-grades { grid-auto-rows: minmax(78px, 1fr); gap: 10px; }
+        .fuel-monitor-billboard-card .many-grades .price-box { padding: 8px; }
+        .fuel-monitor-billboard-card .many-grades .price-type-label { margin-bottom: 6px; }
+        .fuel-monitor-billboard-card .many-grades .led-digits { font-size: clamp(2rem, 4.5vw, 2.8rem); }
+        .fuel-monitor-billboard-card .fuel-station-info { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 12px; margin: 2px 0 12px; font-size: .78rem; line-height: 1.4; text-align: center; opacity: .9; }
+        .fuel-monitor-billboard-card .fuel-station-info a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
         .fuel-monitor-billboard-card .price-value-diesel { color: #ff2a2a; text-shadow: 0 0 6px rgba(255,42,42,.85), 0 0 18px rgba(255,42,42,.45); }
     `;
     (document.head || document.documentElement).appendChild(style);
