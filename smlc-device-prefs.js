@@ -95,8 +95,7 @@
         ' .goog-te-gadget, .goog-te-combo, .goog-logo-link {' +
         '  position: absolute !important; left: -9999px !important; top: auto !important;' +
         '  width: 1px !important; height: 1px !important; overflow: hidden !important;' +
-        '  border: 0 !important; padding: 0 !important; margin: 0 !important; background: none !important; box-shadow: none !important;' +
-        '  visibility: hidden !important; pointer-events: none !important; }' +
+        '  border: 0 !important; padding: 0 !important; margin: 0 !important; background: none !important; box-shadow: none !important; }' +
         ' .goog-te-banner-frame, iframe.skiptranslate, .skiptranslate > iframe, #goog-gt-tt,' +
         ' .goog-te-balloon-frame, .goog-tooltip, .goog-te-menu-frame,' +
         ' .VIpgJd-ZVi9od-ORHb-OEVmcd, .VIpgJd-ZVi9od-aZ2wEe-wOHMyf, .VIpgJd-yAWNEb-L7lbkb { display: none !important; }' +
