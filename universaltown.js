@@ -1600,6 +1600,8 @@ function bindFirebaseLocalLinksEngine(db) {
 // ============================================================================
 // SEMANTIC SECTIONS ENGINE (Swaps POI into Spotlight & Slideshow above History)
 // ============================================================================
+const SLIDESHOW_MAX_PHOTOS = 30;   // newest uploads shown in a town slideshow
+
 function bindFirebaseSemanticSectionsEngine(db) {
     if (!db) return;
     const townName = ACTIVE_TOWN.dbTownKey || "Flora";
@@ -1611,6 +1613,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
         let townSectionsData = {};
         let globalSectionsData = {};
         const linkedGalleryData = {};   // linked town name -> its gallery rows
+        let allTownsData = {};          // home page only: every town's sections (for uploaded photos)
 
         const renderResolvedSections = () => {
             // --- 1. POINT OF INTEREST IN DISCOVER SPOTLIGHT (Guaranteed Image Rendering) ---
@@ -1661,41 +1664,38 @@ function bindFirebaseSemanticSectionsEngine(db) {
                 ? (Array.isArray(globalSectionsData.slideshow.items) ? globalSectionsData.slideshow.items : Object.values(globalSectionsData.slideshow.items))
                 : [];
 
-            // Photos shared/uploaded for this town (Gallery tab -> towns/<Town>/sections/gallery),
-            // including any linked towns (e.g. Louisville page also shows Bible Grove / Hoosier photos)
+            // SLIDESHOW = photos people uploaded (photo uploader / Share Your Photos -> Gallery tab,
+            // stored at towns/<Town>/sections/gallery). Town pages show that town's uploads (plus linked
+            // towns, e.g. Louisville also shows Bible Grove / Hoosier); the Clay County home page shows
+            // uploads from every town. Newest first.
             const asList = (v) => v ? (Array.isArray(v) ? v : Object.values(v)) : [];
             const isShown = (v) => v === true || /^(true|yes|1|x|✓)$/i.test(String(v == null ? '' : v).trim());
-            const seenImages = new Set();
-            const townGallerySlides = [townSectionsData.gallery, ...Object.values(linkedGalleryData)]
-                .flatMap(asList)
-                .filter(g => g && g.image && isShown(g.show))
-                .sort((a, b) => String(b.added || '').localeCompare(String(a.added || '')))
-                .map(g => ({
-                    title: g.caption || g.place || 'Community Photo',
-                    imageUrl: g.image,
-                    alt: g.alt || g.caption || g.place || 'Community photo',
-                    website: ''
-                }));
+            const toUploadSlides = (rowSets) => {
+                const seen = new Set();
+                return rowSets.flatMap(asList)
+                    .filter(g => g && g.image && isShown(g.show))
+                    .sort((a, b) => String(b.added || '').localeCompare(String(a.added || '')))
+                    .filter(g => { const k = String(g.image); if (seen.has(k)) return false; seen.add(k); return true; })
+                    .slice(0, SLIDESHOW_MAX_PHOTOS)
+                    .map(g => ({
+                        title: g.caption || g.place || 'Community Photo',
+                        imageUrl: g.image,
+                        alt: g.alt || g.caption || g.place || 'Community photo',
+                        website: ''
+                    }));
+            };
+            const countyWideUploads = toUploadSlides([globalSectionsData.gallery]);
 
-            let blendedSlides = [];
+            let blendedSlides;
             if (ACTIVE_TOWN.isHome) {
-                // Clay County home page: unchanged (global slideshow)
-                const maxLen = Math.max(townSlides.length, globalSlides.length);
-                for (let i = 0; i < maxLen; i++) {
-                    if (townSlides[i]) blendedSlides.push(townSlides[i]);
-                    if (globalSlides[i]) blendedSlides.push(globalSlides[i]);
-                }
+                const everyTownGallery = Object.values(allTownsData).map(t => t && t.sections ? t.sections.gallery : null);
+                blendedSlides = toUploadSlides([globalSectionsData.gallery, ...everyTownGallery]);
             } else {
-                // Town page: the town's own Slideshow-tab items + its uploaded photos.
-                // A town with neither yet falls back to the Clay County (global) slideshow.
-                const own = [...townSlides, ...townGallerySlides].filter(sl => {
-                    const key = String(sl.imageUrl || sl.image || '');
-                    if (!key || seenImages.has(key)) return false;
-                    seenImages.add(key);
-                    return true;
-                });
-                blendedSlides = own.length > 0 ? own : globalSlides;
+                blendedSlides = toUploadSlides([townSectionsData.gallery, ...Object.values(linkedGalleryData)]);
+                if (blendedSlides.length === 0) blendedSlides = countyWideUploads;   // town has no uploads yet
             }
+            // Nothing uploaded anywhere yet: keep the old Slideshow tab so the slideshow isn't empty
+            if (blendedSlides.length === 0) blendedSlides = [...townSlides, ...globalSlides];
 
             const viewport = document.getElementById('flora-slideshow') || document.getElementById('xenia-slideshow') || document.querySelector('.slider-viewport');
             if (viewport && blendedSlides.length > 0) {
@@ -1871,6 +1871,14 @@ function bindFirebaseSemanticSectionsEngine(db) {
             globalSectionsData = snap.val() || {};
             renderResolvedSections();
         });
+
+        // Home page: uploads from every town
+        if (ACTIVE_TOWN.isHome) {
+            db.ref('master_county_data/towns').on('value', (snap) => {
+                allTownsData = snap.val() || {};
+                renderResolvedSections();
+            });
+        }
 
         // Linked towns (e.g. Bible Grove, Hoosier on the Louisville page): include their uploaded photos
         (ACTIVE_TOWN.linkedTownNames || []).filter(n => n && n !== townName && n !== ACTIVE_TOWN.primaryName).forEach(n => {
