@@ -825,7 +825,7 @@
         selector.appendChild(grp);
     });
 
-    const GRADE_FIELD = { reg: 'Regular Price', mid: 'Midgrade Price', pre: 'Premium Price', dsl: 'Diesel Price' };
+    const GRADE_FIELD = { reg: 'Regular Price', mid: 'Midgrade Price', pre: 'Premium Price', e85: 'E85 Price', dsl: 'Diesel Price' };
 
     // Build Form Interface Objects
     stations.forEach(s => {
@@ -838,7 +838,7 @@
         card.innerHTML = `
             <strong style="font-size: 18px;">${esc(s.name)}</strong>
             ${info ? `<div style="font-size:12px; color:#777; margin-top:4px;">${info}</div>` : ''}
-            ${grades.map(g => `<label class="input-label">${GRADE_FIELD[g.key]}${(g.key === 'mid' || g.key === 'pre') ? ' (leave blank if none)' : ''}</label><input type="text" inputmode="decimal" id="${g.key}-${s.id}">`).join('')}
+            ${grades.map(g => `<label class="input-label">${GRADE_FIELD[g.key]}${(g.key === 'mid' || g.key === 'pre' || g.key === 'e85') ? ' (leave blank if none)' : ''}</label><input type="text" inputmode="decimal" id="${g.key}-${s.id}">`).join('')}
             <label class="input-label">Last Timestamp (CST)</label><input type="text" id="date-${s.id}" readonly style="background:#eee">
             <div class="status-area" id="area-${s.id}"><span class="dot"></span> <span id="msg-${s.id}">Ready to sync</span></div>
             <button class="update-btn" id="btn-${s.id}">Submit Price Update</button>
@@ -929,7 +929,7 @@
             const num = v => (!v || v === "0") ? "---" : esc(v);
             // Regular + Diesel always show; Midgrade / Premium only when a price has been posted
             const rows = window.SMLC_GRADES.filter(g => g.key === 'reg' || g.key === 'dsl' || (info[g.key] && info[g.key] !== "0"));
-            const ledClass = { reg: 'led-grn', mid: 'led-grn', pre: 'led-grn', dsl: 'led-red' };
+            const ledClass = { reg: 'led-grn', mid: 'led-grn', pre: 'led-grn', e85: 'led-grn', dsl: 'led-red' };
             const priceRows = rows.map(g => `
                 <div class="price-row">
                     <span class="price-label">${g.label}</span>

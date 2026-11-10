@@ -615,6 +615,7 @@
                     '<div class="gas-row"><span class="gas-label">REGULAR</span><span class="gas-price reg">' + reg + '</span></div>' +
                     (info.mid && info.mid !== "0" ? '<div class="gas-row"><span class="gas-label">MIDGRADE</span><span class="gas-price reg">' + esc(info.mid) + '</span></div>' : '') +
                     (info.pre && info.pre !== "0" ? '<div class="gas-row"><span class="gas-label">PREMIUM</span><span class="gas-price reg">' + esc(info.pre) + '</span></div>' : '') +
+                    (info.e85 && info.e85 !== "0" ? '<div class="gas-row"><span class="gas-label">E85</span><span class="gas-price reg">' + esc(info.e85) + '</span></div>' : '') +
                     '<div class="gas-row"><span class="gas-label">DIESEL</span><span class="gas-price dsl">' + dsl + '</span></div>' +
                     (cfg.address ? '<div class="gas-updated">' + esc(cfg.address) + (cfg.phone ? ' &bull; ' + esc(cfg.phone) : '') + '</div>' : '') +
                     '<div class="gas-updated">Updated: ' + esc(info.date || "Pending") + '</div>';

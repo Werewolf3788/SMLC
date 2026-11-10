@@ -2177,10 +2177,11 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
         const regPrice = num(info.reg || info.regular || info.price);
         const dslPrice = num(info.dsl || info.diesel);
         // Regular + Diesel always show; Midgrade / Premium only when a price is posted
-        const midPrice = num(info.mid), prePrice = num(info.pre);
+        const midPrice = num(info.mid), prePrice = num(info.pre), e85Price = num(info.e85);
         const rows = [['REGULAR', 'regular', regPrice]];
         if (midPrice !== '---') rows.push(['MIDGRADE', 'midgrade', midPrice]);
         if (prePrice !== '---') rows.push(['PREMIUM', 'premium', prePrice]);
+        if (e85Price !== '---') rows.push(['E85', 'e85', e85Price]);
         rows.push(['DIESEL', 'diesel', dslPrice]);
 
         const infoBits = [];
@@ -4371,6 +4372,7 @@ window.addEventListener('DOMContentLoaded', () => {
             opacity: .09; text-shadow: none; pointer-events: none; }
         .fuel-monitor-billboard-card .price-value-regular { color: #39ff14; text-shadow: 0 0 6px rgba(57,255,20,.85), 0 0 18px rgba(57,255,20,.45); }
         .fuel-monitor-billboard-card .price-value-midgrade { color: #ffc929; text-shadow: 0 0 6px rgba(255,201,41,.85), 0 0 18px rgba(255,201,41,.45); }
+        .fuel-monitor-billboard-card .price-value-e85 { color: #c77dff; text-shadow: 0 0 6px rgba(199,125,255,.85), 0 0 18px rgba(199,125,255,.45); }
         .fuel-monitor-billboard-card .price-value-premium { color: #39d5ff; text-shadow: 0 0 6px rgba(57,213,255,.85), 0 0 18px rgba(57,213,255,.45); }
         .fuel-monitor-billboard-card .fuel-pricing-grid.many-grades { grid-auto-rows: minmax(78px, 1fr); gap: 10px; }
         .fuel-monitor-billboard-card .many-grades .price-box { padding: 8px; }

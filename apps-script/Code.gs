@@ -566,7 +566,7 @@ function updateGasPricesFromGoogle() {
     }
 
     var prices = ((JSON.parse(resp.getContentText()).fuelOptions) || {}).fuelPrices || [];
-    var regular = null, diesel = null, midgrade = null, premium = null, newest = null;
+    var regular = null, diesel = null, midgrade = null, premium = null, e85 = null, newest = null;
     prices.forEach(function(p) {
       if (!p.price) return;
       var value = Number(p.price.units || 0) + Number(p.price.nanos || 0) / 1e9;
@@ -574,6 +574,7 @@ function updateGasPricesFromGoogle() {
       else if (p.type === "DIESEL") diesel = value;
       else if (p.type === "MIDGRADE") midgrade = value;
       else if (p.type === "PREMIUM") premium = value;
+      else if (p.type === "E85") e85 = value;
       else return;
       if (p.updateTime && (!newest || p.updateTime > newest)) newest = p.updateTime;
     });
@@ -583,7 +584,7 @@ function updateGasPricesFromGoogle() {
     // Also feed the live billboard at /fuel_prices/<station_id> (Col C)
     var stationId = String(row[GAS_COL.STATION_ID] || "").trim();
     if (stationId && (regular !== null || diesel !== null)) {
-      pushToBillboard_(stationId, regular, diesel, newest, midgrade, premium);
+      pushToBillboard_(stationId, regular, diesel, newest, midgrade, premium, e85);
     }
 
     if (regular !== null) {
@@ -612,7 +613,7 @@ function updateGasPricesFromGoogle() {
  * Only overwrites when Google's price is NEWER than what's there, so a price
  * someone typed in through the update form is never replaced by an older one.
  */
-function pushToBillboard_(stationId, regular, diesel, googleUpdateIso, midgrade, premium) {
+function pushToBillboard_(stationId, regular, diesel, googleUpdateIso, midgrade, premium, e85) {
   var base = "https://smlc-fuel-monitor-default-rtdb.firebaseio.com/fuel_prices/" + encodeURIComponent(stationId) + ".json";
   var googleTime = googleUpdateIso ? new Date(googleUpdateIso) : new Date();
 
@@ -636,6 +637,7 @@ function pushToBillboard_(stationId, regular, diesel, googleUpdateIso, midgrade,
   if (diesel !== null) update.dsl = diesel.toFixed(2);
   if (midgrade) update.mid = midgrade.toFixed(2);
   if (premium) update.pre = premium.toFixed(2);
+  if (e85) update.e85 = e85.toFixed(2);
 
   var resp = UrlFetchApp.fetch(base, {
     method: "patch",

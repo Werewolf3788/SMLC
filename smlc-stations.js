@@ -27,7 +27,7 @@ window.SMLC_STATIONS = {
                 grades: ["reg", "mid", "pre", "dsl"] },
     "120226": { town: "flora", display: "Flora", name: "FAST STOP", logo: "Fast stop.png",
                 address: "11109 Old US-50", city: "Flora, IL 62839", phone: "(618) 662-2423", hours: "Open 24 hours",
-                grades: ["reg", "dsl"] },
+                grades: ["reg", "e85", "dsl"] },
     "87817":  { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png",
                 address: "300 Route 45 S", city: "Louisville, IL 62858", phone: "(618) 356-1699", hours: "4 AM - Midnight daily",
                 grades: ["reg", "dsl"] },
@@ -35,7 +35,7 @@ window.SMLC_STATIONS = {
                 address: "940 S Main St", city: "Clay City, IL 62824", phone: "(618) 676-1786", hours: "4 AM - Midnight daily",
                 grades: ["reg", "dsl"] },
     "171711": { town: "xenia", display: "Xenia", name: "CITGO", logo: "Citgo.png",
-                address: "1500 Church St", city: "Xenia, IL 62899", phone: "", hours: "",
+                address: "1500 Church St", city: "Xenia, IL 62899", phone: "(618) 678-2800", hours: "",
                 grades: ["reg", "mid", "dsl"] }
 };
 
@@ -44,6 +44,7 @@ window.SMLC_GRADES = [
     { key: "reg", label: "REGULAR" },
     { key: "mid", label: "MIDGRADE" },
     { key: "pre", label: "PREMIUM" },
+    { key: "e85", label: "E85" },
     { key: "dsl", label: "DIESEL" }
 ];
 
