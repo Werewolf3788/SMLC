@@ -705,7 +705,7 @@ function attachUtmParameters(urlStr) {
     if (!urlStr || urlStr === "#" || urlStr.startsWith("javascript:") || urlStr.startsWith("tel:") || urlStr.startsWith("mailto:")) return urlStr;
     try {
         const pageTitle = encodeURIComponent((document.title || "smlc_portal").trim());
-        const urlObj = new URL(urlStr, window.location.origin);
+        const urlObj = new URL(urlStr, window.location.href); // resolve from this page so /SMLC/ on the test copy is kept
         urlObj.searchParams.set("utm_source", "smlc_portal");
         urlObj.searchParams.set("utm_medium", "town_portal");
         urlObj.searchParams.set("utm_campaign", pageTitle);
