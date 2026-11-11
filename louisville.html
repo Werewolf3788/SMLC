@@ -132,6 +132,11 @@
     </script>
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png">
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png">
+    <!-- Speed: open connections early to the places this page loads from -->
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://smlc-fuel-monitor-default-rtdb.firebaseio.com" crossorigin>
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
     <link rel="preconnect" href="//fonts.googleapis.com">
     <link rel="preconnect" href="//fonts.gstatic.com" crossorigin>
     <link href="//fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@500;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
@@ -141,9 +146,9 @@
             if (e.message && (e.message.includes('Script error') || e.message.includes('ResizeObserver'))) { e.preventDefault(); return true; }
         }, true);
     </script>
-    <script crossorigin="anonymous" src="//www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script crossorigin="anonymous" src="//www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    <script crossorigin="anonymous" src="//www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script defer crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script defer crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script defer crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <!-- Device language -> automatic translation (no language picker) -->
     <script src="smlc-device-prefs.js"></script>
     <script src="smlc-data.js"></script>
@@ -446,7 +451,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Footer clock (Central time + your local time) is run by universaltown.js
 });
 </script>
-<script src="smlc-stations.js"></script>
-    <script src="./universaltown.js"></script>
+<script defer src="smlc-stations.js"></script>
+    <script defer src="./universaltown.js"></script>
 </body>
 </html>

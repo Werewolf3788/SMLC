@@ -1505,7 +1505,7 @@ function bindFirebaseMenuEngine(db) {
                 const itemNameUpper = String(item.town || rawName).toUpperCase();
                 const isActive = (activeTownName === itemNameUpper || (ACTIVE_TOWN.isHome && itemNameUpper === "HOME") || (window.location.hash || "").toUpperCase().includes(itemNameUpper.replace(/\s+/g, '-'))) ? 'class="active"' : '';
 
-                const imgTag = normImageUrl ? `<img src="${normImageUrl}" alt="" class="menu-thumb-icon" onerror="this.style.display='none';" />` : '';
+                const imgTag = normImageUrl ? `<img src="${normImageUrl}" alt="" class="menu-thumb-icon" width="34" height="34" onerror="this.remove();" />` : '';
 
                 // A menu entry with sub-links (e.g. "More") becomes a dropdown
                 const kids = smlcMenuChildren(item);
@@ -1780,7 +1780,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
 
                     return `
                         <div class="slider-slide ${idx === 0 ? 'active' : ''}" style="position: absolute; inset: 0; opacity: ${idx === 0 ? 1 : 0}; transition: opacity 0.8s ease-in-out; z-index: ${idx === 0 ? 2 : 1};">
-                            ${imgUrl ? `<img src="${imgUrl}" alt="${safeAlt}" onerror="smlcSlideImageFailed(this)" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'COMMUNITY VIEW', '${safeAlt}', '${safeWeb}', '${safeAlt}')" style="width:100%; height:100%; object-fit:contain; background-color:#0a0a0a; cursor:pointer;">` : `<div class="smlc-img-unavailable" role="img" aria-label="${SMLC_IMG_NOTICE_TEXT}"><span class="smlc-img-unavailable-icon" aria-hidden="true">&#9888;</span><span>${SMLC_IMG_NOTICE_TEXT}</span></div>`}
+                            ${imgUrl ? `<img loading="lazy" decoding="async" src="${imgUrl}" alt="${safeAlt}" onerror="smlcSlideImageFailed(this)" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'COMMUNITY VIEW', '${safeAlt}', '${safeWeb}', '${safeAlt}')" style="width:100%; height:100%; object-fit:contain; background-color:#0a0a0a; cursor:pointer;">` : `<div class="smlc-img-unavailable" role="img" aria-label="${SMLC_IMG_NOTICE_TEXT}"><span class="smlc-img-unavailable-icon" aria-hidden="true">&#9888;</span><span>${SMLC_IMG_NOTICE_TEXT}</span></div>`}
                             ${captionTitle ? `<div class="slider-caption">${captionTitle}</div>` : ''}
                         </div>
                     `;
@@ -1922,7 +1922,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
                             <h3>${evt.title || 'Historical Landmark'}</h3>
                             <p>${displayDesc}</p>
                             ${isLong ? `<span class="read-more-trigger">Read Details &rarr;</span>` : ''}
-                            ${imgUrl ? `<div class="history-img-box"><img src="${imgUrl}" alt="${escapeJsString(evt.title || 'Historical image')}"></div>` : ''}
+                            ${imgUrl ? `<div class="history-img-box"><img loading="lazy" decoding="async" src="${imgUrl}" alt="${escapeJsString(evt.title || 'Historical image')}"></div>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -2352,7 +2352,7 @@ function startGasRotator(data, stationConfigs, stationIds, container) {
         return `
             <div class="sidebar-widget-title">${config.display.toUpperCase()} FUEL INDEX MONITOR</div>
             <div class="fuel-station-header">
-                ${logoSrc ? `<div class="station-logo-frame"><img src="${logoSrc}" alt="" onerror="this.parentElement.style.display='none';"></div>` : ''}
+                ${logoSrc ? `<div class="station-logo-frame"><img loading="lazy" decoding="async" src="${logoSrc}" alt="" onerror="this.parentElement.style.display='none';"></div>` : ''}
                 <div class="station-meta-title">${config.name}${config.stationTown && !String(config.name).toUpperCase().includes(String(config.stationTown).toUpperCase()) ? ` (${config.stationTown})` : ''}</div>
             </div>
             ${infoBits.length ? `<div class="fuel-station-info">${infoBits.join('')}</div>` : ''}
@@ -2658,7 +2658,7 @@ async function loadCommunityBulletinFeed() {
 
                     const thumbnailHtml = finalEventImg ? `
                         <div style="float: right; margin: 0 0 10px 12px;">
-                            <img src="${finalEventImg}" alt="${escapeHtmlText(eventTitle)} flyer" title="View flyer" onclick="openCalendarLightboxModal(${idx})" style="width:85px; height:85px; object-fit:cover; border-radius:6px; border:2px solid var(--card-border-color, #222); cursor:zoom-in; display:block;" onerror="this.parentElement.style.display='none';" />
+                            <img loading="lazy" decoding="async" src="${finalEventImg}" alt="${escapeHtmlText(eventTitle)} flyer" title="View flyer" onclick="openCalendarLightboxModal(${idx})" style="width:85px; height:85px; object-fit:cover; border-radius:6px; border:2px solid var(--card-border-color, #222); cursor:zoom-in; display:block;" onerror="this.parentElement.style.display='none';" />
                         </div>
                     ` : '';
 
@@ -2819,7 +2819,7 @@ async function loadLocalNewsDispatches() {
 
                     return `
                         <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
-                            ${imgUrl ? `<img src="${imgUrl}" alt="" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})">` : ''}
+                            ${imgUrl ? `<img loading="lazy" decoding="async" src="${imgUrl}" alt="" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})">` : ''}
                             <div style="font-size:0.75rem; color:var(--primary); font-weight:bold; margin-top:10px;">${smlcNewsCategoryBadge(story)}${cleanCalendarDate(story.date)}</div>
                             <div style="font-weight:bold; font-size:1rem; margin:6px 0; color:#1a1a1a;">${cleanTitle}</div>
                             <div style="font-size:0.875rem; color:var(--card-text-secondary, #444);">${linkifyRawUrls(displayStory)}</div>
@@ -3994,6 +3994,50 @@ document.addEventListener('keydown', e => {
         @media (prefers-color-scheme: dark) and (max-width: 1023px) {
             html body .menu-bar .navigation-drawer-panel, html body .header .nav-bar { background: #1c1c1e !important; }
             html body .menu-bar .menu-links a:not(.active), html body .nav-links a:not(.active) { background: #2a2a2d !important; border-color: #555 !important; }
+        }
+
+        /* ---------- Pill menu (Test-2): every menu item is a rounded pill with its round town picture ---------- */
+        html body .menu-bar .menu-links a,
+        html body .nav-links a,
+        html body .smlc-menu-dropdown > details > summary,
+        .smlc-more-toggle {
+            display: inline-flex !important; align-items: center !important; gap: 8px !important;
+            min-height: 44px !important; padding: 4px 16px 4px 4px !important;
+            border: 2px solid var(--smlc-nav-primary, #0258A3) !important; border-radius: 999px !important;
+            background: #fff !important; color: #1b1b1b !important;
+            font: 700 16px/1.1 "Atkinson Hyperlegible", system-ui, sans-serif !important;
+            text-decoration: none !important; text-transform: none !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,.12) !important;
+            transition: background .15s, color .15s, transform .15s !important;
+        }
+        .smlc-more-toggle { padding-left: 16px !important; }
+        html body .menu-bar .menu-links a:not(:has(.menu-thumb-icon)), html body .nav-links a:not(:has(.menu-thumb-icon)) { padding-left: 16px !important; }
+        html body .menu-bar .menu-links a:hover, html body .nav-links a:hover,
+        html body .smlc-menu-dropdown > details > summary:hover, .smlc-more-toggle:hover {
+            background: color-mix(in srgb, var(--smlc-nav-primary, #0258A3) 12%, #fff) !important;
+            color: #000 !important; transform: translateY(-1px);
+        }
+        html body .menu-bar .menu-links a.active, html body .nav-links a.active {
+            background: var(--smlc-nav-primary, #0258A3) !important;
+            color: var(--smlc-nav-secondary, #FFC10E) !important;
+            border-color: var(--smlc-nav-primary, #0258A3) !important;
+        }
+        html body .menu-bar .menu-thumb-icon, html body .nav-links .menu-thumb-icon {
+            width: 34px !important; height: 34px !important; border-radius: 50% !important;
+            object-fit: cover !important; border: 1px solid rgba(0,0,0,.25) !important; padding: 0 !important; background: #fff !important;
+        }
+        html body .menu-bar .menu-links li, html body .nav-links li { margin: 4px 5px !important; }
+        html body .menu-bar .menu-links a:focus-visible, html body .nav-links a:focus-visible { outline: 3px solid var(--smlc-nav-secondary, #FFC10E) !important; outline-offset: 2px; }
+        @media (max-width: 1023px) {
+            html body .menu-bar .menu-links a, html body .nav-links a, .smlc-more-toggle { width: 100% !important; justify-content: flex-start !important; }
+            html body .menu-bar .menu-links li, html body .nav-links li { width: 88% !important; margin: 5px auto !important; }
+        }
+        @media (prefers-color-scheme: dark) {
+            html body .menu-bar .menu-links a:not(.active), html body .nav-links a:not(.active),
+            html body .smlc-menu-dropdown > details > summary, .smlc-more-toggle {
+                background: #26262a !important; color: #f4f4f5 !important; border-color: #6d8fb8 !important;
+            }
+            html body .menu-bar .menu-links a:not(.active):hover, html body .nav-links a:not(.active):hover { background: #33363d !important; color: #fff !important; }
         }
     `;
     (document.head || document.documentElement).appendChild(style);

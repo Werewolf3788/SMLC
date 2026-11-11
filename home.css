@@ -524,3 +524,26 @@ html.smlc-header-scrolled .smlc-menu-logo { display: inline-flex; animation: sml
 
 
 .gas-contact a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+
+/* ---------- Pill menu (Test-2): same rounded pills as the town pages ---------- */
+.nav-links a, .nav-more-toggle {
+    display: inline-flex !important; align-items: center !important; gap: 8px !important;
+    min-height: 44px !important; padding: 4px 16px 4px 4px !important;
+    border: 2px solid var(--smlc-nav-primary, #0258A3) !important; border-radius: 999px !important;
+    background: #fff !important; color: #1b1b1b !important;
+    font: 700 16px/1.1 "Atkinson Hyperlegible", system-ui, sans-serif !important;
+    text-decoration: none !important; box-shadow: 0 1px 2px rgba(0,0,0,.12);
+    transition: background .15s, transform .15s;
+}
+.nav-more-toggle, .nav-links a:not(:has(.menu-thumb-icon)) { padding-left: 16px !important; }
+.nav-links a:hover, .nav-more-toggle:hover { background: color-mix(in srgb, var(--smlc-nav-primary, #0258A3) 12%, #fff) !important; color: #000 !important; transform: translateY(-1px); }
+.nav-links a.active { background: var(--smlc-nav-primary, #0258A3) !important; color: var(--smlc-nav-secondary, #FFC10E) !important; }
+.nav-links .menu-thumb-icon { width: 34px !important; height: 34px !important; border-radius: 50% !important; object-fit: cover !important; border: 1px solid rgba(0,0,0,.25); background: #fff; }
+.nav-links li { margin: 4px 5px !important; }
+@media (max-width: 1023px) {
+    .nav-links a, .nav-more-toggle { width: 100% !important; justify-content: flex-start !important; }
+    .nav-links li { width: 88% !important; margin: 5px auto !important; }
+}
+@media (prefers-color-scheme: dark) {
+    .nav-links a:not(.active), .nav-more-toggle { background: #26262a !important; color: #f4f4f5 !important; border-color: #6d8fb8 !important; }
+}
