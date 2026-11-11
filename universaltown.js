@@ -2060,7 +2060,7 @@ function smlcPartnerCardMarkup(partner, pinned) {
     const open = `fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')`;
 
     return `
-        <div class="community-partner-card"${pinned ? ' data-pinned="1"' : ''} data-partner-name="${escapeJsString(name)}" style="transition: transform 0.35s ease, opacity 0.35s ease;">
+        <div class="community-partner-card"${pinned ? ' data-pinned="1"' : ''} data-partner-name="${escapeJsString(name)}" style="transition: opacity 0.6s ease;">
             <div class="partner-logo-container">
                 ${isVideoUrl(imgUrl)
                     ? `<video class="partner-logo-asset" src="${imgUrl.replace(/^\/\//, 'https://')}" aria-label="${escapeJsString(altText)}" autoplay muted loop playsinline webkit-playsinline preload="auto" onclick="${open}" style="cursor:pointer;"></video>`
@@ -2172,7 +2172,7 @@ function renderCarouselPartnerRotator(firstEl, secondEl, images, videos) {
         const fading = [];
         if (firstEl) firstEl.querySelectorAll('.community-partner-card:not([data-pinned])').forEach(c => fading.push(c));
         if (secondEl) secondEl.querySelectorAll('.community-partner-card').forEach(c => fading.push(c));
-        fading.forEach(c => { c.style.opacity = '0.3'; c.style.transform = 'scale(0.96)'; });
+        fading.forEach(c => { c.style.opacity = '0'; });   // fade out (no blink)
 
         setTimeout(() => {
             if (firstEl) {
@@ -2182,11 +2182,15 @@ function renderCarouselPartnerRotator(firstEl, secondEl, images, videos) {
             if (secondEl) {
                 secondEl.innerHTML = L.secondRot ? window_(idx + L.firstRot, L.secondRot) : '';
             }
+            const incoming = [];
             [firstEl, secondEl].forEach(el => el && el.querySelectorAll('.community-partner-card:not([data-pinned])').forEach(c => {
-                c.style.opacity = '1'; c.style.transform = 'scale(1)';
+                c.style.opacity = '0';   // start hidden, then fade in
+                incoming.push(c);
                 trackGa4Event('partner_card_impression', { partner_name: c.getAttribute('data-partner-name'), strip: el === firstEl ? 'top_strip' : 'bottom_strip' });
             }));
-        }, 300);
+            smlcKickPartnerVideos(document);
+            requestAnimationFrame(() => requestAnimationFrame(() => incoming.forEach(c => { c.style.opacity = '1'; })));
+        }, 600);   // matches the 0.6s fade-out
     }, slideDuration);
 }
 
