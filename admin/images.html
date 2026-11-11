@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<!-- SMLC Image Uploader | v4 | 2026-11-02 8:50 PM ET
+<!-- SMLC Image Uploader | v5 | 2026-11-11 12:45 PM ET
+     v5: with the team key connected you choose: "Admin upload" (images/ only, NOT in the Gallery, gives the raw link)
+         or "Gallery photo" (same as the public: filed under a town in the Photo Gallery).
      PUBLIC: anyone can paste a picture, name it, pick the town and save it - no GitHub key.
        Saving goes through the SMLC Sheet's script (Code.gs SECTION 5), which holds the key privately.
      TEAM (optional GitHub key, saved only on that device): see every picture in images/ and save
@@ -50,6 +52,7 @@
         details summary { cursor: pointer; font-weight: 700; }
         code { background: rgba(127, 127, 127, .15); padding: 1px 5px; border-radius: 4px; }
         ol li { margin: 4px 0; }
+        [hidden] { display: none !important; }
     </style>
 </head>
 <body>
@@ -62,6 +65,16 @@
     <!-- ===== Upload ===== -->
     <section class="card">
         <h2>Add a picture</h2>
+        <div id="mode-box" hidden style="display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px;">
+            <label style="flex:1 1 260px;display:flex;gap:10px;align-items:flex-start;border:2px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;margin:0;">
+                <input type="radio" name="mode" value="admin" checked style="width:20px;height:20px;margin-top:2px;">
+                <span><strong>Admin upload</strong><br><span class="hint">Saved to <code>images/</code> only &mdash; <strong>not</strong> in the public Gallery. You get the raw GitHub link for your pages.</span></span>
+            </label>
+            <label style="flex:1 1 260px;display:flex;gap:10px;align-items:flex-start;border:2px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;margin:0;">
+                <input type="radio" name="mode" value="gallery" style="width:20px;height:20px;margin-top:2px;">
+                <span><strong>Gallery photo</strong><br><span class="hint">Filed under a town and shown in the public Photo Gallery (same as the public uploader).</span></span>
+            </label>
+        </div>
         <div id="drop" tabindex="0" aria-label="Paste, drop or choose an image">
             <div id="drop-inner">
                 <p class="big">Paste an image here (Ctrl+V / &#8984;V)</p>
@@ -177,6 +190,18 @@
     var P = window.SMLC_PHOTOS;
     P.fillPlaceSelect($('place'), 'Choose the town…');
     var connected = false;
+    function mode() { var r = document.querySelector('input[name="mode"]:checked'); return connected && r ? r.value : 'gallery'; }
+    function applyMode() {
+        var admin = mode() === 'admin';
+        $('mode-box').hidden = !connected;
+        // Town, description and permission box only matter for Gallery photos
+        $('place').closest('div').style.display = admin ? 'none' : '';
+        $('consent').closest('label').style.display = admin ? 'none' : '';
+        $('alt').style.display = admin ? 'none' : ''; var al = document.querySelector('label[for="alt"]'); if (al) al.style.display = admin ? 'none' : '';
+        $('upload').textContent = admin ? 'Save to GitHub (admin)' : 'Save picture';
+        refreshUploadButton();
+    }
+    document.querySelectorAll('input[name="mode"]').forEach(function (r) { r.addEventListener('change', function () { $('result').innerHTML = ''; applyMode(); }); });
 
     // ---------- settings ----------
     $('token').value = store.get('token');
@@ -215,13 +240,14 @@
             $('token-help').open = false;
             connected = canWrite !== false;
             $('browse-card').hidden = false;
-            $('place').options[0].textContent = connected ? '— not a town photo (team) —' : 'Choose the town…';
+            $('place').options[0].textContent = 'Choose the town…';
+            applyMode();
             refreshUploadButton();
             return true;
         } catch (e) {
             $('token-status').textContent = '❌ ' + e.message;
             $('who').textContent = '';
-            connected = false; $('browse-card').hidden = true;
+            connected = false; $('browse-card').hidden = true; applyMode();
             return false;
         }
     }
@@ -234,7 +260,7 @@
         store.del('token'); $('token').value = '';
         $('token-status').textContent = 'Token removed from this device.';
         $('who').textContent = '';
-        connected = false; $('browse-card').hidden = true;
+        connected = false; $('browse-card').hidden = true; applyMode();
         refreshUploadButton();
     };
     if (store.get('token')) connect(true);
@@ -268,7 +294,7 @@
         refreshUploadButton();
     }
     // Team (key connected): any picture. Everyone else: must pick a town and tick the permission box.
-    function refreshUploadButton() { $('upload').disabled = !(picked && targetPath() && (connected || ($('place').value && $('consent').checked))); }
+    function refreshUploadButton() { $('upload').disabled = !(picked && targetPath() && (mode() === 'admin' || ($('place').value && $('consent').checked))); }
     ['name', 'format', 'maxw', 'place', 'consent'].forEach(function (id) { $(id).addEventListener('input', refreshPreview); $(id).addEventListener('change', refreshPreview); });
 
     function loadImage(blob) {
@@ -390,7 +416,7 @@
 
     // ---------- upload ----------
     $('upload').onclick = async function () {
-        if (!connected) return publicSave();
+        if (mode() !== 'admin') return publicSave();
         var c = cfg(), path = targetPath();
         if (!path) return;
         $('upload').disabled = true;
@@ -420,7 +446,7 @@
                 throw new Error(err.message || ('GitHub error ' + put.status));
             }
             var link = rawUrl(path);
-            showResult('ok', '✅ Saved <code>' + path + '</code> (' + Math.round(blob.size / 1024) + ' KB). Paste this link into the Sheet &mdash; it works right away:' +
+            showResult('ok', '✅ Admin upload saved: <code>' + path + '</code> (' + Math.round(blob.size / 1024) + ' KB). Not added to the Gallery. Raw GitHub link &mdash; works right away:' +
                 '<div class="copyline"><input type="text" readonly value="' + link + '"><button type="button" class="copy-btn">Copy link</button></div>' +
                 (sha ? '<p class="hint">You replaced an existing picture: places that already showed the old one can take up to about 5 minutes to switch over.</p>' : ''));
             addRecent(path);
