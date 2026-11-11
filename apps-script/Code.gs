@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-11-02_v6.5  |  Updated: Nov 2, 2026 9:00 PM ET
+   Active Version: 2026-11-11_v6.6  |  Updated: Nov 11, 2026 1:00 PM ET
    File: Code.gs (Google Apps Script)
    Project: SMLC County Portal Semantic RTDB Sync
    Description: SMLC County Portal Master Parser & Firebase Realtime DB Sync.
@@ -29,6 +29,8 @@
                 - v6.3: Gallery tab gets an "Alt" column (picture description for screen readers).
                 - v6.4: File names don't repeat the town ("Flora water tower" -> flora-water-tower.jpg).
                 - v6.5: setupSMLCPhotos() - run once to approve permissions and test everything.
+                - v6.6: Admins = Script Property ADMIN_EMAILS (comma-separated). Admin uploads from the
+                        Image Uploader (Google sign-in) go to images/ only - not the Gallery.
    ========================================================================== */
 
 // === SECTION 0: Auto-Sync On Edit Event Listener ===
@@ -758,7 +760,7 @@ function installGasPriceTrigger() {
      3. After changing this file later: Deploy -> Manage deployments -> edit -> Version: New version.
    ========================================================================== */
 
-var PH_VERSION = "v1.7 - Nov 2, 2026 9:00 PM ET";
+var PH_VERSION = "v1.8 - Nov 11, 2026 1:00 PM ET (admin list in ADMIN_EMAILS)";
 var PH_REPO = "Werewolf3788/SMLC";
 var PH_BRANCH = "Claude-Test";                 // the branch the live site is published from
 var PH_FOLDER = "images";
@@ -804,6 +806,8 @@ function setupSMLCPhotos() {
   try { phSubmissionsFolder_(); out.push("Private Drive folder: OK"); } catch (e) { out.push("Drive folder: " + e.message); }
   try { phSubmissionsSheet_(); out.push("Private submissions sheet: OK"); } catch (e) { out.push("Submissions sheet: " + e.message); }
   try { out.push("Email quota left today: " + MailApp.getRemainingDailyQuota()); } catch (e) { out.push("Email: " + e.message); }
+  var admins = PropertiesService.getScriptProperties().getProperty("ADMIN_EMAILS");
+  out.push("Admins (ADMIN_EMAILS): " + (admins ? admins : "NONE SET - add Script Property ADMIN_EMAILS"));
   Logger.log("SMLC Photos " + PH_VERSION + "\n" + out.join("\n") +
     "\n\nNext: Deploy -> Manage deployments -> pencil -> Version: New version -> Deploy (Who has access: Anyone).");
 }
@@ -847,15 +851,24 @@ function phCheckUser_(idToken) {
   var user = (JSON.parse(r.getContentText()).users || [])[0];
   if (!user || !user.email) throw new Error("Could not read your sign-in.");
   if (!user.emailVerified) throw new Error("Your Google email is not verified.");
-  // Reading your own smlc_admins entry with your sign-in proves you're on the list
-  var a = UrlFetchApp.fetch(PH_RTDB + "/smlc_admins/" + encodeURIComponent(phEmailKey_(user.email)) + ".json?auth=" + encodeURIComponent(idToken),
-                            { muteHttpExceptions: true });
-  var admin = a.getResponseCode() === 200 && a.getContentText().trim() === "true";
+  // Admins: Script Property ADMIN_EMAILS (private, comma-separated), e.g.
+  //   raykevin71888@gmail.com, skventuresigns@gmail.com, scott.robinson@skventuresigns.com
+  var list = String(PropertiesService.getScriptProperties().getProperty("ADMIN_EMAILS") || "")
+    .toLowerCase().split(/[\s,;]+/).filter(String);
+  var admin = list.indexOf(String(user.email).toLowerCase()) !== -1;
+  if (!admin) {
+    // Older setup: Firebase Realtime Database smlc_admins/<email with , for .> = true
+    try {
+      var a = UrlFetchApp.fetch(PH_RTDB + "/smlc_admins/" + encodeURIComponent(phEmailKey_(user.email)) + ".json?auth=" + encodeURIComponent(idToken),
+                                { muteHttpExceptions: true });
+      admin = a.getResponseCode() === 200 && a.getContentText().trim() === "true";
+    } catch (e) {}
+  }
   return { email: user.email, admin: admin };
 }
 function phRequireAdmin_(idToken) {
   var u = phCheckUser_(idToken);
-  if (!u.admin) throw new Error(u.email + " is not authorized. Ask an administrator to add you in Firebase (smlc_admins).");
+  if (!u.admin) throw new Error(u.email + " is not on the SMLC admin list (ADMIN_EMAILS in the Sheet's Apps Script).");
   return u;
 }
 

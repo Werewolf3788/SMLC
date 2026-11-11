@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<!-- SMLC Image Uploader | v5 | 2026-11-11 12:45 PM ET
+<!-- SMLC Image Uploader | v6 | 2026-11-11 1:10 PM ET
+     v6: SMLC team signs in with Google (Firebase). Admin list = ADMIN_EMAILS in the Sheet's Apps Script.
+         Admin uploads are saved by the Sheet script (no GitHub key needed); the GitHub key stays as a backup.
      v5: with the team key connected you choose: "Admin upload" (images/ only, NOT in the Gallery, gives the raw link)
          or "Gallery photo" (same as the public: filed under a town in the Photo Gallery).
      PUBLIC: anyone can paste a picture, name it, pick the town and save it - no GitHub key.
@@ -13,6 +15,8 @@
     <meta name="robots" content="noindex, nofollow">
     <title>SMLC Image Uploader</title>
     <meta name="color-scheme" content="light dark">
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="../smlc-photos-config.js"></script>
     <style>
         :root { --navy: #001B37; --accent: #FFC10E; --ink: #111; --muted: #555; --card: #fff; --bg: #f3f5f8; --line: #d5dbe3; --ok: #137333; --bad: #b3261e; }
@@ -139,9 +143,19 @@
         <div class="list" id="browse-list"></div>
     </section>
     <!-- ===== Token ===== -->
+    <section class="card" id="signin-card">
+        <h2 style="margin:0 0 6px;">SMLC team sign-in</h2>
+        <p class="hint" style="margin:0 0 10px;">For admins only: save pictures to <code>images/</code> without adding them to the public Gallery, and see every saved picture.</p>
+        <p style="display:flex;gap:8px;flex-wrap:wrap;margin:0;">
+            <button type="button" id="google-signin" class="gold">Sign in with Google</button>
+            <button type="button" id="google-signout" class="secondary" hidden>Sign out</button>
+        </p>
+        <p class="status" id="signin-status" style="margin:8px 0 0;"></p>
+    </section>
+
     <section class="card" id="token-card">
         <details id="team-box">
-        <summary>SMLC team only: GitHub key</summary>
+        <summary>Backup: GitHub key (only if Google sign-in isn't working)</summary>
         <p class="hint">Not needed to add pictures. Only for seeing every picture in the folder and saving pictures that aren't town photos (logos, ads).</p>
         <details id="token-help">
             <summary>How to get a token (2 minutes)</summary>
@@ -201,6 +215,51 @@
         $('upload').textContent = admin ? 'Save to GitHub (admin)' : 'Save picture';
         refreshUploadButton();
     }
+    // ---------- Google sign-in (Firebase) for the SMLC team ----------
+    var adminUser = null;          // signed-in admin (checked by the Sheet script against ADMIN_EMAILS)
+    var tokenConnected = false;    // backup: GitHub key on this device
+    function setConnected() {
+        connected = !!adminUser || tokenConnected;
+        $('browse-card').hidden = !connected;
+        $('who').textContent = adminUser ? 'Admin: ' + adminUser.email : (tokenConnected ? 'SMLC team: connected' : '');
+        applyMode();
+    }
+    var fbAuth = null;
+    try {
+        var fbApp = (firebase.apps || []).filter(function (a) { return a.name === '[DEFAULT]'; })[0] || firebase.initializeApp(P.FIREBASE_CONFIG);
+        fbAuth = fbApp.auth();
+    } catch (e) { $('signin-status').textContent = 'Google sign-in could not load.'; }
+    $('google-signin').onclick = function () {
+        if (!fbAuth) return;
+        $('signin-status').textContent = 'Opening Google sign-in…';
+        fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(function (e) {
+            if (e && e.code === 'auth/popup-blocked') return fbAuth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
+            $('signin-status').textContent = '❌ ' + (e && e.code === 'auth/unauthorized-domain'
+                ? 'This web address isn\'t allowed yet: Firebase → Authentication → Settings → Authorized domains → add ' + location.hostname
+                : ((e && e.message) || 'Sign-in failed.'));
+        });
+    };
+    $('google-signout').onclick = function () { if (fbAuth) fbAuth.signOut(); };
+    if (fbAuth) fbAuth.onAuthStateChanged(function (user) {
+        adminUser = null;
+        $('google-signin').hidden = !!user;
+        $('google-signout').hidden = !user;
+        if (!user) { $('signin-status').textContent = ''; setConnected(); return; }
+        $('signin-status').textContent = 'Checking ' + user.email + '…';
+        user.getIdToken().then(function (t) { return P.call({ action: 'whoami', idToken: t }); }).then(function (res) {
+            if (res.admin) {
+                adminUser = user;
+                $('signin-status').textContent = '✅ Signed in as ' + user.email + ' (admin).';
+            } else {
+                $('signin-status').textContent = '🔒 ' + user.email + ' is not on the SMLC admin list. You can still add Gallery photos above.';
+            }
+            setConnected();
+        }).catch(function (e) {
+            $('signin-status').textContent = '❌ ' + e.message;
+            setConnected();
+        });
+    });
+
     document.querySelectorAll('input[name="mode"]').forEach(function (r) { r.addEventListener('change', function () { $('result').innerHTML = ''; applyMode(); }); });
 
     // ---------- settings ----------
@@ -213,11 +272,9 @@
     function gh(path, opts) {
         var c = cfg();
         opts = opts || {};
-        opts.headers = Object.assign({
-            'Accept': 'application/vnd.github+json',
-            'Authorization': 'Bearer ' + c.token,
-            'X-GitHub-Api-Version': '2022-11-28'
-        }, opts.headers || {});
+        var h = { 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+        if (c.token) h.Authorization = 'Bearer ' + c.token;
+        opts.headers = Object.assign(h, opts.headers || {});
         return fetch('https://api.github.com' + path, opts);
     }
 
@@ -236,18 +293,16 @@
             $('token-status').textContent = canWrite === false
                 ? '⚠️ Connected, but this token can only READ. Give it Contents: Read and write.'
                 : '✅ Connected to ' + c.repo + ' (' + c.branch + ').';
-            $('who').textContent = 'SMLC team: connected';
             $('token-help').open = false;
-            connected = canWrite !== false;
-            $('browse-card').hidden = false;
+            tokenConnected = canWrite !== false;
             $('place').options[0].textContent = 'Choose the town…';
-            applyMode();
+            setConnected();
             refreshUploadButton();
             return true;
         } catch (e) {
             $('token-status').textContent = '❌ ' + e.message;
             $('who').textContent = '';
-            connected = false; $('browse-card').hidden = true; applyMode();
+            tokenConnected = false; setConnected();
             return false;
         }
     }
@@ -260,7 +315,7 @@
         store.del('token'); $('token').value = '';
         $('token-status').textContent = 'Token removed from this device.';
         $('who').textContent = '';
-        connected = false; $('browse-card').hidden = true; applyMode();
+        tokenConnected = false; setConnected();
         refreshUploadButton();
     };
     if (store.get('token')) connect(true);
@@ -417,6 +472,7 @@
     // ---------- upload ----------
     $('upload').onclick = async function () {
         if (mode() !== 'admin') return publicSave();
+        if (adminUser) return adminSaveViaScript(false);
         var c = cfg(), path = targetPath();
         if (!path) return;
         $('upload').disabled = true;
@@ -456,6 +512,29 @@
         }
         refreshUploadButton();
     };
+
+    // ---------- admin save (Google sign-in): the Sheet script saves it to images/, not the Gallery ----------
+    async function adminSaveViaScript(overwrite) {
+        var path = targetPath(); if (!path) return;
+        $('upload').disabled = true;
+        showResult('', 'Saving <code>' + path + '</code>…');
+        try {
+            var blob = await prepareBlob();
+            var res = await P.call({
+                action: 'upload', idToken: await adminUser.getIdToken(), base64: await toBase64(blob),
+                ext: outExt(), name: $('name').value, overwrite: !!overwrite, addToGallery: false
+            });
+            if (res.exists) {
+                if (confirm(res.path + ' already exists.\n\nReplace it with this picture?')) return adminSaveViaScript(true);
+                showResult('', 'Not saved. Change the name to keep both.'); refreshUploadButton(); return;
+            }
+            showResult('ok', '✅ Admin upload saved: <code>' + res.path + '</code> (' + Math.round(blob.size / 1024) + ' KB). Not added to the Gallery. Raw GitHub link &mdash; works right away:' +
+                '<div class="copyline"><input type="text" readonly value="' + res.link + '"><button type="button" class="copy-btn">Copy link</button></div>' +
+                (res.replaced ? '<p class="hint">You replaced an existing picture: places that already showed the old one can take up to about 5 minutes to switch over.</p>' : ''));
+            $('name').value = ''; refreshPreview();
+        } catch (e) { showResult('bad', '❌ ' + e.message); }
+        refreshUploadButton();
+    }
 
     // ---------- public save (no key): through the SMLC Sheet's script ----------
     async function publicSave() {
