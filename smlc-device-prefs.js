@@ -1,14 +1,45 @@
 /* ==========================================================================
-   File: smlc-device-prefs.js  |  2026-10-31
+   File: smlc-device-prefs.js  |  2026-11-11 (adds test-copy marker)
    Load this in the <head> of every SMLC page, BEFORE Google Translate's script.
 
    1. Automatic translation: reads the language the visitor's device is set to
       and tells Google Translate to show the page in that language.
       English devices see the original page. There is no language picker.
    2. Hides all Google Translate menus, banners and pop-ups.
+   3. TEST COPY: on werewolf3788.github.io (the test copy) the page tells search
+      engines not to list it, and shows a slim "test site" bar linking to the same
+      page on the official site, supportmylocalcommunity.com. Nothing happens on
+      the official site.
    (Light/dark mode is handled in each page's CSS with prefers-color-scheme,
     so it simply follows the device setting.)
    ========================================================================== */
+
+// ---------- Test copy marker (werewolf3788.github.io only) ----------
+(function () {
+    var OFFICIAL = 'https://supportmylocalcommunity.com/';
+    if (!/\.github\.io$/i.test(location.hostname)) return;   // official site: do nothing
+
+    // 1. Ask search engines not to list the test copy (each page's canonical tag
+    //    already names the matching supportmylocalcommunity.com page as the real one)
+    var robots = document.querySelector('meta[name="robots"]');
+    if (!robots) { robots = document.createElement('meta'); robots.name = 'robots'; document.head.appendChild(robots); }
+    robots.content = 'noindex, nofollow';
+
+    // 2. Slim notice bar at the very top, pointing to the same page on the official site
+    function addBar() {
+        if (document.getElementById('smlc-test-bar')) return;
+        var page = location.pathname.replace(/^\/SMLC\/?/i, '');
+        var bar = document.createElement('div');
+        bar.id = 'smlc-test-bar';
+        bar.setAttribute('role', 'note');
+        bar.style.cssText = 'background:#FFC10E;color:#111;font:600 14px/1.4 system-ui,sans-serif;text-align:center;padding:6px 12px;position:relative;z-index:100000';
+        bar.innerHTML = '\u26A0\uFE0F Test site \u2014 the official site is <a href="' + OFFICIAL + page +
+            '" style="color:#001B37;text-decoration:underline">supportmylocalcommunity.com</a>';
+        document.body.insertBefore(bar, document.body.firstChild);
+    }
+    if (document.body) addBar(); else document.addEventListener('DOMContentLoaded', addBar);
+})();
+
 (function () {
     var PAGE_LANGUAGE = 'en';
 

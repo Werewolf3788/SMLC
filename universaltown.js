@@ -251,7 +251,7 @@ let ACTIVE_TOWN = getActiveTownConfig();
 const DEFAULT_APP_CONFIG = {
     regional_endpoints: {
         apps_script_bulletin_url: "//script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec",
-        gas_widget: "//werewolf3788.github.io/SMLC/update-gas.html"
+        gas_widget: "update-gas.html"   // same site, works on the test copy and on supportmylocalcommunity.com
     }
 };
 
@@ -2348,7 +2348,7 @@ function publishEventStructuredData(items) {
                 eventStatus: 'https://schema.org/EventScheduled',
                 eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
                 location: { '@type': 'Place', name: place, address: place },
-                organizer: { '@type': 'Organization', name: 'Support My Local Community', url: 'https://werewolf3788.github.io/SMLC/' }
+                organizer: { '@type': 'Organization', name: 'Support My Local Community', url: 'https://supportmylocalcommunity.com/' }
             };
             const desc = item.details || item.description || item.descShort || item.desc;
             if (desc) ev.description = String(desc).slice(0, 300);
@@ -2497,7 +2497,7 @@ function smlcGoogleCalendarUrl(ev) {
         ? `${smlcCentralDateStamp(ev.start)}/${smlcCentralDateStamp(ev.end)}`
         : `${smlcUtcStamp(ev.start)}/${smlcUtcStamp(ev.end)}`;
     const extra = smlcAttachmentLines(ev);
-    const details = [ev.details, extra.length ? 'Attachments:\n' + extra.join('\n') : '', 'From Support My Local Community: https://werewolf3788.github.io/SMLC/']
+    const details = [ev.details, extra.length ? 'Attachments:\n' + extra.join('\n') : '', 'From Support My Local Community: https://supportmylocalcommunity.com/']
         .filter(Boolean).join('\n\n').slice(0, 1800);
     const params = new URLSearchParams({ action: 'TEMPLATE', text: ev.title, dates, details, location: ev.location, ctz: SMLC_TZ });
     return `https://calendar.google.com/calendar/render?${params.toString()}`;
@@ -2524,7 +2524,7 @@ function smlcBuildIcs(ev) {
         `SUMMARY:${smlcIcsEscape(ev.title)}`,
         `LOCATION:${smlcIcsEscape(ev.location)}`,
         `DESCRIPTION:${smlcIcsEscape(description)}`,
-        'URL:https://werewolf3788.github.io/SMLC/',
+        'URL:https://supportmylocalcommunity.com/',
         ...ev.attachments.map(a => `ATTACH${a.mimeType ? ';FMTTYPE=' + a.mimeType : ''}:${String(a.fileUrl).startsWith('//') ? 'https:' + a.fileUrl : a.fileUrl}`),
         'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${smlcIcsEscape(ev.title)}`, 'TRIGGER:-PT1H', 'END:VALARM',
         'END:VEVENT', 'END:VCALENDAR'
