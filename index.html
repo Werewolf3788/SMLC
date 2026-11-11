@@ -124,6 +124,7 @@
     <meta name="color-scheme" content="light dark">
     <!-- Device language -> automatic translation (no language picker) -->
     <script src="smlc-device-prefs.js"></script>
+    <script src="smlc-data.js"></script>
     <script defer src="smlc-bookmarks.js"></script>
     <script defer src="smlc-community.js"></script>
     <script defer src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
@@ -648,9 +649,17 @@
             if (slides.length) { show(); gasTimer = setInterval(show, 6000); }
         }
 
+        // Menu + Business Spotlight: data/smlc.json in GitHub first (smlc-data.js), Firebase only if that file can't load
+        (window.SMLC_DATA ? window.SMLC_DATA.promise : Promise.resolve(null)).then(d => {
+            const menu = d && window.SMLC_DATA.get(d, "global/menu");
+            if (menu) renderMenu(menu);
+            else if (db) db.ref("master_county_data/global/menu").on("value", s => renderMenu(s.val()));
+            const spot = d && window.SMLC_DATA.get(d, "global/sections/spotlight");
+            if (spot) renderSpotlight(spot);
+            else if (db) db.ref("master_county_data/global/sections/spotlight").on("value", s => renderSpotlight(s.val()));
+        });
+
         if (db) {
-            db.ref("master_county_data/global/menu").on("value", s => renderMenu(s.val()));
-            db.ref("master_county_data/global/sections/spotlight").on("value", s => renderSpotlight(s.val()));
             db.ref("fuel_prices").on("value", s => renderGas(s.val() || {}));
             GAS_TOWNS.forEach(town => {
                 db.ref("master_county_data/towns/" + town + "/sections/gas_widget").on("value", s => {

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-11-02_v6.5  |  Updated: Nov 2, 2026 9:00 PM ET
+   Active Version: 2026-11-11_v7 (Test-2)  |  Updated: Nov 11, 2026 12:20 PM ET
    File: Code.gs (Google Apps Script)
    Project: SMLC County Portal Semantic RTDB Sync
    Description: SMLC County Portal Master Parser & Firebase Realtime DB Sync.
@@ -29,6 +29,8 @@
                 - v6.3: Gallery tab gets an "Alt" column (picture description for screen readers).
                 - v6.4: File names don't repeat the town ("Flora water tower" -> flora-water-tower.jpg).
                 - v6.5: setupSMLCPhotos() - run once to approve permissions and test everything.
+                - v7:   SECTION 6 - Menu, Article, Point of Interest, Spotlight, Town History and
+                        Town Links are also saved to GitHub as data/smlc.json (the pages read it first).
    ========================================================================== */
 
 // === SECTION 0: Auto-Sync On Edit Event Listener ===
@@ -1085,4 +1087,84 @@ function phReview_(req) {
   sh.getRange(rowNum, 2).setValue("Approved");
   sh.getRange(rowNum, 12, 1, 3).setValues([[u.email, new Date(), link]]);
   return { approved: true, link: link, path: path };
+}
+
+
+// === SECTION 6: Sheet -> GitHub (data/smlc.json) ===
+/*
+ * The website reads Menu, Article, Point of Interest, Spotlight, Town History and Town Links
+ * from data/smlc.json in GitHub (Firebase is only the backup for those).
+ * Slideshow, partners, gas prices, sports and the gallery still go to Firebase as before.
+ *
+ * SETUP (once):  run installSmlcJsonTrigger  - checks every 5 minutes and saves only if the Sheet changed.
+ * ANY TIME:      run writeSmlcJsonToGitHub   - saves it right now.
+ * Uses the same SMLC_GITHUB_TOKEN as SECTION 5.
+ */
+var SMLC_JSON_BRANCH = "Test-2";            // change to "Claude-Test" when Test-2 goes live
+var SMLC_JSON_PATH = "data/smlc.json";
+var SMLC_JSON_SECTIONS = ["article", "point_of_interest", "spotlight", "history", "town_links"];
+
+/** Only the six tabs, in the same layout Firebase gets */
+function buildSmlcJson_() {
+  var all = processFullCountyDataset();
+  var pick = function (sections) {
+    var out = {};
+    SMLC_JSON_SECTIONS.forEach(function (k) { if (sections && sections[k] !== undefined) out[k] = sections[k]; });
+    return out;
+  };
+  var towns = {};
+  Object.keys(all.towns || {}).forEach(function (t) {
+    var sec = pick(all.towns[t].sections);
+    if (Object.keys(sec).length) towns[t] = { town: all.towns[t].town, sections: sec };
+  });
+  return {
+    _about: "Support My Local Community - Menu, Article, Point of Interest, Spotlight, Town History and Town Links " +
+            "from the SMLC Google Sheet. Slideshow, partners, gas prices and sports come from Firebase.",
+    source: "SMLC Google Sheet",
+    global: { menu: all.global.menu || [], sections: pick(all.global.sections) },
+    towns: towns
+  };
+}
+
+/** Saves data/smlc.json to GitHub if anything changed since the last save */
+function writeSmlcJsonToGitHub(force) {
+  var props = PropertiesService.getScriptProperties();
+  var data = buildSmlcJson_();
+  var body = JSON.stringify(data);
+  var hash = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, body, Utilities.Charset.UTF_8));
+  if (force !== true && props.getProperty("SMLC_JSON_HASH") === hash) {
+    props.deleteProperty("SMLC_JSON_DIRTY");
+    Logger.log("data/smlc.json is already up to date.");
+    return;
+  }
+  data.updatedAt = new Date().toISOString();
+  var text = JSON.stringify(data, null, 2);
+  var url = "https://api.github.com/repos/" + PH_REPO + "/contents/" + SMLC_JSON_PATH;
+  var existing = phGh_(url + "?ref=" + encodeURIComponent(SMLC_JSON_BRANCH));
+  var sha = existing.getResponseCode() === 200 ? JSON.parse(existing.getContentText()).sha : null;
+  var payload = { message: "Update " + SMLC_JSON_PATH + " from the SMLC Sheet", branch: SMLC_JSON_BRANCH,
+                  content: Utilities.base64Encode(text, Utilities.Charset.UTF_8) };
+  if (sha) payload.sha = sha;
+  var r = phGh_(url, { method: "put", contentType: "application/json", payload: JSON.stringify(payload) });
+  if (r.getResponseCode() !== 200 && r.getResponseCode() !== 201) {
+    throw new Error("Saving " + SMLC_JSON_PATH + " to GitHub failed (" + r.getResponseCode() + "): " + r.getContentText().slice(0, 300));
+  }
+  props.setProperty("SMLC_JSON_HASH", hash);
+  props.deleteProperty("SMLC_JSON_DIRTY");
+  Logger.log("Saved " + SMLC_JSON_PATH + " to " + PH_REPO + " (" + SMLC_JSON_BRANCH + ").");
+}
+
+/** Timer job: only does anything if the Sheet was edited since the last save */
+function smlcJsonTimer() {
+  if (PropertiesService.getScriptProperties().getProperty("SMLC_JSON_DIRTY")) writeSmlcJsonToGitHub();
+}
+
+/** Run once by hand: checks every 5 minutes (replaces any old one) and saves the file now */
+function installSmlcJsonTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === "smlcJsonTimer") ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger("smlcJsonTimer").timeBased().everyMinutes(5).create();
+  writeSmlcJsonToGitHub(true);
+  Logger.log("data/smlc.json will be checked every 5 minutes.");
 }

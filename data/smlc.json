@@ -1,0 +1,430 @@
+{
+  "_about": "Support My Local Community - Menu, Article, Point of Interest, Spotlight, Town History and Town Links from the SMLC Google Sheet. Written by Code.gs (writeSmlcJsonToGitHub). Slideshow, partners, gas prices and sports still come from Firebase.",
+  "updatedAt": "2026-11-11T16:49:19+00:00",
+  "source": "SMLC Google Sheet",
+  "global": {
+    "sections": {
+      "spotlight": {
+        "name": "S & K Venture Signs",
+        "description": "Help advertis your business",
+        "website": "https://www.facebook.com/SKVenturesInc",
+        "imageUrl": "https://ourflora.com/wp-content/uploads/2025/12/Screenshot-2025-05-31-205146.png",
+        "alt": "## Image Alt Description\n\n* **Maroon & gold sign with a shiled on the left side of S & K in gold\n* **it reads, Advertise with us! We offer a veriety of prices and sizing for our digital billboards across Central Illinios!"
+      },
+      "town_links": {
+        "links": [
+          {
+            "title": "Donations",
+            "website": "https://streamelements.com/werewolf3788/tip"
+          }
+        ]
+      }
+    },
+    "menu": [
+      {
+        "name": "Home",
+        "town": "",
+        "website": "https://werewolf3788.github.io/SMLC/",
+        "imageUrl": "https://werewolf3788.github.io/SMLC/images/smlc-banner.png",
+        "alt": "## Image Alt Description\n\n* **Icon Graphic:** A simple, colorful vector illustration of a house with thick black outlines.\n* **Structure & Features:** A white house featuring a bright red gabled roof, a matching red front door with a round handle, a red chimney on the right side, and two blue windows flanking the entrance.\n* **Surroundings:** A small green bush positioned on the bottom right corner in front of the house.",
+        "category": ""
+      },
+      {
+        "name": "Clay City",
+        "town": "Clay City",
+        "website": "https://werewolf3788.github.io/SMLC/clay-city",
+        "imageUrl": "https://lh3.googleusercontent.com/d/1UJbESAtKR6-bL-VoOYVYUuW8vdw9H1Gf=s0",
+        "alt": "## Image Alt Description\n\n* **Map Graphic:** An outline map of the state of Illinois in light gray.\n* **Typography & Location:** Blue script lettering overlaying the map reading \"Clay City IL\", accompanied by a red star pinpointing its location in the southeastern region of the state.",
+        "category": "Town"
+      },
+      {
+        "name": "Flora",
+        "town": "Flora",
+        "website": "https://werewolf3788.github.io/SMLC/flora.html#",
+        "imageUrl": "https://raw.githubusercontent.com/Werewolf3788/SMLC/refs/heads/Claude-Test/images/ourflora.png",
+        "alt": "## Image Alt Description\n\n* **Map Graphic:** An outline map of the state of Illinois in light gray.\n* **Typography & Location:** Blue script lettering overlaying the map reading \"Flora IL\", accompanied by a red star pinpointing its location in the southeastern region of the state.",
+        "category": "Town"
+      },
+      {
+        "name": "Louisville",
+        "town": "Louisville",
+        "website": "https://werewolf3788.github.io/SMLC/louisville",
+        "imageUrl": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/images/northclay.jpeg?raw=true",
+        "alt": "## Image Alt Description\n\n* **Map Graphic:** An outline map of the state of Illinois in light gray.\n* **Typography & Location:** Blue script lettering overlaying the map reading \"Louisville IL\", accompanied by a red star pinpointing its location in the southeastern region of the state.",
+        "category": "Town"
+      },
+      {
+        "name": "Xenia",
+        "town": "Xenia",
+        "website": "https://werewolf3788.github.io/SMLC/xenia",
+        "imageUrl": "https://github.com/Werewolf3788/SMLC/blob/main/images/xenia-sign.jpeg?raw=true",
+        "alt": "## Image Alt Description\n\n* **Map Graphic:** An outline map of the state of Illinois in light gray.\n* **Typography & Location:** Blue script lettering overlaying the map reading \"Xenia IL\", accompanied by a red star pinpointing its location in the southeastern region of the state.",
+        "category": "Town"
+      },
+      {
+        "name": "Sailor Springs",
+        "town": "Sailor Springs",
+        "website": "https://werewolf3788.github.io/SMLC/sailor-springs",
+        "imageUrl": "https://drive.google.com/thumbnail?id=1uuYpoYOTBdasLY_1XPDifzFRKRlxes_G&sz=w1600",
+        "alt": "## Image Alt Description\n\n* **Map Graphic:** An outline map of the state of Illinois in light gray.\n* **Typography & Location:** Blue script lettering overlaying the map reading \"Sailor Springs IL\", accompanied by a red star pinpointing its location in the southeastern region of the state.",
+        "category": "Town"
+      },
+      {
+        "name": "Amazon",
+        "town": "",
+        "website": "https://link.amazon/B06CaUyMz",
+        "imageUrl": "https://www.thebusinesstoolkit.com/wp-content/uploads/2025/08/amazon-logo-1.png",
+        "alt": "Amazon",
+        "category": "More"
+      },
+      {
+        "name": "Clay County Calendar",
+        "town": "",
+        "website": "https://calendar.google.com/calendar/u/0/embed?src=09907fc6fff214b9dad96172ef13e7b80d62ea80cf22b504d096a47f277a9d2b@group.calendar.google.com&ctz=America/New_York",
+        "imageUrl": "https://clay.illinoisgenweb.org/images/map1875.jpg",
+        "alt": "Clay County Calendar",
+        "category": "More"
+      },
+      {
+        "name": "Photo Uploader",
+        "town": "",
+        "website": "https://werewolf3788.github.io/SMLC/share-photos.html",
+        "imageUrl": "https://raw.githubusercontent.com/Werewolf3788/SMLC/Claude-Test/images/photo-uploader.jpg",
+        "alt": "Photo Uploader",
+        "category": "More"
+      }
+    ]
+  },
+  "towns": {
+    "Louisville": {
+      "town": "Louisville",
+      "sections": {
+        "article": {
+          "title": "Renewable Energy Feature",
+          "category": "Harvesting the Sun",
+          "deck": "How the quiet fields of Louisville, Illinois, became a powerhouse for the state's clean energy future.",
+          "body": "In the heart of Clay County, the landscape is shifting. Historically known for its rich soil and agricultural prowess, Louisville is now home to some of the most significant solar initiatives in Illinois. The introduction of the Maple Flats Solar Project has transformed 7,000 acres of rural land into a high-tech energy hub.\\n\\nThis transition isn't just about environmental impact; it's a massive economic engine. By repurposing land for photovoltaic arrays, the community is securing a legacy of energy leadership. Local residents are seeing the benefits through programs like Nexamp’s Community Solar, which allows families to save on electric costs without installing their own panels.\\n\\nWhile the Little Wabash River once powered the town's early industry, it is now the Illinois sky that provides the next great resource, proving that small towns can lead the charge in a global energy revolution. The synergy between heritage and high-tech is defining the new Louisville.",
+          "imageUrl": "https://cdn.sanity.io/images/t3nokka8/production/652096bf8d252ae6d711f9ca4facfea91e977680-1332x815.jpg?auto=format",
+          "alt": "## Image Alt Description\n\n* **Aerial View:** An elevated drone shot capturing a solar farm installation situated amidst rural farmlands near Louisville, Illinois.\n* **Layout:** Long, parallel rows of dark photovoltaic solar panels neatly arranged across a cleared plot of land.\n* **Surrounding Landscape:** Expansive green agricultural fields, pastures, and patches of mature trees extending out to the horizon under a bright daytime sky."
+        },
+        "point_of_interest": {
+          "title": "Clay County Veterans",
+          "image1": "https://www.hmdb.org/Photos6/607/Photo607264.jpg?91202115400PM",
+          "image2": "https://www.hmdb.org/Photos6/607/Photo607265.jpg?91202115500PM",
+          "alt1": "## Image Alt Description\n\n* **Monument Focus:** A close-up view of the black granite Clay County Veterans Memorial monument, featuring the inscription \"CLAY COUNTY VETERANS\" below a polished globe and topped with a world map sphere.\n* **Base Inscription:** The lower pillar reads, \"Dedicated to those men and women who served in the armed forces of the United States of America and in special memory of those who gave their lives.\"\n* **Surrounding Setting:** The monument rises from a paved plaza inlaid with a large reddish-brown star design, with flanking branch-of-service markers, flags, and the historic Clay County Courthouse visible in the background.",
+          "alt2": "## Image Alt Description\n\n* **Monument Detail:** An alternate angle of the black granite Clay County Veterans Memorial, highlighting the engraved imagery on its tiers and the dedication date at the base reading \"DEDICATED NOVEMBER 11, 2007\".\n* **Engravings:** The upper tier features an etched eagle soaring above an American flag and a military branch flag, while the lower tier displays a battlefield cross depicting a helmet resting on a rifle rifle-butt-down between combat boots.\n* **Surroundings:** The monument stands atop a red-granite star plaza, with downtown Louisville's streetscape, brick commercial buildings, and vehicles visible in the background.",
+          "header1": "Veterans Memorial Marker",
+          "header2": "Courthouse Square Display",
+          "landmark_description": "W. Memorial is in Louisville, Illinois, in Clay County. It is at the intersection of Broadway Street and South Main Street, on the left when traveling north on Broadway Street. Marker is at the southeast corner of the Clay County Courthouse. Memorial is at or near this postal address: 125 Broadway St, Louisville IL 62858, United States of America.",
+          "about_text": "Louisville, IL is home to major utility-scale solar developments like the Maple Flats Solar Energy Center. For your own property, you can install residential panels or—if you are a renter or prefer not to install panels on your roof—join a local community solar program to save on your utility bills."
+        },
+        "spotlight": {
+          "name": "Zink Building Center",
+          "description": "Very helpful, friendly, patient and professional! Extra shout out to Dylan, for cutting lumber for me on a short notice even though he was busy, he went back and forth between store customers and getting my lumber. All customers taken care of in a timely manner and everyone was happy!",
+          "website": "https://www.zinks.com",
+          "imageUrl": "https://www.zinks.com/uploads/1/8/3/5/18355399/editor/zbc-photo-2.jpeg",
+          "alt": "Exterior Storefront: The exterior of Zink's Do it Best hardware store featuring light-colored vertical siding on the upper level and darker brown wainscoting along the base.\n\nStore Signage: A prominent red and white sign reading \"Do it Best All Across America\" mounted on the front upper facade, alongside an elevated square pole sign reading \"Zink's\" at the top left.\n\nCovered Porch: A wide overhanging metal roof creating a covered walkway supported by thin dark pillars, running along the front of the building.\n\nEntrance & Windows: Vertical glass storefront windows and an entrance door visible beneath the covered porch area, with vending machines positioned near the left side."
+        },
+        "history": [
+          {
+            "year": "1824",
+            "title": "Clay County Formation",
+            "description": "Clay County was formed in 1824 out of portions of Wayne, Crawford, and Fayette counties. Its name is in honor of Henry Clay – famous American statesman, member of the United States Senate from Kentucky, and United States Secretary of State in the 19th Century. Clay was a candidate for President in the year the county was named. John Quincy Adams won however, and was elected President on February 9, 1825.",
+            "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT9KpY61Beff7f6GxyOgH3s5XvppaI959hMEAtHqd7sH6TmCoQZrb2gOIo&s=10",
+            "alt": "## Image Alt Description\n\n* **Photo Scene:** The historic Clay County Courthouse located on the square in Louisville, Illinois—distinguished as the only building in the town with streets surrounding all sides.\n* **Architecture & Monuments:** A classical, multi-story masonry courthouse building set behind a grassy lawn featuring a central black stone war memorial monument, a semi-circle of benches, and multiple flagpoles flying American and military flags.\n* **Environment:** Open public grounds surrounding the county seat's central architectural landmark under an overcast sky."
+          },
+          {
+            "year": "1824",
+            "title": "Clay County Created",
+            "description": "Clay County was created in 23 Dec 1824. The original boundries were carved from Crawford, Fayette, and Wayne counties.",
+            "imageUrl": "https://clay.illinoisgenweb.org/index_files/mapneighbors.jpg",
+            "alt": "## Image Alt Description\n\n* **Regional Map Graphic:** A detailed geographic locator map highlighting Clay County in gold/orange among its neighboring counties in Illinois.\n* **Surrounding Counties:** Labeled neighboring counties include Effingham to the north, Jasper to the northeast, Richland to the east, Wayne to the south, Marion to the west, and a small portion of Fayette to the northwest."
+          },
+          {
+            "year": "1824",
+            "title": "Honor Henry Clay",
+            "description": "Clay county was named in honor of Henry Clay, a lawyer, planter, statesman, and skilled orator. Clay’s personal magnetism made him one of America’s best-loved politicians his elaborate scheming made him one of the most cordially hated. Through it all he displayed remarkable consistency of purpose: he was a nationalist, devoted to the economic development and political integration of the United States. A+E Networks.",
+            "imageUrl": "https://clay.illinoisgenweb.org/index_files/clayhenry.jpg",
+            "alt": "A formal portrait of statesman and politician Henry Clay wearing a dark coat and high-collared white sh## Image Alt Description\n\n* **Historical Portrait:** An oil painting portrait honoring statesman Henry Clay, the namesake of Clay County, Illinois.\n* **Subject:** Henry Clay depicted as an older man with receding gray hair, sharp facial features, and a direct gaze.\n* **Attire & Lighting:** Dressed in period-appropriate formal attire featuring a dark coat, high white collar, and a dark cravat, set against a dark, muted background with warm directional lighting.irt against a neutral background."
+          },
+          {
+            "year": "1856",
+            "title": "Secret Societies",
+            "description": "The A. F. & A. M. fraternity has a number of adherents in and about Louisville. They had a charter granted October 6, 1856. The following were charter members: S. C. Sparks, W. J. Stevenson, Wyatt Cook, Isaac Martin, J. A. Appersen, William McCracken and John Wooden. The lodge was named Louisville Lodge, No. 196. First officers were S. C. Sparks, Master; W. J. Stevenson, Senior Warden; Wyatt Cook, Junior Warden. Present officers: W. R. Whitman, Master; John Erwin, S.W.; G. A. Henry, J. W.; E. H. Hawkins, Treas.; G. W. Mills, Sec. ; John W. Sullivan, S. D.; G. K. Johnson, J. D.; B. F. Surrells, Tiler. The present membership is about forty. Their meetings are held in J. C. McCollum's Hall on Thursday night on or before each full moon. It is the oldest lodge in the county. Its present financial condition is good.",
+            "imageUrl": "https://res.cloudinary.com/aenetworks/image/upload/c_fill,ar_2,w_3840,h_1920,g_auto/dpr_auto/f_auto/q_auto:eco/v1/secret-societies-gettyimages-173990102?_a=BAVMn6DY0",
+            "alt": "## Image Alt Description\n\n* **Central Icon:** A detailed, weathered stone carving of the Eye of Providence, or the \"All-Seeing Eye,\" enclosed within a perfect equilateral triangle.\n* **Triangle's Surroundings:** The triangle is circumscribed by a distinct circle, and the entire composition is set upon a heavily textured background of rough, aged, mossy rock.\n* **Tone & Texture:** The monochromatic image has a cool-toned, dark, and mysterious atmosphere, emphasizing the deep crevices, cracks, and patina of the ancient stonework."
+          },
+          {
+            "year": "2022",
+            "title": "Rise of Bailey Zimmerman",
+            "description": "Louisville native Bailey Zimmerman achieved national fame in the country music industry, putting the small town on the map for his chart-topping hits like 'Fall in Love' and 'Rock and a Hard Place'.",
+            "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRQ6mgJbZ8bp4AJSm1jeSpSSBCY2y2emptRxQAJ-hWeomxk1Hz2QvtbFeY&s=10",
+            "alt": "## Image Alt Description\n\n* **Photo Scene:** Country music artist Bailey Zimmerman taking a selfie in front of a Casey's general store in his hometown of Louisville, Illinois.\n* **Subjects:** Bailey Zimmerman smiling for the camera in the foreground, wearing a dark baseball cap and a red-and-black flannel shirt.\n* **Background:** The exterior of a Casey's store featuring a prominent red sign with large yellow lettering, glass storefront windows displaying window advertisements, and stacked firewood racks outside."
+          }
+        ],
+        "town_links": {
+          "links": [
+            {
+              "title": "Clay County Courthouse",
+              "website": "http://claycountyillinois.org/general-information-2/contact-info/?utm_source=smlc_portal&utm_medium=town_article&utm_campaign=Louisville%252C%2520IL%2520-%2520SMLC%2520Digital%2520Town%2520Square"
+            },
+            {
+              "title": "Casey's",
+              "website": "https://www.caseys.com/general-store/il-louisville/300-route-45-s/1666"
+            }
+          ]
+        }
+      }
+    },
+    "Flora": {
+      "town": "Flora",
+      "sections": {
+        "article": {
+          "title": "Established",
+          "category": "Flora, IL was established in 1854 by Samuel White",
+          "deck": "Point of Interest",
+          "body": "Flora, IL Established in 1854 by Samuel White, who donated land to the City of Flora for several buildings and the city park. The City Park, at that time called the Public Square, is present day Library Park where Flora Public Library is located.",
+          "imageUrl": "https://raw.githubusercontent.com/Werewolf3788/SMLC/refs/heads/main/images/31887480_126720072612.jpg",
+          "alt": "## Image Alt Description\n\n* **Historical Portrait:** A vintage bust-level photographic portrait of an older man with a full white beard and mustache, bald head, and dark suit with a collared shirt and tie.\n* **Lighting:** A prominent, soft golden light overlay concentrated across the center of his face and nose against a dark, textured background."
+        },
+        "point_of_interest": {
+          "title": "Flora Library",
+          "image1": "https://ourflora.com/wp-content/uploads/2026/01/Old-Flora-Library.webp",
+          "image2": "https://ourflora.com/wp-content/uploads/2026/01/New-Flora-Libray.webp",
+          "alt1": "## Image Alt Description\n\n* **Historical Building:** A historic, two-story yellow brick building representing the old Carnegie Library in Flora, Illinois.\n* **Architecture & Details:** Classical revival masonry featuring symmetrical windows, decorative stonework, an arched entryway with glass block sidelights around the front door, and an inscribed stone frieze above the entrance reading \"CARNEGIE LIBRARY CO.\".\n* **Surrounding Landscape:** Manicured green lawn, sculpted boxwood bushes lining the front foundation, mature shade trees, and a tall lattice water tower frame visible in the background under a clear blue sky.",
+          "alt2": "## Image Alt Description\n\n* **Modern Civic Building:** An exterior view of the contemporary **Flora Public Library** facility in Flora, Illinois.\n* **Architecture & Details:** A single-story red brick structure featuring a prominent front gable peak, stone relief accents, an arched window element above the glass double-door entrance, and the text \"FLORA PUBLIC LIBRARY\" etched across the façade.\n* **Setting:** A well-maintained public lawn, paved walkways, trimmed shrubbery, potted flowers near the entrance, and mature trees under a clear blue sky.",
+          "header1": "Old Flora Library",
+          "header2": "New Flora Library",
+          "landmark_description": "The Flora Public Library is located in Library Park at 216 North Main Street. The 9,285 square foot facility was completed in 1992 and dedicated in March 1993. This spacious, modern building replaced the Flora Carnegie Library building, a two-story yellow brick, which stood in Library Park from 1903 until 1990. In January 1990, the Carnegie building was deemed structurally unsafe and closed to the public. After a two-year building campaign, along with the generosity and assistance of a supportive community, the new red brick structure was completed. https://florail.govoffice2.com/library",
+          "about_text": "Have POI & History together, second thing of ads right above thank you, move the title flora discover history up,"
+        },
+        "history": [
+          {
+            "year": "1854",
+            "title": "Founding of Flora",
+            "description": "Flora was established as a key stop along the railroad, setting the stage for future growth and development.",
+            "imageUrl": "https://ourflora.com/wp-content/uploads/2026/01/Flora-railroad.png",
+            "alt": "Founding of Flora"
+          },
+          {
+            "year": "1900",
+            "title": "Industrial Expansion",
+            "description": "The turn of the century brought industrial growth, with new businesses and factories contributing to the town’s prosperity.",
+            "imageUrl": "https://raw.githubusercontent.com/Werewolf3788/SMLC/Claude-Test/images/shoe-factory.jpg",
+            "alt": "Industrial Expansion"
+          },
+          {
+            "year": "1950",
+            "title": "Cultural Renaissance",
+            "description": "Post-war Flora saw a cultural boom, with new schools, theaters, and community centers.  In 1954 the Centenial Birthday was celebrated.",
+            "imageUrl": "https://ourflora.com/wp-content/uploads/2026/01/Flora-Centenial.png",
+            "alt": "Cultural Renaissance"
+          },
+          {
+            "year": "2000",
+            "title": "Modern Revitalization",
+            "description": "Flora embraced modernization while preserving its historical charm, leading to a revitalized downtown area and renewed community spirit.",
+            "imageUrl": "https://ourflora.com/wp-content/uploads/2026/01/CCH-Hospital-1280x867.jpg",
+            "alt": "Modern Revitalization"
+          }
+        ],
+        "town_links": {
+          "links": [
+            {
+              "title": "Our Flora",
+              "website": "ourflora.com"
+            },
+            {
+              "title": "Casey's",
+              "website": "https://www.caseys.com/general-store/il-flora/902-w-north-ave/2282"
+            },
+            {
+              "title": "Mach 1",
+              "website": "https://mach1stores.com/location/flora/"
+            }
+          ]
+        }
+      }
+    },
+    "Clay City": {
+      "town": "Clay City",
+      "sections": {
+        "article": {
+          "title": "Community & Growth",
+          "category": "Annual Traditoins",
+          "deck": "Regional Access",
+          "body": "As for Clay City, it continued to thrive during the boom years before and during World War I. The 1915 Pierce County Atlas lists Clay City with a population of 150. The Seattle Times reported that the factory employed 100 workmen at the kilns at its peak. Starting in 1916, the Eatonville Dispatch newspaper regularly included a neighborhood section with accounts of happenings in Clay City.",
+          "imageUrl": "https://clay.illinoisgenweb.org/images/1930mainstreet1.jpg",
+          "alt": "## Image Alt Description\n\n* **Historical Street View:** A vintage black-and-white photograph depicting Main Street in Clay City, Illinois, taken on a Sunday in July, 1930.\n* **Composition:** A view looking down the wide, paved roadway from just south of the Y where Route 12 leaves Main Street, flanked by historic storefronts and utility poles.\n* **Details on the Right:** Buildings including Paden's restaurant, Weiler's Service Station, the Commercial Telephone office, and the Coggan building occupied by Murvin's general store.\n* **Details on the Left:** The McCawley building containing Shock's grocery, Mix restaurant, Wiltsey's grocery, Blessing's garage, Easley's furniture, and the Walker Harris building housing Beasley's Cafe, with the I.O.O.F. building visible in the distance."
+        },
+        "point_of_interest": {
+          "title": "Local Attraction",
+          "image1": "https://eatonvilletorainier.com/wp-content/uploads/2022/12/0b8fd-a209-clay-city-locy-large-web-view.jpg?w=300&h=206",
+          "image2": "https://lh3.googleusercontent.com/d/12iW_50nVXExRt0-aMoRmBDVtqgJ5z6kT=s1600",
+          "alt1": "## Image Alt Description\n\n* **Historical Photo Scene:** A vintage black-and-white photograph featuring a historic steam locomotive and crew in Clay City, Illinois.\n* **Subjects:** Three men posing with the train—one looking out from the cab window, and two standing proudly on the exterior running board and boiler.\n* **Locomotive & Setting:** An antique steam engine with prominent domes, smokestacks, and heavy iron wheels, stationed underneath a wooden shed or depot structure.",
+          "alt2": "## Image Alt Description\n\n* **Historical Aerial Photo:** A vintage black-and-white aerial photograph displaying the industrial plant and storage yards of **Clay City Pipe** in Clay City, Illinois.\n* **Layout & Features:** An expansive manufacturing building surrounded by multiple round kilns with tall chimneys, extensive outdoor inventory storage yards stacked with ceramic or pipe materials, and surrounding dirt roads and vehicles.\n* **Caption:** A script label at the bottom reads \"Clay City Pipe\".",
+          "header1": "Clay City Train",
+          "header2": "Klins",
+          "landmark_description": "Tacoma Eastern Railroad Company continued to expand its line from Tacoma toward Ashford, a starting point for expeditions to Mount Rainier. Far West Timber Company had a contract for clearing ahead of the tracks, and around 1902, loggers noticed massive deposits of clay when they uprooted trees about two miles south of Lake Kapowsin. The timber company negotiated with the railroad to purchase 320 acres of clay-laden land and then formed the Far West Clay Company. Within a short time, it became “the largest exclusive fire proofing plant in the Pacific Northwest,” according to a May 11, 1911, article in “The Clay Worker.”",
+          "about_text": "The clay was dumped from a 20-foot high trestle inside an enormous drying shed capable of holding 6,000 tons of clay. Machinery accelerated the drying process until the fire-proofing, as the prepared clay was called, advanced in its final form for ‘burning’ in large kilns. Bricks and other materials manufactured at this site could withstand high temperatures, a mark of the product’s strength and quality. The kilns, seven in all, were an unusual dome-shaped brick structure several feet tall. The machinery used to run the dryers and heat the kilns operated on steam power."
+        },
+        "spotlight": {
+          "name": "School",
+          "description": "Fostering excellence in education and athletics for the village's future.",
+          "website": "https://www.claycityschools.org",
+          "imageUrl": "https://raw.githubusercontent.com/skventuresigns-design/media/refs/heads/main/clay-city-school.png",
+          "alt": "Exterior Header & Banner: A banner at the top reads \"Clay City CUSD #10\" and \"Wolves Country\" in blue text, flanked by wolf mascot graphics in the upper corners.\n\nSchool Building Facade: The main entrance of Clay City Schools featuring a prominent overhanging portico supported by bright blue cylindrical pillars.\n\nSignage & Lettering: Large blue dimensional lettering across the front of the portico reads \"CLAY CITY SCHOOLS\", with vertical text reading \"MAIN ENTRANCE\" on the front pillars.\n\nEntrance Details: Double glass doors marked with sign \"1B\" centered under the overhang, with large glass windows and blue benches positioned outside on the right.\n\nLocation Text: Text in the bottom right corner indicates \"Clay County, IL\"."
+        },
+        "history": [
+          {
+            "year": "1900",
+            "title": "The Pottery Legacy",
+            "description": "Local blue-white clay fueled a massive 19th-century pottery industry",
+            "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrYHKd0qJiKD-PXH2jxuT0aWPNiHqoEo4qvOFoVCYZWBzBcPFI80_0ZL8&s=10",
+            "alt": "## Image Alt Description\n\n* **Photo Scene:** An adult potter working on a pottery wheel in a rustic workshop setting in Clay City, Illinois, while three children watch closely.\n* **Subjects:** An older man wearing glasses and a pink t-shirt is seated, shaping a clay vessel on a pottery wheel. Three children—a girl in a pink tank top and two boys in blue and black shirts—stand attentively nearby, observing the craft.\n* **Environment:** A studio workspace featuring corrugated metal walls, shelves filled with clay pieces, and stacked ceramic pitchers in the foreground."
+          },
+          {
+            "year": "1820",
+            "title": "Maysville",
+            "description": "Daniel May lays out the early town of Maysville just south of the future Clay City site.",
+            "imageUrl": "",
+            "alt": "Maysville"
+          },
+          {
+            "year": "1855",
+            "title": "The Ohio and Mississippi (O&M) Railroad",
+            "description": "Is constructed one mile north of Maysville, prompting J.D. Perkey to lay out the new town of Clay City right by the tracks.",
+            "imageUrl": "",
+            "alt": "The Ohio and Mississippi (O&M) Railroad"
+          },
+          {
+            "year": "1862",
+            "title": "Old Maysville",
+            "description": "Officially gets absorbed and incorporated into the expanding village of Clay City, and the surrounding township is officially named Clay City.",
+            "imageUrl": "",
+            "alt": "Old Maysville"
+          }
+        ],
+        "town_links": {
+          "links": [
+            {
+              "title": "Clay City",
+              "website": "https://www.supportmylocalcommunity.com/clay-city.html"
+            },
+            {
+              "title": "Casey's",
+              "website": "https://www.caseys.com/general-store/il-claycity/940-s-main-st/2557"
+            }
+          ]
+        }
+      }
+    },
+    "Sailor Springs": {
+      "town": "Sailor Springs",
+      "sections": {
+        "article": {
+          "title": "Healthy Water",
+          "category": "Milk-Sick",
+          "deck": "2 Big Hotels",
+          "body": "An interesting story is one told of Sailor Springs. This village of a few hundred people is five and a half miles north of Clay City. In an early day there was found at this place a number of  springs with very peculiar water. This water was thought to be the cause of \"milk-sick\" and so the stock was fenced from the springs. In 1869 Mrs. Thomas M. Sailor of Ohio bought the land - four hundred acres - containing the springs. Mr. Sailor had the water tested and found it contained health-giving properties. Illuminating gas has been gathered from the springs and it has been thought it could be made of real value about the hotels. Back in the 70's and 80's the springs were liberally patronized as a summer resort. Two big hotels with fifty rooms each were often crowded while scores and perhaps hundreds lived in tents upon the beautiful grounds. In recent years the reputation of the springs has somewhat declined and the place is not so popular. https://clay.illinoisgenweb.org/hist1912soil.htm",
+          "imageUrl": "https://realfoodrn.com/wp-content/uploads/2022/03/spring-water-scaled.jpeg",
+          "alt": "## Image Alt Description\n\n* **Spring Water Collection:** A person holding a plastic water bottle under a flowing natural spring to fill it up.\n* **Spring Structure:** Water pouring out from a pipe or spout built into a mossy, rustic stone wall in Sailor Springs.\n* **Action & Setting:** Close-up view of clear spring water rushing into the bottle against a backdrop of wet stone and green moss."
+        },
+        "point_of_interest": {
+          "title": "A Lost Resort",
+          "image1": "https://raw.githubusercontent.com/Werewolf3788/SMLC/refs/heads/main/images/43301693_2082276621815379_736574367139364864_n.jpg",
+          "image2": "https://raw.githubusercontent.com/Werewolf3788/SMLC/refs/heads/main/images/43315790_2082276608482047_5618758765898629120_n.jpg",
+          "alt1": "Vintage color photograph of an ornate, weathered wooden gazebo or shelter with a multi-tiered peaked roof and spire, surrounded by bare trees and fields, with a farm trailer parked underneath its roof.",
+          "alt2": "Historic exterior photograph of an aging, multi-story clapboard house showing significant structural wear, missing siding patches around the lower floor, and an peaked gable roofline.",
+          "header1": "",
+          "header2": "",
+          "landmark_description": "Many years ago I visited Sailor Springs with a friend.  It was a paradise for people who appreciate old architecture.  It was once a resort for people wanting to test the \"Healing waters.\"  Anyway, a photo from 1973 showing a once beautiful old gothic or stick style inn converted into a hog shed.  The next door gazebo housed farm equipment.  Both long gone I am sure.",
+          "about_text": ""
+        },
+        "spotlight": {
+          "name": "Post Office",
+          "description": "As little as this town is they do have a Post Office it's actually somene's home",
+          "website": "https://www.usps.com",
+          "imageUrl": "https://raw.githubusercontent.com/Werewolf3788/SMLC/refs/heads/main/images/Post%20Office.png",
+          "alt": "## Image Alt Description\n\n* **Iconographic Illustration:** A stylized vector graphic illustration of a local post office building.\n* **Architecture & Details:** Features a white building with a red roof, a red-trimmed double door entrance, blue-tinted windows, a sign reading \"POST OFFICE\" with an envelope graphic on top, a stylized green tree on the left, and a red mailbox marked \"MAIL\" on the right."
+        },
+        "history": [
+          {
+            "year": "1869",
+            "title": "The Sailor family",
+            "description": "Mrs. Thomas M. Sailor of Ohio bought 400 acres containing the springs and had the water tested, revealing healing properties",
+            "imageUrl": "https://www.ghosttowns.com/states/il/illinois/image1.JPG",
+            "alt": "## Image Alt Description\n\n* **Photo Scene:** The historic decorated spring water feature in Sailor Springs, Illinois, showcasing a stone structure built around a natural water source.\n* **Key Features:** A stone-and-masonry fountain structure featuring a green lion head spigot from which clear spring water flows down into a sunken stone basin below.\n* **Surroundings:** Set within a recessed stone-paved enclosure with surrounding greenery and stone steps."
+          },
+          {
+            "year": "1870",
+            "title": "The Mineral Spa Boom",
+            "description": "Two big hotels with fifty rooms each were often crowded while scores and perhaps hundreds lived in tents upon the beautiful grounds.”, as detailed in the 1912 History of Southern Illinois",
+            "imageUrl": "https://www.ghosttowns.com/states/il/illinois/image2.JPG",
+            "alt": "The Mineral Spa Boom"
+          }
+        ],
+        "town_links": {
+          "links": [
+            {
+              "title": "Sailor Springs",
+              "website": "https://www.supportmylocalcommunity.com/sailor-springs.html"
+            }
+          ]
+        }
+      }
+    },
+    "Xenia": {
+      "town": "Xenia",
+      "sections": {
+        "article": {
+          "title": "The Tale of \"Two Towns\"",
+          "category": "Upper Town",
+          "deck": "Xenia Proper",
+          "body": "The village was laid out in 1834 along the old State Road. The founders chose the name \"Xenia\" (pronounced ZEE-nee-ə), a Greek word representing the ritualized laws of guest-friendship and hospitality. Historically, it implied a cultural duty to welcome travelers, provide them with food and shelter, and ensure safety without asking questions first.",
+          "imageUrl": "https://pbs.twimg.com/profile_images/515905621992808448/_Ivl3CWu_400x400.jpeg",
+          "alt": "## Image Alt Description\n\n* **Street View:** A daytime street-level view of downtown commercial buildings in Xenia, Illinois.\n* **Architecture:** A row of multi-story brick storefronts featuring historic architectural details, arched second-story windows, and a continuous red metal awning over the ground-floor businesses.\n* **Vehicles & Parking:** Several cars parked parallel along the asphalt street in front of the storefronts under an overcast sky."
+        },
+        "point_of_interest": {
+          "title": "Paine House (Xenia, Illinois)",
+          "image1": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Paine_House_in_Xenia.jpg/330px-Paine_House_in_Xenia.jpg",
+          "image2": "https://bcmissioncenter.wordpress.com/wp-content/uploads/2015/10/bclake.png",
+          "alt1": "## Image Alt Description\n\n* **Exterior Structure:** A two-story historic brick building known as the Paine House in Xenia, Illinois, surrounded by mature trees.\n* **Architecture & Windows:** Symmetrical rectangular windows visible along the brick facade with a covered front porch over the main entrance.\n* **Foreground:** A dark sedan parked in the driveway in front of the house amidst a grassy yard and surrounding foliage.",
+          "alt2": "## Image Alt Description\n\n* **Scenery:** A peaceful waterfront view at Brush Creek Campground, located south of Xenia.\n* **Water & Reflections:** A calm pond reflecting the surrounding trees and clear sky on its surface.\n* **Surrounding Landscape:** Lush green trees lining the banks and open grassy areas in the background under a bright daylight sky.",
+          "header1": "U.S. National Register of Historic Places",
+          "header2": "Brush Creek Campground",
+          "landmark_description": "The Paine House is a historic house in Xenia, Illinois, which was the home of author Albert Bigelow Paine. Built in 1858, the house was designed using elements of the Greek Revival and Gothic Revival styles. Paine lived there from 1873 to 1888, during which he began his writing career, authoring numerous stories and poems. Several of his works appeared in Xenia's newspapers, inspiring his pursuit of a literary career. Paine later became known for his friendship with Mark Twain; he edited Twain's letters and wrote a multi-volume biography of the author. As of the 1980s, the house was still owned by Paine's descendants.",
+          "about_text": "Brush Creek Campground is located at 450E, Xenia, IL - 62899. This is the only campground listed in Xenia. You will find the exact location of Brush Creek Campground on the map above"
+        },
+        "spotlight": {
+          "name": "The Village Bar & Grill",
+          "description": "Great Staff, Ice cold beer, good selection & fabulous drink prices, food is tasty",
+          "website": "https://www.facebook.com/p/The-Village-Bar-and-Grill-61571519136776/",
+          "imageUrl": "https://s.yimg.com/bj/f72e/f72e59fb0bed78fda430326cd985ab10.jpg",
+          "alt": "Exterior storefront: The Village Bar and Grill storefront featuring a red brick upper facade and white vertical siding on the lower level.\n\nSignage: A main sign reading \"The Village Bar and Grill\" mounted above the entrance, flanked by two exterior wall lights.\n\nEntrance: A centered black door with the address number \"250\" displayed in an arched transom window above it.\n\nWindows & Decor: Flanking windows displaying beer advertisements (Miller Lite, Bud Light, Coors Light), topped with black semi-circular fanlight accents.\n\nAccessibility & Details: A concrete ramp with a black metal handrail leading up to the entrance, accompanied by a red \"Video Gaming\" banner on the right side."
+        },
+        "history": [
+          {
+            "year": "2009",
+            "title": "School",
+            "description": "Xenia had shut down their schools so now all the kids travel to either Flora or Louisville",
+            "imageUrl": "https://pbs.twimg.com/media/EokW_OQXIAMS8Zz.png",
+            "alt": "## Image Alt Description\n\n* **Top Section Header & Info:** A blue header reading \"Xenia Grade School, 601 Church Street [1961 - 2015]\", accompanied by text noting the building is now home to the Xenia Community Center.\n* **Top Section Photos:** Two exterior photos of the single-story brick Xenia Grade School building featuring large windows, red trim panels, surrounding green lawn, and a tree in the foreground.\n* **Bottom Section Header:** A blue header reading \"The former Xenia Grade / High School [1909 - 1960]\".\n* **Bottom Section Photos:** Two historical black-and-white photographs of the multi-story brick school building featuring a central entrance, cupola tower on top, and symmetrical windows.\n* **Bottom Descriptive Text:** Captions stating that the High School occupied the upper floor and the Grade School the ground floor, noting the last graduating class was 1949 and that it replaced an earlier building on the same site."
+          }
+        ],
+        "town_links": {
+          "links": [
+            {
+              "title": "Xenia",
+              "website": "https://www.supportmylocalcommunity.com/xenia.html"
+            },
+            {
+              "title": "Knapp's Oil",
+              "website": "https://knappoil.com"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

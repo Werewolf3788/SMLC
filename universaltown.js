@@ -1482,9 +1482,9 @@ function bindFirebaseMenuEngine(db) {
 
     try {
         if (activeFbRefMenu) activeFbRefMenu.off();
-        activeFbRefMenu = db.ref(`master_county_data/global/menu`);
+        activeFbRefMenu = null;
 
-        activeFbRefMenu.on('value', (snapshot) => {
+        const onMenuValue = (snapshot) => {
             const val = snapshot.val();
             if (!val) return;
 
@@ -1551,6 +1551,10 @@ function bindFirebaseMenuEngine(db) {
             smlcApplyPillTownIcon();
             if (typeof window.smlcApplyBranding === 'function') window.smlcApplyBranding(rawItems);
             triggerGoogleTranslateUpdate(menuContainer);
+        };
+        smlcFromJsonOrFirebase('global/menu', onMenuValue, () => {
+            activeFbRefMenu = db.ref(`master_county_data/global/menu`);
+            activeFbRefMenu.on('value', onMenuValue);
         });
     } catch(err) {
         console.warn("Firebase Menu Engine error:", err.message);
@@ -1615,21 +1619,46 @@ function bindFirebaseLocalLinksEngine(db) {
             if (val.links) return toPlainArray(val.links);
             return toPlainArray(val).filter(x => x && typeof x === 'object');
         };
-        activeFbRefLinksTown = db.ref(`master_county_data/towns/${townName}/sections/town_links`);
-        activeFbRefLinksGlobal = db.ref(`master_county_data/global/sections/town_links`);   // own slot (was sharing one and getting switched off)
-
-        activeFbRefLinksTown.on('value', (snap) => {
+        activeFbRefLinksTown = null;
+        activeFbRefLinksGlobal = null;
+        smlcFromJsonOrFirebase(`towns/${townName}/sections/town_links`, (snap) => {
             townLinks = readLinks(snap.val());
             renderCombinedLinks();
+        }, () => {
+            activeFbRefLinksTown = db.ref(`master_county_data/towns/${townName}/sections/town_links`);
+            activeFbRefLinksTown.on('value', (snap) => { townLinks = readLinks(snap.val()); renderCombinedLinks(); });
         });
-
-        activeFbRefLinksGlobal.on('value', (snap) => {
+        smlcFromJsonOrFirebase('global/sections/town_links', (snap) => {
             globalLinks = readLinks(snap.val());
             renderCombinedLinks();
+        }, () => {
+            activeFbRefLinksGlobal = db.ref(`master_county_data/global/sections/town_links`);   // own slot (was sharing one and getting switched off)
+            activeFbRefLinksGlobal.on('value', (snap) => { globalLinks = readLinks(snap.val()); renderCombinedLinks(); });
         });
     } catch(e) {
         console.warn("Local links subscription notice:", e.message);
     }
+}
+
+// ============================================================================
+// GITHUB JSON (data/smlc.json via smlc-data.js) - Menu, Article, Point of Interest,
+// Spotlight, Town History and Town Links come from GitHub; Firebase is the backup.
+// ============================================================================
+const SMLC_JSON_SECTION_KEYS = ['article', 'point_of_interest', 'spotlight', 'history'];
+function smlcJsonReady() { return (window.SMLC_DATA && window.SMLC_DATA.promise) ? window.SMLC_DATA.promise : Promise.resolve(null); }
+/** Calls onValue({val()}) with the JSON value at path, or runs useFirebase() if the JSON doesn't have it */
+function smlcFromJsonOrFirebase(path, onValue, useFirebase) {
+    smlcJsonReady().then(d => {
+        const v = d ? window.SMLC_DATA.get(d, path) : undefined;
+        if (v !== undefined && v !== null) onValue({ val: () => v });
+        else useFirebase();
+    });
+}
+/** Firebase sections with the JSON's article / point_of_interest / spotlight / history laid on top */
+function smlcOverlaySections(firebaseVal, jsonVal) {
+    const out = Object.assign({}, firebaseVal || {});
+    if (jsonVal) SMLC_JSON_SECTION_KEYS.forEach(k => { if (jsonVal[k] !== undefined) out[k] = jsonVal[k]; });
+    return out;
 }
 
 // ============================================================================
@@ -1904,13 +1933,27 @@ function bindFirebaseSemanticSectionsEngine(db) {
         activeFbRefSections = db.ref(`master_county_data/towns/${townName}/sections`);
         activeFbRefGlobalSections = db.ref(`master_county_data/global/sections`);
 
+        // Article, Point of Interest, Spotlight and Town History come from GitHub (data/smlc.json);
+        // everything else in sections (slideshow, gallery, partners...) still comes from Firebase.
+        let jsonTownSections = null, jsonGlobalSections = null, fbTownSections = null, fbGlobalSections = null;
+        smlcJsonReady().then(d => {
+            if (!d) return;
+            jsonTownSections = window.SMLC_DATA.get(d, `towns/${townName}/sections`) || null;
+            jsonGlobalSections = window.SMLC_DATA.get(d, 'global/sections') || null;
+            townSectionsData = smlcOverlaySections(fbTownSections, jsonTownSections);
+            globalSectionsData = smlcOverlaySections(fbGlobalSections, jsonGlobalSections);
+            renderResolvedSections();
+        });
+
         activeFbRefSections.on('value', (snap) => {
-            townSectionsData = snap.val() || {};
+            fbTownSections = snap.val() || {};
+            townSectionsData = smlcOverlaySections(fbTownSections, jsonTownSections);
             renderResolvedSections();
         });
 
         activeFbRefGlobalSections.on('value', (snap) => {
-            globalSectionsData = snap.val() || {};
+            fbGlobalSections = snap.val() || {};
+            globalSectionsData = smlcOverlaySections(fbGlobalSections, jsonGlobalSections);
             renderResolvedSections();
         });
 
