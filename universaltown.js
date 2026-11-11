@@ -2164,7 +2164,7 @@ function renderCarouselPartnerRotator(firstEl, secondEl, images, videos) {
     });
 
     if (n <= 1) return;   // nothing to rotate
-    const slideDuration = 8000;   // 8 seconds on every device so people can read each partner
+    const slideDuration = 12000;  // 12 seconds on every device so people can read each partner
     topCarouselInterval = setInterval(() => {
         if (isCarouselPaused) return;
         idx = (idx + 1) % n;
