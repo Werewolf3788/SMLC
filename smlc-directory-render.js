@@ -1,4 +1,5 @@
-/* SMLC Business Directory renderer | v1.3 | 2026-11-15 (tiers: Basic / Plus / Premium; bio Read more)
+/* SMLC Business Directory renderer | v1.4 | 2026-11-15 ("Open" bookmark tag on Plus/Premium cards that are open now;
+   v1.3: tiers Basic / Plus / Premium; bio Read more)
    One set of markup for both:
      - scripts/build-directory.js (bakes the cards, answers and schema into directory.html
        so Google and AI crawlers can read everything without running JavaScript)
@@ -49,8 +50,61 @@
         return 'Services';
     }
 
+    // ---- "Open now" tag (v1.4) -------------------------------------------------------------
+    // Uses b.openingHours (schema.org style, e.g. "Mo-Fr 08:00-16:30") written by BusinessFinder.gs.
+    // The cards are baked into directory.html hourly, so "open now" is worked out in the browser
+    // (refreshOpen) in Clay County time (Central). Hours the sheet could not read give no tag.
+    var DAY_INDEX = { Mo: 0, Tu: 1, We: 2, Th: 3, Fr: 4, Sa: 5, Su: 6 };
+    var WEEKDAY_INDEX = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
+    function centralNow(now) {
+        var o = {};
+        new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+            .formatToParts(now || new Date()).forEach(function (p) { o[p.type] = p.value; });
+        return { day: WEEKDAY_INDEX[o.weekday], minutes: (+o.hour % 24) * 60 + (+o.minute) };
+    }
+    function parseHourRules(list) {
+        var out = [];
+        (list || []).forEach(function (s) {
+            var m = String(s).match(/^(Mo|Tu|We|Th|Fr|Sa|Su)(?:-(Mo|Tu|We|Th|Fr|Sa|Su))?\s+(\d{2}):(\d{2})-(\d{2}):(\d{2})$/);
+            if (!m) return;
+            var end = (+m[5]) * 60 + (+m[6]);
+            if (end === 23 * 60 + 59) end = 1440;                 // "23:59" means open until midnight
+            out.push({ from: DAY_INDEX[m[1]], to: m[2] ? DAY_INDEX[m[2]] : DAY_INDEX[m[1]], start: (+m[3]) * 60 + (+m[4]), end: end });
+        });
+        return out;
+    }
+    function dayInRule(r, d) { return r.from <= r.to ? (d >= r.from && d <= r.to) : (d >= r.from || d <= r.to); }
+    // true / false, or null when there are no readable hours (then no tag is shown)
+    function isOpenNow(openingHours, now) {
+        var rules = parseHourRules(openingHours);
+        if (!rules.length) return null;
+        var t = centralNow(now), prev = (t.day + 6) % 7;
+        for (var i = 0; i < rules.length; i++) {
+            var r = rules[i];
+            if (r.end > r.start) {
+                if (dayInRule(r, t.day) && t.minutes >= r.start && t.minutes < r.end) return true;
+            } else {                                              // runs past midnight, e.g. 22:00-02:00
+                if (dayInRule(r, t.day) && t.minutes >= r.start) return true;
+                if (dayInRule(r, prev) && t.minutes < r.end) return true;
+            }
+        }
+        return false;
+    }
+    // Shows the "Open" tag on every card that is open right now (browser only)
+    function refreshOpen(scope, now) {
+        (scope || document).querySelectorAll('.biz[data-hours]').forEach(function (el) {
+            var tag = el.querySelector('.open-tag');
+            if (!tag) return;
+            var open = isOpenNow(el.getAttribute('data-hours').split('|'), now) === true;
+            tag.hidden = !open;
+            el.classList.toggle('is-open', open);
+        });
+    }
+
     function cardHtml(b, today) {
-        var tier = TIER_LABEL[b.tier] ? '<span class="tier tier-' + slug(b.tier) + '">' + esc(TIER_LABEL[b.tier]) + '</span>' : '';
+        var hasHours = isPlus(b) && b.openingHours && b.openingHours.length;
+        var openTag = hasHours ? '<span class="open-tag" hidden title="Open right now" aria-label="Open now">Open</span>' : '';
+        var tier =TIER_LABEL[b.tier] ? '<span class="tier tier-' + slug(b.tier) + '">' + esc(TIER_LABEL[b.tier]) + '</span>' : '';
         var plus = isPlus(b), prem = isPremium(b);
         var tel = b.phone ? b.phone.replace(/\D/g, '') : '';
         var lines = [];
@@ -75,7 +129,8 @@
                   (long ? '<button type="button" class="more" aria-expanded="false" aria-controls="bio-' + esc(b.id) + '">Read more</button>' : '');
         }
         var hay = [b.name, b.category, b.town].concat(plus ? [b.address] : []).concat(prem ? [b.bio, b.offer] : []).join(' ').toLowerCase();
-        return '<article class="biz tier-' + slug(b.tier) + '" id="' + esc(b.id) + '" data-town="' + esc(b.town) + '" data-category="' + esc(b.category) + '" data-group="' + esc(groupOf(b.category)) + '" data-tier="' + esc(b.tier) + '"' + (offerIsLive(b, today) ? ' data-offer="1"' : '') + ' data-search="' + esc(hay) + '">' +
+        return '<article class="biz tier-' + slug(b.tier) + '" id="' + esc(b.id) + '" data-town="' + esc(b.town) + '" data-category="' + esc(b.category) + '" data-group="' + esc(groupOf(b.category)) + '" data-tier="' + esc(b.tier) + '"' + (offerIsLive(b, today) ? ' data-offer="1"' : '') + (hasHours ? ' data-hours="' + esc(b.openingHours.join('|')) + '"' : '') + ' data-search="' + esc(hay) + '">' +
+            openTag +
             '<div class="biz-logo"><img src="' + esc(b.image) + '" alt="' + esc(b.name) + ' logo" loading="lazy" width="120" height="120" onerror="this.onerror=null;this.src=\'https://raw.githubusercontent.com/skventuresigns-design/media/main/localbusiness.png\'"></div>' +
             '<div class="biz-body">' + tier +
             '<h3>' + esc(b.name) + '</h3>' +
@@ -200,7 +255,8 @@
 
     var api = { esc: esc, todayIso: todayIso, cardHtml: cardHtml, cardsHtml: cardsHtml, optionsHtml: optionsHtml,
                 answersHtml: answersHtml, ldJson: ldJson, fieldsToObject: fieldsToObject, offerIsLive: offerIsLive,
-                offersHtml: offersHtml, liveOffers: liveOffers, groupOf: groupOf, niceDate: niceDate, isPlus: isPlus, isPremium: isPremium };
+                offersHtml: offersHtml, liveOffers: liveOffers, groupOf: groupOf, niceDate: niceDate, isPlus: isPlus, isPremium: isPremium,
+                isOpenNow: isOpenNow, refreshOpen: refreshOpen };
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
     else root.SMLCDirectory = api;
 })(typeof window !== 'undefined' ? window : this);
