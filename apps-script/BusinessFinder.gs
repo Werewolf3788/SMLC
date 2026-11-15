@@ -1,5 +1,7 @@
 /* ==========================================================================
-   Active Version: 2026-11-15_v3.5  |  Updated: Nov 15, 2026 6:10 AM ET
+   Active Version: 2026-11-15_v3.6  |  Updated: Nov 15, 2026 6:20 AM ET
+   Changes in v3.6: Google Maps + Business ID cells turn green when a Maps link has been
+                  looked up, yellow when a link is waiting for "Fill blanks from Google Maps".
    Changes in v3.5: Menu -> "Check Clay County (all rows)": writes a County Check column
                   using the free U.S. Census address lookup + town/ZIP/state/area-code checks.
    Changes in v3.4: AEO text follows the tiers - Basic: name + category + town;
@@ -57,7 +59,7 @@
        Check: same name as X (different address) - e.g. another Dollar General
    ========================================================================== */
 
-var BF_VERSION = "v3.5 - Nov 15, 2026 6:10 AM ET";
+var BF_VERSION = "v3.6 - Nov 15, 2026 6:20 AM ET";
 
 // ---- Settings ----------------------------------------------------------------
 var BF_TAB = "Business Finder";
@@ -111,6 +113,7 @@ function addBusinessFinderMenu() {
     .addItem("Copy ticked rows to Master Data", "copyTickedToMasterData")
     .addItem("Fill blanks from Google Maps (column O)", "fillFromGoogleMaps")
     .addItem("Check Clay County (all rows)", "checkClayCounty")
+    .addItem("Color the Google Maps column", "colorMapsColumn")
     .addItem("Re-check duplicates", "recheckDuplicates")
     .addSeparator()
     .addItem("Send directory to Firestore now", "syncDirectoryToFirestore")
@@ -1151,6 +1154,7 @@ function fillFromGoogleMaps() {
   });
 
   range.setValues(rows);
+  try { colorMapsColumn_(master); } catch (e) { Logger.log("Coloring skipped: " + e); }
   var msg = looked + " rows looked up, " + filled + " updated." +
             (added.length ? "\n\nNew businesses (tick Include when they look right):\n" + added.slice(0, 15).join("\n") : "") +
             (failed.length ? "\n\nCould not fill:\n" + failed.slice(0, 15).join("\n") : "") +
@@ -1283,4 +1287,35 @@ function checkClayCounty() {
             (stopped ? "\n\nStopped at the time limit - run it again to finish the rest." : "");
   Logger.log(msg);
   SpreadsheetApp.getUi().alert("Clay County check", msg, SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+/* ---- Colors for the Google Maps column (v3.6) -----------------------------------------
+   Conditional formatting (Google Sheets updates it live, no script run needed):
+     green  = Maps link + Business ID (looked up)
+     yellow = Maps link, no Business ID yet (run "Fill blanks from Google Maps")
+   Set up once from the menu; "Fill blanks from Google Maps" also makes sure it's there. */
+function colorMapsColumn() {
+  colorMapsColumn_(SpreadsheetApp.getActiveSpreadsheet().getSheetByName(BF_MASTER_TAB));
+  SpreadsheetApp.getActiveSpreadsheet().toast("Google Maps column: green = looked up, yellow = waiting for \"Fill blanks from Google Maps\".", "Colors", 8);
+}
+function colorMapsColumn_(master) {
+  var lastCol = master.getLastColumn();
+  var head = master.getRange(1, 1, 1, lastCol).getValues()[0].map(function(h) { return String(h).trim().toLowerCase(); });
+  var cMaps = dirMapsHeaderIndex_(head), cId = head.indexOf("business id");
+  if (cMaps < 0 || cId < 0) return;
+  function letter(i) { var s = "", n = i + 1; while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
+  var L = letter(cMaps), P = letter(cId);
+  var rows = master.getMaxRows();
+  var ranges = [master.getRange(2, cMaps + 1, rows - 1, 1), master.getRange(2, cId + 1, rows - 1, 1)];
+  var green = "=AND(LEN($" + L + "2)>0,LEN($" + P + "2)>0)";
+  var yellow = "=AND(LEN($" + L + "2)>0,LEN($" + P + "2)=0)";
+  // drop the rules this script added before, keep everyone else's
+  var keep = master.getConditionalFormatRules().filter(function(rule) {
+    var c = rule.getBooleanCondition();
+    var vals = c && c.getCriteriaValues ? c.getCriteriaValues() : [];
+    return !(vals.length && (vals[0] === green || vals[0] === yellow));
+  });
+  keep.push(SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied(green).setBackground("#c8ecd0").setRanges(ranges).build());
+  keep.push(SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied(yellow).setBackground("#fff1b8").setRanges(ranges).build());
+  master.setConditionalFormatRules(keep);
 }
