@@ -1,4 +1,4 @@
-/* SMLC Business Directory renderer | v1.1 | 2026-11-15 (Google Maps links)
+/* SMLC Business Directory renderer | v1.2 | 2026-11-15 (category groups, offers spotlight)
    One set of markup for both:
      - scripts/build-directory.js (bakes the cards, answers and schema into directory.html
        so Google and AI crawlers can read everything without running JavaScript)
@@ -30,6 +30,19 @@
         return months[+m[2] - 1] + ' ' + (+m[3]) + ', ' + m[1];
     }
 
+    // Quick-filter groups (the chips at the top of the directory)
+    var GROUPS = [
+        ['Dining', /restaurant|diner|cafe|food|pizza|\bbar\b|grill|butcher|ice cream|bakery|coffee/i],
+        ['Health', /health|medical|dentist|clinic|hospital|counsel|pharmacy|chiro|vision/i],
+        ['Community', /government|emergency|education|school|non-profit|nonprofit|church|recreation|library|post office/i],
+        ['Shopping', /retail|grocery|hardware|florist|boutique|store|antique|furniture|gift|gas station|appliance/i],
+        ['Services', /./]
+    ];
+    function groupOf(category) {
+        for (var i = 0; i < GROUPS.length; i++) if (GROUPS[i][1].test(category || '')) return GROUPS[i][0];
+        return 'Services';
+    }
+
     function cardHtml(b, today) {
         var tier = TIER_LABEL[b.tier] ? '<span class="tier tier-' + slug(b.tier) + '">' + esc(TIER_LABEL[b.tier]) + '</span>' : '';
         var lines = [];
@@ -46,7 +59,7 @@
             : '';
         var bio = b.bio ? '<p class="bio">' + esc(b.bio) + '</p>' : '';
         var hay = [b.name, b.category, b.town, b.address, b.bio, b.offer].join(' ').toLowerCase();
-        return '<article class="biz tier-' + slug(b.tier) + '" id="' + esc(b.id) + '" data-town="' + esc(b.town) + '" data-category="' + esc(b.category) + '" data-search="' + esc(hay) + '">' +
+        return '<article class="biz tier-' + slug(b.tier) + '" id="' + esc(b.id) + '" data-town="' + esc(b.town) + '" data-category="' + esc(b.category) + '" data-group="' + esc(groupOf(b.category)) + '" data-tier="' + esc(b.tier) + '"' + (offerIsLive(b, today) ? ' data-offer="1"' : '') + ' data-search="' + esc(hay) + '">' +
             '<div class="biz-logo"><img src="' + esc(b.image) + '" alt="' + esc(b.name) + ' logo" loading="lazy" width="120" height="120" onerror="this.onerror=null;this.src=\'https://raw.githubusercontent.com/skventuresigns-design/media/main/localbusiness.png\'"></div>' +
             '<div class="biz-body">' + tier +
             '<h3>' + esc(b.name) + '</h3>' +
@@ -59,6 +72,25 @@
 
     function cardsHtml(pub, today) {
         return (pub.businesses || []).map(function (b) { return cardHtml(b, today); }).join('\n');
+    }
+
+    // "Current offers" spotlight at the top of the directory (links to each card)
+    function offersHtml(pub, today) {
+        var live = (pub.businesses || []).filter(function (b) { return offerIsLive(b, today); });
+        if (!live.length) return '';
+        return '<h2 class="offers-h">Current offers</h2><div class="offers-row">' + live.map(function (b) {
+            return '<a class="offer-card" href="#' + esc(b.id) + '" data-goto="' + esc(b.id) + '">' +
+                '<span class="offer-badge">Offer</span>' +
+                '<img src="' + esc(b.image) + '" alt="" loading="lazy" width="64" height="64">' +
+                '<strong>' + esc(b.name) + '</strong>' +
+                '<span class="offer-text">' + esc(b.offer) + '</span>' +
+                (b.validUntil ? '<span class="offer-until">Through ' + esc(niceDate(b.validUntil)) + '</span>' : '') +
+                '</a>';
+        }).join('') + '</div>';
+    }
+    function liveOffers(pub, today) {
+        return (pub.businesses || []).filter(function (b) { return offerIsLive(b, today); })
+            .map(function (b) { return { id: b.id, name: b.name, image: b.image, offer: b.offer, validUntil: b.validUntil, town: b.town }; });
     }
 
     function optionsHtml(values, allLabel) {
@@ -149,7 +181,8 @@
     }
 
     var api = { esc: esc, todayIso: todayIso, cardHtml: cardHtml, cardsHtml: cardsHtml, optionsHtml: optionsHtml,
-                answersHtml: answersHtml, ldJson: ldJson, fieldsToObject: fieldsToObject, offerIsLive: offerIsLive };
+                answersHtml: answersHtml, ldJson: ldJson, fieldsToObject: fieldsToObject, offerIsLive: offerIsLive,
+                offersHtml: offersHtml, liveOffers: liveOffers, groupOf: groupOf, niceDate: niceDate };
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
     else root.SMLCDirectory = api;
 })(typeof window !== 'undefined' ? window : this);

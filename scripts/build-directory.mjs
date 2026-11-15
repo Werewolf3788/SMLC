@@ -52,6 +52,7 @@ html = between(html, 'DIR-COUNT', String(pub.count || (pub.businesses || []).len
 html = between(html, 'DIR-TOWNS', D.optionsHtml(pub.towns, 'All towns'));
 html = between(html, 'DIR-CATS', D.optionsHtml(pub.categories, 'All categories'));
 html = between(html, 'DIR-CARDS', '\n' + D.cardsHtml(pub, today) + '\n');
+html = between(html, 'DIR-OFFERS', D.offersHtml(pub, today));
 html = between(html, 'DIR-ANSWERS', '\n' + D.answersHtml(pub) + '\n');
 const updated = new Date(pub.updatedAt);
 html = between(html, 'DIR-UPDATED', updated.toLocaleString('en-US', { timeZone: 'America/Chicago', dateStyle: 'medium', timeStyle: 'short' }) + ' Central');
