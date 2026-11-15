@@ -1,0 +1,8 @@
+# Support My Local Community — supportmylocalcommunity.com
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /full/
+Disallow: /apps-script/
+
+Sitemap: https://supportmylocalcommunity.com/sitemap.xml
