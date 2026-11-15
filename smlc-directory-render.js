@@ -1,4 +1,4 @@
-/* SMLC Business Directory renderer | v1.2 | 2026-11-15 (category groups, offers spotlight)
+/* SMLC Business Directory renderer | v1.3 | 2026-11-15 (tiers: Basic / Plus / Premium; bio Read more)
    One set of markup for both:
      - scripts/build-directory.js (bakes the cards, answers and schema into directory.html
        so Google and AI crawlers can read everything without running JavaScript)
@@ -7,7 +7,7 @@
 (function (root) {
     'use strict';
     var SITE = 'https://supportmylocalcommunity.com/';
-    var TIER_LABEL = { Premium: 'Featured', Plus: 'Community Partner' };
+    var TIER_LABEL = { Premium: 'Premium Partner', Plus: 'Plus Member' };
 
     function esc(s) {
         return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -21,7 +21,13 @@
         var p = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
         return p;   // yyyy-mm-dd
     }
-    function offerIsLive(b, today) { return !!b.offer && (!b.validUntil || b.validUntil >= today); }
+    // What each tier shows (Scott's plans):
+    //   Basic   - logo, name, category (+ town)
+    //   Plus    - + address, phone, hours
+    //   Premium - everything: + website, Facebook, company bio, offers
+    function isPlus(b) { return b.tier === 'Plus' || b.tier === 'Premium'; }
+    function isPremium(b) { return b.tier === 'Premium'; }
+    function offerIsLive(b, today) { return isPremium(b) && !!b.offer && (!b.validUntil || b.validUntil >= today); }
     function mapsLink(address) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(address); }
     function niceDate(iso) {
         var m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -45,20 +51,29 @@
 
     function cardHtml(b, today) {
         var tier = TIER_LABEL[b.tier] ? '<span class="tier tier-' + slug(b.tier) + '">' + esc(TIER_LABEL[b.tier]) + '</span>' : '';
+        var plus = isPlus(b), prem = isPremium(b);
+        var tel = b.phone ? b.phone.replace(/\D/g, '') : '';
         var lines = [];
-        if (b.address) lines.push('<li><span aria-hidden="true">&#128205;</span> <a href="' + esc(b.mapsUrl || mapsLink(b.address)) + '" target="_blank" rel="noopener">' + esc(b.address) + '</a></li>');
-        else if (b.mapsUrl) lines.push('<li><span aria-hidden="true">&#128205;</span> <a href="' + esc(b.mapsUrl) + '" target="_blank" rel="noopener">Open in Google Maps</a></li>');
-        if (b.phone) lines.push('<li><span aria-hidden="true">&#128222;</span> <a href="tel:' + esc(b.phone.replace(/\D/g, '')) + '">' + esc(b.phone) + '</a></li>');
-        if (b.hours) lines.push('<li><span aria-hidden="true">&#128339;</span> ' + esc(b.hours) + '</li>');
+        if (plus) {
+            if (b.address) lines.push('<li><span aria-hidden="true">&#128205;</span> <a href="' + esc(b.mapsUrl || mapsLink(b.address)) + '" target="_blank" rel="noopener">' + esc(b.address) + '</a></li>');
+            else if (b.mapsUrl) lines.push('<li><span aria-hidden="true">&#128205;</span> <a href="' + esc(b.mapsUrl) + '" target="_blank" rel="noopener">Open in Google Maps</a></li>');
+            if (b.phone) lines.push('<li><span aria-hidden="true">&#128222;</span> <a href="tel:' + esc(tel) + '">' + esc(b.phone) + '</a></li>');
+            if (b.hours) lines.push('<li><span aria-hidden="true">&#128339;</span> ' + esc(b.hours) + '</li>');
+        }
         var links = [];
-        if (b.website) links.push('<a class="btn" href="' + esc(b.website) + '" target="_blank" rel="noopener">Website</a>');
-        if (b.facebook) links.push('<a class="btn btn-fb" href="' + esc(b.facebook) + '" target="_blank" rel="noopener">Facebook</a>');
-        if (b.phone) links.push('<a class="btn btn-call" href="tel:' + esc(b.phone.replace(/\D/g, '')) + '">Call</a>');
+        if (prem && b.website) links.push('<a class="btn" href="' + esc(b.website) + '" target="_blank" rel="noopener">Website</a>');
+        if (prem && b.facebook) links.push('<a class="btn btn-fb" href="' + esc(b.facebook) + '" target="_blank" rel="noopener">Facebook</a>');
+        if (plus && b.phone) links.push('<a class="btn btn-call" href="tel:' + esc(tel) + '">Call</a>');
         var offer = offerIsLive(b, today)
             ? '<p class="offer"><strong>Offer:</strong> ' + esc(b.offer) + (b.validUntil ? ' <span>(through ' + esc(niceDate(b.validUntil)) + ')</span>' : '') + '</p>'
             : '';
-        var bio = b.bio ? '<p class="bio">' + esc(b.bio) + '</p>' : '';
-        var hay = [b.name, b.category, b.town, b.address, b.bio, b.offer].join(' ').toLowerCase();
+        var bio = '';
+        if (prem && b.bio) {
+            var long = b.bio.length > 160;
+            bio = '<p class="bio' + (long ? ' clamp' : '') + '" id="bio-' + esc(b.id) + '">' + esc(b.bio) + '</p>' +
+                  (long ? '<button type="button" class="more" aria-expanded="false" aria-controls="bio-' + esc(b.id) + '">Read more</button>' : '');
+        }
+        var hay = [b.name, b.category, b.town].concat(plus ? [b.address] : []).concat(prem ? [b.bio, b.offer] : []).join(' ').toLowerCase();
         return '<article class="biz tier-' + slug(b.tier) + '" id="' + esc(b.id) + '" data-town="' + esc(b.town) + '" data-category="' + esc(b.category) + '" data-group="' + esc(groupOf(b.category)) + '" data-tier="' + esc(b.tier) + '"' + (offerIsLive(b, today) ? ' data-offer="1"' : '') + ' data-search="' + esc(hay) + '">' +
             '<div class="biz-logo"><img src="' + esc(b.image) + '" alt="' + esc(b.name) + ' logo" loading="lazy" width="120" height="120" onerror="this.onerror=null;this.src=\'https://raw.githubusercontent.com/skventuresigns-design/media/main/localbusiness.png\'"></div>' +
             '<div class="biz-body">' + tier +
@@ -122,20 +137,22 @@
     function ldJson(pub, today) {
         var page = (pub.pageUrl || SITE + 'directory.html');
         var items = (pub.businesses || []).map(function (b, i) {
+            var plus = isPlus(b), prem = isPremium(b);
+            var addr = plus ? postalAddress(b) : { '@type': 'PostalAddress', addressLocality: b.town, addressRegion: 'IL', addressCountry: 'US' };
             var biz = {
                 '@type': b.schemaType || 'LocalBusiness',
                 '@id': page + '#' + b.id,
                 name: b.name,
-                description: b.bio || b.summary,
+                description: (prem && b.bio) || b.summary,
                 image: b.image,
-                address: postalAddress(b),
+                address: addr,
                 areaServed: { '@type': 'AdministrativeArea', name: 'Clay County, Illinois' }
             };
-            if (b.phone) biz.telephone = '+1-' + b.phone.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
-            if (b.website) biz.url = b.website;
-            if (b.facebook) biz.sameAs = [b.facebook];
-            if (b.mapsUrl) biz.hasMap = b.mapsUrl;
-            if (b.openingHours && b.openingHours.length) biz.openingHours = b.openingHours;
+            if (plus && b.phone) biz.telephone = '+1-' + b.phone.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+            if (plus && b.openingHours && b.openingHours.length) biz.openingHours = b.openingHours;
+            if (plus && b.mapsUrl) biz.hasMap = b.mapsUrl;
+            if (prem && b.website) biz.url = b.website;
+            if (prem && b.facebook) biz.sameAs = [b.facebook];
             if (offerIsLive(b, today)) {
                 biz.makesOffer = { '@type': 'Offer', description: b.offer };
                 if (b.validUntil) biz.makesOffer.validThrough = b.validUntil;
@@ -182,7 +199,7 @@
 
     var api = { esc: esc, todayIso: todayIso, cardHtml: cardHtml, cardsHtml: cardsHtml, optionsHtml: optionsHtml,
                 answersHtml: answersHtml, ldJson: ldJson, fieldsToObject: fieldsToObject, offerIsLive: offerIsLive,
-                offersHtml: offersHtml, liveOffers: liveOffers, groupOf: groupOf, niceDate: niceDate };
+                offersHtml: offersHtml, liveOffers: liveOffers, groupOf: groupOf, niceDate: niceDate, isPlus: isPlus, isPremium: isPremium };
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
     else root.SMLCDirectory = api;
 })(typeof window !== 'undefined' ? window : this);

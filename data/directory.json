@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-11-15T08:54:20.811Z",
+ "updatedAt": "2026-11-15T10:40:24.403Z",
  "count": 77,
  "pageUrl": "https://supportmylocalcommunity.com/directory.html",
  "towns": [
@@ -54,6 +54,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "The shop offers quality automotive services at affordable prices, with operating hours from Monday to Friday, 8:00 AM to 5:00 PM, and Saturday from 8:00 AM to 12:00 PM.",
+   "mapsUrl": "",
    "businessId": "",
    "id": "hanging-rock-auto-flora",
    "schemaType": "AutoRepair",
@@ -74,6 +75,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "Connecting Rural Communities at the Speed of Light, Experience the internet like never before with speeds up to 7 GIG through our fiber-optic service, Unlimied data with NO CAPS !!. Get VoIP or traditional landline phone service depending on your area with options for unlimited long-distance. Add streaming TV to your internet service and get the shows, movies, sports, and local channels you love to watch.",
+   "mapsUrl": "",
    "businessId": "",
    "id": "wabash-independent-networks-louisville",
    "schemaType": "LocalBusiness",
@@ -96,6 +98,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "american-legion-post-914-louisville",
    "schemaType": "NGO",
@@ -120,6 +123,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "bible-grove-township-hall-louisville",
    "schemaType": "GovernmentOffice",
@@ -140,6 +144,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "blair-township-hall-louisville",
    "schemaType": "GovernmentOffice",
@@ -162,6 +167,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "city-of-flora-hall-flora",
    "schemaType": "GovernmentOffice",
@@ -184,6 +190,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "city-of-flora-police-dept-flora",
    "schemaType": "EmergencyService",
@@ -206,6 +213,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-city-fire-department-clay-city",
    "schemaType": "EmergencyService",
@@ -228,6 +236,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-city-high-school-clay-city",
    "schemaType": "EducationalOrganization",
@@ -250,6 +259,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-city-post-office-clay-city",
    "schemaType": "GovernmentOffice",
@@ -273,6 +283,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-city-village-hall-clay-city",
    "schemaType": "GovernmentOffice",
@@ -295,6 +306,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-co-clerk-and-recorder-louisville",
    "schemaType": "GovernmentOffice",
@@ -317,6 +329,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-county-animal-control-louisville",
    "schemaType": "GovernmentOffice",
@@ -340,6 +353,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-county-circuit-clerk-louisville",
    "schemaType": "GovernmentOffice",
@@ -362,6 +376,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-county-coroner-clay-city",
    "schemaType": "GovernmentOffice",
@@ -384,6 +399,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-county-counseling-flora",
    "schemaType": "MedicalOrganization",
@@ -406,6 +422,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-county-counseling-louisville",
    "schemaType": "MedicalOrganization",
@@ -428,6 +445,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-county-courthouse-louisville",
    "schemaType": "GovernmentOffice",
@@ -450,6 +468,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-county-engineer-louisville",
    "schemaType": "GovernmentOffice",
@@ -472,6 +491,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-county-esda-flora",
    "schemaType": "EmergencyService",
@@ -494,6 +514,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-county-sheriff-s-office-louisville",
    "schemaType": "EmergencyService",
@@ -516,6 +537,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "schofield-tax-service-flora",
    "schemaType": "AccountingService",
@@ -536,6 +558,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "we-deliver-flora",
    "schemaType": "LocalBusiness",
@@ -556,6 +579,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "ace-hardware-flora-flora",
    "schemaType": "HardwareStore",
@@ -563,7 +587,7 @@
     "Mo-Sa 08:00-19:00",
     "Su 10:00-17:00"
    ],
-   "summary": "Ace Hardware Flora is a hardware store in Flora, Illinois (Clay County), located at 836 W North Ave, Flora, IL 62839. Phone: (618) 662-4434. Hours: Mon-Sat 8AM-7PM; Sun 10AM-5PM."
+   "summary": "Ace Hardware Flora is a hardware store in Flora, Illinois (Clay County)."
   },
   {
    "name": "Amy Lee Realty LLC",
@@ -579,13 +603,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "amy-lee-realty-llc-flora",
    "schemaType": "RealEstateAgent",
    "openingHours": [
     "Mo-Fr 08:30-17:00"
    ],
-   "summary": "Amy Lee Realty LLC is a real estate agency in Flora, Illinois (Clay County), located at 201 E 2nd St, Flora, IL 62839. Phone: (618) 662-3170. Hours: Mon-Fri 8:30AM-5PM."
+   "summary": "Amy Lee Realty LLC is a real estate agency in Flora, Illinois (Clay County)."
   },
   {
    "name": "Anco Steel",
@@ -601,13 +626,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "anco-steel-louisville",
    "schemaType": "LocalBusiness",
    "openingHours": [
     "Mo-Fr 08:00-16:30"
    ],
-   "summary": "Anco Steel is a manufacturer in Louisville, Illinois (Clay County), located at 14160 US-45, Louisville, IL 62858. Phone: (618) 508-4242. Hours: Mon-Fri 8AM-4:30PM."
+   "summary": "Anco Steel is a manufacturer in Louisville, Illinois (Clay County)."
   },
   {
    "name": "Angela's Village Florist",
@@ -623,6 +649,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "angela-s-village-florist-flora",
    "schemaType": "Florist",
@@ -630,7 +657,7 @@
     "Mo-Fr 09:00-17:00",
     "Sa 09:00-12:00"
    ],
-   "summary": "Angela's Village Florist is a florist in Flora, Illinois (Clay County), located at 213 North Main St, Flora, IL 62839. Phone: (618) 662-2121. Hours: Mon-Fri 9AM-5PM; Sat 9AM-12PM."
+   "summary": "Angela's Village Florist is a florist in Flora, Illinois (Clay County)."
   },
   {
    "name": "Axiom Gardens of Flora",
@@ -646,13 +673,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "axiom-gardens-of-flora-flora",
    "schemaType": "MedicalOrganization",
    "openingHours": [
     "Mo-Su 00:00-23:59"
    ],
-   "summary": "Axiom Gardens of Flora is a healthcare provider in Flora, Illinois (Clay County), located at 701 Shadwell St, Flora, IL 62839. Phone: (618) 662-8361. Hours: 24hrs - 7 days a week."
+   "summary": "Axiom Gardens of Flora is a healthcare provider in Flora, Illinois (Clay County)."
   },
   {
    "name": "B G Distributors",
@@ -668,6 +696,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "b-g-distributors-louisville",
    "schemaType": "LocalBusiness",
@@ -675,7 +704,7 @@
     "Mo-Th 07:45-17:00",
     "Fr 07:45-16:30"
    ],
-   "summary": "B G Distributors is a wholesale distributor in Louisville, Illinois (Clay County), located at 110 North Main St, Louisville, IL 62858. Phone: (618) 665-3353. Hours: Mon-Thu 7:45AM-5PM; Fri 7:45AM-4:30PM."
+   "summary": "B G Distributors is a wholesale distributor in Louisville, Illinois (Clay County)."
   },
   {
    "name": "Bailey Family Farms",
@@ -691,11 +720,12 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "bailey-family-farms-xenia",
    "schemaType": "LocalBusiness",
    "openingHours": [],
-   "summary": "Bailey Family Farms is a farm or agriculture business in Xenia, Illinois (Clay County), located at 357 Darter Lane, Xenia, IL 62899. Phone: (618) 665-4449. Hours: By Appointment."
+   "summary": "Bailey Family Farms is a farm or agriculture business in Xenia, Illinois (Clay County)."
   },
   {
    "name": "Bailey Family Freight",
@@ -711,11 +741,12 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "bailey-family-freight-xenia",
    "schemaType": "LocalBusiness",
    "openingHours": [],
-   "summary": "Bailey Family Freight is a farm or agriculture business in Xenia, Illinois (Clay County), located at 357 Darter Lane, Xenia, IL 62899. Phone: (618) 665-4449. Hours: By Appointment."
+   "summary": "Bailey Family Freight is a farm or agriculture business in Xenia, Illinois (Clay County)."
   },
   {
    "name": "Bailey Family Grain",
@@ -731,13 +762,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "bailey-family-grain-xenia",
    "schemaType": "LocalBusiness",
    "openingHours": [
     "Mo-Fr 07:00-17:00"
    ],
-   "summary": "Bailey Family Grain is a farm or agriculture business in Xenia, Illinois (Clay County), located at 357 Darter Lane, Xenia, IL 62899. Phone: (618) 665-4449. Hours: Mon-Fri 7AM-5PM."
+   "summary": "Bailey Family Grain is a farm or agriculture business in Xenia, Illinois (Clay County)."
   },
   {
    "name": "Bailey's Electric Service",
@@ -753,13 +785,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "bailey-s-electric-service-xenia",
    "schemaType": "LocalBusiness",
    "openingHours": [
     "Mo-Fr 07:00-16:00"
    ],
-   "summary": "Bailey's Electric Service is a local service business in Xenia, Illinois (Clay County), located at 2595 Redbrush Rd, Xenia, IL 62899. Phone: (618) 678-2165. Hours: Mon-Fri 7AM-4:00PM."
+   "summary": "Bailey's Electric Service is a local service business in Xenia, Illinois (Clay County)."
   },
   {
    "name": "Bargain Barn",
@@ -775,13 +808,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "bargain-barn-flora",
    "schemaType": "Store",
    "openingHours": [
     "Tu-Sa 09:00-16:00"
    ],
-   "summary": "Bargain Barn is a store in Flora, Illinois (Clay County), located at 8152 Old Hwy 50, Flora, IL 62839. Phone: (618) 662-9100. Hours: Tue-Sat 9AM-4PM."
+   "summary": "Bargain Barn is a store in Flora, Illinois (Clay County)."
   },
   {
    "name": "Best Western Flora Inn",
@@ -797,13 +831,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "best-western-flora-inn-flora",
    "schemaType": "LodgingBusiness",
    "openingHours": [
     "Mo-Su 00:00-23:59"
    ],
-   "summary": "Best Western Flora Inn is a hotel in Flora, Illinois (Clay County), located at 201 Hagen Dr, Flora, IL 62839. Phone: (618) 662-3054. Hours: 24 Hours."
+   "summary": "Best Western Flora Inn is a hotel in Flora, Illinois (Clay County)."
   },
   {
    "name": "Bible Grove Christian Church",
@@ -819,13 +854,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "bible-grove-christian-church-louisville",
    "schemaType": "Church",
    "openingHours": [
     "Su 10:00-12:00"
    ],
-   "summary": "Bible Grove Christian Church is a non-profit organization in Louisville, Illinois (Clay County), located at 105 Ararat Rd, Louisville, IL 62858. Phone: (618) 686-4441. Hours: Sun 10AM-12PM."
+   "summary": "Bible Grove Christian Church is a non-profit organization in Louisville, Illinois (Clay County)."
   },
   {
    "name": "Big 4 Propane",
@@ -841,13 +877,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "big-4-propane-clay-city",
    "schemaType": "LocalBusiness",
    "openingHours": [
     "Mo-Fr 08:00-16:00"
    ],
-   "summary": "Big 4 Propane is a local service business in Clay City, Illinois (Clay County), located at 945 S 1st St SE, Clay City, 62824. Phone: (618) 676-1222. Hours: Mon-Fri 8AM-4PM."
+   "summary": "Big 4 Propane is a local service business in Clay City, Illinois (Clay County)."
   },
   {
    "name": "Bowen Plumbing Supply",
@@ -863,13 +900,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "bowen-plumbing-supply-flora",
    "schemaType": "LocalBusiness",
    "openingHours": [
     "Mo-Fr 08:00-16:00"
    ],
-   "summary": "Bowen Plumbing Supply is a local service business in Flora, Illinois (Clay County), located at 259 Austin Ave, Flora, IL 62839. Phone: (618) 662-2708. Hours: Mon-Fri 8AM-4PM."
+   "summary": "Bowen Plumbing Supply is a local service business in Flora, Illinois (Clay County)."
   },
   {
    "name": "Briscoe Surplus Sales",
@@ -885,6 +923,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "briscoe-surplus-sales-flora",
    "schemaType": "HardwareStore",
@@ -892,7 +931,7 @@
     "Mo-Fr 08:00-17:00",
     "Sa 08:00-12:00"
    ],
-   "summary": "Briscoe Surplus Sales is a hardware store in Flora, Illinois (Clay County), located at 762 N Sanford Rd, Flora, IL 62839. Phone: (618) 662-8816. Hours: Mon-Fri 8AM-5PM; Sat 8AM-12PM."
+   "summary": "Briscoe Surplus Sales is a hardware store in Flora, Illinois (Clay County)."
   },
   {
    "name": "Burger King",
@@ -908,13 +947,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "burger-king-flora",
    "schemaType": "Restaurant",
    "openingHours": [
     "Mo-Su 06:00-23:00"
    ],
-   "summary": "Burger King is a restaurant in Flora, Illinois (Clay County), located at 1452 North State Rd, Flora, IL 62839. Phone: (618) 662-4316. Hours: Mon-Sun 6AM-11PM."
+   "summary": "Burger King is a restaurant in Flora, Illinois (Clay County)."
   },
   {
    "name": "Butcher Automotive",
@@ -930,6 +970,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "butcher-automotive-louisville",
    "schemaType": "AutoRepair",
@@ -937,7 +978,7 @@
     "Mo-Fr 08:00-17:00",
     "Sa 08:00-12:00"
    ],
-   "summary": "Butcher Automotive is an auto shop in Louisville, Illinois (Clay County), located at 14326 US-45, Louisville, IL 62858. Phone: (618) 665-3666. Hours: Mon-Fri 8AM-5PM; Sat 8AM-12PM."
+   "summary": "Butcher Automotive is an auto shop in Louisville, Illinois (Clay County)."
   },
   {
    "name": "Cargill, Inc.",
@@ -953,13 +994,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "cargill-inc-flora",
    "schemaType": "LocalBusiness",
    "openingHours": [
     "Mo-Fr 07:00-16:00"
    ],
-   "summary": "Cargill, Inc. is a farm or agriculture business in Flora, Illinois (Clay County), located at 6 Industrial Dr, Flora, IL 62839. Phone: (618) 662-8318. Hours: Mon-Fri 7AM-4PM."
+   "summary": "Cargill, Inc. is a farm or agriculture business in Flora, Illinois (Clay County)."
   },
   {
    "name": "Casey's Clay City",
@@ -975,13 +1017,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "casey-s-clay-city-clay-city",
    "schemaType": "GasStation",
    "openingHours": [
     "Mo-Su 04:00-23:59"
    ],
-   "summary": "Casey's Clay City is a gas station in Clay City, Illinois (Clay County), located at 940 S Main St, Clay City, IL 62824. Phone: (618) 676-1786. Hours: Mon-Sun 4AM-12AM."
+   "summary": "Casey's Clay City is a gas station in Clay City, Illinois (Clay County)."
   },
   {
    "name": "Casey's Flora",
@@ -997,13 +1040,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "casey-s-flora-flora",
    "schemaType": "GasStation",
    "openingHours": [
     "Mo-Su 05:00-22:00"
    ],
-   "summary": "Casey's Flora is a gas station in Flora, Illinois (Clay County), located at 902 W North Ave, Flora, IL 62839. Phone: (618) 356-1390. Hours: Mon-Sun 5AM-10PM."
+   "summary": "Casey's Flora is a gas station in Flora, Illinois (Clay County)."
   },
   {
    "name": "Casey's Louisville",
@@ -1019,13 +1063,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "casey-s-louisville-louisville",
    "schemaType": "GasStation",
    "openingHours": [
     "Mo-Su 04:00-23:59"
    ],
-   "summary": "Casey's Louisville is a gas station in Louisville, Illinois (Clay County), located at 300 Route 45 S, Louisville, IL 62858. Phone: (618) 356-1699. Hours: Mon-Sun 4AM-12AM."
+   "summary": "Casey's Louisville is a gas station in Louisville, Illinois (Clay County)."
   },
   {
    "name": "Charms Hair Salon",
@@ -1041,11 +1086,12 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "charms-hair-salon-flora",
    "schemaType": "BeautySalon",
    "openingHours": [],
-   "summary": "Charms Hair Salon is a beauty salon or barber shop in Flora, Illinois (Clay County), located at 402 W North Ave, Flora, IL 62839. Hours: By Appointment."
+   "summary": "Charms Hair Salon is a beauty salon or barber shop in Flora, Illinois (Clay County)."
   },
   {
    "name": "Clarner's Barber Shop",
@@ -1061,11 +1107,12 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clarner-s-barber-shop-flora",
    "schemaType": "BeautySalon",
    "openingHours": [],
-   "summary": "Clarner's Barber Shop is a beauty salon or barber shop in Flora, Illinois (Clay County), located at 504 E North Ave, Flora, IL 62839. Phone: (618) 662-2847. Hours: By Appointment."
+   "summary": "Clarner's Barber Shop is a beauty salon or barber shop in Flora, Illinois (Clay County)."
   },
   {
    "name": "Clay City Banking Co",
@@ -1081,6 +1128,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-city-banking-co-clay-city",
    "schemaType": "FinancialService",
@@ -1088,7 +1136,7 @@
     "Mo-Fr 08:30-16:00",
     "Sa 08:30-12:00"
    ],
-   "summary": "Clay City Banking Co is a bank in Clay City, Illinois (Clay County), located at 331 S Main St, Clay City, IL 62824. Phone: (618) 676-1511. Hours: Mon-Fri 8:30AM-4PM; Sat 8:30AM-12PM."
+   "summary": "Clay City Banking Co is a bank in Clay City, Illinois (Clay County)."
   },
   {
    "name": "Clay County Fair Association",
@@ -1104,11 +1152,12 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-county-fair-association-flora",
    "schemaType": "NGO",
    "openingHours": [],
-   "summary": "Clay County Fair Association is a recreation group in Flora, Illinois (Clay County), located at 104 Golf Course Rd, Flora, IL 62839. Phone: (618) 843-9003. Hours: Seasonal."
+   "summary": "Clay County Fair Association is a recreation group in Flora, Illinois (Clay County)."
   },
   {
    "name": "Clay County Farm Bureau",
@@ -1124,13 +1173,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-county-farm-bureau-louisville",
    "schemaType": "LocalBusiness",
    "openingHours": [
     "Mo-Fr 08:00-16:30"
    ],
-   "summary": "Clay County Farm Bureau is a farm or agriculture business in Louisville, Illinois (Clay County), located at 140 N Church St, Louisville, IL 62858. Phone: (618) 665-3300. Hours: Mon-Fri 8AM-4:30PM."
+   "summary": "Clay County Farm Bureau is a farm or agriculture business in Louisville, Illinois (Clay County)."
   },
   {
    "name": "Clay County Genealogical Society",
@@ -1146,13 +1196,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-county-genealogical-society-louisville",
    "schemaType": "NGO",
    "openingHours": [
     "Tu-Fr 10:00-16:00"
    ],
-   "summary": "Clay County Genealogical Society is a non-profit organization in Louisville, Illinois (Clay County), located at 114 S Church St, Louisville, IL 62858. Phone: (618) 843-7327. Hours: Tue-Fri 10AM-4PM."
+   "summary": "Clay County Genealogical Society is a non-profit organization in Louisville, Illinois (Clay County)."
   },
   {
    "name": "Clay County Health Dept",
@@ -1168,13 +1219,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-county-health-dept-flora",
    "schemaType": "MedicalOrganization",
    "openingHours": [
     "Mo-Fr 08:00-17:00"
    ],
-   "summary": "Clay County Health Dept is a healthcare provider in Flora, Illinois (Clay County), located at 601 E 12th St, Flora, IL 62839. Phone: (618) 662-4406. Hours: Mon-Fri 8AM-5PM."
+   "summary": "Clay County Health Dept is a healthcare provider in Flora, Illinois (Clay County)."
   },
   {
    "name": "Clay County Highway Dept",
@@ -1190,13 +1242,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-county-highway-dept-louisville",
    "schemaType": "GovernmentOffice",
    "openingHours": [
     "Mo-Fr 07:00-15:30"
    ],
-   "summary": "Clay County Highway Dept is a government office in Louisville, Illinois (Clay County), located at 14464 US-45, Louisville, IL 62858. Phone: (618) 665-3346. Hours: Mon-Fri 7AM-3:30PM."
+   "summary": "Clay County Highway Dept is a government office in Louisville, Illinois (Clay County)."
   },
   {
    "name": "Clay County Hospital",
@@ -1212,13 +1265,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-county-hospital-flora",
    "schemaType": "MedicalOrganization",
    "openingHours": [
     "Mo-Su 00:00-23:59"
    ],
-   "summary": "Clay County Hospital is a healthcare provider in Flora, Illinois (Clay County), located at 911 Stacey Burk Dr, Flora, IL 62839. Phone: (618) 662-2131. Hours: 24 Hours."
+   "summary": "Clay County Hospital is a healthcare provider in Flora, Illinois (Clay County)."
   },
   {
    "name": "Clay County Hospital Counseling",
@@ -1234,13 +1288,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-county-hospital-counseling-flora",
    "schemaType": "MedicalOrganization",
    "openingHours": [
     "Mo-Fr 08:00-17:00"
    ],
-   "summary": "Clay County Hospital Counseling is a healthcare provider in Flora, Illinois (Clay County), located at 911 Stacey Burk Dr, Flora, IL 62839. Phone: (618) 662-2131. Hours: Mon-Fri 8AM-5PM."
+   "summary": "Clay County Hospital Counseling is a healthcare provider in Flora, Illinois (Clay County)."
   },
   {
    "name": "Clay County Housing Authority",
@@ -1256,13 +1311,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-county-housing-authority-flora",
    "schemaType": "GovernmentOffice",
    "openingHours": [
     "Mo-Fr 08:00-16:00"
    ],
-   "summary": "Clay County Housing Authority is a government office in Flora, Illinois (Clay County), located at 201 S Locust St, Flora, IL 62839. Phone: (618) 662-5311. Hours: Mon-Fri 8AM-4PM."
+   "summary": "Clay County Housing Authority is a government office in Flora, Illinois (Clay County)."
   },
   {
    "name": "Clay County Ministerial Alliance",
@@ -1278,11 +1334,12 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-county-ministerial-alliance-flora",
    "schemaType": "NGO",
    "openingHours": [],
-   "summary": "Clay County Ministerial Alliance is a non-profit organization in Flora, Illinois (Clay County), located at PO Box 501, Flora, IL 62839. Phone: (618) 662-3851."
+   "summary": "Clay County Ministerial Alliance is a non-profit organization in Flora, Illinois (Clay County)."
   },
   {
    "name": "Clay County Water",
@@ -1298,13 +1355,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "clay-county-water-flora",
    "schemaType": "GovernmentOffice",
    "openingHours": [
     "Mo-Fr 08:00-16:00"
    ],
-   "summary": "Clay County Water is a government office in Flora, Illinois (Clay County), located at 7784 Old Hwy 50, Flora, IL 62839. Phone: (618) 662-6666. Hours: Mon-Fri 8AM-4PM."
+   "summary": "Clay County Water is a government office in Flora, Illinois (Clay County)."
   },
   {
    "name": "Community Southern Baptist Church",
@@ -1320,11 +1378,12 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "community-southern-baptist-church-clay-city",
    "schemaType": "Church",
    "openingHours": [],
-   "summary": "Community Southern Baptist Church is a non-profit organization in Clay City, Illinois (Clay County), located at 825 Kelly Drive, Clay City, IL 62824. Phone: (618) 676-1502. Hours: Sunday School 9:30 AM Worship 10:30 AM Wednesday - 6:30 PM."
+   "summary": "Community Southern Baptist Church is a non-profit organization in Clay City, Illinois (Clay County)."
   },
   {
    "name": "Dollar General",
@@ -1340,13 +1399,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "dollar-general-clay-city",
    "schemaType": "Store",
    "openingHours": [
     "Mo-Su 08:00-22:00"
    ],
-   "summary": "Dollar General is a store in Clay City, Illinois (Clay County), located at 951 Grant Dr, Clay City, IL 62824. Phone: (618) 312-1552. Hours: Mon-Sun 8AM-10PM."
+   "summary": "Dollar General is a store in Clay City, Illinois (Clay County)."
   },
   {
    "name": "Dollar General",
@@ -1362,13 +1422,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "dollar-general-flora",
    "schemaType": "Store",
    "openingHours": [
     "Mo-Su 08:00-22:00"
    ],
-   "summary": "Dollar General is a store in Flora, Illinois (Clay County), located at 847 W North Ave, Flora, IL 62839. Phone: (224) 518-0417. Hours: Mon-Sun 8AM-10PM."
+   "summary": "Dollar General is a store in Flora, Illinois (Clay County)."
   },
   {
    "name": "Dollar General",
@@ -1384,13 +1445,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "dollar-general-louisville",
    "schemaType": "Store",
    "openingHours": [
     "Mo-Su 08:00-22:00"
    ],
-   "summary": "Dollar General is a store in Louisville, Illinois (Clay County), located at 365 Route 45 N, Louisville, IL 62858. Phone: (309) 322-2780. Hours: Mon-Sun 8AM-10PM."
+   "summary": "Dollar General is a store in Louisville, Illinois (Clay County)."
   },
   {
    "name": "Dusty's Tire Shop",
@@ -1406,13 +1468,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "dusty-s-tire-shop-clay-city",
    "schemaType": "AutoRepair",
    "openingHours": [
     "Mo-Fr 08:00-17:00"
    ],
-   "summary": "Dusty's Tire Shop is an auto repair shop in Clay City, Illinois (Clay County), located at 350 S 1st St SE, Clay City, IL 62824. Phone: (618) 676-2304. Hours: Mon-Fri 8AM-5PM."
+   "summary": "Dusty's Tire Shop is an auto repair shop in Clay City, Illinois (Clay County)."
   },
   {
    "name": "Erwin Insurance Agency",
@@ -1428,13 +1491,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "erwin-insurance-agency-clay-city",
    "schemaType": "InsuranceAgency",
    "openingHours": [
     "Mo-Fr 08:30-16:30"
    ],
-   "summary": "Erwin Insurance Agency is an insurance agency in Clay City, Illinois (Clay County), located at 111 S 3rd St SW, Clay City, IL 62824. Phone: (618) 676-1981. Hours: Mon-Fri 8:30AM-4:30PM."
+   "summary": "Erwin Insurance Agency is an insurance agency in Clay City, Illinois (Clay County)."
   },
   {
    "name": "Fat Dads",
@@ -1450,11 +1514,12 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "fat-dads-louisville",
    "schemaType": "Restaurant",
    "openingHours": [],
-   "summary": "Fat Dads is a restaurant in Louisville, Illinois (Clay County), located at 130 US-45 S, Louisville, IL 62858. Phone: (618) 403-0676."
+   "summary": "Fat Dads is a restaurant in Louisville, Illinois (Clay County)."
   },
   {
    "name": "First Baptist Church",
@@ -1470,11 +1535,12 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "first-baptist-church-clay-city",
    "schemaType": "Church",
    "openingHours": [],
-   "summary": "First Baptist Church is a non-profit organization in Clay City, Illinois (Clay County), located at 118 S 5th St, Clay City, IL 62824. Phone: (618) 676-1362. Hours: Sunday School 9:30 AM Worship 10:30 AM Wednesday - 6:30 PM."
+   "summary": "First Baptist Church is a non-profit organization in Clay City, Illinois (Clay County)."
   },
   {
    "name": "Full Armor Christian Academy",
@@ -1490,13 +1556,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "Full Armor Christian Academy offers a faith-based education for students from preschool (ages 3–5) through 12th grade. We focus on the whole child—helping them grow spiritually, academically, and personally, all with Christ at the center. Here, students are equipped to lead, serve, and make a difference in the world.",
+   "mapsUrl": "",
    "businessId": "",
    "id": "full-armor-christian-academy-louisville",
    "schemaType": "EducationalOrganization",
    "openingHours": [
     "Mo-Fr 08:00-15:00"
    ],
-   "summary": "Full Armor Christian Academy is a school in Louisville, Illinois (Clay County), located at 600 Erwin St, Louisville, IL 62858. Phone: (618) 665-4441. Hours: Mon-Fri 8AM-3PM."
+   "summary": "Full Armor Christian Academy is a school in Louisville, Illinois (Clay County)."
   },
   {
    "name": "Gatsby's Gaming",
@@ -1512,13 +1579,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "gatsby-s-gaming-clay-city",
    "schemaType": "LocalBusiness",
    "openingHours": [
     "Mo-Su 08:00-23:59"
    ],
-   "summary": "Gatsby's Gaming is a gaming parlor in Clay City, Illinois (Clay County), located at 200 S Main St, Clay City, IL 62824. Phone: (618) 676-1343. Hours: Mon-Sun 8AM-12AM."
+   "summary": "Gatsby's Gaming is a gaming parlor in Clay City, Illinois (Clay County)."
   },
   {
    "name": "H&R Block Flora",
@@ -1534,13 +1602,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "handr-block-flora-flora",
    "schemaType": "AccountingService",
    "openingHours": [
     "Mo-Fr 09:00-18:00"
    ],
-   "summary": "H&R Block Flora is a tax and bookkeeping service in Flora, Illinois (Clay County), located at 127 E North Ave, Flora, IL 62839. Phone: (618) 662-6806. Hours: Mon-Fri 9AM-6PM."
+   "summary": "H&R Block Flora is a tax and bookkeeping service in Flora, Illinois (Clay County)."
   },
   {
    "name": "Johnny Picker's",
@@ -1556,11 +1625,12 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "johnny-picker-s-clay-city",
    "schemaType": "Restaurant",
    "openingHours": [],
-   "summary": "Johnny Picker's is a restaurant in Clay City, Illinois (Clay County), located at 501 E 1st St SE, Clay City, IL 62849. Phone: (618) 676-1221."
+   "summary": "Johnny Picker's is a restaurant in Clay City, Illinois (Clay County)."
   },
   {
    "name": "Julians",
@@ -1576,11 +1646,12 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "julians-flora",
    "schemaType": "Restaurant",
    "openingHours": [],
-   "summary": "Julians is a restaurant in Flora, Illinois (Clay County), located at 8190 Old Hwy 50, Flora, IL 62839. Phone: (618) 662-5636."
+   "summary": "Julians is a restaurant in Flora, Illinois (Clay County)."
   },
   {
    "name": "Peterman / Bailey Farming",
@@ -1596,11 +1667,12 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "peterman-bailey-farming-clay-city",
    "schemaType": "LocalBusiness",
    "openingHours": [],
-   "summary": "Peterman / Bailey Farming is a farm or agriculture business in Clay City, Illinois (Clay County), located at Clay City, IL 62824. Phone: (618) 676-1302. Hours: By Appointment."
+   "summary": "Peterman / Bailey Farming is a farm or agriculture business in Clay City, Illinois (Clay County)."
   },
   {
    "name": "Salt & Strings",
@@ -1616,11 +1688,12 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "salt-and-strings-louisville",
    "schemaType": "LocalBusiness",
    "openingHours": [],
-   "summary": "Salt & Strings is a butcher shop in Louisville, Illinois (Clay County), located at 133 N Church St, Louisville, 62858. Phone: (618) 665-3151. Hours: Tues - Fri 9AM -5PM Sat 9am - 1PM."
+   "summary": "Salt & Strings is a butcher shop in Louisville, Illinois (Clay County)."
   },
   {
    "name": "Tangles Salon",
@@ -1636,11 +1709,12 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "tangles-salon-flora",
    "schemaType": "BeautySalon",
    "openingHours": [],
-   "summary": "Tangles Salon is a beauty salon or barber shop in Flora, Illinois (Clay County), located at 119 N Elm St, Flora, IL 62839. Phone: (618) 662-2860. Hours: By Appointment."
+   "summary": "Tangles Salon is a beauty salon or barber shop in Flora, Illinois (Clay County)."
   },
   {
    "name": "The Country Closet",
@@ -1656,6 +1730,7 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "the-country-closet-flora",
    "schemaType": "Store",
@@ -1663,7 +1738,7 @@
     "Tu-Fr 10:00-17:00",
     "Sa 10:00-14:00"
    ],
-   "summary": "The Country Closet is a store in Flora, Illinois (Clay County), located at 27 Greenlaw Blvd, Flora, IL 62839. Phone: (618) 662-4893. Hours: Tue-Fri 10AM-5PM; Sat 10AM-2PM."
+   "summary": "The Country Closet is a store in Flora, Illinois (Clay County)."
   },
   {
    "name": "Tungate Law Office",
@@ -1679,13 +1754,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "tungate-law-office-flora",
    "schemaType": "Attorney",
    "openingHours": [
     "Mo-Fr 08:30-17:00"
    ],
-   "summary": "Tungate Law Office is a law office in Flora, Illinois (Clay County), located at 400 N Main St, Flora, IL 62839. Phone: (618) 662-4488. Hours: Mon-Fri 8:30AM-5Pm."
+   "summary": "Tungate Law Office is a law office in Flora, Illinois (Clay County)."
   },
   {
    "name": "Walmart Supercenter Flora",
@@ -1701,13 +1777,14 @@
    "offer": "",
    "validUntil": "",
    "bio": "",
+   "mapsUrl": "",
    "businessId": "",
    "id": "walmart-supercenter-flora-flora",
    "schemaType": "GroceryStore",
    "openingHours": [
     "Mo-Su 06:00-23:00"
    ],
-   "summary": "Walmart Supercenter Flora is a grocery store in Flora, Illinois (Clay County), located at 1540 N Worthey St, Flora, IL 62839. Phone: (618) 662-4491. Hours: Mon-Sun 6AM-11PM."
+   "summary": "Walmart Supercenter Flora is a grocery store in Flora, Illinois (Clay County)."
   }
  ],
  "answers": [
@@ -1721,7 +1798,7 @@
    "town": "Clay City",
    "category": "Auto Repair",
    "q": "Where can I find an auto repair shop in Clay City, IL?",
-   "a": "In Clay City, Illinois: Dusty's Tire Shop (350 S 1st St SE). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Clay City, Illinois: Dusty's Tire Shop. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Clay City",
@@ -1739,19 +1816,19 @@
    "town": "Clay City",
    "category": "Financial",
    "q": "Where can I find a bank in Clay City, IL?",
-   "a": "In Clay City, Illinois: Clay City Banking Co (331 S Main St). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Clay City, Illinois: Clay City Banking Co. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Clay City",
    "category": "Gaming",
    "q": "Where can I find a gaming parlor in Clay City, IL?",
-   "a": "In Clay City, Illinois: Gatsby's Gaming (200 S Main St). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Clay City, Illinois: Gatsby's Gaming. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Clay City",
    "category": "Gas Station",
    "q": "Where can I find a gas station in Clay City, IL?",
-   "a": "In Clay City, Illinois: Casey's Clay City (940 S Main St). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Clay City, Illinois: Casey's Clay City. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Clay City",
@@ -1763,37 +1840,37 @@
    "town": "Clay City",
    "category": "Insurance",
    "q": "Where can I find an insurance agency in Clay City, IL?",
-   "a": "In Clay City, Illinois: Erwin Insurance Agency (111 S 3rd St SW). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Clay City, Illinois: Erwin Insurance Agency. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Clay City",
    "category": "Non-Profit",
    "q": "Where can I find a non-profit organization in Clay City, IL?",
-   "a": "In Clay City, Illinois: Community Southern Baptist Church (825 Kelly Drive) and First Baptist Church (118 S 5th St). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Clay City, Illinois: Community Southern Baptist Church and First Baptist Church. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Clay City",
    "category": "Restaurant",
    "q": "Where can I find a restaurant in Clay City, IL?",
-   "a": "In Clay City, Illinois: Johnny Picker's (501 E 1st St SE). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Clay City, Illinois: Johnny Picker's. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Clay City",
    "category": "Retail",
    "q": "Where can I find a store in Clay City, IL?",
-   "a": "In Clay City, Illinois: Dollar General (951 Grant Dr). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Clay City, Illinois: Dollar General. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Clay City",
    "category": "Services",
    "q": "Where can I find a local service business in Clay City, IL?",
-   "a": "In Clay City, Illinois: Big 4 Propane (945 S 1st St SE). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Clay City, Illinois: Big 4 Propane. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Flora",
    "category": "Agriculture",
    "q": "Where can I find a farm or agriculture business in Flora, IL?",
-   "a": "In Flora, Illinois: Cargill, Inc. (6 Industrial Dr). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Flora, Illinois: Cargill, Inc. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Flora",
@@ -1805,13 +1882,13 @@
    "town": "Flora",
    "category": "Beauty",
    "q": "Where can I find a beauty salon or barber shop in Flora, IL?",
-   "a": "In Flora, Illinois: Charms Hair Salon (402 W North Ave), Clarner's Barber Shop (504 E North Ave) and Tangles Salon (119 N Elm St). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Flora, Illinois: Charms Hair Salon, Clarner's Barber Shop and Tangles Salon. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Flora",
    "category": "Bookkeeping",
    "q": "Where can I find a tax and bookkeeping service in Flora, IL?",
-   "a": "In Flora, Illinois: Schofield Tax Service (551 East 2nd St) and H&R Block Flora (127 E North Ave). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Flora, Illinois: Schofield Tax Service (551 East 2nd St) and H&R Block Flora. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Flora",
@@ -1829,109 +1906,109 @@
    "town": "Flora",
    "category": "Florist",
    "q": "Where can I find a florist in Flora, IL?",
-   "a": "In Flora, Illinois: Angela's Village Florist (213 North Main St). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Flora, Illinois: Angela's Village Florist. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Flora",
    "category": "Gas Station",
    "q": "Where can I find a gas station in Flora, IL?",
-   "a": "In Flora, Illinois: Casey's Flora (902 W North Ave). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Flora, Illinois: Casey's Flora. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Flora",
    "category": "Government",
    "q": "Where can I find a government office in Flora, IL?",
-   "a": "In Flora, Illinois: City of Flora Hall (131 E 2nd St), Clay County Housing Authority (201 S Locust St) and Clay County Water (7784 Old Hwy 50). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Flora, Illinois: City of Flora Hall (131 E 2nd St), Clay County Housing Authority and Clay County Water. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Flora",
    "category": "Hardware",
    "q": "Where can I find a hardware store in Flora, IL?",
-   "a": "In Flora, Illinois: Ace Hardware Flora (836 W North Ave) and Briscoe Surplus Sales (762 N Sanford Rd). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Flora, Illinois: Ace Hardware Flora and Briscoe Surplus Sales. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Flora",
    "category": "Healthcare",
    "q": "Where can I find a healthcare provider in Flora, IL?",
-   "a": "In Flora, Illinois: Clay County Counseling (118 West North Ave), Axiom Gardens of Flora (701 Shadwell St), Clay County Health Dept (601 E 12th St), Clay County Hospital (911 Stacey Burk Dr) and Clay County Hospital Counseling (911 Stacey Burk Dr). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Flora, Illinois: Clay County Counseling (118 West North Ave), Axiom Gardens of Flora, Clay County Health Dept, Clay County Hospital and Clay County Hospital Counseling. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Flora",
    "category": "Legal",
    "q": "Where can I find a law office in Flora, IL?",
-   "a": "In Flora, Illinois: Tungate Law Office (400 N Main St). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Flora, Illinois: Tungate Law Office. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Flora",
    "category": "Lodging",
    "q": "Where can I find a hotel in Flora, IL?",
-   "a": "In Flora, Illinois: Best Western Flora Inn (201 Hagen Dr). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Flora, Illinois: Best Western Flora Inn. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Flora",
    "category": "Non-Profit",
    "q": "Where can I find a non-profit organization in Flora, IL?",
-   "a": "In Flora, Illinois: Clay County Ministerial Alliance (PO Box 501). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Flora, Illinois: Clay County Ministerial Alliance. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Flora",
    "category": "Real Estate",
    "q": "Where can I find a real estate agency in Flora, IL?",
-   "a": "In Flora, Illinois: Amy Lee Realty LLC (201 E 2nd St). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Flora, Illinois: Amy Lee Realty LLC. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Flora",
    "category": "Recreation",
    "q": "Where can I find a recreation group in Flora, IL?",
-   "a": "In Flora, Illinois: Clay County Fair Association (104 Golf Course Rd). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Flora, Illinois: Clay County Fair Association. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Flora",
    "category": "Restaurant",
    "q": "Where can I find a restaurant in Flora, IL?",
-   "a": "In Flora, Illinois: Burger King (1452 North State Rd) and Julians (8190 Old Hwy 50). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Flora, Illinois: Burger King and Julians. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Flora",
    "category": "Retail",
    "q": "Where can I find a store in Flora, IL?",
-   "a": "In Flora, Illinois: Bargain Barn (8152 Old Hwy 50), Dollar General (847 W North Ave) and The Country Closet (27 Greenlaw Blvd). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Flora, Illinois: Bargain Barn, Dollar General and The Country Closet. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Flora",
    "category": "Retail/Grocery",
    "q": "Where can I find a grocery store in Flora, IL?",
-   "a": "In Flora, Illinois: Walmart Supercenter Flora (1540 N Worthey St). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Flora, Illinois: Walmart Supercenter Flora. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Flora",
    "category": "Services",
    "q": "Where can I find a local service business in Flora, IL?",
-   "a": "In Flora, Illinois: Bowen Plumbing Supply (259 Austin Ave). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Flora, Illinois: Bowen Plumbing Supply. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Louisville",
    "category": "Agriculture",
    "q": "Where can I find a farm or agriculture business in Louisville, IL?",
-   "a": "In Louisville, Illinois: Clay County Farm Bureau (140 N Church St). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Louisville, Illinois: Clay County Farm Bureau. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Louisville",
    "category": "Automotive",
    "q": "Where can I find an auto shop in Louisville, IL?",
-   "a": "In Louisville, Illinois: Butcher Automotive (14326 US-45). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Louisville, Illinois: Butcher Automotive. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Louisville",
    "category": "Butcher",
    "q": "Where can I find a butcher shop in Louisville, IL?",
-   "a": "In Louisville, Illinois: Salt & Strings (133 N Church St). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Louisville, Illinois: Salt & Strings. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Louisville",
    "category": "Education",
    "q": "Where can I find a school in Louisville, IL?",
-   "a": "In Louisville, Illinois: Full Armor Christian Academy (600 Erwin St). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Louisville, Illinois: Full Armor Christian Academy. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Louisville",
@@ -1943,13 +2020,13 @@
    "town": "Louisville",
    "category": "Gas Station",
    "q": "Where can I find a gas station in Louisville, IL?",
-   "a": "In Louisville, Illinois: Casey's Louisville (300 Route 45 S). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Louisville, Illinois: Casey's Louisville. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Louisville",
    "category": "Government",
    "q": "Where can I find a government office in Louisville, IL?",
-   "a": "In Louisville, Illinois: Bible Grove Township Hall (188 AntiochLane), Blair Township Hall (42 Blair Twp Lane), Clay Co Clerk & Recorder (111 Chestnut St), Clay County Animal Control (14394 US-45), Clay County Circuit Clerk (111 E Chestnut St), Clay County Courthouse (111 E Chestnut St), Clay County Engineer (14464 Hwy 45 S) and Clay County Highway Dept (14464 US-45). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Louisville, Illinois: Bible Grove Township Hall (188 AntiochLane), Blair Township Hall (42 Blair Twp Lane), Clay Co Clerk & Recorder (111 Chestnut St), Clay County Animal Control (14394 US-45), Clay County Circuit Clerk (111 E Chestnut St), Clay County Courthouse (111 E Chestnut St), Clay County Engineer (14464 Hwy 45 S) and Clay County Highway Dept. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Louisville",
@@ -1961,25 +2038,25 @@
    "town": "Louisville",
    "category": "Manufacturing",
    "q": "Where can I find a manufacturer in Louisville, IL?",
-   "a": "In Louisville, Illinois: Anco Steel (14160 US-45). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Louisville, Illinois: Anco Steel. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Louisville",
    "category": "Non-Profit",
    "q": "Where can I find a non-profit organization in Louisville, IL?",
-   "a": "In Louisville, Illinois: American Legion Post 914 (590 S Main St), Bible Grove Christian Church (105 Ararat Rd) and Clay County Genealogical Society (114 S Church St). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Louisville, Illinois: American Legion Post 914 (590 S Main St), Bible Grove Christian Church and Clay County Genealogical Society. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Louisville",
    "category": "Restaurant",
    "q": "Where can I find a restaurant in Louisville, IL?",
-   "a": "In Louisville, Illinois: Fat Dads (130 US-45 S). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Louisville, Illinois: Fat Dads. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Louisville",
    "category": "Retail",
    "q": "Where can I find a store in Louisville, IL?",
-   "a": "In Louisville, Illinois: Dollar General (365 Route 45 N). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Louisville, Illinois: Dollar General. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Louisville",
@@ -1991,19 +2068,19 @@
    "town": "Louisville",
    "category": "Wholesale",
    "q": "Where can I find a wholesale distributor in Louisville, IL?",
-   "a": "In Louisville, Illinois: B G Distributors (110 North Main St). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Louisville, Illinois: B G Distributors. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Xenia",
    "category": "Agriculture",
    "q": "Where can I find a farm or agriculture business in Xenia, IL?",
-   "a": "In Xenia, Illinois: Bailey Family Farms (357 Darter Lane), Bailey Family Freight (357 Darter Lane) and Bailey Family Grain (357 Darter Lane). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Xenia, Illinois: Bailey Family Farms, Bailey Family Freight and Bailey Family Grain. Listed in the Clay County Business Directory by Support My Local Community."
   },
   {
    "town": "Xenia",
    "category": "Services",
    "q": "Where can I find a local service business in Xenia, IL?",
-   "a": "In Xenia, Illinois: Bailey's Electric Service (2595 Redbrush Rd). Listed in the Clay County Business Directory by Support My Local Community."
+   "a": "In Xenia, Illinois: Bailey's Electric Service. Listed in the Clay County Business Directory by Support My Local Community."
   }
  ]
 }

@@ -1,8 +1,8 @@
 /* ==========================================================================
-   File: smlc-offers.js  |  v1.0  |  2026-11-15
+   File: smlc-offers.js  |  v1.1  |  2026-11-15 (Premium listings only)
    "Offer" pop-up for every SMLC page (not the directory itself).
 
-   When a business in the Clay County Business Directory has an offer (Master
+   When a PREMIUM business in the Clay County Business Directory has an offer (Master
    Data columns "offer" + optional "validuntil"), a small card slides in at the
    bottom corner: OFFER badge, logo, business name and the offer. Tapping it
    opens directory.html at that business. Several offers rotate every 8 seconds.
@@ -20,7 +20,7 @@
     if (/\/directory\.html$/i.test(location.pathname)) return;   // the directory shows offers itself
 
     var FS_DOC = 'https://firestore.googleapis.com/v1/projects/smlc-fuel-monitor/databases/(default)/documents/directory/public?key=AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg';
-    var CACHE_KEY = 'smlc_offers_v1', HIDE_KEY = 'smlc_offers_hidden', CACHE_MS = 15 * 60 * 1000, ROTATE_MS = 8000;
+    var CACHE_KEY = 'smlc_offers_v2', HIDE_KEY = 'smlc_offers_hidden', CACHE_MS = 15 * 60 * 1000, ROTATE_MS = 8000;
     var script = document.currentScript;
     var BASE = script && script.src ? script.src.replace(/[^\/]*$/, '') : '';      // works on the test copy (/SMLC/) and the real domain
 
@@ -46,7 +46,7 @@
     function pickOffers(businesses) {
         var today = todayCentral();
         return (businesses || []).filter(function (b) {
-            return b && b.offer && String(b.offer).trim() && (!b.validUntil || b.validUntil >= today);
+            return b && b.tier === 'Premium' && b.offer && String(b.offer).trim() && (!b.validUntil || b.validUntil >= today);
         }).map(function (b) { return { id: b.id, name: b.name, image: b.image, offer: b.offer, validUntil: b.validUntil || '' }; });
     }
 
@@ -59,7 +59,7 @@
         }
         function save(list) {
             var slim = (list || []).filter(function (b) { return b && b.offer; })
-                .map(function (b) { return { id: b.id, name: b.name, image: b.image, offer: b.offer, validUntil: b.validUntil }; });
+                .map(function (b) { return { id: b.id, name: b.name, image: b.image, offer: b.offer, validUntil: b.validUntil, tier: b.tier }; });
             if (session) try { session.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), b: slim })); } catch (e) {}
             return pickOffers(slim);
         }

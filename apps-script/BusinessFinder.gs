@@ -1,5 +1,7 @@
 /* ==========================================================================
-   Active Version: 2026-11-15_v3.3  |  Updated: Nov 15, 2026 5:35 AM ET
+   Active Version: 2026-11-15_v3.4  |  Updated: Nov 15, 2026 5:50 AM ET
+   Changes in v3.4: AEO text follows the tiers - Basic: name + category + town;
+                  Plus: + address, phone, hours; Premium: everything.
    Changes in v3.3: Business Cards is written by this script (no formula to break):
                   every ticked Master Data row, sorted by name. Ticking/unticking Include
                   updates Business Cards AND Firestore right away. Anything typed straight
@@ -53,7 +55,7 @@
        Check: same name as X (different address) - e.g. another Dollar General
    ========================================================================== */
 
-var BF_VERSION = "v3.3 - Nov 15, 2026 5:35 AM ET";
+var BF_VERSION = "v3.4 - Nov 15, 2026 5:50 AM ET";
 
 // ---- Settings ----------------------------------------------------------------
 var BF_TAB = "Business Finder";
@@ -620,10 +622,11 @@ function dirA_(phrase) { return (/^[aeiou]/i.test(phrase) ? "an " : "a ") + phra
 // One plain sentence AI tools can quote word for word
 function dirSummary_(b) {
   var s = b.name + " is " + dirA_(dirPhrase_(b.category)) + " in " + b.town + ", Illinois (Clay County)";
-  if (b.address) s += ", located at " + b.address;
+  var plus = b.tier === "Plus" || b.tier === "Premium";           // Basic listings: name, category, town only
+  if (plus && b.address) s += ", located at " + b.address;
   s += ".";
-  if (b.phone) s += " Phone: " + b.phone + ".";
-  if (b.hours) s += " Hours: " + b.hours.replace(/\.$/, "") + ".";
+  if (plus && b.phone) s += " Phone: " + b.phone + ".";
+  if (plus && b.hours) s += " Hours: " + b.hours.replace(/\.$/, "") + ".";
   return s;
 }
 
@@ -639,14 +642,14 @@ function dirAnswers_(list) {
     var town = key.split("|")[0], cat = key.split("|")[1], items = groups[key];
     var what = dirPhrase_(cat);
     var names = items.map(function(b) {
-      var street = b.address ? b.address.split(",")[0].trim() : "";
+      var street = (b.tier === "Plus" || b.tier === "Premium") && b.address ? b.address.split(",")[0].trim() : "";
       return b.name + (street && street.toLowerCase() !== town.toLowerCase() && /\d/.test(street) ? " (" + street + ")" : "");
     });
     var last = names.length > 1 ? names.slice(0, -1).join(", ") + " and " + names[names.length - 1] : names[0];
     return {
       town: town, category: cat,
       q: "Where can I find " + dirA_(what) + " in " + town + ", IL?",
-      a: "In " + town + ", Illinois: " + last + ". Listed in the Clay County Business Directory by Support My Local Community."
+      a: "In " + town + ", Illinois: " + last.replace(/\.$/, "") + ". Listed in the Clay County Business Directory by Support My Local Community."
     };
   });
 }
