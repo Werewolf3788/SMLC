@@ -1,8 +1,11 @@
 /* ==========================================================================
-   Active Version: 2026-10-31_v2  |  Updated: Oct 31, 2026 11:16 PM ET
+   Active Version: 2026-11-15_v3  |  Updated: Nov 15, 2026 4:30 AM ET
+   Changes in v3: sends the directory to Firestore (Firebase project smlc-fuel-monitor)
+                  with AEO data (plain-English summary, schema.org type, opening hours,
+                  "Where can I find ... in <town>?" answers) for the SMLC directory page.
    Changes in v2: tries 4 OpenStreetMap servers (fixes "Address unavailable")
    File: BusinessFinder.gs (Google Apps Script - goes in the DIRECTORY sheet)
-   Project: Clay County Business Directory - Business Finder
+   Project: Clay County Business Directory - Business Finder + Firestore sync
 
    Finds Clay County businesses and lists them on their OWN tab
    ("Business Finder") so Master Data is never touched automatically.
@@ -21,6 +24,12 @@
         They are added at the BOTTOM of Master Data with the show box
         UNTICKED, so nothing appears in the directory until you tick it there.
 
+   FIRESTORE (v3) - see the FIRESTORE SYNC section near the bottom for setup.
+     Business Finder menu -> "Send directory to Firestore now"
+     Business Finder menu -> "Turn on automatic sync (every 15 min)"
+     Only rows with "Include in directory" ticked are sent. Unticking a row
+     removes it from the website on the next sync.
+
    DUPLICATES
      Every business gets a Business ID (Google's place ID, or the OpenStreetMap ID).
      The same Business ID is never listed twice on the Business Finder tab.
@@ -33,7 +42,7 @@
        Check: same name as X (different address) - e.g. another Dollar General
    ========================================================================== */
 
-var BF_VERSION = "v2 - Oct 31, 2026 11:16 PM ET";
+var BF_VERSION = "v3 - Nov 15, 2026 4:30 AM ET";
 
 // ---- Settings ----------------------------------------------------------------
 var BF_TAB = "Business Finder";
@@ -86,6 +95,10 @@ function addBusinessFinderMenu() {
     .addSeparator()
     .addItem("Copy ticked rows to Master Data", "copyTickedToMasterData")
     .addItem("Re-check duplicates", "recheckDuplicates")
+    .addSeparator()
+    .addItem("Send directory to Firestore now", "syncDirectoryToFirestore")
+    .addItem("Turn on automatic sync (every 15 min)", "installDirectorySyncTrigger")
+    .addItem("Test Firestore connection", "testFirestoreConnection")
     .addSeparator()
     .addItem("Which version is this?", "showBusinessFinderVersion")
     .addToUi();
@@ -433,4 +446,372 @@ function recheckDuplicates() {
   });
   bf.getRange(2, BF_COL["Status"] + 1, statuses.length, 1).setValues(statuses);
   SpreadsheetApp.getActiveSpreadsheet().toast("Duplicate check updated.", "Business Finder", 5);
+}
+
+/* ==========================================================================
+   FIRESTORE SYNC + AEO (v3)
+   Sends every Master Data row with "Include in directory" ticked to Firestore:
+     businesses/{id}      one document per business (for future admin tools)
+     directory/public     the whole directory in ONE document (the website reads
+                          this once per visit) + AEO answers per town
+   Only changed businesses are written, so it stays inside Firebase's free usage.
+
+   ONE-TIME SETUP (Scott's Google account runs this script, so his account needs
+   permission to write to the smlc-fuel-monitor Firebase project):
+     1. Firebase console (owner) -> Project settings -> Users and permissions ->
+        Add member: skventuresigns@gmail.com, role Editor.
+     2. Apps Script -> Project Settings -> tick "Show appsscript.json manifest file in editor".
+        Open appsscript.json and add the "oauthScopes" list from apps-script/
+        appsscript.directory.json (it keeps every permission Business Finder needs
+        and adds Firestore: https://www.googleapis.com/auth/datastore).
+     3. Business Finder menu -> "Test Firestore connection".
+     4. Business Finder menu -> "Send directory to Firestore now", then
+        "Turn on automatic sync (every 15 min)".
+   ========================================================================== */
+
+var DIR_PROJECT = "smlc-fuel-monitor";
+var DIR_DB = "projects/" + DIR_PROJECT + "/databases/(default)/documents";
+var DIR_API = "https://firestore.googleapis.com/v1/";
+var DIR_IMAGE_BASE = "https://raw.githubusercontent.com/skventuresigns-design/media/main/";
+var DIR_PAGE_URL = "https://supportmylocalcommunity.com/directory.html";
+var DIR_TOWNS = ["Flora", "Louisville", "Clay City", "Xenia", "Sailor Springs", "Iola", "Bible Grove",
+                 "Ingraham", "Hord", "Wendelin", "Rinard"];
+var DIR_TIER_ORDER = { "Premium": 0, "Plus": 1, "Basic": 2 };
+
+// ---- Cleaning helpers ----------------------------------------------------------
+function dirClean_(v) {
+  var s = String(v === null || v === undefined ? "" : v).replace(/\s+/g, " ").trim();
+  return /^(n\/?a|none|null|-|tbd|find)$/i.test(s) ? "" : s;
+}
+function dirUrl_(v) {
+  var s = dirClean_(v);
+  if (!s) return "";
+  var wrapped = s.match(/google\.[a-z.]+\/search\?q=(https?[^&\s]+)/i);   // "google.com/search?q=https://facebook..." -> the real link
+  if (wrapped) s = decodeURIComponent(wrapped[1]);
+  if (/\s/.test(s) || s.indexOf(".") < 0) return "";
+  if (!/^https?:\/\//i.test(s)) s = "https://" + s.replace(/^\/+/, "");
+  return s.replace(/^http:\/\//i, "https://");
+}
+function dirPhone_(v) {
+  var d = String(v || "").replace(/\D/g, "");
+  if (d.length === 11 && d.charAt(0) === "1") d = d.slice(1);
+  return d.length === 10 ? "(" + d.slice(0, 3) + ") " + d.slice(3, 6) + "-" + d.slice(6) : "";
+}
+function dirAddress_(v) {
+  return dirClean_(v).replace(/^find\s*,\s*/i, "").replace(/,\s*IL\s*,\s*(\d{5})/i, ", IL $1").replace(/IL(\d{5})/, "IL $1");
+}
+function dirTown_(town, address) {
+  var t = dirClean_(town);
+  for (var i = 0; i < DIR_TOWNS.length; i++) if (t.toLowerCase() === DIR_TOWNS[i].toLowerCase()) return DIR_TOWNS[i];
+  var fromAddr = bfTownFromAddress_(address, "");
+  if (fromAddr) return fromAddr;
+  var zip = (t.match(/\b(\d{5})\b/) || [])[1];
+  if (zip && BF_ZIP_TOWN[zip]) return BF_ZIP_TOWN[zip];
+  return t.replace(/^IL\s*/i, "") || "Clay County";
+}
+function dirTier_(v) {
+  var t = dirClean_(v).toLowerCase();
+  return t === "premium" ? "Premium" : t === "plus" ? "Plus" : "Basic";
+}
+function dirImage_(v) {
+  var s = dirClean_(v);
+  if (!s || /^placeholder\./i.test(s)) s = "localbusiness.png";
+  return /^https?:\/\//i.test(s) ? s : DIR_IMAGE_BASE + encodeURI(s);
+}
+function dirDate_(v) {
+  if (v instanceof Date && !isNaN(v)) return Utilities.formatDate(v, "America/Chicago", "yyyy-MM-dd");
+  var s = dirClean_(v);
+  if (!s) return "";
+  var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return m[3] + "-" + ("0" + m[1]).slice(-2) + "-" + ("0" + m[2]).slice(-2);
+  return /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(0, 10) : "";
+}
+function dirSlug_(s) {
+  return String(s || "").toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+}
+
+// ---- AEO helpers -----------------------------------------------------------------
+// schema.org type for each category (what Google and AI tools use to understand a business)
+function dirSchemaType_(category, name) {
+  var byCategory = dirSchemaMatch_(String(category || "").toLowerCase());
+  if (byCategory === "NGO" && /church|baptist|methodist|catholic|christian church/i.test(name)) return "Church";
+  if (byCategory !== "LocalBusiness") return byCategory;
+  return dirSchemaMatch_(String(name || "").toLowerCase().replace(/clay county|clay city/g, ""));
+}
+function dirSchemaMatch_(c) {
+  var map = [
+    [/restaurant|diner|cafe|pizza|grill|ice cream|food/, "Restaurant"], [/\bbar\b|saloon|lounge|tavern/, "BarOrPub"],
+    [/gas station|fuel/, "GasStation"], [/hardware/, "HardwareStore"], [/grocery/, "GroceryStore"],
+    [/florist/, "Florist"], [/beauty|salon|barber/, "BeautySalon"], [/auto repair|automotive|tire|auto body/, "AutoRepair"],
+    [/auto parts/, "AutoPartsStore"], [/insurance/, "InsuranceAgency"], [/legal|law/, "Attorney"],
+    [/real estate|realty/, "RealEstateAgent"], [/lodging|hotel|inn\b|motel/, "LodgingBusiness"],
+    [/hospital/, "Hospital"], [/healthcare|clinic|medical|counseling|health/, "MedicalOrganization"],
+    [/dentist/, "Dentist"], [/police|sheriff/, "PoliceStation"], [/fire/, "FireStation"],
+    [/emergency/, "EmergencyService"], [/school|academy|education/, "EducationalOrganization"],
+    [/church|baptist|christian|methodist|catholic/, "Church"], [/government|township|village hall|city of|county|post office/, "GovernmentOffice"],
+    [/bank|banking|financial/, "FinancialService"], [/bookkeeping|accounting|tax|cpa/, "AccountingService"],
+    [/non-profit|nonprofit|legion|club|society|association/, "NGO"], [/library/, "Library"],
+    [/retail|store|boutique|general|walmart|furniture/, "Store"]
+  ];
+  for (var i = 0; i < map.length; i++) if (map[i][0].test(c)) return map[i][1];
+  return "LocalBusiness";
+}
+
+// "Mon-Sat 8AM-7PM; Sun 10AM-5PM" -> ["Mo-Sa 08:00-19:00", "Su 10:00-17:00"]  (empty when unclear)
+function dirOpeningHours_(hours) {
+  var h = dirClean_(hours);
+  if (!h) return [];
+  if (/^(24 ?hours|24\/7|24hrs.*|open 24 hours)$/i.test(h)) return ["Mo-Su 00:00-23:59"];
+  var days = { mon: "Mo", tue: "Tu", wed: "We", thu: "Th", fri: "Fr", sat: "Sa", sun: "Su" };
+  function t24(x) {
+    var m = String(x).trim().toLowerCase().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm|a|p)$/);
+    if (!m) return "";
+    var hr = +m[1] % 12; if (m[3].charAt(0) === "p") hr += 12;
+    return ("0" + hr).slice(-2) + ":" + (m[2] || "00");
+  }
+  var out = [];
+  var parts = h.split(/;\s*/);
+  for (var i = 0; i < parts.length; i++) {
+    var m = parts[i].match(/^(mon|tue|wed|thu|fri|sat|sun)[a-z]*\.?\s*(?:-\s*(mon|tue|wed|thu|fri|sat|sun)[a-z]*\.?)?\s+(\d{1,2}(?::\d{2})?\s*[ap]m?)\s*-\s*(\d{1,2}(?::\d{2})?\s*[ap]m?)$/i);
+    if (!m) return [];                       // one unclear part -> leave hours out of the schema
+    var d1 = days[m[1].toLowerCase()], d2 = m[2] ? days[m[2].toLowerCase()] : "";
+    var a = t24(m[3]), b = t24(m[4]);
+    if (!a || !b) return [];
+    if (b === "00:00") b = "23:59";
+    out.push((d2 ? d1 + "-" + d2 : d1) + " " + a + "-" + b);
+  }
+  return out;
+}
+
+// Category -> words people (and AI tools) actually use: "Automotive" -> "auto shop"
+var DIR_PHRASES = {
+  "agriculture": "farm or agriculture business", "automotive": "auto shop", "auto repair": "auto repair shop",
+  "beauty": "beauty salon or barber shop", "bookkeeping": "tax and bookkeeping service", "butcher": "butcher shop",
+  "delivery": "delivery service", "education": "school", "emergency": "emergency service", "financial": "bank",
+  "gaming": "gaming parlor", "gas station": "gas station", "government": "government office",
+  "hardware": "hardware store", "healthcare": "healthcare provider", "insurance": "insurance agency",
+  "legal": "law office", "lodging": "hotel", "manufacturing": "manufacturer", "non-profit": "non-profit organization",
+  "real estate": "real estate agency", "recreation": "recreation group", "restaurant": "restaurant",
+  "retail": "store", "retail/grocery": "grocery store", "service": "local service business",
+  "services": "local service business", "wholesale": "wholesale distributor", "florist": "florist"
+};
+function dirPhrase_(category) {
+  var c = String(category || "").trim().toLowerCase();
+  if (!c) return "local business";
+  return DIR_PHRASES[c] || c.replace(/\//g, " and ");
+}
+function dirA_(phrase) { return (/^[aeiou]/i.test(phrase) ? "an " : "a ") + phrase; }
+
+// One plain sentence AI tools can quote word for word
+function dirSummary_(b) {
+  var s = b.name + " is " + dirA_(dirPhrase_(b.category)) + " in " + b.town + ", Illinois (Clay County)";
+  if (b.address) s += ", located at " + b.address;
+  s += ".";
+  if (b.phone) s += " Phone: " + b.phone + ".";
+  if (b.hours) s += " Hours: " + b.hours.replace(/\.$/, "") + ".";
+  return s;
+}
+
+// "Where can I find a gas station in Flora, IL?" -> names, for every town + category with listings
+function dirAnswers_(list) {
+  var groups = {};
+  list.forEach(function(b) {
+    if (!b.category) return;
+    var key = b.town + "|" + b.category;
+    (groups[key] = groups[key] || []).push(b);
+  });
+  return Object.keys(groups).sort().map(function(key) {
+    var town = key.split("|")[0], cat = key.split("|")[1], items = groups[key];
+    var what = dirPhrase_(cat);
+    var names = items.map(function(b) {
+      var street = b.address ? b.address.split(",")[0].trim() : "";
+      return b.name + (street && street.toLowerCase() !== town.toLowerCase() && /\d/.test(street) ? " (" + street + ")" : "");
+    });
+    var last = names.length > 1 ? names.slice(0, -1).join(", ") + " and " + names[names.length - 1] : names[0];
+    return {
+      town: town, category: cat,
+      q: "Where can I find " + dirA_(what) + " in " + town + ", IL?",
+      a: "In " + town + ", Illinois: " + last + ". Listed in the Clay County Business Directory by Support My Local Community."
+    };
+  });
+}
+
+// ---- Read Master Data -> clean business records -----------------------------------
+function dirReadMasterData_(values) {
+  var head = values[0].map(function(h) { return String(h).trim().toLowerCase(); });
+  function col(name) { return head.indexOf(name); }
+  var c = {
+    show: col("include in directory") >= 0 ? col("include in directory") : 0,
+    name: col("name"), town: col("town"), phone: col("phone"), category: col("category"), tier: col("tier"),
+    image: col("imageid"), website: col("website"), address: col("address"), hours: col("hours"),
+    facebook: col("facebook"), offer: col("offer"), until: col("validuntil"), bio: col("company-bio"), id: col("business id")
+  };
+  function get(r, k) { return c[k] >= 0 && c[k] < r.length ? r[c[k]] : ""; }
+  var used = {}, list = [];
+  values.slice(1).forEach(function(r) {
+    var show = get(r, "show");
+    if (!(show === true || String(show).toUpperCase() === "TRUE")) return;
+    var name = dirClean_(get(r, "name"));
+    if (!name || /^test$/i.test(name)) return;
+    var address = dirAddress_(get(r, "address"));
+    var b = {
+      name: name,
+      town: dirTown_(get(r, "town"), address),
+      phone: dirPhone_(get(r, "phone")),
+      category: dirClean_(get(r, "category")),
+      tier: dirTier_(get(r, "tier")),
+      image: dirImage_(get(r, "image")),
+      website: dirUrl_(get(r, "website")),
+      address: address,
+      hours: dirClean_(get(r, "hours")),
+      facebook: dirUrl_(get(r, "facebook")),
+      offer: dirClean_(get(r, "offer")),
+      validUntil: dirDate_(get(r, "until")),
+      bio: dirClean_(get(r, "bio")),
+      businessId: dirClean_(get(r, "id"))
+    };
+    var base = b.businessId ? b.businessId.replace(/[\/#?\s]+/g, "_") : dirSlug_(b.name + " " + b.town);
+    var id = base, n = 2;
+    while (used[id]) id = base + "-" + (n++);
+    used[id] = true;
+    b.id = id;
+    b.schemaType = dirSchemaType_(b.category, b.name);
+    b.openingHours = dirOpeningHours_(b.hours);
+    b.summary = dirSummary_(b);
+    list.push(b);
+  });
+  list.sort(function(a, b) {
+    return (DIR_TIER_ORDER[a.tier] - DIR_TIER_ORDER[b.tier]) || a.name.localeCompare(b.name) || a.town.localeCompare(b.town);
+  });
+  return list;
+}
+
+/** Everything the website needs, in one object (also used by the page builder). */
+function dirBuildPublic_(list) {
+  var towns = {}, cats = {};
+  list.forEach(function(b) { towns[b.town] = 1; if (b.category) cats[b.category] = 1; });
+  return {
+    updatedAt: new Date().toISOString(),
+    count: list.length,
+    pageUrl: DIR_PAGE_URL,
+    towns: Object.keys(towns).sort(),
+    categories: Object.keys(cats).sort(),
+    businesses: list,
+    answers: dirAnswers_(list)
+  };
+}
+
+// ---- Firestore REST ---------------------------------------------------------------
+function dirFsValue_(v) {
+  if (v === null || v === undefined) return { nullValue: null };
+  if (typeof v === "boolean") return { booleanValue: v };
+  if (typeof v === "number") return Math.floor(v) === v ? { integerValue: String(v) } : { doubleValue: v };
+  if (Array.isArray(v)) return { arrayValue: v.length ? { values: v.map(dirFsValue_) } : {} };
+  if (typeof v === "object") return { mapValue: { fields: dirFsFields_(v) } };
+  return { stringValue: String(v) };
+}
+function dirFsFields_(obj) {
+  var f = {};
+  Object.keys(obj).forEach(function(k) { f[k] = dirFsValue_(obj[k]); });
+  return f;
+}
+function dirFetch_(method, path, body) {
+  var opts = {
+    method: method, muteHttpExceptions: true, contentType: "application/json",
+    headers: { Authorization: "Bearer " + ScriptApp.getOAuthToken() }
+  };
+  if (body) opts.payload = JSON.stringify(body);
+  var r = UrlFetchApp.fetch(DIR_API + path, opts);
+  var code = r.getResponseCode(), text = r.getContentText();
+  if (code >= 300) {
+    var hint = code === 403 ? "\nPermission denied: see ONE-TIME SETUP at the top of the FIRESTORE SYNC section (Firebase member + appsscript.json scope)." : "";
+    throw new Error("Firestore " + method + " " + path.split("?")[0] + " -> HTTP " + code + ": " + text.slice(0, 300) + hint);
+  }
+  return text ? JSON.parse(text) : {};
+}
+function dirHash_(obj) {
+  var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, JSON.stringify(obj), Utilities.Charset.UTF_8);
+  return bytes.map(function(b) { return ("0" + (b & 255).toString(16)).slice(-2); }).join("");
+}
+
+/** Existing business documents -> { id: hash } */
+function dirExistingHashes_() {
+  var out = {}, token = "";
+  do {
+    var res = dirFetch_("get", DIR_DB + "/businesses?pageSize=300&mask.fieldPaths=hash" + (token ? "&pageToken=" + encodeURIComponent(token) : ""));
+    (res.documents || []).forEach(function(d) {
+      var id = d.name.split("/").pop();
+      out[id] = d.fields && d.fields.hash ? d.fields.hash.stringValue : "";
+    });
+    token = res.nextPageToken || "";
+  } while (token);
+  return out;
+}
+
+// ---- Sync ---------------------------------------------------------------------------
+/** Business Finder menu -> "Send directory to Firestore now" (also used by the 15-minute trigger). */
+function syncDirectoryToFirestore(force) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("DIRECTORY_SHEET_ID"));
+  var master = ss.getSheetByName(BF_MASTER_TAB);
+  if (!master) throw new Error("Tab '" + BF_MASTER_TAB + "' not found.");
+  var props = PropertiesService.getScriptProperties();
+  props.setProperty("DIRECTORY_SHEET_ID", ss.getId());
+
+  var list = dirReadMasterData_(master.getDataRange().getValues());
+  var sheetHash = dirHash_(list);
+  if (force === false && props.getProperty("DIR_LAST_HASH") === sheetHash) {   // timer: skip when nothing changed
+    Logger.log("Directory unchanged - nothing sent.");
+    return 0;
+  }
+
+  var existing = dirExistingHashes_();
+  var now = new Date().toISOString();
+  var writes = [], changed = 0, removed = 0;
+  list.forEach(function(b) {
+    var h = dirHash_(b);
+    if (existing[b.id] === h) return;
+    var doc = {};
+    Object.keys(b).forEach(function(k) { doc[k] = b[k]; });
+    doc.hash = h; doc.updatedAt = now;
+    writes.push({ update: { name: DIR_DB + "/businesses/" + b.id, fields: dirFsFields_(doc) } });
+    changed++;
+  });
+  var keep = {};
+  list.forEach(function(b) { keep[b.id] = true; });
+  Object.keys(existing).forEach(function(id) {
+    if (!keep[id]) { writes.push({ delete: DIR_DB + "/businesses/" + id }); removed++; }
+  });
+  writes.push({ update: { name: DIR_DB + "/directory/public", fields: dirFsFields_(dirBuildPublic_(list)) } });
+
+  for (var i = 0; i < writes.length; i += 400) {
+    dirFetch_("post", DIR_DB + ":commit", { writes: writes.slice(i, i + 400) });
+  }
+  props.setProperty("DIR_LAST_HASH", sheetHash);
+  var msg = list.length + " businesses in the directory: " + changed + " updated, " + removed + " removed.";
+  Logger.log(msg);
+  try { ss.toast(msg, "Directory -> Firestore", 8); } catch (e) {}
+  return changed + removed;
+}
+
+/** Business Finder menu -> "Turn on automatic sync (every 15 min)". Only sends when Master Data changed. */
+function installDirectorySyncTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function(t) {
+    if (t.getHandlerFunction() === "syncDirectoryOnTimer") ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger("syncDirectoryOnTimer").timeBased().everyMinutes(15).create();
+  PropertiesService.getScriptProperties().setProperty("DIRECTORY_SHEET_ID", SpreadsheetApp.getActiveSpreadsheet().getId());
+  syncDirectoryToFirestore(true);
+  SpreadsheetApp.getActiveSpreadsheet().toast("Automatic sync is on: changes reach the website within 15 minutes.", "Directory", 8);
+}
+function syncDirectoryOnTimer() { syncDirectoryToFirestore(false); }
+
+/** Business Finder menu -> "Test Firestore connection" */
+function testFirestoreConnection() {
+  var ui = SpreadsheetApp.getUi();
+  try {
+    dirFetch_("get", DIR_DB + "/businesses?pageSize=1&mask.fieldPaths=hash");
+    ui.alert("Firestore connection works. You can now use \"Send directory to Firestore now\".");
+  } catch (e) {
+    ui.alert("Firestore connection failed:\n\n" + e.message);
+  }
 }
