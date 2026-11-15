@@ -392,7 +392,7 @@ function linkifyRawUrls(text) {
 }
 
 function buildTurnByTurnNavigationUrl(rawAddress) {
-    if (!rawAddress) return "#";
+    if (!rawAddress || !String(rawAddress).trim()) return "";
     const cleanAddress = encodeURIComponent(rawAddress.trim());
     const isAppleDevice = /iPad|iPhone|iPod|Macintosh/i.test(navigator.userAgent) && !window.MSStream;
 
@@ -701,6 +701,69 @@ function trackGa4Event(eventName, eventParams = {}) {
     }
 }
 
+// === REAL LINKS ONLY ===
+// A link is used only when it is a real address. Bare domains ("ourflora.com") get https://;
+// "N/A", "#", blanks and plain words give "" so no link is shown at all (never a dead "#" link).
+function smlcRealUrl(u) {
+    const s = String(u == null ? '' : u).trim();
+    if (!s || s === '#' || /^(n\/?a|none|null|tbd|-|find)$/i.test(s) || /\s/.test(s) && !/^https?:/i.test(s)) return '';
+    if (/^(https?:|mailto:|tel:)/i.test(s)) return s.replace(/^http:\/\//i, 'https://');
+    if (/^\/\//.test(s)) return 'https:' + s;
+    if (/^(\.{0,2}\/|[\w-]+\.html?(?:[?#].*)?$)/i.test(s)) return s;                 // this site's own pages
+    if (/^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(s)) return 'https://' + s;               // ourflora.com -> https://ourflora.com
+    return '';
+}
+window.smlcRealUrl = smlcRealUrl;
+
+// === BUSINESS DIRECTORY LINKS ===
+// Partners, the Business Spotlight, etc. link to the business's directory listing when they
+// have no website of their own. Names must match exactly (ignoring capitals, punctuation,
+// "The", "Inc", "LLC"), so a link never points at the wrong business.
+const SMLC_DIR_DOC = 'https://firestore.googleapis.com/v1/projects/smlc-fuel-monitor/databases/(default)/documents/directory/public?key=AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg';
+window.smlcDirIndexCache = null;
+function smlcDirKey(name) {
+    return String(name || '').toLowerCase().replace(/&/g, ' and ').replace(/\b(the|inc|llc|co|company|corp|corporation)\b\.?/g, ' ').replace(/[^a-z0-9]/g, '');
+}
+function smlcDirectoryIndex() {
+    if (window.smlcDirIndexPromise) return window.smlcDirIndexPromise;
+    const CK = 'smlc_dir_index_v1';
+    const build = list => {
+        const idx = {};
+        (list || []).forEach(b => { if (b && b.id && b.name) idx[smlcDirKey(b.name)] = { id: b.id, name: b.name, town: b.town || '' }; });
+        window.smlcDirIndexCache = idx;
+        return idx;
+    };
+    const fromFs = v => {
+        if (!v || typeof v !== 'object') return v;
+        if ('stringValue' in v) return v.stringValue;
+        if ('arrayValue' in v) return (v.arrayValue.values || []).map(fromFs);
+        if ('mapValue' in v) { const o = {}, f = v.mapValue.fields || {}; Object.keys(f).forEach(k => { o[k] = fromFs(f[k]); }); return o; }
+        return null;
+    };
+    window.smlcDirIndexPromise = (async () => {
+        try {
+            const c = JSON.parse(sessionStorage.getItem(CK) || 'null');
+            if (c && Date.now() - c.t < 30 * 60 * 1000) return build(c.b);
+        } catch (e) {}
+        let list = null;
+        try {
+            const r = await fetch(SMLC_DIR_DOC);
+            if (r.ok) list = fromFs(((await r.json()).fields || {}).businesses);
+        } catch (e) {}
+        if (!list || !list.length) {
+            try { const r = await fetch('data/directory.json'); if (r.ok) list = (await r.json()).businesses; } catch (e) {}
+        }
+        const slim = (list || []).map(b => ({ id: b.id, name: b.name, town: b.town }));
+        try { sessionStorage.setItem(CK, JSON.stringify({ t: Date.now(), b: slim })); } catch (e) {}
+        return build(slim);
+    })();
+    return window.smlcDirIndexPromise;
+}
+function smlcDirectoryHrefFor(name) {
+    const hit = window.smlcDirIndexCache && window.smlcDirIndexCache[smlcDirKey(name)];
+    return hit ? 'directory.html#' + encodeURIComponent(hit.id) : '';
+}
+
 function attachUtmParameters(urlStr) {
     if (!urlStr || urlStr === "#" || urlStr.startsWith("javascript:") || urlStr.startsWith("tel:") || urlStr.startsWith("mailto:")) return urlStr;
     try {
@@ -983,7 +1046,7 @@ function openCalendarLightboxModal(idx) {
     const winLb = getEventWindow(targetItem);
     const tzNote = winLb && !winLb.allDay ? ` ${SMLC_TZ_LABEL}` : '';
     const yourTime = buildViewerTimeNote(winLb);
-    const metaHeader = `${dateText} &bull; ${timeText}${tzNote}${yourTime ? `<br><em>${yourTime}</em>` : ''}<br>Location: <a href="${navUrl}" target="_blank" rel="noopener" style="color:var(--primary); font-weight:bold; text-decoration:underline;">${rawLoc} (Directions &rarr;)</a>`;
+    const metaHeader = `${dateText} &bull; ${timeText}${tzNote}${yourTime ? `<br><em>${yourTime}</em>` : ''}<br>Location: ${navUrl ? '' : escapeHtmlText(rawLoc)}<a ${navUrl ? '' : 'hidden '}href="${navUrl}" target="_blank" rel="noopener" style="color:var(--primary); font-weight:bold; text-decoration:underline;">${rawLoc} (Directions &rarr;)</a>`;
 
     fireLightbox(finalEventImg, title, metaHeader, rawDetails, '', `${title} flyer`);
 }
@@ -1376,7 +1439,7 @@ function extractScoreStreamWidget(entry) {
     const typeMatch = (code + ' ' + script).match(/data-ss_widget_type\s*=\s*["']?([A-Za-z]+)/);
     if (typeMatch) type = typeMatch[1];
     if (!id) return null;
-    return { id, type, label: String(entry.school_grade || '').trim(), website: String(entry.website || '').trim() };
+    return { id, type, label: String(entry.school_grade || '').trim(), website: smlcRealUrl(entry.website) };
 }
 
 function loadScoreStreamEmbed() {
@@ -1497,9 +1560,10 @@ function bindFirebaseMenuEngine(db) {
             const buildMenuLink = (item) => {
                 const name = escapeHtmlText(item.name || item.alt || 'Link');
                 const rawName = String(item.name || item.alt || '');
-                const targetUrl = attachUtmParameters(item.website || '#');
+                const realUrl = smlcRealUrl(item.website);
+                const targetUrl = realUrl ? attachUtmParameters(realUrl) : '';
                 const normImageUrl = normalizeImageUrl(item.imageUrl);
-                const linkTarget = resolveLinkTarget(item.website);
+                const linkTarget = resolveLinkTarget(realUrl);
 
                 const activeTownName = (ACTIVE_TOWN.primaryName || "").toUpperCase();
                 const itemNameUpper = String(item.town || rawName).toUpperCase();
@@ -1514,7 +1578,7 @@ function bindFirebaseMenuEngine(db) {
                     <li class="smlc-menu-dropdown">
                         <details>
                             <summary data-ga-label="Nav_${name.replace(/\s+/g, '')}">${imgTag}<span>${name}</span><span class="smlc-dd-caret" aria-hidden="true">&#9662;</span></summary>
-                            <ul class="smlc-submenu">${kids.map(k => `<li><a href="${attachUtmParameters(k.website || '#')}" target="${resolveLinkTarget(k.website)}" ${resolveLinkTarget(k.website) === '_blank' ? 'rel="noopener"' : ''} data-ga-label="Nav_${String(k.name).replace(/\s+/g, '')}" onclick="window.closeMobileMenu();"><span>${k.name}</span></a></li>`).join('')}</ul>
+                            <ul class="smlc-submenu">${kids.filter(k => smlcRealUrl(k.website)).map(k => `<li><a href="${attachUtmParameters(smlcRealUrl(k.website))}" target="${resolveLinkTarget(smlcRealUrl(k.website))}" ${resolveLinkTarget(smlcRealUrl(k.website)) === '_blank' ? 'rel="noopener"' : ''} data-ga-label="Nav_${String(k.name).replace(/\s+/g, '')}" onclick="window.closeMobileMenu();"><span>${k.name}</span></a></li>`).join('')}</ul>
                         </details>
                     </li>`;
                 }
@@ -1529,8 +1593,10 @@ function bindFirebaseMenuEngine(db) {
                 `;
             };
 
-            const mainItems = rawItems.filter(item => !isMoreItem(item));
-            const moreItems = rawItems.filter(isMoreItem);
+            // Only entries with a real link (or a dropdown of links) become menu items
+            const linkItems = rawItems.filter(item => smlcRealUrl(item.website) || smlcMenuChildren(item).some(k => smlcRealUrl(k.website)));
+            const mainItems = linkItems.filter(item => !isMoreItem(item));
+            const moreItems = linkItems.filter(isMoreItem);
             menuContainer.innerHTML = mainItems.map(buildMenuLink).join('') + (moreItems.length ? `
                     <li class="smlc-more-menu">
                         <button type="button" class="smlc-more-toggle" aria-expanded="false" aria-haspopup="true">
@@ -1539,12 +1605,12 @@ function bindFirebaseMenuEngine(db) {
                         <ul class="smlc-more-list">${moreItems.map(buildMenuLink).join('')}</ul>
                     </li>` : '');
             smlcWireMoreMenu(menuContainer);
-            window.smlcMenuItems = rawItems.map(item => ({
+            window.smlcMenuItems = rawItems.filter(item => smlcRealUrl(item.website)).map(item => ({
                 name: item.name || item.alt || 'Link',
                 town: item.town || '',
                 category: item.category || '',
-                href: attachUtmParameters(item.website || '#'),
-                target: resolveLinkTarget(item.website),
+                href: attachUtmParameters(smlcRealUrl(item.website)),
+                target: resolveLinkTarget(smlcRealUrl(item.website)),
                 img: normalizeImageUrl(item.imageUrl) || ''
             }));
             renderBottomNav();
@@ -1582,7 +1648,8 @@ function bindFirebaseLocalLinksEngine(db) {
                 applyHighDensityScrollLimits(linkTarget, filteredLinks.length, 360);
                 linkTarget.innerHTML = filteredLinks.map(link => {
                     const name = extractText(link.title || link.name || link.label || link.alt) || "Local Resource";
-                    const rawUrl = link.website || link.url || link.link || link.href || "#";
+                    const rawUrl = smlcRealUrl(link.website || link.url || link.link || link.href);
+                    if (!rawUrl) return '';                                   // no real link: leave it out
                     const targetUrl = attachUtmParameters(rawUrl);
                     const linkTargetAttr = resolveLinkTarget(rawUrl);
                     const displayLoc = link.location || link.town || ACTIVE_TOWN.primaryName;
@@ -1747,7 +1814,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
                     const safeImg = escapeJsString(imgUrl);
                     const safeCaption = escapeJsString(captionTitle);
                     const safeAlt = escapeJsString(altText);
-                    const safeWeb = escapeJsString(item.website || '');
+                    const safeWeb = escapeJsString(smlcRealUrl(item.website));
 
                     return `
                         <div class="slider-slide ${idx === 0 ? 'active' : ''}" style="position: absolute; inset: 0; opacity: ${idx === 0 ? 1 : 0}; transition: opacity 0.8s ease-in-out; z-index: ${idx === 0 ? 2 : 1};">
@@ -1849,9 +1916,20 @@ function bindFirebaseSemanticSectionsEngine(db) {
 
             if (spotNameEl && spot.name) spotNameEl.innerText = spot.name;
             if (spotDescEl && spot.description) spotDescEl.innerText = `"${spot.description}"`;
-            if (spotLinkEl && spot.website) {
-                spotLinkEl.href = attachUtmParameters(spot.website);
-                spotLinkEl.target = resolveLinkTarget(spot.website);
+            if (spotLinkEl) {
+                const web = smlcRealUrl(spot.website);
+                const showLink = (href, label, external) => {
+                    spotLinkEl.href = href; spotLinkEl.textContent = label; spotLinkEl.style.display = '';
+                    if (external) { spotLinkEl.target = resolveLinkTarget(href); spotLinkEl.rel = 'noopener'; } else { spotLinkEl.target = '_self'; spotLinkEl.removeAttribute('rel'); }
+                };
+                if (web) showLink(attachUtmParameters(web), 'Visit Business \u2192', true);
+                else {
+                    spotLinkEl.style.display = 'none';                   // never a dead "#" button
+                    smlcDirectoryIndex().then(() => {
+                        const d = smlcDirectoryHrefFor(spot.name);
+                        if (d) showLink(d, 'See directory listing \u2192', false);
+                    });
+                }
             }
 
             const spotImgUrl = normalizeImageUrl(spot.imageUrl);
@@ -1859,7 +1937,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
             if (spotImgEl && !spotImgUrl) safeSetImageSource(spotImgEl, null, null, spotAltText);
             if (spotImgEl && spotImgUrl) {
                 safeSetImageSource(spotImgEl, spotImgUrl, null, spotAltText);
-                spotImgEl.onclick = () => fireLightbox(escapeJsString(spotImgUrl), escapeJsString(spot.name || 'Merchant'), ACTIVE_TOWN.primaryName + ', IL', escapeJsString(spot.description || ''), escapeJsString(spot.website || ''), escapeJsString(spotAltText));
+                spotImgEl.onclick = () => fireLightbox(escapeJsString(spotImgUrl), escapeJsString(spot.name || 'Merchant'), ACTIVE_TOWN.primaryName + ', IL', escapeJsString(spot.description || ''), escapeJsString(smlcRealUrl(spot.website) || smlcDirectoryHrefFor(spot.name)), escapeJsString(spotAltText));
             }
 
             // --- 5. TOWN HISTORY TIMELINE & MERGED ABOUT SECTION ---
@@ -1992,6 +2070,12 @@ function bindFirebasePartnersEngine(db) {
             window.globalPartnersPool = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
             renderCombinedPartners();
         });
+
+        // Partners with no website link to their directory listing once the directory has loaded
+        smlcDirectoryIndex().then(idx => {
+            const pool = [...window.townPartnersPool, ...window.globalPartnersPool];
+            if (pool.some(p => p && !smlcRealUrl(p.website) && idx[smlcDirKey(p.name)])) renderCombinedPartners();
+        });
     } catch(err) {
         console.warn("Partners engine error:", err.message);
     }
@@ -2053,8 +2137,10 @@ if (!window.smlcVideoGestureBound) {
 function smlcPartnerCardMarkup(partner, pinned) {
     const imgUrl = normalizeImageUrl(resolvePartnerImage(partner.imageUrl || partner.image1));
     const name = partner.name || 'Local Community Partner';
-    const rawUrl = partner.website || '#';
-    const link = attachUtmParameters(rawUrl);
+    const website = smlcRealUrl(partner.website);
+    const dirHref = website ? '' : smlcDirectoryHrefFor(name);          // no website: their directory listing, if any
+    const rawUrl = website || dirHref;
+    const link = website ? attachUtmParameters(website) : dirHref;     // our own directory page: no tracking tags
     const linkTargetAttr = resolveLinkTarget(rawUrl);
     const altText = partner.alt || name;
     const open = `fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')`;
@@ -2067,7 +2153,8 @@ function smlcPartnerCardMarkup(partner, pinned) {
                     : `<img class="partner-logo-asset" src="${imgUrl}" alt="${escapeJsString(altText)} logo" loading="lazy" onclick="${open}" style="cursor:pointer;">`}
             </div>
             <h3 class="partner-title">${name}</h3>
-            ${partner.website ? `<a class="directory-tile-link" href="${link}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} data-ga-label="partner_cta">Visit Partner &rarr;</a>` : ''}
+            ${website ? `<a class="directory-tile-link" href="${link}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} data-ga-label="partner_cta">Visit Partner &rarr;</a>`
+              : dirHref ? `<a class="directory-tile-link" href="${link}" data-ga-label="partner_directory">See directory listing &rarr;</a>` : ''}
         </div>
     `;
 }

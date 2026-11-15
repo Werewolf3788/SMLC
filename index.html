@@ -398,9 +398,28 @@
             return String(v == null ? "" : v).replace(/[&<>"']/g, c =>
                 ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
         }
+        // Real links only: "ourflora.com" -> https://ourflora.com; "N/A", "#", blanks -> "" (no link shown)
         function safeUrl(u) {
             const s = String(u || "").trim();
-            return /^(https?:\/\/|\.{0,2}\/|[\w\-]+\.html)/i.test(s) ? s : "";
+            if (!s || s === "#" || /^(n\/?a|none|null|tbd|-|find)$/i.test(s)) return "";
+            if (/^(https?:\/\/|\.{0,2}\/|[\w\-]+\.html)/i.test(s)) return s.replace(/^http:\/\//i, "https://");
+            if (/^\/\//.test(s)) return "https:" + s;
+            if (/^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(s)) return "https://" + s;
+            return "";
+        }
+        // Name -> directory.html#id when the business is in the Clay County Business Directory (exact name match)
+        function smlcDirKey(n) { return String(n || "").toLowerCase().replace(/&/g, " and ").replace(/\b(the|inc|llc|co|company|corp|corporation)\b\.?/g, " ").replace(/[^a-z0-9]/g, ""); }
+        let smlcDirIdx = null;
+        function smlcDirectoryLinkFor(name) {
+            const FS = "https://firestore.googleapis.com/v1/projects/smlc-fuel-monitor/databases/(default)/documents/directory/public?key=AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg";
+            const fromFs = v => !v || typeof v !== "object" ? v : "stringValue" in v ? v.stringValue
+                : "arrayValue" in v ? (v.arrayValue.values || []).map(fromFs)
+                : "mapValue" in v ? Object.fromEntries(Object.entries(v.mapValue.fields || {}).map(([k, x]) => [k, fromFs(x)])) : null;
+            const toIdx = list => { const idx = {}; (list || []).forEach(b => { if (b && b.id && b.name) idx[smlcDirKey(b.name)] = b.id; }); return idx; };
+            if (!smlcDirIdx) smlcDirIdx = fetch(FS).then(r => r.ok ? r.json() : Promise.reject())
+                .then(d => { const l = fromFs((d.fields || {}).businesses); if (!l || !l.length) throw 0; return toIdx(l); })
+                .catch(() => fetch("data/directory.json").then(r => r.ok ? r.json() : { businesses: [] }).then(p => toIdx(p.businesses)).catch(() => ({})));
+            return smlcDirIdx.then(idx => idx[smlcDirKey(name)] ? "directory.html#" + encodeURIComponent(idx[smlcDirKey(name)]) : "");
         }
         function driveToImage(u) {
             const s = safeUrl(u);
@@ -536,10 +555,11 @@
             }
 
             navLinks.innerHTML = "";
-            items.filter(it => !isMore(it)).forEach(it => navLinks.appendChild(makeItem(it)));
+            // Only entries with a real link become menu items (no dead "#" links)
+            items.filter(it => !isMore(it) && safeUrl(it.website)).forEach(it => navLinks.appendChild(makeItem(it)));
 
             // Category "More" -> its own dropdown
-            const moreItems = items.filter(isMore);
+            const moreItems = items.filter(it => isMore(it) && safeUrl(it.website));
             if (moreItems.length) {
                 const li = document.createElement("li");
                 li.className = "nav-more";
@@ -579,7 +599,14 @@
             if (img) { imgEl.src = img; imgEl.alt = s.alt || s.name; }
             const link = document.getElementById("spotlight-link");
             const web = safeUrl(s.website);
-            if (web) link.href = web; else link.style.display = "none";
+            if (web) { link.href = web; link.textContent = "Visit Website"; link.style.display = ""; }
+            else {
+                link.style.display = "none";                       // never a dead link
+                smlcDirectoryLinkFor(s.name).then(d => {           // no website: their directory listing, if any
+                    if (!d) return;
+                    link.href = d; link.textContent = "See directory listing"; link.target = "_self"; link.removeAttribute("rel"); link.style.display = "";
+                });
+            }
         }
 
         let gasTimer = null;
