@@ -104,6 +104,7 @@
             // Never start a separately named app first: universaltown.js would then skip its own setup.
             var app = (firebase.apps || []).filter(function (a) { return a.name === '[DEFAULT]'; })[0] ||
                       firebase.initializeApp(FIREBASE_CONFIG);
+            if (typeof window.smlcEnableOffline === 'function') window.smlcEnableOffline();   // saved copy when offline
             db = app.database();
         } catch (e) { console.warn('Community Corner: Firebase not available', e.message); }
         return db;

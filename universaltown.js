@@ -1515,7 +1515,7 @@ function bindFirebaseServices() {
         // Start the main ([DEFAULT]) Firebase app unless it's already running.
         // (Other scripts on the page may start their own named apps first.)
         if (!firebase.apps.some(a => a.name === '[DEFAULT]')) firebase.initializeApp(firebaseConfig);
-        
+        if (typeof window.smlcEnableOffline === 'function') window.smlcEnableOffline();   // saved copy when offline
         const db = firebase.database();
 
         initializeFirebaseGasMonitor(db);

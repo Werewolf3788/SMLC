@@ -55,7 +55,8 @@
         var tel = b.phone ? b.phone.replace(/\D/g, '') : '';
         var lines = [];
         if (plus) {
-            if (b.address) lines.push('<li><span aria-hidden="true">&#128205;</span> <a href="' + esc(b.mapsUrl || mapsLink(b.address)) + '" target="_blank" rel="noopener">' + esc(b.address) + '</a></li>');
+            // data-address: on iPhone/iPad/Mac, smlc-app.js opens Apple Maps with this address instead
+            if (b.address) lines.push('<li><span aria-hidden="true">&#128205;</span> <a href="' + esc(b.mapsUrl || mapsLink(b.address)) + '" data-address="' + esc(b.address) + '" target="_blank" rel="noopener">' + esc(b.address) + '</a></li>');
             else if (b.mapsUrl) lines.push('<li><span aria-hidden="true">&#128205;</span> <a href="' + esc(b.mapsUrl) + '" target="_blank" rel="noopener">Open in Google Maps</a></li>');
             if (b.phone) lines.push('<li><span aria-hidden="true">&#128222;</span> <a href="tel:' + esc(tel) + '">' + esc(b.phone) + '</a></li>');
             if (b.hours) lines.push('<li><span aria-hidden="true">&#128339;</span> ' + esc(b.hours) + '</li>');

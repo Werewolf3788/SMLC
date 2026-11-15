@@ -11,6 +11,7 @@
 - [Xenia, IL](https://supportmylocalcommunity.com/xenia.html): Xenia events, news, gas prices, weather, landmarks and history (ZIP 62899)
 
 - [Clay County Business Directory](https://supportmylocalcommunity.com/directory.html): phone numbers, addresses, hours and offers for local businesses, services, churches and offices, with quick answers by town
+- [Install the SMLC app](https://supportmylocalcommunity.com/install.html): add SMLC to an iPhone, Android phone or computer; works offline
 - [Clay County photo gallery](https://supportmylocalcommunity.com/gallery.html): community photos of Clay County towns and history
 - [Share photos](https://supportmylocalcommunity.com/share-photos.html): send photos to the free gallery
 - [Gas prices](https://supportmylocalcommunity.com/update-gas.html): see and update local fuel prices
