@@ -1,5 +1,9 @@
 /* ==========================================================================
-   Active Version: 2026-11-15_v3.2  |  Updated: Nov 15, 2026 5:20 AM ET
+   Active Version: 2026-11-15_v3.3  |  Updated: Nov 15, 2026 5:35 AM ET
+   Changes in v3.3: Business Cards is written by this script (no formula to break):
+                  every ticked Master Data row, sorted by name. Ticking/unticking Include
+                  updates Business Cards AND Firestore right away. Anything typed straight
+                  into Business Cards is moved into Master Data (ticked) instead of lost.
    Changes in v3.2: a row with ONLY a Maps link becomes a full new business: name, town,
                   category, tier "Basic", logo placeholder (show box stays unticked);
                   warns when the same Google place is already on another row.
@@ -32,9 +36,10 @@
 
    FIRESTORE (v3) - see the FIRESTORE SYNC section near the bottom for setup.
      Business Finder menu -> "Send directory to Firestore now"
-     Business Finder menu -> "Turn on automatic sync (every 15 min)"
-     Only rows with "Include in directory" ticked are sent. Unticking a row
-     removes it from the website on the next sync.
+     Business Finder menu -> "Turn on automatic sync (instant + every 15 min)"
+     Only rows with "Include in directory" ticked are sent. Ticking / unticking
+     updates Business Cards and the website right away; other edits within 15 min.
+     Business Cards is written by this script - add businesses in Master Data only.
 
    DUPLICATES
      Every business gets a Business ID (Google's place ID, or the OpenStreetMap ID).
@@ -48,7 +53,7 @@
        Check: same name as X (different address) - e.g. another Dollar General
    ========================================================================== */
 
-var BF_VERSION = "v3.2 - Nov 15, 2026 5:20 AM ET";
+var BF_VERSION = "v3.3 - Nov 15, 2026 5:35 AM ET";
 
 // ---- Settings ----------------------------------------------------------------
 var BF_TAB = "Business Finder";
@@ -104,7 +109,8 @@ function addBusinessFinderMenu() {
     .addItem("Re-check duplicates", "recheckDuplicates")
     .addSeparator()
     .addItem("Send directory to Firestore now", "syncDirectoryToFirestore")
-    .addItem("Turn on automatic sync (every 15 min)", "installDirectorySyncTrigger")
+    .addItem("Turn on automatic sync (instant + every 15 min)", "installDirectorySyncTrigger")
+    .addItem("Rebuild Business Cards now", "rebuildBusinessCardsNow")
     .addItem("Test Firestore connection", "testFirestoreConnection")
     .addSeparator()
     .addItem("Which version is this?", "showBusinessFinderVersion")
@@ -768,6 +774,17 @@ function syncDirectoryToFirestore(force) {
   var props = PropertiesService.getScriptProperties();
   props.setProperty("DIRECTORY_SHEET_ID", ss.getId());
 
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) { Logger.log("Another sync is running - skipped."); return 0; }
+  try {
+    dirRebuildBusinessCards_(ss);                       // Business Cards always matches Master Data
+    return dirSendToFirestore_(ss, master, props, force);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function dirSendToFirestore_(ss, master, props, force) {
   var list = dirReadMasterData_(master.getDataRange().getValues());
   var sheetHash = dirHash_(list);
   if (force === false && props.getProperty("DIR_LAST_HASH") === sheetHash) {   // timer: skip when nothing changed
@@ -804,17 +821,125 @@ function syncDirectoryToFirestore(force) {
   return changed + removed;
 }
 
-/** Business Finder menu -> "Turn on automatic sync (every 15 min)". Only sends when Master Data changed. */
+/** Business Finder menu -> "Turn on automatic sync". Two triggers:
+ *   - on edit: any Master Data edit rebuilds Business Cards at once; ticking/unticking
+ *     Include (column A) also updates Firestore at once
+ *   - every 15 min: sends other edits (phone, hours, ...) when Master Data changed */
 function installDirectorySyncTrigger() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
   ScriptApp.getProjectTriggers().forEach(function(t) {
-    if (t.getHandlerFunction() === "syncDirectoryOnTimer") ScriptApp.deleteTrigger(t);
+    var f = t.getHandlerFunction();
+    if (f === "syncDirectoryOnTimer" || f === "onMasterDataEdit") ScriptApp.deleteTrigger(t);
   });
   ScriptApp.newTrigger("syncDirectoryOnTimer").timeBased().everyMinutes(15).create();
-  PropertiesService.getScriptProperties().setProperty("DIRECTORY_SHEET_ID", SpreadsheetApp.getActiveSpreadsheet().getId());
+  ScriptApp.newTrigger("onMasterDataEdit").forSpreadsheet(ss).onEdit().create();
+  PropertiesService.getScriptProperties().setProperty("DIRECTORY_SHEET_ID", ss.getId());
   syncDirectoryToFirestore(true);
-  SpreadsheetApp.getActiveSpreadsheet().toast("Automatic sync is on: changes reach the website within 15 minutes.", "Directory", 8);
+  ss.toast("Automatic sync is on: ticking or unticking Include updates Business Cards and the website right away; other edits within 15 minutes.", "Directory", 10);
 }
 function syncDirectoryOnTimer() { syncDirectoryToFirestore(false); }
+
+/** Installed "on edit" trigger (see installDirectorySyncTrigger) */
+function onMasterDataEdit(e) {
+  if (!e || !e.range) return;
+  var sheet = e.range.getSheet();
+  var name = sheet.getName();
+  if (name === "Business Cards") {                     // typed into Business Cards: move it into Master Data
+    syncDirectoryToFirestore(false);
+    return;
+  }
+  if (name !== BF_MASTER_TAB || e.range.getRow() < 2 && e.range.getLastRow() < 2) return;
+  if (e.range.getColumn() === 1) {                     // Include ticked / unticked -> everything now
+    syncDirectoryToFirestore(false);
+  } else {                                             // other edits: Business Cards now, Firestore on the timer
+    var lock = LockService.getScriptLock();
+    if (!lock.tryLock(10000)) return;
+    try { dirRebuildBusinessCards_(e.source); } finally { lock.releaseLock(); }
+  }
+}
+
+/** Business Finder menu -> "Rebuild Business Cards now" */
+function rebuildBusinessCardsNow() {
+  var r = dirRebuildBusinessCards_(SpreadsheetApp.getActiveSpreadsheet());
+  SpreadsheetApp.getActiveSpreadsheet().toast(r.count + " businesses on Business Cards." +
+    (r.rescued.length ? " Moved into Master Data: " + r.rescued.join(", ") : ""), "Business Cards", 8);
+}
+
+/* ---- Business Cards (written by this script; replaces the old FILTER formula) ----------
+   Same layout the old formula made: Master Data's name..company-bio headers, then every
+   ticked row, sorted by name. Rows someone typed straight into Business Cards that are not
+   in Master Data are first ADDED to Master Data (ticked), so nothing is lost. */
+var DIR_CARDS_TAB = "Business Cards";
+
+function dirKey_(name, town) { return bfNorm_(name) + "|" + bfNorm_(town); }
+
+function dirRebuildBusinessCards_(ss) {
+  var master = ss.getSheetByName(BF_MASTER_TAB);
+  var cards = ss.getSheetByName(DIR_CARDS_TAB) || ss.insertSheet(DIR_CARDS_TAB);
+  var props = PropertiesService.getScriptProperties();
+  var values = master.getDataRange().getValues();
+  var head = values[0].map(function(h) { return String(h).trim().toLowerCase(); });
+  var cols = BF_MASTER_COLUMNS.map(function(c) { return head.indexOf(c.toLowerCase()); });
+  var cName = head.indexOf("name"), cTown = head.indexOf("town");
+
+  // 1. Rescue rows typed into Business Cards that Master Data doesn't have
+  var inMaster = {};
+  values.slice(1).forEach(function(r) { if (dirClean_(r[cName])) inMaster[dirKey_(r[cName], r[cTown])] = true; });
+  var lastWritten = {};
+  String(props.getProperty("DIR_CARDS_KEYS") || "").split(",").forEach(function(k) { if (k) lastWritten[k] = true; });
+  var rescued = [], rescueRows = [];
+  if (cards.getLastRow() >= 2) {
+    var cv = cards.getRange(1, 1, cards.getLastRow(), Math.max(cards.getLastColumn(), BF_MASTER_COLUMNS.length)).getValues();
+    var ch = cv[0].map(function(h) { return String(h).trim().toLowerCase(); });
+    var cardsName = ch.indexOf("name") >= 0 ? ch.indexOf("name") : 0;
+    var cardsTown = ch.indexOf("town") >= 0 ? ch.indexOf("town") : 1;
+    cv.slice(1).forEach(function(r) {
+      var nm = dirClean_(r[cardsName]);
+      if (!nm || /^#(ref|n\/a|value)/i.test(nm)) return;
+      var key = dirKey_(nm, r[cardsTown]);
+      var hk = dirHash_(key).slice(0, 10);
+      if (inMaster[key] || lastWritten[hk]) return;      // already in Master Data, or written by us before (renamed since)
+      var row = [true];
+      BF_MASTER_COLUMNS.forEach(function(c, j) { var k = ch.indexOf(c.toLowerCase()); row.push(k >= 0 ? r[k] : r[j]); });
+      while (row.length < head.length) row.push("");
+      rescueRows.push(row.slice(0, Math.max(head.length, row.length)));
+      rescued.push(nm);
+      inMaster[key] = true;
+    });
+  }
+  if (rescueRows.length) {
+    var width = Math.max(head.length, rescueRows[0].length);
+    rescueRows = rescueRows.map(function(r) { while (r.length < width) r.push(""); return r.slice(0, width); });
+    // use the first empty rows (name..company-bio blank), else add at the bottom
+    var free = [];
+    values.slice(1).forEach(function(r, i) {
+      if (free.length < rescueRows.length && r.slice(1).every(function(v) { return v === "" || v === null; })) free.push(i + 2);   // every column after A blank (keeps Maps links / IDs safe)
+    });
+    var next = values.length + 1;
+    rescueRows.forEach(function(row, i) {
+      var at = free[i] || next++;
+      master.getRange(at, 1, 1, width).setValues([row]);
+      master.getRange(at, 1, 1, 1).insertCheckboxes();
+    });
+    values = master.getDataRange().getValues();
+  }
+
+  // 2. Write header + ticked rows, sorted by name (values only)
+  var out = values.slice(1).filter(function(r) {
+    return (r[0] === true || String(r[0]).toUpperCase() === "TRUE") && dirClean_(r[cName]);
+  }).map(function(r) {
+    return cols.map(function(c) { return c >= 0 ? r[c] : ""; });
+  }).sort(function(a, b) { return String(a[0]).toLowerCase().localeCompare(String(b[0]).toLowerCase()); });
+  var header = BF_MASTER_COLUMNS.map(function(c, j) { return cols[j] >= 0 ? values[0][cols[j]] : c; });
+  cards.clearContents();
+  cards.getRange(1, 1, 1, header.length).setValues([header]);
+  if (out.length) cards.getRange(2, 1, out.length, header.length).setValues(out);
+  if (cards.getFrozenRows() < 1) cards.setFrozenRows(1);
+
+  props.setProperty("DIR_CARDS_KEYS", out.map(function(r) { return dirHash_(dirKey_(r[0], r[1])).slice(0, 10); }).join(","));
+  if (rescued.length) { try { ss.toast("Moved into Master Data (ticked): " + rescued.join(", "), "Business Cards", 10); } catch (e) {} }
+  return { count: out.length, rescued: rescued };
+}
 
 /** Business Finder menu -> "Test Firestore connection" */
 function testFirestoreConnection() {
