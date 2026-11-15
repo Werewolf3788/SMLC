@@ -1,5 +1,7 @@
 /* ==========================================================================
-   Active Version: 2026-11-15_v3.4  |  Updated: Nov 15, 2026 5:50 AM ET
+   Active Version: 2026-11-15_v3.5  |  Updated: Nov 15, 2026 6:10 AM ET
+   Changes in v3.5: Menu -> "Check Clay County (all rows)": writes a County Check column
+                  using the free U.S. Census address lookup + town/ZIP/state/area-code checks.
    Changes in v3.4: AEO text follows the tiers - Basic: name + category + town;
                   Plus: + address, phone, hours; Premium: everything.
    Changes in v3.3: Business Cards is written by this script (no formula to break):
@@ -55,7 +57,7 @@
        Check: same name as X (different address) - e.g. another Dollar General
    ========================================================================== */
 
-var BF_VERSION = "v3.4 - Nov 15, 2026 5:50 AM ET";
+var BF_VERSION = "v3.5 - Nov 15, 2026 6:10 AM ET";
 
 // ---- Settings ----------------------------------------------------------------
 var BF_TAB = "Business Finder";
@@ -108,6 +110,7 @@ function addBusinessFinderMenu() {
     .addSeparator()
     .addItem("Copy ticked rows to Master Data", "copyTickedToMasterData")
     .addItem("Fill blanks from Google Maps (column O)", "fillFromGoogleMaps")
+    .addItem("Check Clay County (all rows)", "checkClayCounty")
     .addItem("Re-check duplicates", "recheckDuplicates")
     .addSeparator()
     .addItem("Send directory to Firestore now", "syncDirectoryToFirestore")
@@ -1154,4 +1157,130 @@ function fillFromGoogleMaps() {
             (Date.now() - started > 5 * 60 * 1000 ? "\n\nStopped at the time limit: run it again to continue." : "");
   Logger.log(msg);
   SpreadsheetApp.getUi().alert("Google Maps fill-in", msg, SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+/* ==========================================================================
+   CLAY COUNTY CHECK (v3.5) - Business Finder menu -> "Check Clay County (all rows)"
+   Writes a "County Check" column in Master Data (added at the far right):
+     ✓ Clay County                      Census Bureau says the street address is in Clay County, IL
+     ✗ Wayne County, IL                 the address is in another county
+     ✗ Not Illinois (WI)                another state
+     ✗ ZIP 62878 is outside Clay County  no street address, but the ZIP is not a Clay County ZIP
+     ? Likely Clay County (no street address)   town/ZIP look right, nothing to verify exactly
+     ? Not verified: <reason>           e.g. the Census lookup could not match the address
+   Extra warnings are added for phone area codes outside Illinois (e.g. 715 = Wisconsin).
+   Nothing is unticked or deleted. Rows are re-checked only when their address changes,
+   so run it again any time (it stops after ~5 minutes; run again to continue).
+   Census lookup: free, no key - https://geocoding.geo.census.gov
+   ========================================================================== */
+var CC_ZIPS = { "62839": "Flora", "62858": "Louisville", "62824": "Clay City", "62899": "Xenia",
+                "62879": "Sailor Springs", "62838": "Iola", "62434": "Ingraham" };
+var CC_PLACES = ["flora", "louisville", "clay city", "xenia", "sailor springs", "iola", "ingraham", "bible grove",
+                 "hord", "oskaloosa", "songer", "pixley", "larkinsburg", "harter", "stanford", "blair", "hoosier",
+                 "clay county", "riffle", "kenner", "camp travis", "greendale", "oak mound"];
+var IL_AREA_CODES = ["217", "224", "309", "312", "331", "447", "464", "618", "630", "708", "730", "773", "779", "815", "847", "861", "872"];
+var TOLL_FREE = ["800", "833", "844", "855", "866", "877", "888"];
+var STATE_CODES = /\b(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)\s+\d{5}\b/;
+
+/** Census Bureau: address -> { county, state, fips } or null */
+function ccCensus_(address) {
+  var url = "https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?benchmark=Public_AR_Current&vintage=Current_Current&layers=Counties&format=json&address=" + encodeURIComponent(address);
+  var r = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+  if (r.getResponseCode() !== 200) throw new Error("Census lookup HTTP " + r.getResponseCode());
+  var m = ((JSON.parse(r.getContentText()).result || {}).addressMatches || [])[0];
+  if (!m) return null;
+  var c = ((m.geographies || {}).Counties || [])[0];
+  if (!c) return null;
+  return { county: c.NAME || c.BASENAME || "", fips: String(c.GEOID || (String(c.STATE || "") + String(c.COUNTY || ""))), state: String(c.STATE || ""), matched: m.matchedAddress || "" };
+}
+
+var FIPS_STATE = { "17": "IL", "18": "IN", "29": "MO", "21": "KY", "55": "WI", "19": "IA", "26": "MI", "39": "OH" };
+
+/** One row -> { result, warn } */
+function ccCheckRow_(name, town, address, phone, census) {
+  var addr = dirAddress_(address), t = dirClean_(town).toLowerCase();
+  var warn = [];
+  var area = String(phone || "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "").slice(0, 3);
+  if (area.length === 3 && IL_AREA_CODES.indexOf(area) < 0 && TOLL_FREE.indexOf(area) < 0) warn.push("phone area code " + area + " is not Illinois");
+
+  var other = (addr.match(STATE_CODES) || [])[1];
+  if (other && other !== "IL") return { result: "✗ Not Illinois (" + other + ")", warn: warn };
+  var zip = (addr.match(/\b(\d{5})\b(?!.*\b\d{5}\b)/) || [])[1] || (t.match(/\b(\d{5})\b/) || [])[1];
+
+  var hasStreet = /^\s*\d+\s+\S/.test(addr) && !/service area|hub|po box/i.test(addr);
+  if (hasStreet && census) {
+    try {
+      var c = census(addr.indexOf(",") > 0 ? addr : addr + ", " + (town || "") + ", IL");
+      if (c) {
+        if (c.fips === "17025") return { result: "✓ Clay County", warn: warn };
+        var st = FIPS_STATE[c.state] || ("state " + c.state);
+        return { result: "✗ " + c.county + (st ? ", " + st : ""), warn: warn };
+      }
+      warn.push("Census could not match the street address");
+    } catch (e) {
+      warn.push("Census lookup failed (" + e.message + ")");
+    }
+  }
+  if (zip && !CC_ZIPS[zip]) return { result: "✗ ZIP " + zip + " is outside Clay County", warn: warn };
+  var placeOk = CC_PLACES.some(function(p) { return t.indexOf(p) >= 0 || addr.toLowerCase().indexOf(p) >= 0; });
+  if (zip && CC_ZIPS[zip]) return { result: "? Likely Clay County (" + (hasStreet ? "address not verified" : "no street address") + ")", warn: warn };
+  if (placeOk) return { result: "? Likely Clay County (no street address or ZIP)", warn: warn };
+  return { result: "? Not verified: no Clay County town, ZIP or street address", warn: warn };
+}
+
+/** Business Finder menu -> "Check Clay County (all rows)" */
+function checkClayCounty() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var master = ss.getSheetByName(BF_MASTER_TAB);
+  var lastCol = master.getLastColumn();
+  var head = master.getRange(1, 1, 1, lastCol).getValues()[0].map(function(h) { return String(h).trim().toLowerCase(); });
+  var cCheck = head.indexOf("county check");
+  if (cCheck < 0) {
+    cCheck = lastCol;
+    master.getRange(1, cCheck + 1).setValue("County Check")
+      .setNote("Filled by Business Finder -> Check Clay County. ✓ = verified in Clay County, ✗ = outside, ? = could not verify exactly.");
+    lastCol++;
+  }
+  var cName = head.indexOf("name"), cTown = head.indexOf("town"), cAddr = head.indexOf("address"), cPhone = head.indexOf("phone");
+  var n = master.getLastRow() - 1;
+  if (n < 1) return;
+  var data = master.getRange(2, 1, n, lastCol).getValues();
+  var checkRange = master.getRange(2, cCheck + 1, n, 1);
+  var results = checkRange.getValues(), notes = checkRange.getNotes();
+  var colors = checkRange.getBackgrounds();
+  var started = Date.now(), done = 0, skipped = 0, stopped = false;
+  var counts = { ok: 0, out: 0, maybe: 0 }, outside = [];
+
+  for (var i = 0; i < n; i++) {
+    var r = data[i];
+    var name = dirClean_(r[cName]);
+    if (!name) { results[i][0] = ""; notes[i][0] = ""; colors[i][0] = null; continue; }
+    var key = [r[cTown], r[cAddr], r[cPhone]].join(" | ");
+    if (notes[i][0] === key && results[i][0]) { skipped++; tally(results[i][0], name, i); continue; }   // unchanged since last check
+    if (Date.now() - started > 5 * 60 * 1000) { stopped = true; break; }
+    var res = ccCheckRow_(name, r[cTown], r[cAddr], r[cPhone], ccCensus_);
+    results[i][0] = res.result + (res.warn.length ? "  ⚠ " + res.warn.join("; ") : "");
+    notes[i][0] = key;
+    colors[i][0] = res.result.charAt(0) === "✓" ? "#d9f2dd" : res.result.charAt(0) === "✗" ? "#f8d7d5" : "#fff3c4";
+    if (res.warn.length && res.result.charAt(0) === "✓") colors[i][0] = "#fff3c4";
+    tally(results[i][0], name, i);
+    done++;
+    Utilities.sleep(150);
+  }
+  function tally(text, nm, idx) {
+    var c = String(text).charAt(0);
+    if (c === "✓" && String(text).indexOf("⚠") < 0) counts.ok++;
+    else if (c === "✗") { counts.out++; outside.push("Row " + (idx + 2) + ": " + nm + " - " + String(text).slice(2)); }
+    else counts.maybe++;
+  }
+  checkRange.setValues(results);
+  checkRange.setNotes(notes);
+  checkRange.setBackgrounds(colors);
+
+  var msg = "Checked " + done + " rows (" + skipped + " unchanged since last time).\n\n" +
+            "✓ In Clay County: " + counts.ok + "\n✗ Outside Clay County: " + counts.out + "\n? Check by hand: " + counts.maybe +
+            (outside.length ? "\n\nOutside:\n" + outside.slice(0, 20).join("\n") + (outside.length > 20 ? "\n…and " + (outside.length - 20) + " more" : "") : "") +
+            (stopped ? "\n\nStopped at the time limit - run it again to finish the rest." : "");
+  Logger.log(msg);
+  SpreadsheetApp.getUi().alert("Clay County check", msg, SpreadsheetApp.getUi().ButtonSet.OK);
 }
