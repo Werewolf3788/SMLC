@@ -1,5 +1,8 @@
 /* ==========================================================================
-   Active Version: 2026-11-15_v3.1  |  Updated: Nov 15, 2026 5:15 AM ET
+   Active Version: 2026-11-15_v3.2  |  Updated: Nov 15, 2026 5:20 AM ET
+   Changes in v3.2: a row with ONLY a Maps link becomes a full new business: name, town,
+                  category, tier "Basic", logo placeholder (show box stays unticked);
+                  warns when the same Google place is already on another row.
    Changes in v3.1: Master Data column O "Google Maps" (a Maps share link or a plus code).
                   Menu -> "Fill blanks from Google Maps (column O)" fills empty Address /
                   phone / website / hours cells; the website's address links open that exact spot.
@@ -45,7 +48,7 @@
        Check: same name as X (different address) - e.g. another Dollar General
    ========================================================================== */
 
-var BF_VERSION = "v3.1 - Nov 15, 2026 5:15 AM ET";
+var BF_VERSION = "v3.2 - Nov 15, 2026 5:20 AM ET";
 
 // ---- Settings ----------------------------------------------------------------
 var BF_TAB = "Business Finder";
@@ -832,7 +835,9 @@ function testFirestoreConnection() {
                                                                          fills the address only)
    Business Finder menu -> "Fill blanks from Google Maps (column O)"
      Fills ONLY empty cells (or "N/A" / "find, ..." placeholders) in Address, phone,
-     website and hours - it never overwrites what you typed. It also fills Business ID
+     website and hours - it never overwrites what you typed. A row with ONLY a Maps
+     link also gets name, town, category, tier "Basic" and the placeholder logo
+     (Include stays unticked so you can check it first). It also fills Business ID
      (Google's place ID), which marks the row as done and prevents duplicates.
      Needs Script Property PLACES_API_KEY (Places API (New)).
    ========================================================================== */
@@ -913,7 +918,8 @@ function gmHours_(weekdayDescriptions) {
 /** Places API (New) Text Search, biased to the pin when we have one */
 function gmLookup_(info, key) {
   var fields = ["places.id", "places.displayName", "places.formattedAddress", "places.nationalPhoneNumber",
-                "places.websiteUri", "places.regularOpeningHours.weekdayDescriptions", "places.googleMapsUri", "places.types"].join(",");
+                "places.websiteUri", "places.regularOpeningHours.weekdayDescriptions", "places.googleMapsUri", "places.types",
+                "places.primaryTypeDisplayName"].join(",");
   var body = { textQuery: info.query || (info.lat + "," + info.lng), pageSize: 1 };
   if (info.lat !== undefined) body.locationBias = { circle: { center: { latitude: info.lat, longitude: info.lng }, radius: 300 } };
   else body.locationBias = { rectangle: { low: { latitude: BF_BOX.south, longitude: BF_BOX.west }, high: { latitude: BF_BOX.north, longitude: BF_BOX.east } } };
@@ -925,9 +931,13 @@ function gmLookup_(info, key) {
   var p = (JSON.parse(r.getContentText()).places || [])[0];
   if (!p) return null;
   var isPlace = !(p.types || []).some(function(x) { return x === "plus_code" || x === "street_address" || x === "geocode" || x === "premise"; });
+  var address = String(p.formattedAddress || "").replace(/, USA$/, "");
   return {
     id: p.id,
-    address: String(p.formattedAddress || "").replace(/, USA$/, ""),
+    name: (p.displayName || {}).text || "",
+    category: (p.primaryTypeDisplayName || {}).text || "",
+    town: bfTownFromAddress_(address, ""),
+    address: address,
     phone: p.nationalPhoneNumber || "",
     website: p.websiteUri || "",
     hours: gmHours_((p.regularOpeningHours || {}).weekdayDescriptions),
@@ -959,10 +969,14 @@ function fillFromGoogleMaps() {
     master.getRange(1, cId + 1).setValue("Business ID").setNote("Google place ID / OpenStreetMap ID. Filled by Business Finder; prevents duplicates.");
     lastCol++;
   }
-  var cols = { address: head.indexOf("address"), phone: head.indexOf("phone"), website: head.indexOf("website"), hours: head.indexOf("hours") };
+  var cols = { address: head.indexOf("address"), phone: head.indexOf("phone"), website: head.indexOf("website"), hours: head.indexOf("hours"),
+               name: head.indexOf("name"), town: head.indexOf("town"), category: head.indexOf("category"), tier: head.indexOf("tier"),
+               image: head.indexOf("imageid") };
   var range = master.getRange(2, 1, master.getLastRow() - 1, lastCol);
   var rows = range.getValues();
-  var started = Date.now(), filled = 0, looked = 0, failed = [];
+  var started = Date.now(), filled = 0, looked = 0, failed = [], added = [];
+  var idRow = {};                                                       // Google place ID -> sheet row (duplicate check)
+  rows.forEach(function(r, i) { var id = dirClean_(r[cId]); if (id) idRow[id] = i + 2; });
 
   rows.forEach(function(r, i) {
     if (Date.now() - started > 5 * 60 * 1000) return;                 // stay under Apps Script's 6-minute limit
@@ -974,14 +988,28 @@ function fillFromGoogleMaps() {
     var g;
     try { g = gmLookup_(info, key); } catch (e) { failed.push("Row " + (i + 2) + ": " + e.message); return; }
     if (!g) { failed.push("Row " + (i + 2) + ": Google found nothing"); return; }
+    if (g.isBusiness && idRow[g.id] && idRow[g.id] !== i + 2) {
+      failed.push("Row " + (i + 2) + ": same Google place as row " + idRow[g.id] + " (left empty - delete one of them)");
+      return;
+    }
     var changed = false;
+    var isNew = cols.name >= 0 && !dirClean_(r[cols.name]);
     function put(c, v) { if (c >= 0 && v && gmIsBlank_(r[c])) { r[c] = v; changed = true; } }
     put(cols.address, g.address);
     if (g.isBusiness) {                                                  // plus codes: address only
+      put(cols.name, g.name);                                            // a row with only a link -> a full new business
+      put(cols.town, g.town);
+      put(cols.category, g.category);
       put(cols.phone, g.phone);
       put(cols.website, g.website);
       put(cols.hours, g.hours);
+      if (isNew) {
+        put(cols.tier, "Basic");
+        put(cols.image, "localbusiness.png");
+        added.push("Row " + (i + 2) + ": " + g.name);
+      }
       r[cId] = g.id;
+      idRow[g.id] = i + 2;
       changed = true;
     } else {
       r[cId] = "pluscode:" + String(link).trim().split(/\s+/)[0];        // marks the row as done
@@ -992,7 +1020,9 @@ function fillFromGoogleMaps() {
   });
 
   range.setValues(rows);
-  var msg = looked + " rows looked up, " + filled + " updated." + (failed.length ? "\n\nCould not fill:\n" + failed.slice(0, 15).join("\n") : "") +
+  var msg = looked + " rows looked up, " + filled + " updated." +
+            (added.length ? "\n\nNew businesses (tick Include when they look right):\n" + added.slice(0, 15).join("\n") : "") +
+            (failed.length ? "\n\nCould not fill:\n" + failed.slice(0, 15).join("\n") : "") +
             (Date.now() - started > 5 * 60 * 1000 ? "\n\nStopped at the time limit: run it again to continue." : "");
   Logger.log(msg);
   SpreadsheetApp.getUi().alert("Google Maps fill-in", msg, SpreadsheetApp.getUi().ButtonSet.OK);
