@@ -1,4 +1,4 @@
-/* SMLC Business Directory renderer | v1.0 | 2026-11-15
+/* SMLC Business Directory renderer | v1.1 | 2026-11-15 (Google Maps links)
    One set of markup for both:
      - scripts/build-directory.js (bakes the cards, answers and schema into directory.html
        so Google and AI crawlers can read everything without running JavaScript)
@@ -33,7 +33,8 @@
     function cardHtml(b, today) {
         var tier = TIER_LABEL[b.tier] ? '<span class="tier tier-' + slug(b.tier) + '">' + esc(TIER_LABEL[b.tier]) + '</span>' : '';
         var lines = [];
-        if (b.address) lines.push('<li><span aria-hidden="true">&#128205;</span> <a href="' + esc(mapsLink(b.address)) + '" target="_blank" rel="noopener">' + esc(b.address) + '</a></li>');
+        if (b.address) lines.push('<li><span aria-hidden="true">&#128205;</span> <a href="' + esc(b.mapsUrl || mapsLink(b.address)) + '" target="_blank" rel="noopener">' + esc(b.address) + '</a></li>');
+        else if (b.mapsUrl) lines.push('<li><span aria-hidden="true">&#128205;</span> <a href="' + esc(b.mapsUrl) + '" target="_blank" rel="noopener">Open in Google Maps</a></li>');
         if (b.phone) lines.push('<li><span aria-hidden="true">&#128222;</span> <a href="tel:' + esc(b.phone.replace(/\D/g, '')) + '">' + esc(b.phone) + '</a></li>');
         if (b.hours) lines.push('<li><span aria-hidden="true">&#128339;</span> ' + esc(b.hours) + '</li>');
         var links = [];
@@ -101,6 +102,7 @@
             if (b.phone) biz.telephone = '+1-' + b.phone.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
             if (b.website) biz.url = b.website;
             if (b.facebook) biz.sameAs = [b.facebook];
+            if (b.mapsUrl) biz.hasMap = b.mapsUrl;
             if (b.openingHours && b.openingHours.length) biz.openingHours = b.openingHours;
             if (offerIsLive(b, today)) {
                 biz.makesOffer = { '@type': 'Offer', description: b.offer };

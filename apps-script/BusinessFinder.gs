@@ -1,5 +1,8 @@
 /* ==========================================================================
-   Active Version: 2026-11-15_v3  |  Updated: Nov 15, 2026 4:30 AM ET
+   Active Version: 2026-11-15_v3.1  |  Updated: Nov 15, 2026 5:15 AM ET
+   Changes in v3.1: Master Data column O "Google Maps" (a Maps share link or a plus code).
+                  Menu -> "Fill blanks from Google Maps (column O)" fills empty Address /
+                  phone / website / hours cells; the website's address links open that exact spot.
    Changes in v3: sends the directory to Firestore (Firebase project smlc-fuel-monitor)
                   with AEO data (plain-English summary, schema.org type, opening hours,
                   "Where can I find ... in <town>?" answers) for the SMLC directory page.
@@ -42,7 +45,7 @@
        Check: same name as X (different address) - e.g. another Dollar General
    ========================================================================== */
 
-var BF_VERSION = "v3 - Nov 15, 2026 4:30 AM ET";
+var BF_VERSION = "v3.1 - Nov 15, 2026 5:15 AM ET";
 
 // ---- Settings ----------------------------------------------------------------
 var BF_TAB = "Business Finder";
@@ -94,6 +97,7 @@ function addBusinessFinderMenu() {
     .addItem("Find businesses (Google)", "findBusinessesGoogle")
     .addSeparator()
     .addItem("Copy ticked rows to Master Data", "copyTickedToMasterData")
+    .addItem("Fill blanks from Google Maps (column O)", "fillFromGoogleMaps")
     .addItem("Re-check duplicates", "recheckDuplicates")
     .addSeparator()
     .addItem("Send directory to Firestore now", "syncDirectoryToFirestore")
@@ -405,16 +409,18 @@ function copyTickedToMasterData() {
       .setNote("Filled by Business Finder. Used to avoid adding the same business twice.");
   }
 
+  var mapsCol = mHead.indexOf("google maps");
   var rows = bf.getRange(2, 1, bf.getLastRow() - 1, BF_HEADERS.length).getValues();
   var out = [], doneRows = [];
   rows.forEach(function(r, i) {
     if (r[BF_COL["Add?"]] !== true) return;
     if (String(r[BF_COL["Status"]]).indexOf("Added") === 0) return;
     var line = [];
-    for (var c = 0; c <= Math.max(idCol, BF_MASTER_COLUMNS.length); c++) line.push("");
+    for (var c = 0; c <= Math.max(idCol, mapsCol, BF_MASTER_COLUMNS.length); c++) line.push("");
     line[0] = false;                                         // A = show box, unticked
     BF_MASTER_COLUMNS.forEach(function(col, j) { line[j + 1] = r[BF_COL[col]]; });   // B..N
     line[idCol] = r[BF_COL["Business ID"]];
+    if (mapsCol >= 0) line[mapsCol] = r[BF_COL["Google Maps"]];
     out.push(line);
     doneRows.push(i + 2);
   });
@@ -644,7 +650,8 @@ function dirReadMasterData_(values) {
     show: col("include in directory") >= 0 ? col("include in directory") : 0,
     name: col("name"), town: col("town"), phone: col("phone"), category: col("category"), tier: col("tier"),
     image: col("imageid"), website: col("website"), address: col("address"), hours: col("hours"),
-    facebook: col("facebook"), offer: col("offer"), until: col("validuntil"), bio: col("company-bio"), id: col("business id")
+    facebook: col("facebook"), offer: col("offer"), until: col("validuntil"), bio: col("company-bio"), id: col("business id"),
+    maps: dirMapsHeaderIndex_(head)
   };
   function get(r, k) { return c[k] >= 0 && c[k] < r.length ? r[c[k]] : ""; }
   var used = {}, list = [];
@@ -668,9 +675,10 @@ function dirReadMasterData_(values) {
       offer: dirClean_(get(r, "offer")),
       validUntil: dirDate_(get(r, "until")),
       bio: dirClean_(get(r, "bio")),
+      mapsUrl: dirMapsUrl_(get(r, "maps")),
       businessId: dirClean_(get(r, "id"))
     };
-    var base = b.businessId ? b.businessId.replace(/[\/#?\s]+/g, "_") : dirSlug_(b.name + " " + b.town);
+    var base = b.businessId ? b.businessId.replace(/[^A-Za-z0-9_-]+/g, "_") : dirSlug_(b.name + " " + b.town);
     var id = base, n = 2;
     while (used[id]) id = base + "-" + (n++);
     used[id] = true;
@@ -814,4 +822,178 @@ function testFirestoreConnection() {
   } catch (e) {
     ui.alert("Firestore connection failed:\n\n" + e.message);
   }
+}
+
+/* ==========================================================================
+   GOOGLE MAPS COLUMN (v3.1) - Master Data column O, header "Google Maps"
+   Paste either:
+     - a Maps share link   https://maps.app.goo.gl/tzkYqVey2GNZbT1JA   (best: it is THE business)
+     - a plus code         MGHC+5J Flora, Illinois                     (only a spot on the map:
+                                                                         fills the address only)
+   Business Finder menu -> "Fill blanks from Google Maps (column O)"
+     Fills ONLY empty cells (or "N/A" / "find, ..." placeholders) in Address, phone,
+     website and hours - it never overwrites what you typed. It also fills Business ID
+     (Google's place ID), which marks the row as done and prevents duplicates.
+     Needs Script Property PLACES_API_KEY (Places API (New)).
+   ========================================================================== */
+
+/** Column index of the Maps column: header "Google Maps" (also accepts "GMaps" / "Maps") */
+function dirMapsHeaderIndex_(head) {
+  var names = ["google maps", "gmaps", "maps", "google map"];
+  for (var i = 0; i < names.length; i++) { var c = head.indexOf(names[i]); if (c >= 0) return c; }
+  return -1;
+}
+
+var DIR_PLUS_CODE = /^\s*([23456789CFGHJMPQRVWX]{4,8}\+[23456789CFGHJMPQRVWX]{0,3})\b/i;
+
+/** Link the website uses for "open in Maps" (share link as-is, plus code -> Maps search) */
+function dirMapsUrl_(v) {
+  var s = dirClean_(v);
+  if (!s) return "";
+  if (/^https?:\/\//i.test(s)) return s.replace(/^http:\/\//i, "https://");
+  if (DIR_PLUS_CODE.test(s)) return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(s);
+  return "";
+}
+
+/** Short link -> the full Google Maps address it points to (follows up to 5 redirects) */
+function gmExpand_(url) {
+  var current = url;
+  for (var i = 0; i < 5; i++) {
+    var r = UrlFetchApp.fetch(current, { followRedirects: false, muteHttpExceptions: true });
+    var h = r.getHeaders();
+    var loc = h.Location || h.location;
+    if (!loc || r.getResponseCode() < 300 || r.getResponseCode() >= 400) return current;
+    current = loc;
+  }
+  return current;
+}
+
+/** What to search for: { query, lat, lng, isPlusCode } from a share link, Maps URL or plus code */
+function gmParse_(value) {
+  var s = dirClean_(value);
+  if (!s) return null;
+  if (DIR_PLUS_CODE.test(s)) return { query: s, isPlusCode: true };
+  if (!/^https?:\/\//i.test(s)) return { query: s };
+  var full = /goo\.gl|g\.co\//i.test(s) ? gmExpand_(s) : s;
+  var out = { query: "", url: full };
+  var place = full.match(/\/maps\/place\/([^\/@?]+)/);
+  if (place) out.query = decodeURIComponent(place[1].replace(/\+/g, " "));
+  var pin = full.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) || full.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (pin) { out.lat = +pin[1]; out.lng = +pin[2]; }
+  var q = full.match(/[?&](?:q|query)=([^&]+)/);
+  if (!out.query && q) out.query = decodeURIComponent(q[1].replace(/\+/g, " "));
+  if (out.query && DIR_PLUS_CODE.test(out.query)) out.isPlusCode = true;
+  return out.query || pin ? out : null;
+}
+
+/** "Monday: 8:00 AM – 7:00 PM" x7 -> "Mon-Sat 8AM-7PM; Sun 10AM-5PM" (same style as the sheet) */
+function gmHours_(weekdayDescriptions) {
+  var list = weekdayDescriptions || [];
+  if (!list.length) return "";
+  function t(x) { return x.replace(/ | /g, " ").replace(/:00\s*/g, "").replace(/\s*(AM|PM)/gi, "$1").trim(); }
+  var days = list.map(function(line) {
+    var m = String(line).match(/^(\w{3})\w*:\s*(.*)$/);
+    if (!m) return null;
+    var hours = m[2].trim();
+    if (/open 24 hours/i.test(hours)) hours = "24 Hours";
+    else if (!/closed/i.test(hours)) hours = hours.split(/\s*,\s*/).map(function(r) { return r.split(/\s*[–-]\s*/).map(t).join("-"); }).join(", ");
+    return { day: m[1], hours: hours };
+  }).filter(Boolean);
+  if (days.length === 7 && days.every(function(d) { return d.hours === "24 Hours"; })) return "24 Hours";
+  var out = [], i = 0;
+  while (i < days.length) {
+    var j = i;
+    while (j + 1 < days.length && days[j + 1].hours === days[i].hours) j++;
+    if (!/closed/i.test(days[i].hours)) out.push((j > i ? days[i].day + "-" + days[j].day : days[i].day) + " " + days[i].hours);
+    i = j + 1;
+  }
+  return out.join("; ");
+}
+
+/** Places API (New) Text Search, biased to the pin when we have one */
+function gmLookup_(info, key) {
+  var fields = ["places.id", "places.displayName", "places.formattedAddress", "places.nationalPhoneNumber",
+                "places.websiteUri", "places.regularOpeningHours.weekdayDescriptions", "places.googleMapsUri", "places.types"].join(",");
+  var body = { textQuery: info.query || (info.lat + "," + info.lng), pageSize: 1 };
+  if (info.lat !== undefined) body.locationBias = { circle: { center: { latitude: info.lat, longitude: info.lng }, radius: 300 } };
+  else body.locationBias = { rectangle: { low: { latitude: BF_BOX.south, longitude: BF_BOX.west }, high: { latitude: BF_BOX.north, longitude: BF_BOX.east } } };
+  var r = UrlFetchApp.fetch("https://places.googleapis.com/v1/places:searchText", {
+    method: "post", contentType: "application/json", muteHttpExceptions: true,
+    headers: { "X-Goog-Api-Key": key, "X-Goog-FieldMask": fields }, payload: JSON.stringify(body)
+  });
+  if (r.getResponseCode() !== 200) throw new Error("Google Places: HTTP " + r.getResponseCode() + " " + r.getContentText().slice(0, 200));
+  var p = (JSON.parse(r.getContentText()).places || [])[0];
+  if (!p) return null;
+  var isPlace = !(p.types || []).some(function(x) { return x === "plus_code" || x === "street_address" || x === "geocode" || x === "premise"; });
+  return {
+    id: p.id,
+    address: String(p.formattedAddress || "").replace(/, USA$/, ""),
+    phone: p.nationalPhoneNumber || "",
+    website: p.websiteUri || "",
+    hours: gmHours_((p.regularOpeningHours || {}).weekdayDescriptions),
+    isBusiness: isPlace && !info.isPlusCode
+  };
+}
+
+function gmIsBlank_(v) {
+  var s = String(v === null || v === undefined ? "" : v).trim();
+  return !s || /^(n\/?a|none|tbd|-)$/i.test(s) || /^find\s*,/i.test(s) || /^[^,\d]*(service area|hub)$/i.test(s);
+}
+
+/** Business Finder menu -> "Fill blanks from Google Maps (column O)" */
+function fillFromGoogleMaps() {
+  var key = PropertiesService.getScriptProperties().getProperty("PLACES_API_KEY");
+  if (!key) throw new Error("Missing Script Property PLACES_API_KEY (Project Settings -> Script Properties).");
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var master = ss.getSheetByName(BF_MASTER_TAB);
+  var lastCol = master.getLastColumn();
+  var head = master.getRange(1, 1, 1, lastCol).getValues()[0].map(function(h) { return String(h).trim().toLowerCase(); });
+  var cMaps = dirMapsHeaderIndex_(head);
+  if (cMaps < 0) {
+    SpreadsheetApp.getUi().alert("Type \"Google Maps\" in the first row of an empty column in Master Data (for example O1), paste Maps links or plus codes under it, then run this again.");
+    return;
+  }
+  var cId = head.indexOf("business id");
+  if (cId < 0) {                      // add the Business ID column at the far right
+    cId = lastCol;
+    master.getRange(1, cId + 1).setValue("Business ID").setNote("Google place ID / OpenStreetMap ID. Filled by Business Finder; prevents duplicates.");
+    lastCol++;
+  }
+  var cols = { address: head.indexOf("address"), phone: head.indexOf("phone"), website: head.indexOf("website"), hours: head.indexOf("hours") };
+  var range = master.getRange(2, 1, master.getLastRow() - 1, lastCol);
+  var rows = range.getValues();
+  var started = Date.now(), filled = 0, looked = 0, failed = [];
+
+  rows.forEach(function(r, i) {
+    if (Date.now() - started > 5 * 60 * 1000) return;                 // stay under Apps Script's 6-minute limit
+    var link = r[cMaps];
+    if (!dirClean_(link) || dirClean_(r[cId])) return;                  // no link, or already done
+    var info = gmParse_(link);
+    if (!info) { failed.push("Row " + (i + 2) + ": can't read the link"); return; }
+    looked++;
+    var g;
+    try { g = gmLookup_(info, key); } catch (e) { failed.push("Row " + (i + 2) + ": " + e.message); return; }
+    if (!g) { failed.push("Row " + (i + 2) + ": Google found nothing"); return; }
+    var changed = false;
+    function put(c, v) { if (c >= 0 && v && gmIsBlank_(r[c])) { r[c] = v; changed = true; } }
+    put(cols.address, g.address);
+    if (g.isBusiness) {                                                  // plus codes: address only
+      put(cols.phone, g.phone);
+      put(cols.website, g.website);
+      put(cols.hours, g.hours);
+      r[cId] = g.id;
+      changed = true;
+    } else {
+      r[cId] = "pluscode:" + String(link).trim().split(/\s+/)[0];        // marks the row as done
+      changed = true;
+    }
+    if (changed) filled++;
+    Utilities.sleep(200);
+  });
+
+  range.setValues(rows);
+  var msg = looked + " rows looked up, " + filled + " updated." + (failed.length ? "\n\nCould not fill:\n" + failed.slice(0, 15).join("\n") : "") +
+            (Date.now() - started > 5 * 60 * 1000 ? "\n\nStopped at the time limit: run it again to continue." : "");
+  Logger.log(msg);
+  SpreadsheetApp.getUi().alert("Google Maps fill-in", msg, SpreadsheetApp.getUi().ButtonSet.OK);
 }
