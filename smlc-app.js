@@ -23,6 +23,11 @@
 
     var script = document.currentScript;
     var BASE = script && script.src ? script.src.replace(/[^\/]*$/, '') : '';
+    // Inside WordPress (SMLC Connect plugin): the app files come from the WordPress site itself
+    var WP = window.SMLC_WP || null;
+    var SW_URL = WP && WP.sw ? WP.sw : BASE + 'sw.js';
+    var MANIFEST_URL = WP && WP.manifest ? WP.manifest : BASE + 'manifest.webmanifest';
+    var INSTALL_URL = WP && WP.pages && WP.pages['install.html'] ? WP.pages['install.html'] : BASE + 'install.html';
     var UA = navigator.userAgent || '';
     var IS_APPLE = /iPhone|iPad|iPod|Macintosh/i.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     var IS_IOS = /iPhone|iPad|iPod/i.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -74,7 +79,7 @@
     // ---------------------------------------------------------------- 2. APP (service worker)
     if ('serviceWorker' in navigator && /^https:|^http:\/\/localhost/.test(location.href)) {
         window.addEventListener('load', function () {
-            navigator.serviceWorker.register(BASE + 'sw.js').catch(function () {});
+            navigator.serviceWorker.register(SW_URL).catch(function () {});
         });
     }
     function addHeadLink(rel, href, extra) {
@@ -84,7 +89,7 @@
         document.head.appendChild(l);
     }
     if (document.head) {
-        addHeadLink('manifest', BASE + 'manifest.webmanifest');
+        addHeadLink('manifest', MANIFEST_URL);
         addHeadLink('apple-touch-icon', BASE + 'icons/apple-touch-icon.png');
         if (!document.querySelector('meta[name="apple-mobile-web-app-capable"]')) {
             [['apple-mobile-web-app-capable', 'yes'], ['mobile-web-app-capable', 'yes'],
@@ -214,7 +219,7 @@
             deferredPrompt.userChoice.then(function () { deferredPrompt = null; hideInstall(); });
             return true;
         }
-        location.href = BASE + 'install.html';
+        location.href = INSTALL_URL;
         return false;
     };
     window.smlcCanPromptInstall = function () { return !!deferredPrompt; };
@@ -243,7 +248,7 @@
             '<strong style="font-size:1rem">Install the SMLC app</strong></div>' +
             '<div style="font-size:.9rem;opacity:.95">' + how + '</div>' +
             '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
-            (IS_IOS ? '<a href="' + BASE + 'install.html" style="background:#FFC10E;color:#111;font-weight:800;border-radius:8px;padding:7px 12px;text-decoration:none">Show me how</a>'
+            (IS_IOS ? '<a href="' + INSTALL_URL + '" style="background:#FFC10E;color:#111;font-weight:800;border-radius:8px;padding:7px 12px;text-decoration:none">Show me how</a>'
                     : '<button type="button" data-act="install" style="background:#FFC10E;color:#111;font-weight:800;border:0;border-radius:8px;padding:7px 12px;cursor:pointer;font:inherit">Install</button>') +
             '<button type="button" data-act="later" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:7px 12px;cursor:pointer;font:inherit">Not now</button></div>';
         box.addEventListener('click', function (e) {

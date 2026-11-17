@@ -30,6 +30,11 @@ var CORE = [
     'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'
 ];
 
+// Inside WordPress the SMLC Connect plugin sets these before this file: the WordPress page
+// addresses to save, and the GitHub address the scripts/styles come from.
+if (self.SMLC_CORE && self.SMLC_CORE.length) CORE = self.SMLC_CORE;
+var EXTRA_HOSTS = self.SMLC_ASSET_HOST ? new RegExp(self.SMLC_ASSET_HOST.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') : null;
+
 var SKIP = /googletagmanager|google-analytics|googlesyndication|doubleclick|adservice|pagead|translate\.google|translate\.googleapis|gstatic\.com\/_\/translate|script\.google\.com|script\.googleusercontent|identitytoolkit|securetoken|firebaseio\.com|\/Listen\/channel|\/Write\/channel/i;
 var EXT_OK = /raw\.githubusercontent\.com|githubusercontent\.com|github\.com\/.*\/raw|drive\.google\.com\/thumbnail|lh3\.googleusercontent\.com|www\.gstatic\.com\/firebasejs|fonts\.googleapis\.com|fonts\.gstatic\.com|cdnjs\.cloudflare\.com|skventuresigns\.com|scorestream\.com\/.*\.(png|jpg|svg)/i;
 
@@ -96,5 +101,6 @@ self.addEventListener('fetch', function (event) {
     if (sameOrigin) {                                                   // our own files: always the newest when connected
         event.respondWith(networkFirst(req, /\.(html?)(\?|$)/.test(url) ? PAGES : FILES, 5000)); return;
     }
+    if (EXTRA_HOSTS && EXTRA_HOSTS.test(url)) { event.respondWith(networkFirst(req, FILES, 5000)); return; }   // SMLC files on GitHub (WordPress)
     if (EXT_OK.test(url)) { event.respondWith(staleWhileRevalidate(req, EXT, true)); return; }
 });
