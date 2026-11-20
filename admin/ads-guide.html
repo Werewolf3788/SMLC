@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<!-- SMLC Ads & Partners Guide | v1.0 | 2026-11-20 1:45 PM ET
+     Team page (noindex) for Kevin and Scott:
+       1. How Google Ads charges (click vs view vs action) and how AdSense pays the site
+       2. How that maps to Scott's digital billboards and the SMLC partner cards
+       3. Why the partner cards stay named "partners" (ad blockers)
+       4. Live Partner Health Check: reads the same Firebase partner lists the town pages use
+          (master_county_data/towns/<Town>/sections/partners + global/sections/partners)
+          and shows which partners are live, hidden, expired, broken or at risk from ad blockers
+       5. Pricing calculator for billboard slots and partner cards
+     Read-only: this page never writes to Firebase or the Sheet. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light dark">
+<title>SMLC Ads &amp; Partners Guide</title>
+<style>
+  :root { --navy:#001B37; --accent:#FFC10E; --ink:#111; --muted:#555; --card:#fff; --bg:#f3f5f8; --line:#d5dbe3;
+          --ok:#137333; --okbg:#e6f4ea; --warn:#8a5a00; --warnbg:#fff4d6; --bad:#b3261e; --badbg:#fce8e6; --chip:#eef2f7; }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink:#ececf0; --muted:#b5b5bd; --card:#1d1d20; --bg:#121214; --line:#3a3f48;
+            --ok:#6fd28a; --okbg:#173322; --warn:#ffd36b; --warnbg:#3a2f12; --bad:#ff8a80; --badbg:#3d1c1a; --chip:#2a2e36; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+  header { background:var(--navy); color:#fff; padding:16px 20px; border-bottom:4px solid var(--accent); }
+  header .wrap { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  header h1 { margin:0; font-size:1.3rem; }
+  header small { opacity:.85; }
+  nav { display:flex; gap:8px; flex-wrap:wrap; }
+  nav a { color:#fff; text-decoration:none; font-size:.85rem; padding:6px 12px; border:1px solid rgba(255,255,255,.35); border-radius:999px; }
+  nav a:hover { background:rgba(255,255,255,.12); }
+  .wrap { width:min(80vw, 1500px); margin:0 auto; }
+  main.wrap { padding:20px 0 40px; display:grid; gap:20px; }
+  @media (max-width: 820px) { .wrap { width:auto; } main.wrap { padding:14px; } header { padding:14px; } }
+  section.card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px; }
+  h2 { margin:0 0 6px; font-size:1.2rem; }
+  h3 { margin:14px 0 6px; font-size:1rem; }
+  p { margin:6px 0; }
+  .lead { color:var(--muted); margin-bottom:12px; }
+  .grid4 { display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; }
+  .grid3 { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width: 1100px) { .grid4 { grid-template-columns:1fr 1fr; } .grid3 { grid-template-columns:1fr; } }
+  @media (max-width: 820px) { .grid4, .grid2 { grid-template-columns:1fr; } }
+  .tile { border:1px solid var(--line); border-radius:12px; padding:14px; background:var(--bg); }
+  .tile .tag { display:inline-block; font-weight:800; font-size:.8rem; letter-spacing:.04em; background:var(--navy); color:#fff; padding:3px 9px; border-radius:6px; }
+  .tile h3 { margin:8px 0 4px; }
+  .tile .use { font-size:.85rem; color:var(--muted); margin-top:8px; }
+  .callout { border-left:5px solid var(--accent); background:var(--warnbg); padding:12px 14px; border-radius:8px; margin:12px 0; }
+  .callout.good { border-color:var(--ok); background:var(--okbg); }
+  ul { margin:6px 0; padding-left:20px; }
+  li { margin:3px 0; }
+  code { background:var(--chip); padding:1px 6px; border-radius:5px; font-size:.88em; }
+  table { width:100%; border-collapse:collapse; font-size:.92rem; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+  .tablewrap { overflow-x:auto; }
+  .pill { display:inline-block; padding:2px 9px; border-radius:999px; font-size:.78rem; font-weight:700; white-space:nowrap; margin:1px 2px 1px 0; }
+  .pill.ok { background:var(--okbg); color:var(--ok); }
+  .pill.warn { background:var(--warnbg); color:var(--warn); }
+  .pill.bad { background:var(--badbg); color:var(--bad); }
+  .pill.info { background:var(--chip); color:var(--ink); }
+  .thumb { width:84px; height:42px; object-fit:contain; border-radius:6px; background:var(--chip); display:block; }
+  button { font:inherit; font-weight:700; border:0; border-radius:8px; padding:10px 16px; cursor:pointer; background:var(--navy); color:#fff; }
+  button.gold { background:var(--accent); color:#111; }
+  button:disabled { opacity:.5; cursor:wait; }
+  .toolbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:10px 0 14px; }
+  select, input[type=number] { font:inherit; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); }
+  input[type=number] { width:100%; }
+  label { display:block; font-weight:600; font-size:.88rem; margin:10px 0 4px; }
+  .summary { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  .stat { background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 14px; min-width:120px; }
+  .stat b { display:block; font-size:1.4rem; }
+  .stat span { font-size:.8rem; color:var(--muted); }
+  .result { background:var(--navy); color:#fff; border-radius:12px; padding:14px; margin-top:14px; }
+  .result b { color:var(--accent); font-size:1.25rem; }
+  .muted { color:var(--muted); font-size:.85rem; }
+  .check-row { display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); }
+  /* Bait elements for the ad-blocker test. Named like ads on purpose; never shown to the eye. */
+  .smlc-bait { position:absolute; left:-9999px; top:0; width:10px; height:10px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div>
+      <h1>SMLC Ads &amp; Partners Guide</h1>
+      <small>How ads get paid for, how Scott's partners and billboards fit, and a live check that the partner cards are working.</small>
+    </div>
+    <nav>
+      <a href="#how">How Google charges</a>
+      <a href="#scott">Scott's setup</a>
+      <a href="#adblock">Ad blockers</a>
+      <a href="#health">Partner check</a>
+      <a href="#pricing">Pricing</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- 1. HOW GOOGLE ADS CHARGES -->
+<section class="card" id="how">
+  <h2>1. How Google Ads charges an advertiser</h2>
+  <p class="lead">It's not one or the other. When an advertiser sets up a campaign, they pick what they pay for. These are the four main ways.</p>
+  <div class="grid4">
+    <div class="tile"><span class="tag">CPC</span><h3>Pay per click</h3>
+      <p>The ad can show thousands of times for free. The advertiser pays only when someone clicks it.</p>
+      <p class="use">Most common. Standard for Google Search ads.</p></div>
+    <div class="tile"><span class="tag">CPM</span><h3>Pay per 1,000 views</h3>
+      <p>Paid for every 1,000 times the ad is shown, click or not. "Viewable CPM" only counts it if it was actually on screen.</p>
+      <p class="use">Display/banner ads where the goal is being seen. <b>Billboards work like this.</b></p></div>
+    <div class="tile"><span class="tag">CPA</span><h3>Pay per action</h3>
+      <p>Paid when someone does something specific: a purchase, a sign-up, a phone call. Google sets the bids to hit a target cost.</p>
+      <p class="use">Needs conversion tracking on the advertiser's own site.</p></div>
+    <div class="tile"><span class="tag">CPV</span><h3>Pay per video view</h3>
+      <p>Paid when someone watches about 30 seconds of a video ad (or all of it, if shorter) or clicks it.</p>
+      <p class="use">YouTube ads.</p></div>
+  </div>
+  <div class="grid2" style="margin-top:16px">
+    <div>
+      <h3>How the price is set: an auction</h3>
+      <p>Every time an ad spot opens up, advertisers' bids compete. Google weighs each bid against how good and relevant the ad is, so a better ad can win the spot while paying less than a bigger bidder.</p>
+    </div>
+    <div>
+      <h3>The other side: AdSense (the site gets paid)</h3>
+      <p>SMLC already has AdSense set up (<code>ads.txt</code> and the AdSense script on the directory, gallery and share-photos pages). With AdSense it's reversed: Google puts other companies' ads on the site and pays SMLC, mostly per click, with a small amount per view.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 2. SCOTT'S SETUP -->
+<section class="card" id="scott">
+  <h2>2. How this maps to Scott's ads</h2>
+  <p class="lead">Scott sells his own space, so he decides the model. Here is what fits each kind.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Where</th><th>What's being sold</th><th>Best pricing model</th><th>How to prove it's working</th></tr></thead>
+    <tbody>
+      <tr><td><b>Digital billboards</b></td><td>Plays of a 2:1 image/video in the board's loop</td><td>Flat monthly price per slot, explained as CPM (cost per 1,000 views). No clicks are possible.</td><td>Play counts from the board, plus road traffic counts (IDOT) for estimated viewers. A QR code or short link on the ad can show real response.</td></tr>
+      <tr><td><b>SMLC partner cards</b> (town pages)</td><td>A card in the partner strips on one town page, several towns, or Global (every page)</td><td>Flat monthly fee is simplest. Can be quoted as a CPM using real view counts.</td><td>The site already sends <code>partner_card_impression</code> (views) and click events to Google Analytics, and adds UTM tags to partner links so the partner sees SMLC visits in their own analytics.</td></tr>
+      <tr><td><b>AdSense</b></td><td>Nothing. Google fills the spot.</td><td>Google pays SMLC per click and per view.</td><td>AdSense dashboard.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout good"><b>Recommendation:</b> sell partners and billboard slots as flat monthly packages, and use the view counts as proof of value at renewal time. Per-click billing is hard for a small site to run fairly and needs tracking that ad blockers can break (see below).</div>
+</section>
+
+<!-- 3. AD BLOCKERS -->
+<section class="card" id="adblock">
+  <h2>3. Should "partners" be renamed to "ads"?</h2>
+  <div class="callout good"><b>No. Keep it as "partners."</b> Your instinct was right. Ad blockers decide what to hide mostly by <b>names in the code and addresses</b>: class names, IDs, folder names and file names with words like <code>ad</code>, <code>ads</code>, <code>banner</code>, <code>sponsor</code>, <code>promo</code>, standard ad sizes like <code>300x250</code>, and known ad servers like Google's. Renaming to "ads" would make ad blockers start hiding the cards.</div>
+  <div class="grid2">
+    <div>
+      <h3>What the SMLC code does now (checked)</h3>
+      <ul>
+        <li>Cards use <code>community-partner-card</code>, <code>partner-logo-asset</code>, <code>partners-horizontal-strip</code>. Safe.</li>
+        <li>Partner data comes from SMLC's own Firebase, not an ad network. Safe.</li>
+        <li>Images load from <code>skventuresigns.com/images/</code>. Safe, as long as file names stay neutral (see the check below).</li>
+        <li>The lightbox label "Local Sponsor" is visible text, not a class name. Ad blockers don't hide it, and it's good honest labeling.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>The catch: tracking still gets blocked</h3>
+      <p>The cards still <b>show</b> with an ad blocker on, but the view and click counts go through Google Analytics (<code>googletagmanager.com</code>), and most ad blockers and Brave block that. So the GA numbers will be <b>lower than the real number</b> of people who saw a partner.</p>
+      <p>That's fine for flat monthly pricing. It's a problem only if Scott ever bills per click. If that happens, counts should be stored in SMLC's own database instead.</p>
+      <h3>Rules to keep it safe</h3>
+      <ul>
+        <li>Never name image files or folders <code>ad-…</code>, <code>…_ad.png</code>, <code>banner…</code>, <code>sponsor…</code>, <code>/ads/</code>.</li>
+        <li>Avoid ad sizes in file names (<code>300x250</code>, <code>728x90</code>).</li>
+        <li>Never add a class or ID with those words to the partner section.</li>
+      </ul>
+    </div>
+  </div>
+  <h3>Test this browser right now</h3>
+  <p class="muted">Turn your ad blocker on or off and press the button. It shows what visitors with this setup see.</p>
+  <div class="toolbar"><button class="gold" id="run-blocker-test">Run ad-blocker test</button></div>
+  <div id="blocker-results"></div>
+</section>
+
+<!-- 4. LIVE PARTNER HEALTH CHECK -->
+<section class="card" id="health">
+  <h2>4. Live Partner Health Check</h2>
+  <p class="lead">Reads the same partner lists the town pages read from Firebase (filled by the Partners tab in the SMLC Firebase Setup sheet). Uses the same rules: status must be <code>active</code> and the expiration date can't be past. Read-only.</p>
+  <div class="toolbar">
+    <label style="margin:0">Town
+      <select id="town-pick">
+        <option value="ALL">All towns + Global</option>
+        <option>Global</option><option>Flora</option><option>Louisville</option><option>Clay City</option>
+        <option>Xenia</option><option>Sailor Springs</option><option>Iola</option>
+      </select>
+    </label>
+    <button id="run-health">Check partners</button>
+    <span class="muted" id="health-status"></span>
+  </div>
+  <div class="summary" id="health-summary"></div>
+  <div class="tablewrap"><table id="health-table" hidden>
+    <thead><tr><th>Image</th><th>Partner</th><th>Where</th><th>Showing?</th><th>Expires</th><th>Image</th><th>Link</th><th>Ad-blocker risk</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+</section>
+
+<!-- 5. PRICING CALCULATOR -->
+<section class="card" id="pricing">
+  <h2>5. Pricing calculator</h2>
+  <p class="lead">Turns a flat monthly price into a cost per 1,000 views (CPM), so Scott can explain the value the same way Google does. The numbers filled in are examples. Change them to the real ones.</p>
+  <div class="grid2">
+    <div class="tile">
+      <h3>Digital billboard slot</h3>
+      <div class="grid2">
+        <div><label>Loop length (seconds)</label><input type="number" id="bb-loop" value="64" min="1"></div>
+        <div><label>Ad length (seconds)</label><input type="number" id="bb-len" value="8" min="1"></div>
+        <div><label>Hours on per day</label><input type="number" id="bb-hours" value="18" min="1" max="24"></div>
+        <div><label>Cars passing per day</label><input type="number" id="bb-traffic" value="6000" min="0"></div>
+        <div><label>People per car</label><input type="number" id="bb-occ" value="1.3" step="0.1" min="1"></div>
+        <div><label>Price per month ($)</label><input type="number" id="bb-price" value="300" min="0"></div>
+      </div>
+      <div class="result" id="bb-out"></div>
+      <p class="muted">Views are estimated as the share of passers-by who are there while the ad is on screen. Traffic counts per road are on IDOT's Getting Around Illinois map.</p>
+    </div>
+    <div class="tile">
+      <h3>SMLC partner card</h3>
+      <div class="grid2">
+        <div><label>Town page views per month</label><input type="number" id="pc-views" value="2000" min="0"></div>
+        <div><label>Active image partners on that page</label><input type="number" id="pc-partners" value="12" min="1"></div>
+        <div><label>Cards visible at once (both strips)</label><input type="number" id="pc-slots" value="10" min="1"></div>
+        <div><label>Price per month ($)</label><input type="number" id="pc-price" value="50" min="0"></div>
+      </div>
+      <div class="result" id="pc-out"></div>
+      <p class="muted">Video partners are pinned, so they get every view. For real numbers, use the <code>partner_card_impression</code> count from Google Analytics (Reports → Engagement → Events), and remember it runs low because of ad blockers.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var DB = 'https://smlc-fuel-monitor-default-rtdb.firebaseio.com/master_county_data';
+  var TOWNS = ['Global', 'Flora', 'Louisville', 'Clay City', 'Xenia', 'Sailor Springs', 'Iola'];
+  var IMG_BASE = 'https://skventuresigns.com/images/';
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); };
+  var pill = function (cls, txt) { return '<span class="pill ' + cls + '">' + esc(txt) + '</span>'; };
+
+  /* ---------- Same rules as universaltown.js ---------- */
+  function resolvePartnerImage(raw) {
+    var u = String(raw || '').trim();
+    if (!u) return '';
+    if (/^(https?:)?\/\//i.test(u) || /^data:/i.test(u)) return u.replace(/^\/\//, 'https://');
+    return IMG_BASE + u.replace(/^\.?\/?(images\/)?/i, '').replace(/ /g, '%20');
+  }
+  function realUrl(raw) {
+    var u = String(raw || '').trim();
+    if (!u || u === '#' || /^n\/?a$/i.test(u)) return '';
+    if (/^https?:\/\//i.test(u)) return u;
+    if (/^[\w-]+(\.[\w-]+)+(\/.*)?$/.test(u)) return 'https://' + u;
+    return '';
+  }
+  function todayIso() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function liveState(p) {
+    if (p.status !== undefined && String(p.status).trim().toLowerCase() !== 'active')
+      return { ok: false, why: p.status ? 'Status is "' + p.status + '"' : 'Status is blank' };
+    if (p.expirationDate && String(p.expirationDate).trim() < todayIso())
+      return { ok: false, why: 'Expired' };
+    return { ok: true, why: 'Showing' };
+  }
+  function isVideo(u) { return /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(u); }
+
+  /* ---------- Ad-blocker risk patterns (EasyList-style) ---------- */
+  var RISK_WORDS = /(^|[\/_\-.=?&])(ads?|adv|advert\w*|adserv\w*|banners?|sponsor\w*|promo\w*|popup|affiliate)([\/_\-.=?&]|$)/i;
+  var RISK_SIZES = /(^|[^0-9])(300x250|728x90|160x600|468x60|320x50|300x600|970x90|970x250|336x280|120x600)([^0-9]|$)/i;
+  var RISK_HOSTS = /(doubleclick|googlesyndication|adservice|adnxs|taboola|outbrain|amazon-adsystem)/i;
+  function adRisk(url) {
+    var out = [];
+    if (!url) return out;
+    var path = url.replace(/^https?:\/\/[^\/]+/i, '');
+    if (RISK_HOSTS.test(url)) out.push('ad-network address');
+    var m = path.match(RISK_WORDS); if (m) out.push('"' + m[2] + '" in file/folder name');
+    var s = path.match(RISK_SIZES); if (s) out.push('ad size ' + s[2] + ' in name');
+    return out;
+  }
+
+  /* ---------- Checks that run in the browser ---------- */
+  function checkImage(url) {
+    return new Promise(function (resolve) {
+      if (!url) return resolve({ cls: 'bad', txt: 'No image' });
+      if (isVideo(url)) {
+        var v = document.createElement('video'); var done = false;
+        var fin = function (r) { if (!done) { done = true; resolve(r); } };
+        v.preload = 'metadata'; v.muted = true;
+        v.onloadedmetadata = function () { fin({ cls: 'ok', txt: 'Video OK' }); };
+        v.onerror = function () { fin({ cls: 'bad', txt: 'Video not loading' }); };
+        setTimeout(function () { fin({ cls: 'warn', txt: 'Video slow' }); }, 12000);
+        v.src = url; return;
+      }
+      var img = new Image(); var t = setTimeout(function () { resolve({ cls: 'warn', txt: 'Slow to load' }); }, 12000);
+      img.onload = function () {
+        clearTimeout(t);
+        var r = img.naturalWidth / (img.naturalHeight || 1);
+        resolve({ cls: 'ok', txt: 'Loads (' + img.naturalWidth + '×' + img.naturalHeight + ')', ratio: r });
+      };
+      img.onerror = function () { clearTimeout(t); resolve({ cls: 'bad', txt: 'Broken image' }); };
+      img.src = url;
+    });
+  }
+  function checkLink(url) {
+    // A browser can't read another site's status code (CORS), so this only proves the site answers.
+    return new Promise(function (resolve) {
+      if (!url) return resolve({ cls: 'info', txt: 'No website (uses directory listing)' });
+      var ctl = window.AbortController ? new AbortController() : null;
+      var t = setTimeout(function () { if (ctl) ctl.abort(); resolve({ cls: 'warn', txt: 'No answer in 10s' }); }, 10000);
+      fetch(url, { mode: 'no-cors', signal: ctl ? ctl.signal : undefined })
+        .then(function () { clearTimeout(t); resolve({ cls: 'ok', txt: 'Site answers' }); })
+        .catch(function () { clearTimeout(t); resolve({ cls: 'bad', txt: 'Site unreachable' }); });
+    });
+  }
+
+  function loadTown(town) {
+    var path = town === 'Global' ? DB + '/global/sections/partners.json' : DB + '/towns/' + encodeURIComponent(town) + '/sections/partners.json';
+    return fetch(path).then(function (r) {
+      if (!r.ok) throw new Error(town + ': HTTP ' + r.status);
+      return r.json();
+    }).then(function (val) {
+      var list = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
+      return list.filter(Boolean).map(function (p) { return { town: town, p: p }; });
+    });
+  }
+
+  $('run-health').addEventListener('click', function () {
+    var btn = this, pick = $('town-pick').value;
+    var towns = pick === 'ALL' ? TOWNS : [pick];
+    btn.disabled = true; $('health-status').textContent = 'Loading partners from Firebase…';
+    $('health-summary').innerHTML = ''; var tbody = document.querySelector('#health-table tbody'); tbody.innerHTML = '';
+
+    Promise.allSettled(towns.map(loadTown)).then(function (results) {
+      var rows = [], errs = [];
+      results.forEach(function (r) { if (r.status === 'fulfilled') rows = rows.concat(r.value); else errs.push(r.reason.message); });
+      if (!rows.length) {
+        $('health-status').textContent = errs.length ? 'Could not read Firebase: ' + errs.join('; ') : 'No partners found for that choice.';
+        btn.disabled = false; return;
+      }
+      $('health-table').hidden = false;
+      $('health-status').textContent = 'Checking ' + rows.length + ' partner entries…' + (errs.length ? ' (skipped: ' + errs.join('; ') + ')' : '');
+
+      // Same partner name in several lists: the town page shows only the first one
+      var nameCount = {};
+      rows.forEach(function (x) { var k = String(x.p.name || '').trim().toLowerCase() + '|' + x.town; nameCount[k] = (nameCount[k] || 0) + 1; });
+
+      var stats = { total: rows.length, live: 0, hidden: 0, problems: 0, risk: 0 };
+      var jobs = rows.map(function (x) {
+        var p = x.p, state = liveState(p);
+        var img = resolvePartnerImage(p.imageUrl || p.image1);
+        var site = realUrl(p.website);
+        var risks = adRisk(img).concat(adRisk(site).map(function (r) { return r + ' (link)'; }));
+        var dup = nameCount[String(p.name || '').trim().toLowerCase() + '|' + x.town] > 1;
+        if (state.ok) stats.live++; else stats.hidden++;
+        if (risks.length) stats.risk++;
+
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + (img ? (isVideo(img) ? '<video class="thumb" src="' + esc(img) + '" muted playsinline preload="metadata"></video>' : '<img class="thumb" src="' + esc(img) + '" alt="" loading="lazy">') : '') + '</td>' +
+          '<td><b>' + esc(p.name || '(no name)') + '</b>' + (dup ? '<br>' + pill('warn', 'Listed twice: only one shows') : '') + '</td>' +
+          '<td>' + esc(x.town) + '</td>' +
+          '<td>' + pill(state.ok ? 'ok' : 'info', state.why) + '</td>' +
+          '<td>' + esc(p.expirationDate || '—') + '</td>' +
+          '<td class="img-cell">' + pill('info', 'Checking…') + '</td>' +
+          '<td class="link-cell">' + pill('info', 'Checking…') + '</td>' +
+          '<td>' + (risks.length ? risks.map(function (r) { return pill('bad', r); }).join('') : pill('ok', 'None found')) + '</td>';
+        tbody.appendChild(tr);
+
+        return Promise.all([checkImage(img), checkLink(site)]).then(function (res) {
+          var im = res[0], ln = res[1];
+          var imgHtml = pill(im.cls, im.txt);
+          if (im.ratio && !isVideo(img) && Math.abs(im.ratio - 2) > 0.35) imgHtml += pill('warn', 'Not 2:1 (billboard art needs 2:1)');
+          tr.querySelector('.img-cell').innerHTML = imgHtml;
+          tr.querySelector('.link-cell').innerHTML = pill(ln.cls, ln.txt);
+          if (state.ok && (im.cls === 'bad' || ln.cls === 'bad')) stats.problems++;
+        });
+      });
+
+      var drawSummary = function () {
+        $('health-summary').innerHTML =
+          '<div class="stat"><b>' + stats.total + '</b><span>Entries checked</span></div>' +
+          '<div class="stat"><b style="color:var(--ok)">' + stats.live + '</b><span>Showing on site</span></div>' +
+          '<div class="stat"><b>' + stats.hidden + '</b><span>Hidden (status/expired)</span></div>' +
+          '<div class="stat"><b style="color:var(--bad)">' + stats.problems + '</b><span>Live but broken</span></div>' +
+          '<div class="stat"><b style="color:var(--warn)">' + stats.risk + '</b><span>Ad-blocker risk</span></div>';
+      };
+      drawSummary();
+      Promise.all(jobs).then(function () {
+        drawSummary();
+        $('health-status').textContent = 'Done ' + new Date().toLocaleTimeString() + '.';
+        btn.disabled = false;
+      });
+    });
+  });
+
+  /* ---------- Ad-blocker test ---------- */
+  $('run-blocker-test').addEventListener('click', function () {
+    var btn = this; btn.disabled = true;
+    var out = $('blocker-results'); out.innerHTML = '<p class="muted">Testing…</p>';
+
+    function bait(cls, id) {
+      var d = document.createElement('div'); d.className = cls + ' smlc-bait'; if (id) d.id = id; d.innerHTML = '&nbsp;';
+      document.body.appendChild(d); return d;
+    }
+    var adBait = bait('adsbox ad-banner sponsor-ad textads', 'ad-container');
+    var partnerBait = bait('community-partner-card partner-logo-container');
+
+    function hidden(el) { var cs = getComputedStyle(el); return !el.offsetParent && cs.position !== 'fixed' || cs.display === 'none' || cs.visibility === 'hidden' || el.offsetHeight === 0; }
+    function scriptLoads(src) {
+      return new Promise(function (resolve) {
+        var s = document.createElement('script'); var t = setTimeout(function () { resolve(false); }, 6000);
+        s.async = true; s.src = src;
+        s.onload = function () { clearTimeout(t); resolve(true); s.remove(); };
+        s.onerror = function () { clearTimeout(t); resolve(false); s.remove(); };
+        document.head.appendChild(s);
+      });
+    }
+
+    setTimeout(function () {
+      var adHidden = hidden(adBait), partnerHidden = hidden(partnerBait);
+      adBait.remove(); partnerBait.remove();
+      Promise.all([
+        scriptLoads('https://www.googletagmanager.com/gtag/js?id=G-FHJNXDB9BB'),
+        scriptLoads('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js')
+      ]).then(function (r) {
+        var gaOk = r[0], adsenseOk = r[1];
+        var blocker = adHidden || !adsenseOk;
+        function row(label, good, goodTxt, badTxt, badCls) {
+          return '<div class="check-row"><span>' + label + '</span>' + (good ? pill('ok', goodTxt) : pill(badCls || 'bad', badTxt)) + '</div>';
+        }
+        out.innerHTML =
+          '<div class="callout ' + (blocker ? '' : 'good') + '"><b>' + (blocker ? 'An ad blocker is active in this browser.' : 'No ad blocker detected in this browser.') + '</b></div>' +
+          row('Something named like an ad (<code>ad-banner</code>)', !adHidden, 'Visible', 'Hidden by blocker', 'warn') +
+          row('SMLC partner card (<code>community-partner-card</code>)', !partnerHidden, 'Visible: partners still show', 'Hidden: check filter lists!') +
+          row('Google Analytics (partner view/click counts)', gaOk, 'Loads: visits are counted', 'Blocked: this visitor is not counted', 'warn') +
+          row('Google AdSense', adsenseOk, 'Loads: AdSense can earn', 'Blocked: no AdSense earnings', 'warn') +
+          '<p class="muted">If the partner card ever shows "Hidden", a filter list has started matching the SMLC class names, and they need new neutral names.</p>';
+        btn.disabled = false;
+      });
+    }, 400);
+  });
+
+  /* ---------- Pricing calculator ---------- */
+  var money = function (n) { return isFinite(n) ? '$' + n.toFixed(2) : '—'; };
+  var num = function (n) { return isFinite(n) ? Math.round(n).toLocaleString() : '—'; };
+  var v = function (id) { return parseFloat($(id).value) || 0; };
+  function calcBillboard() {
+    var loop = Math.max(v('bb-loop'), 1), len = Math.max(v('bb-len'), 1), hours = v('bb-hours');
+    var playsDay = (hours * 3600) / loop;
+    var shareOn = Math.min(len / loop, 1) * (hours / 24);  // share of the day's passers-by who see this ad
+    var viewsMonth = v('bb-traffic') * v('bb-occ') * shareOn * 30;
+    var price = v('bb-price');
+    $('bb-out').innerHTML =
+      'Plays per day: <b>' + num(playsDay) + '</b> · Ads in loop: ' + num(loop / len) + '<br>' +
+      'Estimated views per month: <b>' + num(viewsMonth) + '</b><br>' +
+      'Cost per 1,000 views (CPM): <b>' + money(viewsMonth ? price / viewsMonth * 1000 : NaN) + '</b>';
+  }
+  function calcPartner() {
+    var share = Math.min(v('pc-slots') / Math.max(v('pc-partners'), 1), 1);
+    var views = v('pc-views') * share, price = v('pc-price');
+    $('pc-out').innerHTML =
+      'Chance this card is on screen per visit: <b>' + Math.round(share * 100) + '%</b><br>' +
+      'Estimated card views per month: <b>' + num(views) + '</b><br>' +
+      'Cost per 1,000 views (CPM): <b>' + money(views ? price / views * 1000 : NaN) + '</b>';
+  }
+  ['bb-loop','bb-len','bb-hours','bb-traffic','bb-occ','bb-price'].forEach(function (id) { $(id).addEventListener('input', calcBillboard); });
+  ['pc-views','pc-partners','pc-slots','pc-price'].forEach(function (id) { $(id).addEventListener('input', calcPartner); });
+  calcBillboard(); calcPartner();
+})();
+</script>
+</body>
+</html>
