@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<!-- SMLC Site Pulse | v1.0 | 2026-11-20 2:30 PM ET
+     Team dashboard for SMLC's own visit counts (smlc-pulse.js), which ad blockers don't stop,
+     shown next to what Google Analytics would miss. Also lists every page on the site.
+     Sign-in: Google, same team list as the Image Uploader (Firebase RTDB /smlc_admins).
+
+     FIREBASE RULES NEEDED (once). Firebase console -> Realtime Database -> Rules.
+     Add this "community_pulse" block INSIDE the existing "rules": { ... } next to what is there.
+     Do not replace the other rules.
+
+        "community_pulse": {
+          ".read": "auth != null && root.child('smlc_admins').child(auth.token.email.toLowerCase().replace('.', ',')).val() === true",
+          "days": {
+            "$day": {
+              ".write": "newData.exists() && $day.matches(/^20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/)"
+            }
+          }
+        }
+
+     Visitors' browsers can only ADD to a day's counts; only team members can read them.
+     Free (Spark) plan: counting uses uploads, which are not billed; Firebase never charges on
+     the free plan, it would only pause if a limit were hit. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light dark">
+<title>SMLC Site Pulse</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+<script src="../smlc-photos-config.js"></script>
+<style>
+  :root { --navy:#001B37; --accent:#FFC10E; --ink:#111; --muted:#555; --card:#fff; --bg:#f3f5f8; --line:#d5dbe3;
+          --ok:#137333; --bad:#b3261e; --bar:#0258A3; --bar2:#FFC10E; --chip:#eef2f7; }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink:#ececf0; --muted:#b5b5bd; --card:#1d1d20; --bg:#121214; --line:#3a3f48; --ok:#6fd28a; --bad:#ff8a80; --bar:#5aa2e6; --chip:#2a2e36; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+  header { background:var(--navy); color:#fff; padding:16px 20px; border-bottom:4px solid var(--accent); }
+  header .wrap { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  header h1 { margin:0; font-size:1.3rem; }
+  header small { opacity:.85; }
+  header a { color:#fff; font-size:.85rem; }
+  .wrap { width:min(80vw, 1500px); margin:0 auto; }
+  main.wrap { padding:20px 0 40px; display:grid; gap:20px; }
+  @media (max-width: 820px) { .wrap { width:auto; } main.wrap { padding:14px; } header { padding:14px; } }
+  section.card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px; }
+  h2 { margin:0 0 8px; font-size:1.15rem; }
+  .muted { color:var(--muted); font-size:.85rem; }
+  .toolbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  button { font:inherit; font-weight:700; border:0; border-radius:8px; padding:10px 16px; cursor:pointer; background:var(--navy); color:#fff; }
+  button.gold { background:var(--accent); color:#111; }
+  button.secondary { background:transparent; color:var(--ink); border:1px solid var(--line); }
+  select { font:inherit; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); }
+  .stats { display:grid; grid-template-columns:repeat(6, 1fr); gap:12px; }
+  @media (max-width: 1100px) { .stats { grid-template-columns:repeat(3, 1fr); } }
+  @media (max-width: 560px) { .stats { grid-template-columns:1fr 1fr; } }
+  .stat { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; }
+  .stat b { display:block; font-size:1.6rem; line-height:1.2; }
+  .stat span { font-size:.8rem; color:var(--muted); }
+  .grid3 { display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width: 1100px) { .grid3 { grid-template-columns:1fr 1fr; } }
+  @media (max-width: 820px) { .grid3, .grid2 { grid-template-columns:1fr; } }
+  table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  th, td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--line); }
+  th { font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+  td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; }
+  .barcell { width:40%; }
+  .minibar { height:8px; border-radius:4px; background:var(--bar); }
+  .chart { display:flex; align-items:flex-end; gap:3px; height:180px; padding-top:10px; border-bottom:1px solid var(--line); }
+  .chart .col { flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:stretch; height:100%; position:relative; }
+  .chart .v { background:var(--bar); border-radius:3px 3px 0 0; min-height:1px; }
+  .chart .u { background:var(--bar2); border-radius:3px 3px 0 0; min-height:1px; margin-top:2px; }
+  .chart .col:hover::after { content:attr(data-tip); position:absolute; bottom:100%; left:50%; transform:translateX(-50%); background:var(--navy); color:#fff; font-size:.75rem; padding:4px 8px; border-radius:6px; white-space:nowrap; z-index:2; }
+  .axis { display:flex; justify-content:space-between; font-size:.75rem; color:var(--muted); margin-top:4px; }
+  .legend { display:flex; gap:14px; font-size:.8rem; color:var(--muted); margin-top:6px; }
+  .legend i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:middle; }
+  .callout { border-left:5px solid var(--accent); background:var(--chip); padding:12px 14px; border-radius:8px; }
+  .inv a { color:inherit; font-weight:700; }
+  .hidden { display:none !important; }
+</style>
+<!-- SMLC Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FHJNXDB9BB"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-FHJNXDB9BB');
+</script>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div>
+      <h1>SMLC Site Pulse</h1>
+      <small>SMLC's own visit counts. Ad blockers don't stop these, unlike Google Analytics.</small>
+    </div>
+    <div class="toolbar">
+      <a href="ads-guide.html">Ads &amp; Partners Guide</a>
+      <span id="who" class="muted" style="color:#fff"></span>
+      <button class="gold" id="signin">Sign in with Google</button>
+      <button class="secondary hidden" id="signout" style="color:#fff;border-color:rgba(255,255,255,.4)">Sign out</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="card" id="gate">
+    <h2>Team sign-in</h2>
+    <p id="gate-msg">Sign in with the Google account that's on the SMLC team list (the same one the Image Uploader uses).</p>
+  </section>
+
+  <div id="dash" class="hidden" style="display:grid;gap:20px">
+    <section class="card">
+      <div class="toolbar" style="justify-content:space-between">
+        <h2 style="margin:0">Overview</h2>
+        <div class="toolbar">
+          <select id="range">
+            <option value="1">Today</option>
+            <option value="7" selected>Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="365">Last 12 months</option>
+          </select>
+          <button id="reload">Refresh</button>
+        </div>
+      </div>
+      <p class="muted" id="status"></p>
+      <div class="stats" id="tiles"></div>
+    </section>
+
+    <section class="card">
+      <h2>Views by day</h2>
+      <div class="chart" id="chart"></div>
+      <div class="axis"><span id="ax-from"></span><span id="ax-to"></span></div>
+      <div class="legend"><span><i style="background:var(--bar)"></i>Page views</span><span><i style="background:var(--bar2)"></i>Visitors</span></div>
+    </section>
+
+    <div class="grid2">
+      <section class="card"><h2>Pages</h2><div id="t-pages"></div></section>
+      <section class="card"><h2>Towns viewed</h2><p class="muted">Town pages switch towns without reloading, so this counts each town shown.</p><div id="t-towns"></div></section>
+    </div>
+
+    <section class="card">
+      <h2>Partners</h2>
+      <p class="muted">Card views = each time a partner's card rotates onto someone's screen. Clicks = taps on the card (image or "Visit Partner"). "GA would show" estimates what Google Analytics reports after ad blockers.</p>
+      <div id="t-partners"></div>
+    </section>
+
+    <div class="grid3">
+      <section class="card"><h2>Where visitors came from</h2><div id="t-sources"></div></section>
+      <section class="card"><h2>Devices</h2><div id="t-devices"></div></section>
+      <section class="card"><h2>Site address</h2><p class="muted">Live site vs. test branch.</p><div id="t-hosts"></div></section>
+    </div>
+
+    <div class="grid2">
+      <section class="card"><h2>Actions people took</h2><p class="muted">Every event the site sends (calls, directions, outbound clicks, calendar adds…).</p><div id="t-events"></div></section>
+      <section class="card"><h2>Business clicks</h2><div id="t-biz"></div></section>
+    </div>
+  </div>
+
+  <section class="card">
+    <h2>What's on the site</h2>
+    <p class="muted">Every page in the SMLC repository and what it's for. Page view counts appear once you're signed in.</p>
+    <div class="inv" id="inventory"></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); };
+  var fmt = function (n) { return Math.round(n || 0).toLocaleString(); };
+
+  /* ---------- Site inventory (keep in step with the repo) ---------- */
+  var PAGES = [
+    ['home', 'index.html', 'Home', 'Clay County home: events, news, gas prices, businesses. Town switching happens here and on the town pages.'],
+    ['flora', 'flora.html', 'Flora', 'Town page: events, news, gas widget, partners, ScoreStream banner.'],
+    ['louisville', 'louisville.html', 'Louisville', 'Town page (county seat): events, news, gas, partners, ScoreStream banner.'],
+    ['clay-city', 'clay-city.html', 'Clay City', 'Town page: events, news, gas, partners.'],
+    ['xenia', 'xenia.html', 'Xenia', 'Town page: events, news, gas, partners.'],
+    ['sailor-springs', 'sailor-springs.html', 'Sailor Springs', 'Town page (no gas widget; Business Spotlight centered).'],
+    ['directory', 'directory.html', 'Business Directory', 'Clay County business directory from the Master Data sheet.'],
+    ['gallery', 'gallery.html', 'Photo Gallery', 'Public gallery of approved photos.'],
+    ['share-photos', 'share-photos.html', 'Share Your Photos', 'Public photo submission form.'],
+    ['update-gas', 'update-gas.html', 'Update Gas Prices', 'Visitors report local fuel prices.'],
+    ['install', 'install.html', 'Install the App', 'How to add SMLC to a phone home screen.'],
+    ['tct', 'tct.html', 'Traveling Computer Tech', 'Scott\'s computer repair page (Effingham).'],
+    ['full › flora', 'full/flora.html', 'Full: Flora', 'Older all-in-one town page versions (full/ folder).'],
+    ['full › louisville', 'full/louisville.html', 'Full: Louisville', 'Older all-in-one version.'],
+    ['full › clay-city', 'full/clay-city.html', 'Full: Clay City', 'Older all-in-one version.'],
+    ['full › sailor-springs', 'full/sailor-springs.html', 'Full: Sailor Springs', 'Older all-in-one version.'],
+    ['test › cc', 'test/cc.html', 'Test page', 'Test copy of a town page.'],
+    ['', 'admin/images.html', 'Image Uploader (team)', 'Upload pictures and approve public photos. Not counted.'],
+    ['', 'admin/team.html', 'Team tools (team)', 'Team sign-in tools. Not counted.'],
+    ['', 'admin/ads-guide.html', 'Ads & Partners Guide (team)', 'How ads are priced, ad-blocker test, live partner check. Not counted.'],
+    ['', 'admin/site-pulse.html', 'Site Pulse (team)', 'This dashboard. Not counted.']
+  ];
+  function drawInventory(views) {
+    var rows = PAGES.map(function (p) {
+      var v = p[0] && views ? (views[p[0]] || 0) : null;
+      return '<tr><td><a href="../' + p[1] + '" target="_blank" rel="noopener">' + esc(p[2]) + '</a><div class="muted">' + esc(p[1]) + '</div></td>' +
+             '<td>' + esc(p[3]) + '</td><td class="n">' + (v === null ? '—' : fmt(v)) + '</td></tr>';
+    }).join('');
+    $('inventory').innerHTML = '<div style="overflow-x:auto"><table><thead><tr><th>Page</th><th>What it is</th><th class="n">Views</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+  drawInventory(null);
+
+  /* ---------- Firebase sign-in (same team list as the Image Uploader) ---------- */
+  var P = window.SMLC_PHOTOS || {};
+  var app = firebase.apps.length ? firebase.app() : firebase.initializeApp(P.FIREBASE_CONFIG);
+  var auth = app.auth(), db = app.database();
+  function emailKey(e) { return String(e || '').toLowerCase().replace(/\./g, ','); }
+
+  $('signin').onclick = function () {
+    auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(function (e) {
+      if (e && e.code === 'auth/popup-blocked') return auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
+      $('gate-msg').textContent = 'Sign-in failed: ' + (e && e.message || e);
+    });
+  };
+  $('signout').onclick = function () { auth.signOut(); };
+
+  auth.onAuthStateChanged(function (user) {
+    $('signin').classList.toggle('hidden', !!user);
+    $('signout').classList.toggle('hidden', !user);
+    $('who').textContent = user ? user.email : '';
+    if (!user) { $('dash').classList.add('hidden'); $('gate').classList.remove('hidden'); return; }
+    db.ref('smlc_admins/' + emailKey(user.email)).once('value').then(function (s) {
+      if (s.val() !== true) throw new Error('not-admin');
+      $('gate').classList.add('hidden'); $('dash').classList.remove('hidden');
+      load();
+    }).catch(function (e) {
+      $('gate').classList.remove('hidden'); $('dash').classList.add('hidden');
+      $('gate-msg').textContent = e.message === 'not-admin'
+        ? user.email + ' is not on the SMLC team list (Firebase → smlc_admins).'
+        : 'Could not check the team list: ' + e.message;
+    });
+  });
+
+  /* ---------- Load + add up ---------- */
+  function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function addInto(target, src) { Object.keys(src || {}).forEach(function (k) { target[k] = (target[k] || 0) + (Number(src[k]) || 0); }); }
+
+  function load() {
+    var days = parseInt($('range').value, 10);
+    var from = new Date(); from.setDate(from.getDate() - (days - 1));
+    $('status').textContent = 'Loading…';
+    db.ref('community_pulse/days').orderByKey().startAt(iso(from)).once('value').then(function (snap) {
+      var data = snap.val() || {};
+      var T = { views:{}, towns:{}, sources:{}, devices:{}, hosts:{}, events:{}, ga:{}, biz:{}, partners:{}, visitors:0, newVisitors:0, daily:[] };
+      for (var i = 0; i < days; i++) {
+        var d = new Date(from); d.setDate(from.getDate() + i);
+        var k = iso(d), day = data[k] || {};
+        var dv = 0; Object.keys(day.views || {}).forEach(function (p) { dv += Number(day.views[p]) || 0; });
+        T.daily.push({ day: k, views: dv, visitors: Number(day.visitors) || 0 });
+        addInto(T.views, day.views); addInto(T.towns, day.towns); addInto(T.sources, day.sources);
+        addInto(T.devices, day.devices); addInto(T.hosts, day.hosts); addInto(T.events, day.events); addInto(T.ga, day.ga);
+        T.visitors += Number(day.visitors) || 0; T.newVisitors += Number(day.newVisitors) || 0;
+        Object.keys(day.businesses || {}).forEach(function (b) { T.biz[b] = (T.biz[b] || 0) + (Number(day.businesses[b].clicks) || 0); });
+        Object.keys(day.partners || {}).forEach(function (p) {
+          var x = T.partners[p] || (T.partners[p] = { views: 0, clicks: 0 });
+          x.views += Number(day.partners[p].views) || 0; x.clicks += Number(day.partners[p].clicks) || 0;
+        });
+      }
+      draw(T);
+      $('status').textContent = Object.keys(data).length
+        ? 'Updated ' + new Date().toLocaleTimeString() + '.'
+        : 'No counts yet for this period. Counting starts once the Firebase rule is added and the pages are live.';
+    }).catch(function (e) {
+      $('status').textContent = 'Could not read counts: ' + e.message + ' (Has the community_pulse rule been added in Firebase?)';
+    });
+  }
+  $('reload').onclick = load;
+  $('range').onchange = load;
+
+  /* ---------- Drawing ---------- */
+  function sum(o) { return Object.keys(o).reduce(function (a, k) { return a + (Number(o[k]) || 0); }, 0); }
+  function table(obj, label, limit) {
+    var rows = Object.keys(obj).map(function (k) { return [k, obj[k]]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, limit || 25);
+    if (!rows.length) return '<p class="muted">Nothing yet.</p>';
+    var max = rows[0][1] || 1;
+    return '<table><thead><tr><th>' + esc(label) + '</th><th class="barcell"></th><th class="n">Count</th></tr></thead><tbody>' +
+      rows.map(function (r) {
+        return '<tr><td>' + esc(r[0]) + '</td><td class="barcell"><div class="minibar" style="width:' + (r[1] / max * 100).toFixed(1) + '%"></div></td><td class="n">' + fmt(r[1]) + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+  function draw(T) {
+    var views = sum(T.views), gaLoaded = T.ga.loaded || 0, gaBlocked = T.ga.blocked || 0;
+    var gaShare = (gaLoaded + gaBlocked) ? gaLoaded / (gaLoaded + gaBlocked) : 1;
+    var pViews = 0, pClicks = 0;
+    Object.keys(T.partners).forEach(function (p) { pViews += T.partners[p].views; pClicks += T.partners[p].clicks; });
+
+    $('tiles').innerHTML = [
+      [fmt(views), 'Page views'],
+      [fmt(T.visitors), 'Visitors (per day, added up)'],
+      [fmt(T.newVisitors), 'First-time visitors'],
+      [fmt(pViews), 'Partner card views'],
+      [fmt(pClicks), 'Partner clicks'],
+      [(gaLoaded + gaBlocked) ? Math.round((1 - gaShare) * 100) + '%' : '—', 'Hidden from Google Analytics']
+    ].map(function (t) { return '<div class="stat"><b>' + t[0] + '</b><span>' + t[1] + '</span></div>'; }).join('');
+
+    var maxV = Math.max.apply(null, T.daily.map(function (d) { return d.views; }).concat([1]));
+    $('chart').innerHTML = T.daily.map(function (d) {
+      return '<div class="col" data-tip="' + d.day + ': ' + fmt(d.views) + ' views, ' + fmt(d.visitors) + ' visitors">' +
+             '<div class="v" style="height:' + (d.views / maxV * 100) + '%"></div>' +
+             '<div class="u" style="height:' + (d.visitors / maxV * 100) + '%"></div></div>';
+    }).join('');
+    $('ax-from').textContent = T.daily.length ? T.daily[0].day : '';
+    $('ax-to').textContent = T.daily.length ? T.daily[T.daily.length - 1].day : '';
+
+    $('t-pages').innerHTML = table(T.views, 'Page');
+    $('t-towns').innerHTML = table(T.towns, 'Town');
+    $('t-sources').innerHTML = table(T.sources, 'Source', 15);
+    $('t-devices').innerHTML = table(T.devices, 'Device');
+    $('t-hosts').innerHTML = table(T.hosts, 'Address');
+    $('t-events').innerHTML = table(T.events, 'Event', 30);
+    $('t-biz').innerHTML = table(T.biz, 'Business', 30);
+
+    var prow = Object.keys(T.partners).map(function (k) { return [k, T.partners[k]]; }).sort(function (a, b) { return b[1].views - a[1].views; });
+    $('t-partners').innerHTML = prow.length
+      ? '<div style="overflow-x:auto"><table><thead><tr><th>Partner</th><th class="n">Card views</th><th class="n">Clicks</th><th class="n">Click rate</th><th class="n">GA would show</th></tr></thead><tbody>' +
+        prow.map(function (r) {
+          var x = r[1];
+          return '<tr><td>' + esc(r[0]) + '</td><td class="n">' + fmt(x.views) + '</td><td class="n">' + fmt(x.clicks) + '</td><td class="n">' +
+                 (x.views ? (x.clicks / x.views * 100).toFixed(1) + '%' : '—') + '</td><td class="n">' + fmt(x.views * gaShare) + ' views</td></tr>';
+        }).join('') + '</tbody></table></div>'
+      : '<p class="muted">No partner activity yet.</p>';
+
+    drawInventory(T.views);
+  }
+})();
+</script>
+</body>
+</html>
