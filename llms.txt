@@ -15,6 +15,7 @@
 - [Clay County photo gallery](https://supportmylocalcommunity.com/gallery.html): community photos of Clay County towns and history
 - [Share photos](https://supportmylocalcommunity.com/share-photos.html): send photos to the free gallery
 - [Gas prices](https://supportmylocalcommunity.com/update-gas.html): see and update local fuel prices
+- [Home Inventory app](https://supportmylocalcommunity.com/inventory/): free household inventory app; scan barcodes in and out, track expiration dates, shopping list of what ran out, shared live with roommates or family (invite code), counts cases and multi-packs, works offline
 
 ## Key facts
 - Clay County, Illinois is in the Central Time Zone; all times on the site are Central.
