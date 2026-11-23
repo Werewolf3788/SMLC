@@ -193,6 +193,7 @@
         .item .act { flex: none; font-size: .85rem; padding: .5em .8em; }
         .empty { text-align: center; color: var(--muted); padding: 40px 10px; }
         .empty .i { font-size: 2.6rem; }
+        .item .act + .act { margin-left: 4px; }
         .dupbar { background: rgba(255,193,14,.14); border: 1px solid var(--gold); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: .9rem; }
         .dupbar button { padding: .4em .9em; margin-left: auto; }
         .log { display: grid; gap: 6px; }
@@ -472,6 +473,8 @@
             </div>
             <label for="fNotes">Notes</label>
             <input id="fNotes" maxlength="200" placeholder="optional">
+            <label for="fLow">Put it on the shopping list when it gets down to</label>
+            <div style="display:flex;gap:8px;align-items:center"><input id="fLow" type="number" min="0" step="1" value="0" style="width:6em"><span class="hint">0 = only when it's all gone</span></div>
             <div class="btnrow"><button type="submit" class="gold" id="itemSave">Save</button></div>
             <div class="btnrow" id="itemExtra"></div>
         </form>
@@ -950,9 +953,13 @@
     function card(it, mode) {
         var meta = [it.brand, it.location].filter(Boolean).map(esc).join(' · ');
         var right;
-        if (mode === 'out') {
+        if (mode === 'low') {
+            meta = (it.qty || 0) + ' left · list at ' + it.lowAt + (it.location ? ' · ' + esc(it.location) : '');
+            right = '<button class="act ghost" data-act="store" data-id="' + it.id + '" title="Find at a store">🛒</button>';
+            mode = 'in';
+        } else if (mode === 'out') {
             meta = esc(OUT_REASONS[it.outReason] || 'Out') + (it.outBy ? ' · ' + esc(it.outBy) : '') + (it.outAt ? ' · ' + when(it.outAt) : '');
-            right = '<button class="act ok" data-act="restock" data-id="' + it.id + '">Got it again</button>';
+            right = '<button class="act ghost" data-act="store" data-id="' + it.id + '" title="Find at a store">🛒</button> <button class="act ok" data-act="restock" data-id="' + it.id + '">Got it again</button>';
         } else {
             right = '<div class="qty"><button data-act="dec" data-id="' + it.id + '" aria-label="Use one">−</button><span>' + (it.qty || 0) +
                 '</span><button data-act="inc" data-id="' + it.id + '" aria-label="Add one">+</button></div>';
@@ -961,14 +968,57 @@
             (it.unit && mode !== 'out' ? ' <span class="hint">(' + esc(it.unit) + ')</span>' : '') + '</b><small>' + (meta || '&nbsp;') + '</small>' +
             (mode === 'out' ? '' : expBadge(it) + gotBadge(it)) + '</div>' + right + '</div>';
     }
+    function isLow(i) { return i.status !== 'out' && (i.lowAt || 0) > 0 && (i.qty || 0) <= i.lowAt; }
+    // Stores: each opens the store's own site/app searching for the item (the store keeps the sale)
+    var STORES = {
+        walmart: ['Walmart', 'https://www.walmart.com/search?q='],
+        sams: ["Sam's Club", 'https://www.samsclub.com/s/'],
+        publix: ['Publix', 'https://www.publix.com/search?searchTerm='],
+        dg: ['Dollar General', 'https://www.dollargeneral.com/search?q='],
+        target: ['Target', 'https://www.target.com/s?searchTerm='],
+        aldi: ['Aldi', 'https://new.aldi.us/results?q='],
+        kroger: ['Kroger', 'https://www.kroger.com/search?query='],
+        costco: ['Costco', 'https://www.costco.com/s?keyword='],
+        amazon: ['Amazon', 'https://www.amazon.com/s?k='],
+        instacart: ['Instacart (any store)', 'https://www.instacart.com/store/s?k=']
+    };
+    function myStores() { var l = S.house && S.house.stores; return (l && l.length ? l : ['walmart', 'sams', 'publix', 'dg']).filter(function (k) { return STORES[k]; }); }
+    function searchText(it) { return [it.brand && (it.name || '').toLowerCase().indexOf(it.brand.toLowerCase()) < 0 ? it.brand : '', (it.name || '').replace(/\([^)]*\)/g, ' ')].join(' ').replace(/\s+/g, ' ').trim(); }
+    async function storePick(it) {
+        var opts = myStores().map(function (k) { return { label: STORES[k][0], value: k, cls: 'ghost' }; });
+        opts.push({ label: 'Cancel', value: null, cls: 'ghost' });
+        var k = await choice('Find ' + it.name + ' at…', '<p class="hint">Opens the store\'s own site or app, searching for it. Add it to that store\'s list or cart there.</p>', opts);
+        if (!k) return;
+        ev('inventory_store_link', { store: k });
+        window.open(STORES[k][1] + encodeURIComponent(searchText(it)), '_blank', 'noopener');
+    }
+    async function pickStores() {
+        var cur = myStores();
+        var body = '<p class="hint">Which stores does your household shop at? These show up when you tap 🛒.</p><div class="stack" id="storeChecks">' +
+            Object.keys(STORES).map(function (k) { return '<label class="checkline"><input type="checkbox" value="' + k + '"' + (cur.indexOf(k) >= 0 ? ' checked' : '') + '> <span>' + STORES[k][0] + '</span></label>'; }).join('') + '</div>';
+        var r = await choice('🏬 My stores', body, [{ label: 'Save', value: 'ok', cls: 'gold' }, { label: 'Cancel', value: null, cls: 'ghost' }]);
+        if (r !== 'ok') return;
+        var pick = [].slice.call(document.querySelectorAll('#storeChecks input:checked')).map(function (x) { return x.value; });
+        houseRef().update({ stores: pick }).then(function () { toast('Stores saved'); }).catch(fail);
+    }
+    function shareList() {
+        var out = S.items.filter(function (i) { return i.status === 'out'; }).sort(byName);
+        var low = S.items.filter(isLow).sort(byName);
+        var lines = low.map(function (i) { return '• ' + i.name + ' (' + (i.qty || 0) + ' left)'; }).concat(out.map(function (i) { return '• ' + i.name; }));
+        var text = '🛒 Shopping list' + (S.house ? ' — ' + S.house.name : '') + '\n' + lines.join('\n');
+        if (navigator.share) navigator.share({ title: 'Shopping list', text: text }).catch(function () {});
+        else copy(text);
+    }
     function emptyMsg(icon, msg) { return '<div class="empty"><div class="i">' + icon + '</div>' + msg + '</div>'; }
 
     function render() {
         var inH = S.items.filter(function (i) { return i.status !== 'out'; });
         var out = S.items.filter(function (i) { return i.status === 'out'; });
         var exp = inH.filter(function (i) { var n = daysUntil(i.expires); return n !== null && n <= 7; });
-        $('stIn').textContent = inH.length; $('stExp').textContent = exp.length; $('stOut').textContent = out.length;
-        $('nIn').textContent = inH.length || ''; $('nExp').textContent = exp.length || ''; $('nOut').textContent = out.length || '';
+        var low = inH.filter(isLow);
+        var buyN = out.length + low.length;
+        $('stIn').textContent = inH.length; $('stExp').textContent = exp.length; $('stOut').textContent = buyN;
+        $('nIn').textContent = inH.length || ''; $('nExp').textContent = exp.length || ''; $('nOut').textContent = buyN || '';
         var h = '';
         var dupGroups = {};
         S.items.forEach(function (i) { var k = normName(i.name); if (k) (dupGroups[k] = dupGroups[k] || []).push(i); });
@@ -997,8 +1047,13 @@
             if (!h) h = emptyMsg('✅', 'Nothing with an expiration date yet.<br>Add a date when you scan things in, and they show up here before they go bad.');
         } else if (S.tab === 'out') {
             var o = out.filter(matches).sort(function (a, b) { return (b.outAt && b.outAt.seconds || 9e9) - (a.outAt && a.outAt.seconds || 9e9); });
-            h = o.length ? '<p class="hint" style="margin-top:0">Things that ran out, expired or got tossed — your shopping list. Tap <b>Got it again</b> (or scan it in) when it comes home.</p><div class="grid">' + o.map(function (i) { return card(i, 'out'); }).join('') + '</div>'
-                : emptyMsg('🛒', 'Nothing is out. When something is used up or expired, scan it out and it lands here.');
+            var lw = low.filter(matches).sort(byName);
+            if (o.length || lw.length) {
+                h += '<p class="hint" style="margin-top:0">Your shopping list. Tap <b>🛒</b> to look an item up at your store, or <b>Got it again</b> (or scan it in) when it comes home.</p>' +
+                    '<div class="btnrow" style="margin:0 0 10px"><button class="ghost" data-act="shareList">📤 Send the list</button><button class="ghost" data-act="pickStores">🏬 My stores</button></div>';
+                if (lw.length) h += '<h2 class="group">Running low <span class="badge warn">' + lw.length + '</span></h2><div class="grid">' + lw.map(function (i) { return card(i, 'low'); }).join('') + '</div>';
+                if (o.length) h += '<h2 class="group">Out of the house <span class="badge bad">' + o.length + '</span></h2><div class="grid">' + o.map(function (i) { return card(i, 'out'); }).join('') + '</div>';
+            } else h = emptyMsg('🛒', 'Nothing to buy. When something is used up or gets down to the number you picked, it lands here.');
         } else {
             var A = { added: '📥 added', restocked: '🔄 restocked', plus: '➕ added one more', used: '➖ used one', out: '📤 marked out', edited: '✏️ edited', deleted: '🗑️ deleted', merged: '🔗 combined into', joined: '👋 joined the household', left: '🚪 left the household' };
             h = S.log.length ? '<div class="log">' + S.log.map(function (l) {
@@ -1026,6 +1081,8 @@
             toast('Combined — each thing is one entry now');
             return;
         }
+        if (b.dataset.act === 'shareList') { shareList(); return; }
+        if (b.dataset.act === 'pickStores') { pickStores(); return; }
         if (b.dataset.act === 'outAllExpired') {
             var ex = S.items.filter(function (i) { return i.status !== 'out' && daysUntil(i.expires) < 0; });
             var ok = await choice('Mark ' + ex.length + ' expired item' + (ex.length > 1 ? 's' : '') + ' out?', '<p>They move to Out / Shopping.</p>',
@@ -1038,6 +1095,7 @@
         else if (b.dataset.act === 'inc') { itemsRef().doc(it.id).update({ qty: (it.qty || 0) + 1, updatedAt: TS(), updatedBy: me().name }).catch(fail); logIt('plus', it); }
         else if (b.dataset.act === 'dec') useOne(it);
         else if (b.dataset.act === 'restock') restock(it);
+        else if (b.dataset.act === 'store') storePick(it);
     };
 
     // ------------------------------------------------------------------ item actions
@@ -1045,7 +1103,7 @@
         if ((it.qty || 0) > 1) {
             itemsRef().doc(it.id).update({ qty: it.qty - 1, updatedAt: TS(), updatedBy: me().name }).catch(fail);
             logIt('used', it, (it.qty - 1) + ' left');
-            toast('−1 ' + it.name + ' — ' + (it.qty - 1) + ' left', 3000);
+            toast('−1 ' + it.name + ' — ' + (it.qty - 1) + ' left' + ((it.lowAt || 0) > 0 && it.qty - 1 <= it.lowAt ? ' · added to the shopping list' : ''), 3500);
             return Promise.resolve();
         }
         return outPrompt(it);
@@ -1103,6 +1161,7 @@
         $('fOpened').parentNode.hidden = !!it;   // only asked when adding
         if (isC && !it && !o.restock) $('fQty').value = p.qty || cs || 24;
         $('fNotes').value = src.notes || '';
+        $('fLow').value = src.lowAt || 0;
         $('itemSave').textContent = o.restock ? 'Put back in the house' : it ? 'Save' : 'Add it';
         var head = '';
         if (editing.image || p.source) {
@@ -1169,6 +1228,7 @@
             qty: Math.max(0, parseInt($('fQty').value, 10) || 0), unit: $('fUnit').value.trim(),
             expires: $('fExp').value || '', barcode: $('fBarcode').value.replace(/\s/g, ''), notes: $('fNotes').value.trim(),
             image: editing.image || '', updatedAt: TS(), updatedBy: me().name,
+            lowAt: Math.max(0, parseInt($('fLow').value, 10) || 0),
             caseBarcode: $('fIsCase').checked ? $('fCaseCode').value.replace(/\s/g, '') : '',
             caseSize: $('fIsCase').checked ? Math.max(1, parseInt($('fCaseSize').value, 10) || 1) : 0
         };
