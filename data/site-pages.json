@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-20T19:35:14+00:00",
+ "generated": "2026-11-23T20:57:59+00:00",
  "repo": "Werewolf3788/SMLC",
  "branch": "Claude-Test",
  "pages": [
@@ -72,6 +72,13 @@
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/install.html",
    "updated": "2026-11-20T13:42:32-05:00",
    "message": "Add Site Pulse (own visit counter) and SMLC GA tag on every page"
+  },
+  {
+   "path": "inventory/index.html",
+   "url": "https://werewolf3788.github.io/SMLC/inventory/",
+   "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/inventory/index.html",
+   "updated": "2026-11-23T15:57:48-05:00",
+   "message": "Add Home Inventory app (inventory/): barcode scan in/out, shared households, Firestore storage"
   },
   {
    "path": "louisville.html",
