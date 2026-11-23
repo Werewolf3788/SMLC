@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-23T23:02:51+00:00",
+ "generated": "2026-11-23T23:05:50+00:00",
  "repo": "Werewolf3788/SMLC",
  "branch": "Claude-Test",
  "pages": [
@@ -77,8 +77,8 @@
    "path": "inventory/index.html",
    "url": "https://werewolf3788.github.io/SMLC/inventory/",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/inventory/index.html",
-   "updated": "2026-11-23T18:02:42-05:00",
-   "message": "Inventory: scanner reads barcodes in any direction (zxing-cpp wasm), email sign-in, fixes"
+   "updated": "2026-11-23T18:05:42-05:00",
+   "message": "Inventory: Sign in with Discord (via ww-discord-auth, app=smlc)"
   },
   {
    "path": "louisville.html",
