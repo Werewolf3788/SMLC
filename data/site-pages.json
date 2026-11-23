@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-23T22:34:56+00:00",
+ "generated": "2026-11-23T22:38:34+00:00",
  "repo": "Werewolf3788/SMLC",
  "branch": "Claude-Test",
  "pages": [
@@ -77,8 +77,8 @@
    "path": "inventory/index.html",
    "url": "https://werewolf3788.github.io/SMLC/inventory/",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/inventory/index.html",
-   "updated": "2026-11-23T17:34:46-05:00",
-   "message": "Inventory: case/multi-pack barcodes (scan the sealed case to add all, link single-item barcodes later)"
+   "updated": "2026-11-23T17:38:27-05:00",
+   "message": "Inventory: ask if a case is sealed or opened (how many missing); one running count for cases + singles"
   },
   {
    "path": "louisville.html",
