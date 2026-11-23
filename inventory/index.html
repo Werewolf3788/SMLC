@@ -90,6 +90,9 @@
         .steps { text-align: left; display: grid; gap: 10px; margin: 18px 0; }
         .steps > div { display: flex; gap: 10px; align-items: flex-start; }
         .steps span { background: var(--gold); color: #111; font-weight: 800; border-radius: 50%; min-width: 1.7em; height: 1.7em; display: grid; place-items: center; }
+        .signbtns { display: grid; gap: 10px; }
+        .signbtns button { width: 100%; }
+        button.discord { background: #5865F2; color: #fff; }
         .or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: .85rem; margin: 18px 0 12px; }
         .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
         .emailform { display: grid; gap: 8px; text-align: left; }
@@ -292,7 +295,10 @@
             <div><span>2</span><div><b>Scan out</b> when something is used up, empty or expired.</div></div>
             <div><span>3</span><div><b>Share</b> one list with your roommates or family. Everyone sees changes live.</div></div>
         </div>
-        <button id="signinBtn" class="gold bigbtn">Sign in with Google</button>
+        <div class="signbtns">
+            <button id="signinBtn" class="gold bigbtn">Sign in with Google</button>
+            <button id="discordBtn" class="bigbtn discord">Sign in with Discord</button>
+        </div>
         <div class="or"><span>or use your email</span></div>
         <form id="emailForm" class="emailform" autocomplete="on">
             <input id="eName" placeholder="Your name (what your household sees)" maxlength="40" autocomplete="name" hidden>
@@ -613,6 +619,21 @@
         });
     };
     auth.getRedirectResult().catch(function () {});
+
+    // ---- Discord: Kevin's login server (ww-discord-auth) signs people into SMLC's Firebase
+    var DISCORD_AUTH = 'https://ww-discord-auth.onrender.com';
+    $('discordBtn').onclick = function () {
+        this.disabled = true; this.textContent = 'Opening Discord… (can take up to a minute the first time)';
+        location.href = DISCORD_AUTH + '/login?app=smlc&next=' + encodeURIComponent(location.origin + location.pathname + location.search);
+    };
+    (function () {
+        var h = location.hash, tk = h.match(/ww_discord_token=([^&]+)/), er = h.match(/ww_discord_error=([^&]+)/);
+        if (!tk && !er) return;
+        history.replaceState(null, '', location.pathname + location.search);
+        if (er) setTimeout(function () { toast(decodeURIComponent(er[1]), 7000); }, 300);
+        if (tk) auth.signInWithCustomToken(decodeURIComponent(tk[1])).then(function () { ev('inventory_signin', { method: 'discord' }); })
+            .catch(function (e) { toast('Discord sign-in failed: ' + (e && e.message || e), 7000); });
+    })();
 
     // ---- email + password
     var creating = false;
