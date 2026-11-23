@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<!-- ==========================================================================
+     SMLC Home Inventory | v1.0 | 2026-11-23 4:30 PM ET
+     Scan everything in the house, share one list with everyone who lives there.
+       - Scan in:  adds an item (or +1 if you already have it)
+       - Scan out: used one / empty / expired / thrown out -> "not in the house"
+       - Check:    "do we have this?" (handy at the store)
+     Barcodes: looked up free on Open Food Facts (+ beauty, products, pet food).
+     If a barcode isn't found you type the name once; it is saved for next time.
+     Storage: Firestore only (project smlc-fuel-monitor), nothing in RTDB.
+       households/{hid}                 name, ownerUid, inviteCode, locations
+       households/{hid}/members/{uid}   who lives there
+       households/{hid}/items/{id}      the inventory
+       households/{hid}/log/{id}        activity (who added / used what)
+       household_invites/{code}         invite code -> household
+       inventory_users/{uid}            which households you belong to
+       inventory_barcodes/{barcode}     shared barcode -> name labels
+     Security rules: inventory/firestore.rules
+     ========================================================================== -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Home Inventory | Support My Local Community</title>
+    <meta name="description" content="Scan what's in your house, share it with your household, and know what's expiring or running out.">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#001B37">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Inventory">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="../smlc-device-prefs.js"></script>
+    <script src="../smlc-app.js"></script>
+    <script>function googleTranslateElementInit() { if (window.smlcStartTranslate) window.smlcStartTranslate(); }</script>
+    <script defer src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <!-- SMLC Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FHJNXDB9BB"></script>
+    <script>window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-FHJNXDB9BB');</script>
+    <script defer src="../smlc-pulse.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --navy: #001B37; --gold: #FFC10E; --ink: #14171c; --muted: #5b6270; --card: #fff; --bg: #eef1f5;
+            --line: #d7dde6; --ok: #137333; --warn: #b26a00; --bad: #b3261e; --soft: rgba(0,27,55,.06);
+            --radius: 14px; --nav-h: 66px;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root { --ink: #eceef2; --muted: #a9b0bc; --card: #1b1e24; --bg: #0f1114; --line: #343a45; --ok: #6fd28a; --warn: #ffb74d; --bad: #ff8a80; --soft: rgba(255,255,255,.05); }
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { font-size: clamp(16px, 0.55vw + 11px, 22px); }
+        body { margin: 0; font: 1rem/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
+        [hidden] { display: none !important; }
+        button, input, select, textarea { font: inherit; color: inherit; }
+        button { cursor: pointer; border: 0; border-radius: 10px; padding: .6em 1em; font-weight: 700; background: var(--navy); color: #fff; }
+        @media (prefers-color-scheme: dark) { button { background: #24406a; } }
+        button.gold { background: var(--gold); color: #111; }
+        button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+        button.danger { background: var(--bad); color: #fff; }
+        button.ok { background: var(--ok); color: #fff; }
+        button:disabled { opacity: .5; cursor: default; }
+        input, select, textarea { width: 100%; padding: .65em .8em; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+        label { display: block; font-weight: 700; font-size: .9rem; margin: .7em 0 .25em; }
+        .hint { color: var(--muted); font-size: .85rem; }
+
+        /* ---------- header ---------- */
+        header { background: var(--navy); color: #fff; padding: calc(env(safe-area-inset-top) + 10px) 16px 10px; position: sticky; top: 0; z-index: 20; }
+        .hwrap { width: min(100%, 80vw); margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+        @media (max-width: 899px) { .hwrap { width: 100%; } }
+        .brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+        .brand img { width: 34px; height: 34px; border-radius: 8px; }
+        .brand b { display: block; font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .brand small { opacity: .8; font-size: .78rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #houseBtn { background: rgba(255,255,255,.12); padding: .45em .8em; font-size: .85rem; max-width: 45vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        #avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; background: #fff3; padding: 0; flex: none; }
+
+        /* ---------- screens ---------- */
+        .screen { width: min(100%, 80vw); margin: 0 auto; padding: 18px 16px; }
+        @media (max-width: 899px) { .screen { width: 100%; } }
+        .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+        .center { max-width: 560px; margin: 6vh auto; text-align: center; }
+        .center h1 { margin: .2em 0; font-size: 1.6rem; }
+        .center p { color: var(--muted); }
+        .bigbtn { font-size: 1.05rem; padding: .85em 1.3em; }
+        .steps { text-align: left; display: grid; gap: 10px; margin: 18px 0; }
+        .steps div { display: flex; gap: 10px; align-items: flex-start; }
+        .steps span { background: var(--gold); color: #111; font-weight: 800; border-radius: 50%; min-width: 1.7em; height: 1.7em; display: grid; place-items: center; }
+        .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; text-align: left; }
+        @media (max-width: 640px) { .two { grid-template-columns: 1fr; } }
+
+        /* ---------- app layout ---------- */
+        #app { display: grid; gap: 18px; padding-bottom: calc(var(--nav-h) + 90px + env(safe-area-inset-bottom)); }
+        @media (min-width: 900px) {
+            #app { grid-template-columns: minmax(260px, 340px) 1fr; align-items: start; padding-bottom: 30px; }
+            #side { position: sticky; top: 84px; }
+        }
+        #side { display: grid; gap: 14px; }
+        .scanbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .scanbtns button { padding: 1em .6em; font-size: 1rem; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .scanbtns button .i { font-size: 1.6rem; line-height: 1; }
+        .scanbtns .wide { grid-column: span 2; flex-direction: row; justify-content: center; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px; text-align: center; cursor: pointer; }
+        .stat b { display: block; font-size: 1.4rem; }
+        .stat small { color: var(--muted); font-size: .75rem; }
+        .stat.warn b { color: var(--warn); }
+        .stat.bad b { color: var(--bad); }
+
+        /* nav: sidebar list on desktop, bottom bar on phones */
+        #nav { display: grid; gap: 6px; }
+        #nav button { background: var(--card); color: var(--ink); border: 1px solid var(--line); text-align: left; display: flex; align-items: center; gap: 10px; }
+        #nav button.on { background: var(--navy); color: #fff; border-color: var(--navy); }
+        #nav .count { margin-left: auto; background: var(--soft); border-radius: 99px; padding: 0 .55em; font-size: .8rem; }
+        #nav button.on .count { background: #fff3; }
+        @media (max-width: 899px) {
+            #side .scanbtns, #side .stats { display: none; }
+            #nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; grid-template-columns: repeat(4, 1fr); gap: 0;
+                   background: var(--card); border-top: 1px solid var(--line); padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); }
+            #nav button { border: 0; background: none; flex-direction: column; gap: 0; font-size: .72rem; padding: 6px 2px; text-align: center; border-radius: 10px; }
+            #nav button .ni { font-size: 1.35rem; }
+            #nav button.on { background: var(--soft); color: var(--ink); }
+            #nav .count { margin: 0; position: absolute; transform: translate(14px, -4px); background: var(--gold); color: #111; font-size: .65rem; }
+            #nav button { position: relative; }
+            #fab { display: flex !important; }
+        }
+        #fab { display: none; position: fixed; right: 16px; bottom: calc(var(--nav-h) + 14px + env(safe-area-inset-bottom)); z-index: 31; gap: 8px; }
+        #fab button { border-radius: 99px; padding: .8em 1.1em; box-shadow: 0 6px 18px rgba(0,0,0,.3); font-size: 1rem; }
+
+        /* ---------- list ---------- */
+        .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+        .toolbar input { flex: 1; min-width: 200px; }
+        .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 8px; scrollbar-width: thin; }
+        .chip { background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 99px; padding: .35em .85em; white-space: nowrap; font-weight: 600; font-size: .85rem; }
+        .chip.on { background: var(--gold); color: #111; border-color: var(--gold); }
+        h2.group { font-size: .95rem; margin: 18px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; display: flex; gap: 8px; align-items: center; }
+        h2.group:first-child { margin-top: 0; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; }
+        @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+        .item { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: flex; gap: 12px; align-items: center; }
+        .item .pic { width: 54px; height: 54px; border-radius: 10px; flex: none; object-fit: contain; background: #fff; display: grid; place-items: center; font-size: 1.7rem; }
+        @media (prefers-color-scheme: dark) { .item .pic.emoji { background: #262a31; } }
+        .item .info { flex: 1; min-width: 0; cursor: pointer; }
+        .item .info b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .item .info small { color: var(--muted); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .8rem; }
+        .badge { display: inline-block; font-size: .72rem; font-weight: 700; border-radius: 6px; padding: 1px 6px; margin-top: 3px; }
+        .badge.ok { background: rgba(19,115,51,.12); color: var(--ok); }
+        .badge.warn { background: rgba(178,106,0,.14); color: var(--warn); }
+        .badge.bad { background: rgba(179,38,30,.13); color: var(--bad); }
+        .badge.gray { background: var(--soft); color: var(--muted); }
+        .qty { display: flex; align-items: center; gap: 4px; flex: none; }
+        .qty button { width: 2.2em; height: 2.2em; padding: 0; border-radius: 50%; background: var(--soft); color: var(--ink); border: 1px solid var(--line); font-size: 1.1rem; }
+        .qty span { min-width: 1.8em; text-align: center; font-weight: 800; }
+        .item .act { flex: none; font-size: .85rem; padding: .5em .8em; }
+        .empty { text-align: center; color: var(--muted); padding: 40px 10px; }
+        .empty .i { font-size: 2.6rem; }
+        .log { display: grid; gap: 6px; }
+        .log div { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-size: .9rem; }
+        .log small { color: var(--muted); display: block; font-size: .75rem; }
+
+        /* ---------- sheets (pop-ups) ---------- */
+        .sheet { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; background: rgba(0,0,0,.5); }
+        .sheet > .panel { background: var(--card); width: 100%; max-width: 560px; max-height: 92vh; overflow: auto; border-radius: 18px 18px 0 0; padding: 18px 18px calc(18px + env(safe-area-inset-bottom)); }
+        @media (min-width: 700px) { .sheet { align-items: center; } .sheet > .panel { border-radius: 18px; } }
+        .panel h3 { margin: 0 0 6px; font-size: 1.2rem; display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+        .panel .x { background: var(--soft); color: var(--ink); border-radius: 50%; width: 2.1em; height: 2.1em; padding: 0; flex: none; }
+        .btnrow { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+        .btnrow button { flex: 1; min-width: 120px; }
+        .stack { display: grid; gap: 8px; margin-top: 14px; }
+        .stack button { padding: .85em; }
+        .prodhead { display: flex; gap: 12px; align-items: center; margin: 8px 0; }
+        .prodhead img { width: 72px; height: 72px; object-fit: contain; background: #fff; border-radius: 10px; }
+        .r2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 8px 0 10px; }
+        .modes button { background: var(--soft); color: var(--ink); border: 1px solid var(--line); padding: .55em .3em; font-size: .9rem; }
+        .modes button.on { background: var(--navy); color: #fff; border-color: var(--navy); }
+        .modes button.on.out { background: var(--bad); border-color: var(--bad); }
+        .modes button.on.chk { background: var(--gold); color: #111; border-color: var(--gold); }
+        .cam { position: relative; background: #000; border-radius: 14px; overflow: hidden; aspect-ratio: 4 / 3; }
+        .cam video { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .cam .frame { position: absolute; left: 10%; right: 10%; top: 32%; bottom: 32%; border: 3px solid var(--gold); border-radius: 12px; box-shadow: 0 0 0 999px rgba(0,0,0,.35); }
+        .cam .line { position: absolute; left: 12%; right: 12%; top: 50%; height: 2px; background: #ff3b30; animation: scanline 1.6s ease-in-out infinite; }
+        @keyframes scanline { 0%,100% { transform: translateY(-28px); } 50% { transform: translateY(28px); } }
+        #scanMsg { text-align: center; margin: 8px 0; font-weight: 600; }
+        .manual { display: flex; gap: 8px; margin-top: 8px; }
+        .manual input { flex: 1; }
+        .codebox { font: 800 2rem/1 ui-monospace, Menlo, monospace; letter-spacing: .2em; text-align: center; background: var(--soft); border-radius: 12px; padding: 16px; margin: 10px 0; user-select: all; }
+        .member { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+        .member img, .member .ph { width: 32px; height: 32px; border-radius: 50%; background: var(--soft); display: grid; place-items: center; }
+        .member div { flex: 1; min-width: 0; }
+        .member small { color: var(--muted); display: block; font-size: .75rem; }
+        #toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--nav-h) + 90px + env(safe-area-inset-bottom)); z-index: 90; background: #222; color: #fff; padding: .7em 1.1em; border-radius: 12px; max-width: 90vw; box-shadow: 0 6px 20px rgba(0,0,0,.35); font-weight: 600; }
+        @media (min-width: 900px) { #toast { bottom: 30px; } }
+        .goog-te-banner-frame, #goog-gt-tt, .skiptranslate iframe { display: none !important; }
+    </style>
+</head>
+<body>
+<div id="google_translate_element" hidden></div>
+
+<header>
+    <div class="hwrap">
+        <div class="brand">
+            <img src="../icons/icon-192.png" alt="">
+            <div><b id="title">Home Inventory</b><small id="subtitle">Support My Local Community</small></div>
+        </div>
+        <button id="houseBtn" hidden>🏠 Household</button>
+        <button id="avatarBtn" title="Account" hidden style="padding:0;background:none"><img id="avatar" alt=""></button>
+    </div>
+</header>
+
+<!-- ================= Sign in ================= -->
+<section id="signin" class="screen" hidden>
+    <div class="center card">
+        <div style="font-size:3rem">📦</div>
+        <h1>Home Inventory</h1>
+        <p>Scan everything in your house so everyone who lives there knows what you have, what's running low, and what's about to expire.</p>
+        <div class="steps">
+            <div><span>1</span><div><b>Scan in</b> groceries and supplies when they come home.</div></div>
+            <div><span>2</span><div><b>Scan out</b> when something is used up, empty or expired.</div></div>
+            <div><span>3</span><div><b>Share</b> one list with your roommates or family. Everyone sees changes live.</div></div>
+        </div>
+        <button id="signinBtn" class="gold bigbtn">Sign in with Google</button>
+        <p class="hint">Your list is private to your household. Signing in is only so your household can share it.</p>
+    </div>
+</section>
+
+<!-- ================= No household yet ================= -->
+<section id="setup" class="screen" hidden>
+    <div class="center" style="max-width:820px">
+        <h1>Set up your household</h1>
+        <p>Start a new household list, or join the one someone in your house already made.</p>
+        <div class="two">
+            <div class="card">
+                <h3 style="margin-top:0">🏠 Start a new household</h3>
+                <label for="newHouseName">Name it</label>
+                <input id="newHouseName" placeholder="e.g. Our House, Apartment 4B" maxlength="60">
+                <div class="btnrow"><button id="createHouseBtn" class="gold">Create</button></div>
+            </div>
+            <div class="card">
+                <h3 style="margin-top:0">🤝 Join a household</h3>
+                <label for="joinCode">Invite code</label>
+                <input id="joinCode" placeholder="6-letter code" maxlength="10" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:.15em">
+                <div class="btnrow"><button id="joinBtn">Join</button></div>
+                <p class="hint">Ask someone in your house to open ⚙️ Household and share the invite.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ================= Main app ================= -->
+<section id="app" class="screen" hidden>
+    <aside id="side">
+        <div class="scanbtns">
+            <button class="gold" data-scan="in"><span class="i">📥</span>Scan in</button>
+            <button class="danger" data-scan="out"><span class="i">📤</span>Scan out</button>
+            <button class="ghost wide" data-scan="check">🔍 Do we have it?</button>
+            <button class="ghost wide" id="addManualBtn">✏️ Add without a barcode</button>
+        </div>
+        <div class="stats">
+            <div class="stat" data-tab="in"><b id="stIn">0</b><small>In the house</small></div>
+            <div class="stat warn" data-tab="exp"><b id="stExp">0</b><small>Expiring</small></div>
+            <div class="stat bad" data-tab="out"><b id="stOut">0</b><small>Out / buy</small></div>
+        </div>
+        <nav id="nav">
+            <button data-tab="in" class="on"><span class="ni">🏠</span><span>In the house</span><span class="count" id="nIn"></span></button>
+            <button data-tab="exp"><span class="ni">⏰</span><span>Expiring</span><span class="count" id="nExp"></span></button>
+            <button data-tab="out"><span class="ni">🛒</span><span>Out / Shopping</span><span class="count" id="nOut"></span></button>
+            <button data-tab="log"><span class="ni">🕘</span><span>Activity</span></button>
+        </nav>
+    </aside>
+    <main id="main">
+        <div class="toolbar">
+            <input id="search" type="search" placeholder="Search name, brand or barcode…" autocomplete="off">
+            <button class="ghost" id="addManualBtn2" title="Add something without a barcode">✏️ Add</button>
+        </div>
+        <div class="chips" id="locChips"></div>
+        <div id="list"></div>
+    </main>
+</section>
+
+<div id="fab" hidden>
+    <button class="danger" data-scan="out">📤 Out</button>
+    <button class="gold" data-scan="in">📥 Scan in</button>
+</div>
+
+<!-- ================= Scanner ================= -->
+<div id="scanSheet" class="sheet" hidden>
+    <div class="panel">
+        <h3><span>Scan a barcode</span><button class="x" data-close="scan" aria-label="Close">✕</button></h3>
+        <div class="modes">
+            <button data-mode="in">📥 Scan in</button>
+            <button data-mode="out" class="out">📤 Scan out</button>
+            <button data-mode="check" class="chk">🔍 Check</button>
+        </div>
+        <div class="cam"><video id="scanVideo" playsinline muted autoplay></video><div class="frame"></div><div class="line"></div></div>
+        <div id="scanMsg">Starting camera…</div>
+        <div class="manual">
+            <input id="manualCode" inputmode="numeric" placeholder="Or type the barcode numbers" autocomplete="off">
+            <button id="manualGo">Go</button>
+        </div>
+        <p class="hint" style="text-align:center">Keeps scanning after each item, so you can go shelf by shelf. Tap ✕ when you're done.</p>
+    </div>
+</div>
+
+<!-- ================= Item add / edit ================= -->
+<div id="itemSheet" class="sheet" hidden>
+    <div class="panel">
+        <h3><span id="itemTitle">Add item</span><button class="x" data-close="item" aria-label="Close">✕</button></h3>
+        <div class="prodhead" id="itemHead"></div>
+        <form id="itemForm" autocomplete="off">
+            <label for="fName">What is it?</label>
+            <input id="fName" required maxlength="120" placeholder="e.g. Peanut butter">
+            <div class="r2">
+                <div><label for="fBrand">Brand</label><input id="fBrand" maxlength="80"></div>
+                <div><label for="fCat">Type</label><select id="fCat"></select></div>
+            </div>
+            <div class="r2">
+                <div><label for="fLoc">Where is it kept?</label><select id="fLoc"></select></div>
+                <div><label for="fQty">How many</label>
+                    <div style="display:flex;gap:6px"><input id="fQty" type="number" min="0" step="1" value="1" style="width:5em"><input id="fUnit" placeholder="cans, boxes…" maxlength="20"></div></div>
+            </div>
+            <label for="fExp">Expires / best by <span class="hint">(optional)</span></label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <input id="fExp" type="date" style="flex:1;min-width:150px">
+                <button type="button" class="ghost" data-exp="3">+3 days</button>
+                <button type="button" class="ghost" data-exp="7">+1 wk</button>
+                <button type="button" class="ghost" data-exp="30">+1 mo</button>
+                <button type="button" class="ghost" data-exp="">None</button>
+            </div>
+            <label for="fBarcode">Barcode</label>
+            <input id="fBarcode" inputmode="numeric" maxlength="40" placeholder="(none)">
+            <label for="fNotes">Notes</label>
+            <input id="fNotes" maxlength="200" placeholder="optional">
+            <div class="btnrow"><button type="submit" class="gold" id="itemSave">Save</button></div>
+            <div class="btnrow" id="itemExtra"></div>
+        </form>
+    </div>
+</div>
+
+<!-- ================= Choice pop-up ================= -->
+<div id="choiceSheet" class="sheet" hidden>
+    <div class="panel">
+        <h3><span id="choiceTitle"></span><button class="x" data-close="choice" aria-label="Close">✕</button></h3>
+        <div id="choiceBody"></div>
+        <div class="stack" id="choiceBtns"></div>
+    </div>
+</div>
+
+<!-- ================= Household / account ================= -->
+<div id="houseSheet" class="sheet" hidden>
+    <div class="panel">
+        <h3><span>⚙️ Household</span><button class="x" data-close="house" aria-label="Close">✕</button></h3>
+        <label for="hName">Household name</label>
+        <div style="display:flex;gap:8px"><input id="hName" maxlength="60"><button id="hNameSave">Save</button></div>
+
+        <label>Invite the people you live with</label>
+        <div class="codebox" id="hCode">——</div>
+        <div class="btnrow" style="margin-top:0">
+            <button id="hShare" class="gold">📤 Share invite</button>
+            <button id="hCopy" class="ghost">Copy link</button>
+        </div>
+        <p class="hint">They open the link (or enter the code), sign in with Google, and they're in. <a href="#" id="hNewCode">Make a new code</a> if an old one got passed around.</p>
+
+        <label>Who's in this household</label>
+        <div id="hMembers"></div>
+
+        <label for="hLocs">Places things are kept</label>
+        <textarea id="hLocs" rows="2" placeholder="Pantry, Fridge, Freezer…"></textarea>
+        <div class="btnrow" style="margin-top:6px"><button id="hLocsSave" class="ghost">Save places</button></div>
+
+        <label>Switch / add household</label>
+        <select id="hSwitch"></select>
+        <div class="btnrow">
+            <button id="hLeave" class="ghost">Leave this household</button>
+            <button id="hSignout" class="ghost">Sign out</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast" hidden></div>
+
+<script src="zxing.min.js" defer></script>
+<script>
+(function () {
+    'use strict';
+
+    // ------------------------------------------------------------------ setup
+    var FIREBASE_CONFIG = {
+        apiKey: "AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg",
+        authDomain: "smlc-fuel-monitor.firebaseapp.com",
+        databaseURL: "https://smlc-fuel-monitor-default-rtdb.firebaseio.com",
+        projectId: "smlc-fuel-monitor",
+        storageBucket: "smlc-fuel-monitor.firebasestorage.app",
+        messagingSenderId: "22397440085",
+        appId: "1:22397440085:web:c00e716858ed58895bc4dc"
+    };
+    var fbApp = firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG);
+    var db = fbApp.firestore();
+    try { db.enablePersistence({ synchronizeTabs: true }).catch(function () {}); } catch (e) {}
+    var auth = fbApp.auth();
+    var TS = function () { return firebase.firestore.FieldValue.serverTimestamp(); };
+
+    var DEFAULT_LOCS = ['Pantry', 'Fridge', 'Freezer', 'Kitchen cabinet', 'Bathroom', 'Laundry / cleaning', 'Garage / storage', 'Other'];
+    var CATS = [
+        ['Food', '🥫'], ['Fresh food', '🥬'], ['Drinks', '🥤'], ['Snacks', '🍪'], ['Frozen', '🧊'], ['Cleaning', '🧽'],
+        ['Personal care', '🧴'], ['Medicine', '💊'], ['Paper goods', '🧻'], ['Pet', '🐾'], ['Baby', '🍼'], ['Other', '📦']
+    ];
+    var CAT_EMOJI = {}; CATS.forEach(function (c) { CAT_EMOJI[c[0]] = c[1]; });
+    var OUT_REASONS = { empty: 'Empty / used up', expired: 'Expired', tossed: 'Thrown out' };
+
+    var S = {
+        user: null, userDoc: {}, hid: null, house: null, items: [], members: [], log: [],
+        tab: 'in', loc: 'All', q: '', unsubs: [], scanMode: 'in', scanLoop: false
+    };
+
+    function $(id) { return document.getElementById(id); }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function ev(name, p) { try { gtag('event', name, p || {}); } catch (e) {} }
+    var toastT;
+    function toast(msg, ms) {
+        var t = $('toast'); t.textContent = msg; t.hidden = false;
+        clearTimeout(toastT); toastT = setTimeout(function () { t.hidden = true; }, ms || 2600);
+    }
+    function showScreen(id) { ['signin', 'setup', 'app'].forEach(function (s) { $(s).hidden = s !== id; }); $('fab').hidden = id !== 'app'; }
+    function me() { var u = S.user || {}; return { uid: u.uid, name: u.displayName || (u.email || 'Someone').split('@')[0] }; }
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+    function dateStr(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+    function daysUntil(s) {
+        if (!s) return null;
+        var p = s.split('-'); var d = new Date(+p[0], +p[1] - 1, +p[2]);
+        var t = new Date(); t.setHours(0, 0, 0, 0);
+        return Math.round((d - t) / 86400000);
+    }
+    function niceDate(s) {
+        if (!s) return '';
+        var p = s.split('-'); var d = new Date(+p[0], +p[1] - 1, +p[2]);
+        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
+    }
+    function when(ts) {
+        if (!ts || !ts.toDate) return 'just now';
+        var d = ts.toDate(), m = Math.round((Date.now() - d) / 60000);
+        if (m < 1) return 'just now'; if (m < 60) return m + ' min ago';
+        var h = Math.round(m / 60); if (h < 24) return h + ' hr ago';
+        return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    }
+    function expBadge(it) {
+        var n = daysUntil(it.expires);
+        if (n === null) return '';
+        if (n < 0) return '<span class="badge bad">Expired ' + niceDate(it.expires) + '</span>';
+        if (n === 0) return '<span class="badge bad">Expires today</span>';
+        if (n <= 3) return '<span class="badge warn">Expires in ' + n + ' day' + (n > 1 ? 's' : '') + '</span>';
+        if (n <= 7) return '<span class="badge warn">Expires ' + niceDate(it.expires) + '</span>';
+        return '<span class="badge ok">Good until ' + niceDate(it.expires) + '</span>';
+    }
+    function picHtml(it) {
+        return it.image ? '<img class="pic" src="' + esc(it.image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">'
+                        : '<div class="pic emoji">' + (CAT_EMOJI[it.category] || '📦') + '</div>';
+    }
+    function makeCode() {
+        var a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', s = '';
+        var r = new Uint32Array(6); crypto.getRandomValues(r);
+        for (var i = 0; i < 6; i++) s += a[r[i] % a.length];
+        return s;
+    }
+    function locs() { return (S.house && S.house.locations && S.house.locations.length) ? S.house.locations : DEFAULT_LOCS; }
+    function houseRef(hid) { return db.collection('households').doc(hid || S.hid); }
+    function itemsRef() { return houseRef().collection('items'); }
+    function logIt(action, it, extra) {
+        houseRef().collection('log').add({
+            action: action, itemName: it.name || '', itemId: it.id || '', extra: extra || '',
+            by: me().name, byUid: me().uid, at: TS()
+        }).catch(function () {});
+    }
+    function fail(e) { console.error(e); toast((e && e.code === 'permission-denied') ? "Not allowed — the household's Firestore rules may not be set up yet." : 'Something went wrong: ' + (e && e.message || e), 5000); }
+
+    // ------------------------------------------------------------------ sheets
+    var sheetDone = {};
+    function openSheet(name) { $(name + 'Sheet').hidden = false; }
+    function closeSheet(name, val) {
+        $(name + 'Sheet').hidden = true;
+        if (name === 'scan') { stopCamera(); }
+        var cb = sheetDone[name]; sheetDone[name] = null;
+        if (cb) cb(val);
+    }
+    document.addEventListener('click', function (e) {
+        var c = e.target.closest('[data-close]');
+        if (c) { if (c.dataset.close === 'scan') S.scanLoop = false; closeSheet(c.dataset.close, null); return; }
+        if (e.target.classList.contains('sheet')) {
+            var n = e.target.id.replace('Sheet', '');
+            if (n === 'scan') S.scanLoop = false;
+            closeSheet(n, null);
+        }
+    });
+
+    // choice(title, bodyHtml, [{label, value, cls}]) -> Promise<value|null>
+    function choice(title, body, opts) {
+        $('choiceTitle').textContent = title;
+        $('choiceBody').innerHTML = body || '';
+        $('choiceBtns').innerHTML = opts.map(function (o, i) {
+            return '<button data-i="' + i + '" class="' + (o.cls || '') + '">' + o.label + '</button>';
+        }).join('');
+        return new Promise(function (resolve) {
+            sheetDone.choice = resolve;
+            $('choiceBtns').onclick = function (e) {
+                var b = e.target.closest('button[data-i]'); if (!b) return;
+                closeSheet('choice', opts[+b.dataset.i].value);
+            };
+            openSheet('choice');
+        });
+    }
+
+    // ------------------------------------------------------------------ auth
+    $('signinBtn').onclick = function () {
+        var p = new firebase.auth.GoogleAuthProvider();
+        var standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+        if (standalone) return auth.signInWithRedirect(p);
+        auth.signInWithPopup(p).catch(function (e) {
+            if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment')) return auth.signInWithRedirect(p);
+            if (e && e.code !== 'auth/popup-closed-by-user') toast('Sign-in failed: ' + e.message, 5000);
+        });
+    };
+    auth.getRedirectResult().catch(function () {});
+
+    var params = new URLSearchParams(location.search);
+    auth.onAuthStateChanged(async function (u) {
+        S.user = u;
+        stopHouse();
+        if (!u) { $('houseBtn').hidden = $('avatarBtn').hidden = true; $('subtitle').textContent = 'Support My Local Community'; showScreen('signin'); return; }
+        $('avatarBtn').hidden = false;
+        $('avatar').src = u.photoURL || '../icons/icon-192.png';
+        var snap = await db.collection('inventory_users').doc(u.uid).get().catch(function () { return null; });
+        S.userDoc = (snap && snap.exists) ? snap.data() : {};
+        var join = params.get('join');
+        if (join) {
+            params.delete('join');
+            history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : ''));
+            var ok = await joinWithCode(join, true);
+            if (ok) return;
+        }
+        var houses = S.userDoc.households || {};
+        var hid = (S.userDoc.current && houses[S.userDoc.current]) ? S.userDoc.current : Object.keys(houses)[0];
+        if (hid) openHouse(hid); else { $('houseBtn').hidden = true; showScreen('setup'); }
+    });
+
+    // ------------------------------------------------------------------ households
+    function memberDoc(code) {
+        var u = S.user;
+        return { name: me().name, email: u.email || '', photo: u.photoURL || '', code: code || '', joinedAt: TS() };
+    }
+    async function saveUserHouse(hid, name) {
+        var upd = { households: {}, current: hid };
+        upd.households[hid] = name;
+        await db.collection('inventory_users').doc(S.user.uid).set(upd, { merge: true });
+        S.userDoc.households = S.userDoc.households || {};
+        S.userDoc.households[hid] = name; S.userDoc.current = hid;
+    }
+    async function createHouse(name) {
+        name = (name || '').trim() || 'Our House';
+        var ref = db.collection('households').doc(), code = makeCode();
+        await ref.set({ name: name, ownerUid: S.user.uid, inviteCode: code, locations: DEFAULT_LOCS, createdAt: TS() });
+        await ref.collection('members').doc(S.user.uid).set(memberDoc(''));
+        await db.collection('household_invites').doc(code).set({ householdId: ref.id, householdName: name, createdBy: S.user.uid });
+        await saveUserHouse(ref.id, name);
+        ev('inventory_household_created');
+        openHouse(ref.id);
+        setTimeout(function () { toast('Household created! Open 🏠 at the top to invite the people you live with.', 4500); }, 600);
+    }
+    async function joinWithCode(code, ask) {
+        code = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (!code) { toast('Enter the invite code'); return false; }
+        try {
+            var inv = await db.collection('household_invites').doc(code).get();
+            if (!inv.exists) { toast("That invite code wasn't found. Ask for a new one.", 4500); return false; }
+            var d = inv.data();
+            if (S.userDoc.households && S.userDoc.households[d.householdId]) { openHouse(d.householdId); return true; }
+            if (ask) {
+                var yes = await choice('Join household?', '<p>You were invited to <b>' + esc(d.householdName) + '</b>. Everyone in it can see and update the same inventory.</p>',
+                    [{ label: 'Join ' + esc(d.householdName), value: true, cls: 'gold' }, { label: 'Not now', value: false, cls: 'ghost' }]);
+                if (!yes) return false;
+            }
+            await houseRef(d.householdId).collection('members').doc(S.user.uid).set(memberDoc(code));
+            await saveUserHouse(d.householdId, d.householdName);
+            S.hid = d.householdId; logIt('joined', { name: '' });
+            ev('inventory_household_joined');
+            openHouse(d.householdId);
+            toast('Welcome to ' + d.householdName + '!');
+            return true;
+        } catch (e) { fail(e); return false; }
+    }
+    function stopHouse() { S.unsubs.forEach(function (f) { try { f(); } catch (e) {} }); S.unsubs = []; S.items = []; S.members = []; S.log = []; S.house = null; }
+    function openHouse(hid) {
+        stopHouse();
+        S.hid = hid;
+        if (S.userDoc.current !== hid) db.collection('inventory_users').doc(S.user.uid).set({ current: hid }, { merge: true }).catch(function () {});
+        S.userDoc.current = hid;
+        showScreen('app');
+        $('houseBtn').hidden = false;
+        $('houseBtn').textContent = '🏠 ' + ((S.userDoc.households || {})[hid] || 'Household');
+        $('list').innerHTML = '<div class="empty">Loading…</div>';
+        S.unsubs.push(houseRef(hid).onSnapshot(function (s) {
+            if (!s.exists) return lostHouse(hid);
+            S.house = s.data();
+            $('houseBtn').textContent = '🏠 ' + S.house.name;
+            $('subtitle').textContent = S.house.name;
+            if (S.userDoc.households && S.userDoc.households[hid] !== S.house.name) saveUserHouse(hid, S.house.name).catch(function () {});
+            renderChips(); fillHouseSheet();
+        }, function (e) { if (e.code === 'permission-denied') lostHouse(hid); else fail(e); }));
+        S.unsubs.push(houseRef(hid).collection('items').onSnapshot(function (qs) {
+            S.items = qs.docs.map(function (d) { var x = d.data(); x.id = d.id; return x; });
+            render();
+        }, fail));
+        S.unsubs.push(houseRef(hid).collection('members').onSnapshot(function (qs) {
+            S.members = qs.docs.map(function (d) { var x = d.data(); x.uid = d.id; return x; });
+            fillHouseSheet();
+        }, function () {}));
+        S.unsubs.push(houseRef(hid).collection('log').orderBy('at', 'desc').limit(80).onSnapshot(function (qs) {
+            S.log = qs.docs.map(function (d) { return d.data(); });
+            if (S.tab === 'log') render();
+        }, function () {}));
+    }
+    async function lostHouse(hid) {
+        // removed from the household (or it was deleted)
+        stopHouse();
+        if (S.userDoc.households) delete S.userDoc.households[hid];
+        var upd = { current: firebase.firestore.FieldValue.delete() };
+        upd['households.' + hid] = firebase.firestore.FieldValue.delete();
+        await db.collection('inventory_users').doc(S.user.uid).update(upd).catch(function () {});
+        S.userDoc.current = null;
+        var next = Object.keys(S.userDoc.households || {})[0];
+        if (next) openHouse(next); else { $('houseBtn').hidden = true; showScreen('setup'); }
+    }
+
+    $('createHouseBtn').onclick = function () { this.disabled = true; var b = this; createHouse($('newHouseName').value).catch(fail).finally(function () { b.disabled = false; }); };
+    $('joinBtn').onclick = function () { joinWithCode($('joinCode').value, false); };
+
+    // ------------------------------------------------------------------ household sheet
+    function inviteLink() { return location.origin + location.pathname + '?join=' + (S.house ? S.house.inviteCode : ''); }
+    function fillHouseSheet() {
+        if (!S.house) return;
+        if (document.activeElement !== $('hName')) $('hName').value = S.house.name || '';
+        $('hCode').textContent = S.house.inviteCode || '——';
+        if (document.activeElement !== $('hLocs')) $('hLocs').value = locs().join(', ');
+        $('hMembers').innerHTML = S.members.map(function (m) {
+            var owner = S.house.ownerUid === m.uid;
+            var canRemove = S.house.ownerUid === me().uid && !owner;
+            return '<div class="member">' + (m.photo ? '<img src="' + esc(m.photo) + '" alt="" referrerpolicy="no-referrer">' : '<span class="ph">👤</span>') +
+                '<div><b>' + esc(m.name) + (m.uid === me().uid ? ' (you)' : '') + '</b><small>' + (owner ? 'Started this household' : 'Member') + '</small></div>' +
+                (canRemove ? '<button class="ghost" data-remove="' + esc(m.uid) + '" style="padding:.3em .7em;font-size:.8rem">Remove</button>' : '') + '</div>';
+        }).join('') || '<p class="hint">Just you so far.</p>';
+        var hs = S.userDoc.households || {};
+        $('hSwitch').innerHTML = Object.keys(hs).map(function (k) {
+            return '<option value="' + esc(k) + '"' + (k === S.hid ? ' selected' : '') + '>' + esc(hs[k]) + '</option>';
+        }).join('') + '<option value="__new">➕ Start or join another household…</option>';
+    }
+    $('houseBtn').onclick = $('avatarBtn').onclick = function () { fillHouseSheet(); openSheet('house'); };
+    $('hNameSave').onclick = function () {
+        var n = $('hName').value.trim(); if (!n) return;
+        houseRef().update({ name: n }).then(function () {
+            db.collection('household_invites').doc(S.house.inviteCode).set({ householdId: S.hid, householdName: n, createdBy: S.user.uid }).catch(function () {});
+            toast('Saved');
+        }).catch(fail);
+    };
+    $('hLocsSave').onclick = function () {
+        var list = $('hLocs').value.split(/[,\n]/).map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 30);
+        if (!list.length) list = DEFAULT_LOCS;
+        houseRef().update({ locations: list }).then(function () { toast('Places saved'); }).catch(fail);
+    };
+    $('hShare').onclick = function () {
+        var text = 'Join our household inventory "' + S.house.name + '" — code ' + S.house.inviteCode;
+        if (navigator.share) navigator.share({ title: 'Home Inventory', text: text, url: inviteLink() }).catch(function () {});
+        else copy(text + '\n' + inviteLink());
+        ev('inventory_invite_shared');
+    };
+    $('hCopy').onclick = function () { copy(inviteLink()); };
+    function copy(t) {
+        (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { toast('Copied'); })
+            .catch(function () { prompt('Copy this:', t); });
+    }
+    $('hNewCode').onclick = async function (e) {
+        e.preventDefault();
+        var ok = await choice('Make a new invite code?', '<p>The old code and link will stop working. People already in the household stay in.</p>',
+            [{ label: 'Make a new code', value: true, cls: 'gold' }, { label: 'Cancel', value: false, cls: 'ghost' }]);
+        if (!ok) return openSheet('house');
+        var old = S.house.inviteCode, code = makeCode();
+        try {
+            await houseRef().update({ inviteCode: code });
+            await db.collection('household_invites').doc(code).set({ householdId: S.hid, householdName: S.house.name, createdBy: S.user.uid });
+            await db.collection('household_invites').doc(old).delete().catch(function () {});
+            toast('New code: ' + code);
+        } catch (err) { fail(err); }
+        openSheet('house');
+    };
+    $('hMembers').onclick = async function (e) {
+        var b = e.target.closest('[data-remove]'); if (!b) return;
+        var m = S.members.filter(function (x) { return x.uid === b.dataset.remove; })[0];
+        var ok = await choice('Remove ' + (m ? m.name : 'this person') + '?', '<p>They will no longer see this household. Tip: make a new invite code too.</p>',
+            [{ label: 'Remove', value: true, cls: 'danger' }, { label: 'Cancel', value: false, cls: 'ghost' }]);
+        if (ok) await houseRef().collection('members').doc(b.dataset.remove).delete().catch(fail);
+        openSheet('house');
+    };
+    $('hSwitch').onchange = function () {
+        var v = this.value;
+        closeSheet('house');
+        if (v === '__new') { stopHouse(); S.hid = null; showScreen('setup'); return; }
+        if (v !== S.hid) openHouse(v);
+    };
+    $('hLeave').onclick = async function () {
+        var ok = await choice('Leave ' + (S.house ? S.house.name : 'this household') + '?', '<p>You can rejoin later with an invite code.</p>',
+            [{ label: 'Leave household', value: true, cls: 'danger' }, { label: 'Cancel', value: false, cls: 'ghost' }]);
+        if (!ok) return;
+        var hid = S.hid;
+        logIt('left', { name: '' });
+        await houseRef(hid).collection('members').doc(S.user.uid).delete().catch(fail);
+        lostHouse(hid);
+    };
+    $('hSignout').onclick = function () { closeSheet('house'); auth.signOut(); };
+
+    // ------------------------------------------------------------------ list rendering
+    function setTab(t) {
+        S.tab = t;
+        document.querySelectorAll('#nav button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === t); });
+        $('search').parentNode.hidden = $('locChips').hidden = (t === 'log');
+        render();
+        if (window.innerWidth < 900) window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    document.querySelectorAll('[data-tab]').forEach(function (b) { b.onclick = function () { setTab(b.dataset.tab); }; });
+    $('search').oninput = function () { S.q = this.value.trim().toLowerCase(); render(); };
+    function renderChips() {
+        var all = ['All'].concat(locs());
+        if (all.indexOf(S.loc) < 0) S.loc = 'All';
+        $('locChips').innerHTML = all.map(function (l) { return '<button class="chip' + (l === S.loc ? ' on' : '') + '" data-loc="' + esc(l) + '">' + esc(l) + '</button>'; }).join('');
+    }
+    $('locChips').onclick = function (e) { var b = e.target.closest('[data-loc]'); if (!b) return; S.loc = b.dataset.loc; renderChips(); render(); };
+
+    function matches(it) {
+        if (S.loc !== 'All' && (it.location || 'Other') !== S.loc) return false;
+        if (!S.q) return true;
+        return ((it.name || '') + ' ' + (it.brand || '') + ' ' + (it.barcode || '') + ' ' + (it.category || '') + ' ' + (it.notes || '')).toLowerCase().indexOf(S.q) >= 0;
+    }
+    function byName(a, b) { return (a.name || '').localeCompare(b.name || ''); }
+    function card(it, mode) {
+        var meta = [it.brand, it.location].filter(Boolean).map(esc).join(' · ');
+        var right;
+        if (mode === 'out') {
+            meta = esc(OUT_REASONS[it.outReason] || 'Out') + (it.outBy ? ' · ' + esc(it.outBy) : '') + (it.outAt ? ' · ' + when(it.outAt) : '');
+            right = '<button class="act ok" data-act="restock" data-id="' + it.id + '">Got it again</button>';
+        } else {
+            right = '<div class="qty"><button data-act="dec" data-id="' + it.id + '" aria-label="Use one">−</button><span>' + (it.qty || 0) +
+                '</span><button data-act="inc" data-id="' + it.id + '" aria-label="Add one">+</button></div>';
+        }
+        return '<div class="item">' + picHtml(it) + '<div class="info" data-act="edit" data-id="' + it.id + '"><b>' + esc(it.name) +
+            (it.unit && mode !== 'out' ? ' <span class="hint">(' + esc(it.unit) + ')</span>' : '') + '</b><small>' + (meta || '&nbsp;') + '</small>' +
+            (mode === 'out' ? '' : expBadge(it)) + '</div>' + right + '</div>';
+    }
+    function emptyMsg(icon, msg) { return '<div class="empty"><div class="i">' + icon + '</div>' + msg + '</div>'; }
+
+    function render() {
+        var inH = S.items.filter(function (i) { return i.status !== 'out'; });
+        var out = S.items.filter(function (i) { return i.status === 'out'; });
+        var exp = inH.filter(function (i) { var n = daysUntil(i.expires); return n !== null && n <= 7; });
+        $('stIn').textContent = inH.length; $('stExp').textContent = exp.length; $('stOut').textContent = out.length;
+        $('nIn').textContent = inH.length || ''; $('nExp').textContent = exp.length || ''; $('nOut').textContent = out.length || '';
+        var h = '';
+        if (S.tab === 'in') {
+            var list = inH.filter(matches).sort(byName);
+            if (!list.length) h = S.items.length ? emptyMsg('🔍', 'Nothing matches.') :
+                emptyMsg('📦', '<b>Your inventory is empty.</b><br>Tap <b>Scan in</b> and go shelf by shelf. The scanner keeps going after each item.');
+            var groups = {};
+            list.forEach(function (it) { var l = it.location || 'Other'; (groups[l] = groups[l] || []).push(it); });
+            var order = locs().concat(Object.keys(groups).filter(function (l) { return locs().indexOf(l) < 0; }));
+            order.forEach(function (l) {
+                if (!groups[l]) return;
+                h += '<h2 class="group">' + esc(l) + ' <span class="badge gray">' + groups[l].length + '</span></h2><div class="grid">' + groups[l].map(function (i) { return card(i, 'in'); }).join('') + '</div>';
+            });
+        } else if (S.tab === 'exp') {
+            var withDate = inH.filter(function (i) { return i.expires; }).filter(matches).sort(function (a, b) { return a.expires < b.expires ? -1 : 1; });
+            var bad = withDate.filter(function (i) { return daysUntil(i.expires) < 0; });
+            var soon = withDate.filter(function (i) { var n = daysUntil(i.expires); return n >= 0 && n <= 7; });
+            var later = withDate.filter(function (i) { return daysUntil(i.expires) > 7; });
+            if (bad.length) h += '<h2 class="group">Already expired <span class="badge bad">' + bad.length + '</span> <button class="act danger" data-act="outAllExpired" style="margin-left:auto;padding:.35em .8em;font-size:.78rem;text-transform:none">Mark all out</button></h2><div class="grid">' + bad.map(function (i) { return card(i, 'in'); }).join('') + '</div>';
+            if (soon.length) h += '<h2 class="group">This week <span class="badge warn">' + soon.length + '</span></h2><div class="grid">' + soon.map(function (i) { return card(i, 'in'); }).join('') + '</div>';
+            if (later.length) h += '<h2 class="group">Later</h2><div class="grid">' + later.map(function (i) { return card(i, 'in'); }).join('') + '</div>';
+            if (!h) h = emptyMsg('✅', 'Nothing with an expiration date yet.<br>Add a date when you scan things in, and they show up here before they go bad.');
+        } else if (S.tab === 'out') {
+            var o = out.filter(matches).sort(function (a, b) { return (b.outAt && b.outAt.seconds || 9e9) - (a.outAt && a.outAt.seconds || 9e9); });
+            h = o.length ? '<p class="hint" style="margin-top:0">Things that ran out, expired or got tossed — your shopping list. Tap <b>Got it again</b> (or scan it in) when it comes home.</p><div class="grid">' + o.map(function (i) { return card(i, 'out'); }).join('') + '</div>'
+                : emptyMsg('🛒', 'Nothing is out. When something is used up or expired, scan it out and it lands here.');
+        } else {
+            var A = { added: '📥 added', restocked: '🔄 restocked', plus: '➕ added one more', used: '➖ used one', out: '📤 marked out', edited: '✏️ edited', deleted: '🗑️ deleted', joined: '👋 joined the household', left: '🚪 left the household' };
+            h = S.log.length ? '<div class="log">' + S.log.map(function (l) {
+                return '<div><b>' + esc(l.by) + '</b> ' + (A[l.action] || esc(l.action)) + (l.itemName ? ' <b>' + esc(l.itemName) + '</b>' : '') +
+                    (l.extra ? ' <span class="hint">(' + esc(l.extra) + ')</span>' : '') + '<small>' + when(l.at) + '</small></div>';
+            }).join('') + '</div>' : emptyMsg('🕘', 'No activity yet.');
+        }
+        $('list').innerHTML = h;
+    }
+
+    $('list').onclick = async function (e) {
+        var b = e.target.closest('[data-act]'); if (!b) return;
+        if (b.dataset.act === 'outAllExpired') {
+            var ex = S.items.filter(function (i) { return i.status !== 'out' && daysUntil(i.expires) < 0; });
+            var ok = await choice('Mark ' + ex.length + ' expired item' + (ex.length > 1 ? 's' : '') + ' out?', '<p>They move to Out / Shopping.</p>',
+                [{ label: 'Mark them out', value: true, cls: 'danger' }, { label: 'Cancel', value: false, cls: 'ghost' }]);
+            if (ok) ex.forEach(function (i) { markOut(i, 'expired'); });
+            return;
+        }
+        var it = S.items.filter(function (i) { return i.id === b.dataset.id; })[0]; if (!it) return;
+        if (b.dataset.act === 'edit') itemSheet({ item: it });
+        else if (b.dataset.act === 'inc') { itemsRef().doc(it.id).update({ qty: (it.qty || 0) + 1, updatedAt: TS(), updatedBy: me().name }).catch(fail); logIt('plus', it); }
+        else if (b.dataset.act === 'dec') useOne(it);
+        else if (b.dataset.act === 'restock') restock(it);
+    };
+
+    // ------------------------------------------------------------------ item actions
+    function useOne(it) {
+        if ((it.qty || 0) > 1) {
+            itemsRef().doc(it.id).update({ qty: it.qty - 1, updatedAt: TS(), updatedBy: me().name }).catch(fail);
+            logIt('used', it, (it.qty - 1) + ' left');
+            return Promise.resolve();
+        }
+        return outPrompt(it);
+    }
+    async function outPrompt(it, extraOpts) {
+        var opts = (extraOpts || []).concat([
+            { label: '🫙 Empty / used up', value: 'empty', cls: 'danger' },
+            { label: '⏰ Expired', value: 'expired', cls: 'ghost' },
+            { label: '🗑️ Thrown out', value: 'tossed', cls: 'ghost' },
+            { label: 'Cancel', value: null, cls: 'ghost' }
+        ]);
+        var head = '<div class="prodhead">' + picHtml(it) + '<div><b>' + esc(it.name) + '</b><br><span class="hint">' + (it.qty || 0) + ' in the house' + (it.location ? ' · ' + esc(it.location) : '') + '</span><br>' + expBadge(it) + '</div></div>';
+        var r = await choice('Take it out of the house?', head, opts);
+        if (r === 'one') return useOne(it);
+        if (r) markOut(it, r);
+        return r;
+    }
+    function markOut(it, reason) {
+        itemsRef().doc(it.id).update({ status: 'out', qty: 0, outReason: reason, outAt: TS(), outBy: me().name, updatedAt: TS(), updatedBy: me().name })
+            .then(function () { toast(it.name + ' moved to Out / Shopping'); }).catch(fail);
+        logIt('out', it, OUT_REASONS[reason]);
+        ev('inventory_item_out', { reason: reason });
+    }
+    function restock(it) {
+        // back in the house: confirm quantity/expiration in the edit sheet
+        return itemSheet({ item: it, restock: true });
+    }
+
+    // itemSheet({item?, prefill?, restock?}) -> Promise (resolves when closed)
+    var editing = null;
+    function fillSelect(sel, list, val) {
+        if (val && list.indexOf(val) < 0) list = list.concat([val]);
+        sel.innerHTML = list.map(function (x) { return '<option' + (x === val ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('');
+    }
+    function itemSheet(o) {
+        var it = o.item || null, p = o.prefill || {};
+        editing = { item: it, restock: !!o.restock, image: (it && it.image) || p.image || '', source: p.source || '' };
+        var src = it || p;
+        $('itemTitle').textContent = o.restock ? 'Back in the house' : it ? 'Edit item' : 'Add to the house';
+        $('fName').value = src.name || '';
+        $('fBrand').value = src.brand || '';
+        fillSelect($('fCat'), CATS.map(function (c) { return c[0]; }), src.category || 'Food');
+        fillSelect($('fLoc'), locs().slice(), src.location || guessLoc(src.category));
+        $('fQty').value = o.restock ? 1 : (it ? (it.qty || 0) : (p.qty || 1));
+        $('fUnit').value = src.unit || '';
+        $('fExp').value = o.restock ? '' : (src.expires || '');
+        $('fBarcode').value = src.barcode || '';
+        $('fNotes').value = src.notes || '';
+        $('itemSave').textContent = o.restock ? 'Put back in the house' : it ? 'Save' : 'Add it';
+        var head = '';
+        if (editing.image || p.source) {
+            head = (editing.image ? '<img src="' + esc(editing.image) + '" alt="" referrerpolicy="no-referrer">' : '') +
+                '<div class="hint">' + (p.source === 'found' ? '✅ Found this barcode online — check the name and add an expiration date if it has one.'
+                    : p.source === 'saved' ? '✅ Your household (or another SMLC user) labeled this barcode before.'
+                    : p.source === 'new' ? "🆕 This barcode isn't in the product lists yet. Type what it is once — it's remembered for next time."
+                    : '') + '</div>';
+        }
+        $('itemHead').innerHTML = head;
+        $('itemExtra').innerHTML = (it && !o.restock) ? (
+            (it.status === 'out' ? '<button type="button" class="ok" data-x="restock">Got it again</button>' : '<button type="button" class="danger" data-x="out">Mark out of the house</button>') +
+            '<button type="button" class="ghost" data-x="delete">Delete</button>') : '';
+        return new Promise(function (resolve) {
+            sheetDone.item = resolve;
+            openSheet('item');
+            if (!$('fName').value) setTimeout(function () { $('fName').focus(); }, 250);
+        });
+    }
+    function guessLoc(cat) {
+        var L = locs(), pick = function (re) { for (var i = 0; i < L.length; i++) if (re.test(L[i])) return L[i]; return null; };
+        var m = { 'Frozen': /freez/i, 'Fresh food': /fridge|refrig/i, 'Drinks': /fridge|pantry/i, 'Cleaning': /laundry|clean/i, 'Personal care': /bath/i, 'Medicine': /bath|medic/i, 'Paper goods': /storage|garage|bath/i };
+        return (m[cat] && pick(m[cat])) || pick(/pantry/i) || L[0];
+    }
+    $('itemForm').onclick = function (e) {
+        var d = e.target.closest('[data-exp]');
+        if (d) { var n = d.dataset.exp; if (n === '') { $('fExp').value = ''; return; } var t = new Date(); t.setDate(t.getDate() + +n); $('fExp').value = dateStr(t); return; }
+        var x = e.target.closest('[data-x]'); if (!x || !editing || !editing.item) return;
+        var it = editing.item;
+        if (x.dataset.x === 'out') { closeSheet('item'); outPrompt(it); }
+        else if (x.dataset.x === 'restock') { closeSheet('item'); restock(it); }
+        else if (x.dataset.x === 'delete') {
+            closeSheet('item');
+            choice('Delete ' + it.name + '?', '<p>This removes it completely (it will not go on the shopping list). To keep it on the list, use <b>Mark out</b> instead.</p>',
+                [{ label: 'Delete', value: true, cls: 'danger' }, { label: 'Cancel', value: false, cls: 'ghost' }]).then(function (ok) {
+                if (ok) { itemsRef().doc(it.id).delete().catch(fail); logIt('deleted', it); }
+            });
+        }
+    };
+    $('itemForm').onsubmit = function (e) {
+        e.preventDefault();
+        var name = $('fName').value.trim(); if (!name) return;
+        var data = {
+            name: name, brand: $('fBrand').value.trim(), category: $('fCat').value, location: $('fLoc').value,
+            qty: Math.max(0, parseInt($('fQty').value, 10) || 0), unit: $('fUnit').value.trim(),
+            expires: $('fExp').value || '', barcode: $('fBarcode').value.replace(/\s/g, ''), notes: $('fNotes').value.trim(),
+            image: editing.image || '', updatedAt: TS(), updatedBy: me().name
+        };
+        var it = editing.item, p;
+        if (it && editing.restock) {
+            data.status = 'in'; data.outReason = ''; data.qty = data.qty || 1;
+            p = itemsRef().doc(it.id).update(data); logIt('restocked', data);
+        } else if (it) {
+            if (it.status === 'out' && data.qty > 0) { data.status = 'in'; data.outReason = ''; }
+            p = itemsRef().doc(it.id).update(data); logIt('edited', data);
+        } else {
+            data.status = data.qty > 0 ? 'in' : 'out';
+            data.addedAt = TS(); data.addedBy = me().name; data.addedByUid = me().uid;
+            p = itemsRef().add(data); logIt('added', data, data.qty > 1 ? data.qty + ' ' + (data.unit || '') : '');
+            ev('inventory_item_added', { source: editing.source || 'manual' });
+        }
+        p.catch(fail);
+        // remember the barcode's label for next time (shared)
+        if (data.barcode && (editing.source !== 'saved' || (it && it.name !== name))) {
+            db.collection('inventory_barcodes').doc(data.barcode).set({
+                name: name, brand: data.brand, category: data.category, image: data.image, savedAt: TS()
+            }, { merge: true }).catch(function () {});
+        }
+        toast((it && !editing.restock ? 'Saved ' : 'Added ') + name);
+        closeSheet('item', true);
+    };
+    $('addManualBtn').onclick = $('addManualBtn2').onclick = function () { itemSheet({ prefill: {} }); };
+
+    // ------------------------------------------------------------------ barcode lookup
+    var OFF = [
+        ['world.openfoodfacts.org', null], ['world.openbeautyfacts.org', 'Personal care'],
+        ['world.openproductsfacts.org', 'Cleaning'], ['world.openpetfoodfacts.org', 'Pet']
+    ];
+    function catFromTags(tags, fallback) {
+        var t = (tags || []).join(' ');
+        if (/frozen/.test(t)) return 'Frozen';
+        if (/beverage|drink|water|juice|soda|coffee|tea/.test(t)) return 'Drinks';
+        if (/snack|chip|cookie|biscuit|candy|chocolate|sweet/.test(t)) return 'Snacks';
+        if (/dairy|milk|cheese|yogurt|egg|meat|fresh|fruit|vegetable/.test(t)) return 'Fresh food';
+        return fallback || 'Food';
+    }
+    async function lookup(code) {
+        // 1) your household already has it
+        var mine = S.items.filter(function (i) { return i.barcode === code; })[0];
+        if (mine) return { name: mine.name, brand: mine.brand, category: mine.category, image: mine.image, unit: mine.unit, location: mine.location, barcode: code, source: 'saved' };
+        // 2) someone labeled it before
+        try {
+            var s = await db.collection('inventory_barcodes').doc(code).get();
+            if (s.exists && s.data().name) { var d = s.data(); return { name: d.name, brand: d.brand, category: d.category, image: d.image, barcode: code, source: 'saved' }; }
+        } catch (e) {}
+        // 3) free public product lists
+        var variants = [code]; if (/^\d{12}$/.test(code)) variants.push('0' + code);
+        for (var i = 0; i < OFF.length; i++) {
+            for (var v = 0; v < variants.length; v++) {
+                try {
+                    var r = await fetch('https://' + OFF[i][0] + '/api/v2/product/' + variants[v] + '.json?fields=product_name,product_name_en,generic_name,brands,image_front_small_url,image_small_url,categories_tags,quantity');
+                    if (!r.ok) continue;
+                    var j = await r.json();
+                    if (j && j.status === 1 && j.product) {
+                        var pr = j.product, nm = pr.product_name_en || pr.product_name || pr.generic_name || '';
+                        if (!nm) continue;
+                        if (pr.quantity && nm.indexOf(pr.quantity) < 0) nm += ' (' + pr.quantity + ')';
+                        return { name: nm, brand: (pr.brands || '').split(',')[0].trim(), category: catFromTags(pr.categories_tags, OFF[i][1]),
+                                 image: pr.image_front_small_url || pr.image_small_url || '', barcode: code, source: 'found' };
+                    }
+                } catch (e) { /* offline or blocked: fall through */ }
+            }
+        }
+        return { name: '', barcode: code, source: 'new' };
+    }
+
+    // ------------------------------------------------------------------ what a scan does
+    async function handleCode(code, mode) {
+        var all = S.items.filter(function (i) { return i.barcode === code; });
+        var inH = all.filter(function (i) { return i.status !== 'out'; })
+            .sort(function (a, b) { return (a.expires || '9999') < (b.expires || '9999') ? -1 : 1; });
+        var outI = all.filter(function (i) { return i.status === 'out'; });
+        ev('inventory_scan', { mode: mode });
+
+        if (mode === 'in') {
+            if (inH.length) {
+                var it = inH[0];
+                var r = await choice('You already have this', '<div class="prodhead">' + picHtml(it) + '<div><b>' + esc(it.name) + '</b><br><span class="hint">' +
+                    inH.reduce(function (s, i) { return s + (i.qty || 0); }, 0) + ' in the house' + (it.location ? ' · ' + esc(it.location) : '') + '</span><br>' + expBadge(it) + '</div></div>',
+                    [{ label: '➕ Add 1 more', value: 'inc', cls: 'gold' },
+                     { label: '📅 Add as separate (different expiration date)', value: 'new', cls: 'ghost' },
+                     { label: 'Cancel', value: null, cls: 'ghost' }]);
+                if (r === 'inc') { await itemsRef().doc(it.id).update({ qty: (it.qty || 0) + 1, updatedAt: TS(), updatedBy: me().name }).catch(fail); logIt('plus', it); toast('+1 ' + it.name); }
+                else if (r === 'new') await itemSheet({ prefill: { name: it.name, brand: it.brand, category: it.category, location: it.location, unit: it.unit, image: it.image, barcode: code, source: 'saved' } });
+                return;
+            }
+            if (outI.length) { await restock(outI[0]); return; }
+            $('scanMsg').textContent = 'Looking up ' + code + '…';
+            var info = await lookup(code);
+            await itemSheet({ prefill: info });
+            return;
+        }
+
+        if (mode === 'out') {
+            if (inH.length) {
+                var t = inH[0];
+                await outPrompt(t, (t.qty || 0) > 1 ? [{ label: '➖ Used one (' + (t.qty - 1) + ' left)', value: 'one', cls: 'gold' }] : []);
+                return;
+            }
+            var nm = all[0] ? all[0].name : (await lookup(code)).name;
+            var r2 = await choice('Not in the house list', '<p>' + (nm ? '<b>' + esc(nm) + '</b>' : 'Barcode ' + esc(code)) + (outI.length ? ' is already marked out.' : " isn't in your inventory.") + '</p>',
+                [{ label: 'OK', value: null, cls: 'gold' }, { label: 'Put it on the shopping list', value: 'list', cls: 'ghost' }]);
+            if (r2 === 'list' && !outI.length) {
+                var inf = await lookup(code);
+                if (!inf.name) { await itemSheet({ prefill: Object.assign(inf, { qty: 0 }) }); return; }
+                await itemsRef().add({ name: inf.name, brand: inf.brand || '', category: inf.category || 'Other', location: guessLoc(inf.category), qty: 0, unit: '', expires: '',
+                    barcode: code, notes: '', image: inf.image || '', status: 'out', outReason: 'empty', outAt: TS(), outBy: me().name,
+                    addedAt: TS(), addedBy: me().name, addedByUid: me().uid, updatedAt: TS(), updatedBy: me().name }).catch(fail);
+                toast(inf.name + ' added to the shopping list');
+            }
+            return;
+        }
+
+        // check
+        if (inH.length) {
+            var c = inH[0], total = inH.reduce(function (s, i) { return s + (i.qty || 0); }, 0);
+            await choice('✅ Yes, you have it', '<div class="prodhead">' + picHtml(c) + '<div><b>' + esc(c.name) + '</b><br>' + total + ' in the house' +
+                (c.location ? ' · ' + esc(c.location) : '') + '<br>' + expBadge(c) + '</div></div>', [{ label: 'OK', value: null, cls: 'gold' }]);
+        } else if (outI.length) {
+            var oo = outI[0];
+            await choice("❌ You're out", '<div class="prodhead">' + picHtml(oo) + '<div><b>' + esc(oo.name) + '</b><br><span class="hint">' + esc(OUT_REASONS[oo.outReason] || 'Out') +
+                (oo.outBy ? ' · marked by ' + esc(oo.outBy) : '') + ' · ' + when(oo.outAt) + '</span></div></div>', [{ label: 'OK', value: null, cls: 'gold' }]);
+        } else {
+            var li = await lookup(code);
+            await choice('❌ Not in your inventory', '<p>' + (li.name ? '<b>' + esc(li.name) + '</b>' : 'Barcode ' + esc(code)) + " isn't in your house list.</p>", [{ label: 'OK', value: null, cls: 'gold' }]);
+        }
+    }
+
+    // ------------------------------------------------------------------ camera scanner
+    var cam = { stream: null, timer: null, reader: null, busy: false, last: '', lastAt: 0, on: false };
+    var WANT = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf', 'qr_code'];
+    function setMode(m) {
+        S.scanMode = m;
+        document.querySelectorAll('[data-mode]').forEach(function (b) { b.classList.toggle('on', b.dataset.mode === m); });
+        if (cam.stream || cam.reader) $('scanMsg').textContent = { in: '📥 Point at a barcode to add it', out: '📤 Point at a barcode to take it out', check: '🔍 Point at a barcode to check' }[m];
+    }
+    document.querySelectorAll('[data-mode]').forEach(function (b) { b.onclick = function () { setMode(b.dataset.mode); }; });
+    document.querySelectorAll('[data-scan]').forEach(function (b) { b.onclick = function () { openScanner(b.dataset.scan); }; });
+
+    function openScanner(mode) {
+        if (!S.hid) return;
+        if (mode) setMode(mode);
+        S.scanLoop = true;
+        $('manualCode').value = '';
+        openSheet('scan');
+        startCamera();
+    }
+    async function startCamera() {
+        var video = $('scanVideo'), msg = $('scanMsg');
+        stopCamera(); cam.on = true;
+        msg.textContent = 'Starting camera…';
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { msg.textContent = 'This browser can’t use the camera here. Type the barcode numbers below.'; return; }
+        try {
+            var fmts = [];
+            if ('BarcodeDetector' in window) { try { fmts = (await BarcodeDetector.getSupportedFormats()).filter(function (f) { return WANT.indexOf(f) >= 0; }); } catch (e) {} }
+            if (fmts.length) {
+                cam.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+                if (!cam.on) return stopCamera();
+                video.srcObject = cam.stream; await video.play().catch(function () {});
+                var det = new BarcodeDetector({ formats: fmts });
+                cam.timer = setInterval(async function () {
+                    if (cam.busy || video.readyState < 2) return;
+                    cam.busy = true;
+                    try { var r = await det.detect(video); if (r && r.length) gotCode(r[0].rawValue); } catch (e) {}
+                    cam.busy = false;
+                }, 180);
+            } else {
+                if (!window.ZXing) { msg.textContent = 'Loading scanner…'; await new Promise(function (res) { var n = 0; (function w() { if (window.ZXing || n++ > 50) return res(); setTimeout(w, 100); })(); }); }
+                if (!window.ZXing) throw new Error('Scanner did not load');
+                var Z = window.ZXing, hints = new Map();
+                hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8, Z.BarcodeFormat.UPC_A, Z.BarcodeFormat.UPC_E,
+                    Z.BarcodeFormat.CODE_128, Z.BarcodeFormat.CODE_39, Z.BarcodeFormat.ITF, Z.BarcodeFormat.QR_CODE]);
+                hints.set(Z.DecodeHintType.TRY_HARDER, true);
+                cam.reader = new Z.BrowserMultiFormatReader(hints, 200);
+                await cam.reader.decodeFromConstraints({ video: { facingMode: { ideal: 'environment' } }, audio: false }, video, function (res) { if (res) gotCode(res.getText()); });
+                if (!cam.on) return stopCamera();
+            }
+            msg.textContent = { in: '📥 Point at a barcode to add it', out: '📤 Point at a barcode to take it out', check: '🔍 Point at a barcode to check' }[S.scanMode];
+        } catch (e) {
+            msg.textContent = (e && e.name === 'NotAllowedError') ? 'Camera permission is off. Allow the camera for this site, or type the barcode below.'
+                : 'Camera not available. Type the barcode numbers below.';
+        }
+    }
+    function stopCamera() {
+        cam.on = false;
+        clearInterval(cam.timer); cam.timer = null;
+        if (cam.reader) { try { cam.reader.reset(); } catch (e) {} cam.reader = null; }
+        if (cam.stream) { cam.stream.getTracks().forEach(function (t) { t.stop(); }); cam.stream = null; }
+        var v = $('scanVideo'); if (v && v.srcObject) { try { v.srcObject.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {} v.srcObject = null; }
+    }
+    function beep() {
+        try { navigator.vibrate && navigator.vibrate(60); } catch (e) {}
+        try {
+            var C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+            var a = beep.ctx || (beep.ctx = new C()), o = a.createOscillator(), g = a.createGain();
+            o.frequency.value = 1150; g.gain.value = .08; o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + .09);
+        } catch (e) {}
+    }
+    function gotCode(code) {
+        code = String(code || '').trim();
+        if (!code || !cam.on) return;
+        var now = Date.now();
+        if (code === cam.last && now - cam.lastAt < 2500) return;
+        cam.last = code; cam.lastAt = now;
+        beep();
+        runCode(code);
+    }
+    function runCode(code) {
+        var mode = S.scanMode;
+        stopCamera();
+        $('scanSheet').hidden = true;          // keep the loop going
+        handleCode(code, mode).catch(fail).then(function () {
+            if (S.scanLoop) { $('scanSheet').hidden = false; startCamera(); }
+        });
+    }
+    $('manualGo').onclick = function () {
+        var c = $('manualCode').value.replace(/\s/g, '');
+        if (!c) return;
+        $('manualCode').value = '';
+        runCode(c);
+    };
+    $('manualCode').onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); $('manualGo').click(); } };
+    document.addEventListener('visibilitychange', function () {
+        if (document.hidden) stopCamera();
+        else if (!$('scanSheet').hidden && S.scanLoop) startCamera();
+    });
+
+    // shortcuts: ?scan=in|out|check, ?tab=out
+    var firstOpen = true;
+    var _open = openHouse;
+    openHouse = function (hid) {
+        _open(hid);
+        if (!firstOpen) return; firstOpen = false;
+        var t = params.get('tab'); if (t && /^(in|exp|out|log)$/.test(t)) setTab(t);
+        var s = params.get('scan'); if (s && /^(in|out|check)$/.test(s)) setTimeout(function () { openScanner(s); }, 400);
+    };
+
+    // re-render once a minute so "x min ago" and expiration badges stay current
+    setInterval(function () { if (S.hid && !document.hidden) render(); }, 60000);
+})();
+</script>
+</body>
+</html>

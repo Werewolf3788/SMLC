@@ -1,0 +1,68 @@
+// ==========================================================================
+// Home Inventory (inventory/index.html) | Firestore rules | 2026-11-23
+// Firebase project: smlc-fuel-monitor -> Firestore Database -> Rules
+//
+// ADD the block between the START/END lines INSIDE your existing
+//   match /databases/{database}/documents { ... }
+// Keep every rule you already have (directory, smlc_events, local_news...).
+// Then press Publish.
+//
+// Who can see what:
+//   - Only people in a household can see or change that household's items.
+//   - People join with the household's invite code (or the invite link).
+//   - Anyone signed in can look up / save a product name for a barcode
+//     (shared barcode labels, so a label typed once helps everyone).
+// ==========================================================================
+
+    // ----- Home Inventory START -----
+    function invSignedIn() { return request.auth != null; }
+    function invHouse(hid) { return get(/databases/$(database)/documents/households/$(hid)).data; }
+    function invMember(hid) {
+      return invSignedIn() &&
+        exists(/databases/$(database)/documents/households/$(hid)/members/$(request.auth.uid));
+    }
+
+    match /inventory_users/{uid} {
+      allow read, write: if invSignedIn() && request.auth.uid == uid;
+    }
+
+    match /households/{hid} {
+      allow create: if invSignedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow read, update: if invMember(hid);
+      allow delete: if invSignedIn() && resource.data.ownerUid == request.auth.uid;
+
+      match /members/{uid} {
+        allow read: if invMember(hid);
+        // join: the owner adds themself, or someone with the current invite code
+        allow create: if invSignedIn() && request.auth.uid == uid &&
+          (invHouse(hid).ownerUid == request.auth.uid ||
+           request.resource.data.code == invHouse(hid).inviteCode);
+        allow update: if invSignedIn() && request.auth.uid == uid;
+        // leave (yourself) or the owner removes someone
+        allow delete: if invSignedIn() &&
+          (request.auth.uid == uid || invHouse(hid).ownerUid == request.auth.uid);
+      }
+      match /items/{itemId} {
+        allow read, write: if invMember(hid);
+      }
+      match /log/{logId} {
+        allow read, create: if invMember(hid);
+        allow update, delete: if false;
+      }
+    }
+
+    match /household_invites/{code} {
+      allow get: if invSignedIn();        // look up one code (no listing all codes)
+      allow list: if false;
+      allow create: if invMember(request.resource.data.householdId);
+      allow update: if invMember(resource.data.householdId) &&
+        request.resource.data.householdId == resource.data.householdId;   // household renamed
+      allow delete: if invMember(resource.data.householdId);
+    }
+
+    match /inventory_barcodes/{code} {
+      allow read: if invSignedIn();
+      allow create, update: if invSignedIn() && request.resource.data.name is string &&
+        request.resource.data.name.size() > 0 && request.resource.data.name.size() < 200;
+    }
+    // ----- Home Inventory END -----
