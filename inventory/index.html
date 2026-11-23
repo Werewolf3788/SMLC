@@ -88,8 +88,14 @@
         .center p { color: var(--muted); }
         .bigbtn { font-size: 1.05rem; padding: .85em 1.3em; }
         .steps { text-align: left; display: grid; gap: 10px; margin: 18px 0; }
-        .steps div { display: flex; gap: 10px; align-items: flex-start; }
+        .steps > div { display: flex; gap: 10px; align-items: flex-start; }
         .steps span { background: var(--gold); color: #111; font-weight: 800; border-radius: 50%; min-width: 1.7em; height: 1.7em; display: grid; place-items: center; }
+        .or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: .85rem; margin: 18px 0 12px; }
+        .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+        .emailform { display: grid; gap: 8px; text-align: left; }
+        .emailform button { width: 100%; }
+        .emaillinks { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: .85rem; }
+        .emaillinks a { color: inherit; }
         .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; text-align: left; }
         @media (max-width: 640px) { .two { grid-template-columns: 1fr; } }
 
@@ -126,7 +132,7 @@
             #nav button.on { background: var(--soft); color: var(--ink); }
             #nav .count { margin: 0; position: absolute; transform: translate(14px, -4px); background: var(--gold); color: #111; font-size: .65rem; }
             #nav button { position: relative; }
-            #fab { display: flex !important; }
+            #fab:not([hidden]) { display: flex; }
         }
         #fab { display: none; position: fixed; right: 16px; bottom: calc(var(--nav-h) + 14px + env(safe-area-inset-bottom)); z-index: 31; gap: 8px; }
         #fab button { border-radius: 99px; padding: .8em 1.1em; box-shadow: 0 6px 18px rgba(0,0,0,.3); font-size: 1rem; }
@@ -182,7 +188,7 @@
         .modes button.on.chk { background: var(--gold); color: #111; border-color: var(--gold); }
         .cam { position: relative; background: #000; border-radius: 14px; overflow: hidden; aspect-ratio: 4 / 3; }
         .cam video { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .cam .frame { position: absolute; left: 10%; right: 10%; top: 32%; bottom: 32%; border: 3px solid var(--gold); border-radius: 12px; box-shadow: 0 0 0 999px rgba(0,0,0,.35); }
+        .cam .frame { position: absolute; left: 20%; right: 20%; top: 30%; bottom: 30%; border: 3px solid var(--gold); border-radius: 12px; box-shadow: 0 0 0 999px rgba(0,0,0,.35); }
         .cam .torch { position: absolute; top: 10px; right: 10px; z-index: 2; background: rgba(0,0,0,.55); color: #fff; border: 1px solid #ffffff55; border-radius: 99px; padding: .45em .9em; font-size: .9rem; }
         .cam .torch.on { background: var(--gold); color: #111; border-color: var(--gold); }
         .cam .line { position: absolute; left: 12%; right: 12%; top: 50%; height: 2px; background: #ff3b30; animation: scanline 1.6s ease-in-out infinite; }
@@ -246,7 +252,7 @@
                 background: linear-gradient(rgba(0,0,0,.75), transparent); font-size: 1.05rem; }
             .scanpanel .x { background: rgba(255,255,255,.18); color: #fff; width: 2.4em; height: 2.4em; font-size: 1rem; }
             .scanpanel .cam { flex: 1; aspect-ratio: auto; border-radius: 0; min-height: 0; }
-            .scanpanel .cam .frame { left: 8%; right: 8%; top: 36%; bottom: 36%; border-radius: 16px; }
+            .scanpanel .cam .frame { left: 20%; right: 20%; top: 30%; bottom: 30%; border-radius: 16px; }
             .scanpanel .cam .torch { top: auto; right: 50%; transform: translateX(50%); bottom: 18px; padding: .6em 1.2em; font-size: 1rem; }
             .scanpanel .modes { position: absolute; z-index: 3; left: 12px; right: 12px; top: calc(env(safe-area-inset-top) + 58px); margin: 0; }
             .scanpanel .modes button { background: rgba(0,0,0,.55); color: #fff; border-color: #ffffff44; padding: .6em .2em; backdrop-filter: blur(6px); }
@@ -287,6 +293,14 @@
             <div><span>3</span><div><b>Share</b> one list with your roommates or family. Everyone sees changes live.</div></div>
         </div>
         <button id="signinBtn" class="gold bigbtn">Sign in with Google</button>
+        <div class="or"><span>or use your email</span></div>
+        <form id="emailForm" class="emailform" autocomplete="on">
+            <input id="eName" placeholder="Your name (what your household sees)" maxlength="40" autocomplete="name" hidden>
+            <input id="eMail" type="email" placeholder="Email address" required autocomplete="email">
+            <input id="ePass" type="password" placeholder="Password (6+ characters)" required minlength="6" autocomplete="current-password">
+            <button type="submit" id="eGo" class="bigbtn">Sign in</button>
+            <div class="emaillinks"><a href="#" id="eToggle">New here? Create an account</a><a href="#" id="eForgot">Forgot password?</a></div>
+        </form>
         <p class="hint">Your list is private to your household. Signing in is only so your household can share it.</p>
     </div>
 </section>
@@ -359,7 +373,7 @@
             <button data-mode="out" class="out">📤 Scan out</button>
             <button data-mode="check" class="chk">🔍 Check</button>
         </div>
-        <div class="cam"><video id="scanVideo" playsinline muted autoplay></video><div class="frame"></div><div class="line"></div><button type="button" id="torchBtn" class="torch" aria-pressed="false">🔦 Light</button></div>
+        <div class="cam"><video id="scanVideo" playsinline muted autoplay></video><div class="frame"></div><button type="button" id="torchBtn" class="torch" aria-pressed="false">🔦 Light</button></div>
         <div id="scanMsg">Starting camera…</div>
         <div class="manual">
             <input id="manualCode" inputmode="numeric" placeholder="Or type the barcode numbers" autocomplete="off">
@@ -459,7 +473,6 @@
 
 <div id="toast" hidden></div>
 
-<script src="zxing.min.js" defer></script>
 <script>
 (function () {
     'use strict';
@@ -600,6 +613,51 @@
         });
     };
     auth.getRedirectResult().catch(function () {});
+
+    // ---- email + password
+    var creating = false;
+    function authMsg(e) {
+        var c = e && e.code || '';
+        if (c === 'auth/operation-not-allowed') return "Email sign-in isn't turned on yet (Firebase → Authentication → Sign-in method → Email/Password).";
+        if (c === 'auth/invalid-credential' || c === 'auth/wrong-password' || c === 'auth/user-not-found' || c === 'auth/invalid-login-credentials') return 'Wrong email or password. New here? Tap "Create an account".';
+        if (c === 'auth/email-already-in-use') return 'That email already has an account. Sign in instead (or tap Forgot password).';
+        if (c === 'auth/weak-password') return 'Pick a password with at least 6 characters.';
+        if (c === 'auth/invalid-email') return "That email address doesn't look right.";
+        if (c === 'auth/too-many-requests') return 'Too many tries. Wait a minute and try again.';
+        return 'Sign-in failed: ' + (e && e.message || e);
+    }
+    $('eToggle').onclick = function (e) {
+        e.preventDefault(); creating = !creating;
+        $('eName').hidden = !creating; $('eName').required = creating;
+        $('ePass').autocomplete = creating ? 'new-password' : 'current-password';
+        $('eGo').textContent = creating ? 'Create account' : 'Sign in';
+        this.textContent = creating ? 'Have an account? Sign in' : 'New here? Create an account';
+    };
+    $('eForgot').onclick = function (e) {
+        e.preventDefault();
+        var m = $('eMail').value.trim();
+        if (!m) { toast('Type your email first, then tap Forgot password'); $('eMail').focus(); return; }
+        auth.sendPasswordResetEmail(m).then(function () { toast('Check your email for a link to reset your password.', 5000); })
+            .catch(function (er) { toast(authMsg(er), 6000); });
+    };
+    $('emailForm').onsubmit = async function (e) {
+        e.preventDefault();
+        var m = $('eMail').value.trim(), pw = $('ePass').value, btn = $('eGo');
+        btn.disabled = true;
+        try {
+            if (creating) {
+                var cred = await auth.createUserWithEmailAndPassword(m, pw);
+                var nm = $('eName').value.trim() || m.split('@')[0];
+                await cred.user.updateProfile({ displayName: nm });
+                ev('inventory_signup', { method: 'email' });
+                // onAuthStateChanged may have fired before the name was set
+                if (S.user) { S.user = auth.currentUser; }
+            } else {
+                await auth.signInWithEmailAndPassword(m, pw);
+            }
+        } catch (er) { toast(authMsg(er), 6000); }
+        btn.disabled = false;
+    };
 
     var params = new URLSearchParams(location.search);
     auth.onAuthStateChanged(async function (u) {
@@ -1265,6 +1323,39 @@
         openSheet('scan');
         startCamera();
     }
+    // ---- iPhone / no built-in detector: zxing-cpp (WebAssembly). Reads barcodes in any direction.
+    var wasmReady = null;
+    function loadWasm() {
+        if (wasmReady) return wasmReady;
+        wasmReady = new Promise(function (res, rej) {
+            var sc = document.createElement('script'); sc.src = 'zxing-reader.js';
+            sc.onload = function () {
+                Promise.resolve(ZXingWASM.prepareZXingModule({
+                    overrides: { locateFile: function (path, pre) { return /\.wasm$/.test(path) ? new URL('zxing_reader.wasm', location.href).href : pre + path; } },
+                    fireImmediately: true
+                })).then(res, rej);
+            };
+            sc.onerror = function () { wasmReady = null; rej(new Error('Scanner did not load')); };
+            document.head.appendChild(sc);
+        });
+        return wasmReady;
+    }
+    var WFMT = ['EAN-13', 'EAN-8', 'UPC-A', 'UPC-E', 'Code128', 'Code39', 'ITF', 'QRCode'];
+    // middle-of-frame crops [width share, height share, longest side in px]; tried in turn, one per tick
+    var WCROPS = [[.6, .4, 600], [.6, .4, 900], [.85, .6, 720], [.45, .3, 520], [1, 1, 900]];
+    var zcan = document.createElement('canvas'), zctx = zcan.getContext('2d', { willReadFrequently: true });
+    async function decodeFrame(src, k) {
+        var c = WCROPS[k % WCROPS.length];
+        var w = src.videoWidth || src.naturalWidth || src.width, h = src.videoHeight || src.naturalHeight || src.height;
+        var sw = w * c[0], sh = h * c[1], sx = (w - sw) / 2, sy = (h - sh) / 2;
+        var sc = Math.min(1, c[2] / Math.max(sw, sh));
+        var dw = Math.max(1, Math.round(sw * sc)), dh = Math.max(1, Math.round(sh * sc));
+        zcan.width = dw; zcan.height = dh;
+        zctx.drawImage(src, sx, sy, sw, sh, 0, 0, dw, dh);
+        var r = await ZXingWASM.readBarcodes(zctx.getImageData(0, 0, dw, dh), { tryHarder: true, formats: WFMT, maxNumberOfSymbols: 1 });
+        return r && r.length && r[0].isValid !== false ? r[0].text : null;
+    }
+
     async function startCamera() {
         var video = $('scanVideo'), msg = $('scanMsg');
         stopCamera(); cam.on = true;
@@ -1285,19 +1376,25 @@
                     cam.busy = false;
                 }, 180);
             } else {
-                if (!window.ZXing) { msg.textContent = 'Loading scanner…'; await new Promise(function (res) { var n = 0; (function w() { if (window.ZXing || n++ > 50) return res(); setTimeout(w, 100); })(); }); }
-                if (!window.ZXing) throw new Error('Scanner did not load');
-                var Z = window.ZXing, hints = new Map();
-                hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8, Z.BarcodeFormat.UPC_A, Z.BarcodeFormat.UPC_E,
-                    Z.BarcodeFormat.CODE_128, Z.BarcodeFormat.CODE_39, Z.BarcodeFormat.ITF, Z.BarcodeFormat.QR_CODE]);
-                hints.set(Z.DecodeHintType.TRY_HARDER, true);
-                cam.reader = new Z.BrowserMultiFormatReader(hints, 200);
-                await cam.reader.decodeFromConstraints({ video: { facingMode: { ideal: 'environment' } }, audio: false }, video, function (res) { if (res) gotCode(res.getText()); });
+                msg.textContent = 'Loading scanner…';
+                await loadWasm();
+                cam.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
+                if (!cam.on) return stopCamera();
+                video.srcObject = cam.stream; await video.play().catch(function () {});
+                try { var tk = cam.stream.getVideoTracks()[0], cp = tk.getCapabilities ? tk.getCapabilities() : {};
+                      if (cp.focusMode && cp.focusMode.indexOf('continuous') >= 0) tk.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(function () {}); } catch (e) {}
+                var turn = 0;
+                cam.timer = setInterval(async function () {
+                    if (cam.busy || video.readyState < 2 || !video.videoWidth) return;
+                    cam.busy = true;
+                    try { var t = await decodeFrame(video, turn++); if (t) gotCode(t); } catch (e) {}
+                    cam.busy = false;
+                }, 70);
                 if (!cam.on) return stopCamera();
             }
             showTorch(false);
             if (torchWanted()) setTimeout(function () { applyTorch(true, true); }, 300);
-            msg.textContent = { in: '📥 Point at a barcode to add it', out: '📤 Point at a barcode to take it out', check: '🔍 Point at a barcode to check' }[S.scanMode];
+            msg.textContent = { in: '📥 Fill the box with a barcode (any direction)', out: '📤 Fill the box with a barcode to take it out', check: '🔍 Fill the box with a barcode to check' }[S.scanMode];
         } catch (e) {
             msg.textContent = (e && e.name === 'NotAllowedError') ? 'Camera permission is off. Allow the camera for this site, or type the barcode below.'
                 : 'Camera not available. Type the barcode numbers below.';
@@ -1351,7 +1448,10 @@
         beep();
         runCode(code);
     }
+    // same product, same code on every phone: a 13-digit EAN that starts with 0 is really the 12-digit UPC
+    function normCode(c) { c = String(c || '').replace(/\s/g, ''); return /^0\d{12}$/.test(c) ? c.slice(1) : c; }
     function runCode(code) {
+        code = normCode(code);
         var mode = S.scanMode;
         stopCamera();
         $('scanSheet').hidden = true;          // keep the loop going
