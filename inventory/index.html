@@ -343,6 +343,11 @@
                     <div><label for="fCaseCode">Case barcode</label><input id="fCaseCode" inputmode="numeric" maxlength="40"></div>
                     <div><label for="fCaseSize">How many in one case</label><input id="fCaseSize" type="number" min="1" step="1" value="24"></div>
                 </div>
+                <label class="checkline"><input type="checkbox" id="fOpened"> <span>This case is <b>already opened</b></span></label>
+                <div id="openedBox" hidden style="display:flex;gap:8px;align-items:center">
+                    <span>How many are missing?</span><input id="fMissing" type="number" min="0" step="1" value="0" style="width:6em">
+                    <span class="hint" id="fLeftHint"></span>
+                </div>
                 <p class="hint">Scanning the case adds this many. When you open it and scan a single one out, the app asks which item it belongs to the first time, then remembers.</p>
             </div>
             <label for="fNotes">Notes</label>
@@ -832,6 +837,7 @@
         if ((it.qty || 0) > 1) {
             itemsRef().doc(it.id).update({ qty: it.qty - 1, updatedAt: TS(), updatedBy: me().name }).catch(fail);
             logIt('used', it, (it.qty - 1) + ' left');
+            toast('−1 ' + it.name + ' — ' + (it.qty - 1) + ' left', 3000);
             return Promise.resolve();
         }
         return outPrompt(it);
@@ -885,6 +891,8 @@
         $('fCaseSize').value = cs || 24;
         if (isC && !src.caseBarcode && !it && p.barcode) { $('fCaseCode').value = p.barcode; $('fBarcode').value = ''; }
         $('fIsCase').checked = isC; $('caseBox').hidden = !isC;
+        $('fOpened').checked = false; $('openedBox').hidden = true; $('fMissing').value = 0; $('fLeftHint').textContent = '';
+        $('fOpened').parentNode.hidden = !!it;   // only asked when adding
         if (isC && !it && !o.restock) $('fQty').value = p.qty || cs || 24;
         $('fNotes').value = src.notes || '';
         $('itemSave').textContent = o.restock ? 'Put back in the house' : it ? 'Save' : 'Add it';
@@ -913,7 +921,16 @@
         if (!on && !$('fBarcode').value && $('fCaseCode').value) { $('fBarcode').value = $('fCaseCode').value; $('fCaseCode').value = ''; }
         if (on && editing && !editing.item) { var n = parseInt($('fCaseSize').value, 10) || 24; $('fQty').value = n; $('fUnit').value = $('fUnit').value || 'packs'; }
     };
-    $('fCaseSize').oninput = function () { if ($('fIsCase').checked && editing && !editing.item) $('fQty').value = parseInt(this.value, 10) || 1; };
+    function caseQtyFromForm() {
+        if (!$('fIsCase').checked || !editing || editing.item) return;
+        var size = parseInt($('fCaseSize').value, 10) || 1;
+        var miss = $('fOpened').checked ? Math.max(0, parseInt($('fMissing').value, 10) || 0) : 0;
+        var left = Math.max(0, size - miss);
+        $('fQty').value = left;
+        $('fLeftHint').textContent = $('fOpened').checked ? '→ ' + left + ' left' : '';
+    }
+    $('fCaseSize').oninput = $('fMissing').oninput = caseQtyFromForm;
+    $('fOpened').onchange = function () { $('openedBox').hidden = !this.checked; if (this.checked) $('openedBox').style.display = 'flex'; caseQtyFromForm(); };
     function guessLoc(cat) {
         var L = locs(), pick = function (re) { for (var i = 0; i < L.length; i++) if (re.test(L[i])) return L[i]; return null; };
         var m = { 'Frozen': /freez/i, 'Fresh food': /fridge|refrig/i, 'Drinks': /fridge|pantry/i, 'Cleaning': /laundry|clean/i, 'Personal care': /bath/i, 'Medicine': /bath|medic/i, 'Paper goods': /storage|garage|bath/i };
@@ -1050,12 +1067,32 @@
         toast('Got it — this barcode is now ' + it.name);
         return it;
     }
+    // askNumber(title, html, default) -> number or null
+    async function askNumber(title, html, def, okLabel) {
+        var r = await choice(title, (html || '') + '<input id="choiceNum" type="number" inputmode="numeric" min="0" step="1" value="' + (def || 0) + '" style="font-size:1.4rem;text-align:center;margin-top:8px">',
+            [{ label: okLabel || 'OK', value: 'ok', cls: 'gold' }, { label: 'Cancel', value: null, cls: 'ghost' }]);
+        if (r !== 'ok') return null;
+        var n = parseInt($('choiceNum').value, 10);
+        return isNaN(n) || n < 0 ? 0 : n;
+    }
+    // A case: sealed = full count, opened = full count minus what's missing
+    async function caseCount(size, name) {
+        var r = await choice('Is the case sealed?', '<p><b>' + esc(name) + '</b> · ' + size + ' per case</p>',
+            [{ label: '📦 Sealed (+' + size + ')', value: 'sealed', cls: 'gold' }, { label: '✂️ Opened — some are missing', value: 'open', cls: 'ghost' }, { label: 'Cancel', value: null, cls: 'ghost' }]);
+        if (!r) return null;
+        if (r === 'sealed') return size;
+        var miss = await askNumber('How many are missing?', '<p>Out of ' + size + '. The rest get added.</p>', 0, 'Add the rest');
+        if (miss === null) return null;
+        return Math.max(0, size - miss);
+    }
     async function addCase(it) {
-        var n = it.caseSize || 1;
+        var n = await caseCount(it.caseSize || 1, it.name);
+        if (n === null) return;
         var upd = { qty: (it.status === 'out' ? 0 : (it.qty || 0)) + n, status: 'in', outReason: '', updatedAt: TS(), updatedBy: me().name };
         await itemsRef().doc(it.id).update(upd).catch(fail);
-        logIt('plus', it, '+' + n + ' (case)');
-        toast('+' + n + ' ' + it.name);
+        var total = (it.status === 'out' ? 0 : (it.qty || 0)) + n;
+        logIt('plus', it, '+' + n + ' from a case');
+        toast('+' + n + ' ' + it.name + ' — ' + total + ' in the house now', 3500);
     }
 
     // ------------------------------------------------------------------ what a scan does
@@ -1072,7 +1109,7 @@
                 var ci = inH[0] || all[0];
                 var rc = await choice('📦 Case of ' + ci.name, '<div class="prodhead">' + picHtml(ci) + '<div><b>' + esc(ci.name) + '</b><br><span class="hint">' +
                     (ci.status === 'out' ? 'Currently out' : (ci.qty || 0) + ' in the house') + ' · ' + (ci.caseSize || 1) + ' per case</span><br>' + expBadge(ci) + '</div></div>',
-                    [{ label: '➕ Add the case (+' + (ci.caseSize || 1) + ')', value: 'case', cls: 'gold' },
+                    [{ label: '➕ Add this case', value: 'case', cls: 'gold' },
                      { label: '📅 Add as separate (different expiration date)', value: 'new', cls: 'ghost' },
                      { label: 'Cancel', value: null, cls: 'ghost' }]);
                 if (rc === 'case') await addCase(ci);
@@ -1087,7 +1124,7 @@
                     [{ label: '➕ Add 1 more', value: 'inc', cls: 'gold' },
                      { label: '📅 Add as separate (different expiration date)', value: 'new', cls: 'ghost' },
                      { label: 'Cancel', value: null, cls: 'ghost' }]);
-                if (r === 'inc') { await itemsRef().doc(it.id).update({ qty: (it.qty || 0) + 1, updatedAt: TS(), updatedBy: me().name }).catch(fail); logIt('plus', it); toast('+1 ' + it.name); }
+                if (r === 'inc') { await itemsRef().doc(it.id).update({ qty: (it.qty || 0) + 1, updatedAt: TS(), updatedBy: me().name }).catch(fail); logIt('plus', it); toast('+1 ' + it.name + ' — ' + ((it.qty || 0) + 1) + ' in the house now', 3000); }
                 else if (r === 'new') await itemSheet({ prefill: { name: it.name, brand: it.brand, category: it.category, location: it.location, unit: it.unit, image: it.image, barcode: code, source: 'saved' } });
                 return;
             }
