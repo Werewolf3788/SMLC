@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-23T20:57:59+00:00",
+ "generated": "2026-11-23T22:26:50+00:00",
  "repo": "Werewolf3788/SMLC",
  "branch": "Claude-Test",
  "pages": [
@@ -77,8 +77,8 @@
    "path": "inventory/index.html",
    "url": "https://werewolf3788.github.io/SMLC/inventory/",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/inventory/index.html",
-   "updated": "2026-11-23T15:57:48-05:00",
-   "message": "Add Home Inventory app (inventory/): barcode scan in/out, shared households, Firestore storage"
+   "updated": "2026-11-23T17:26:41-05:00",
+   "message": "Inventory scanner: flashlight button (stays on between scans)"
   },
   {
    "path": "louisville.html",
