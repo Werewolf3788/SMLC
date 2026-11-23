@@ -190,6 +190,8 @@
         #scanMsg { text-align: center; margin: 8px 0; font-weight: 600; }
         .manual { display: flex; gap: 8px; margin-top: 8px; }
         .manual input { flex: 1; }
+        .checkline { display: flex; gap: 8px; align-items: center; font-weight: 600; margin: .8em 0 .2em; }
+        .checkline input { width: 22px; height: 22px; flex: none; }
         .codebox { font: 800 2rem/1 ui-monospace, Menlo, monospace; letter-spacing: .2em; text-align: center; background: var(--soft); border-radius: 12px; padding: 16px; margin: 10px 0; user-select: all; }
         .member { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
         .member img, .member .ph { width: 32px; height: 32px; border-radius: 50%; background: var(--soft); display: grid; place-items: center; }
@@ -333,8 +335,16 @@
                 <button type="button" class="ghost" data-exp="30">+1 mo</button>
                 <button type="button" class="ghost" data-exp="">None</button>
             </div>
-            <label for="fBarcode">Barcode</label>
-            <input id="fBarcode" inputmode="numeric" maxlength="40" placeholder="(none)">
+            <label for="fBarcode">Barcode on one item</label>
+            <input id="fBarcode" inputmode="numeric" maxlength="40" placeholder="(none — fills in when you scan one later)">
+            <label class="checkline"><input type="checkbox" id="fIsCase"> <span>📦 This is a <b>case / multi-pack</b> barcode (sealed box)</span></label>
+            <div id="caseBox" hidden>
+                <div class="r2">
+                    <div><label for="fCaseCode">Case barcode</label><input id="fCaseCode" inputmode="numeric" maxlength="40"></div>
+                    <div><label for="fCaseSize">How many in one case</label><input id="fCaseSize" type="number" min="1" step="1" value="24"></div>
+                </div>
+                <p class="hint">Scanning the case adds this many. When you open it and scan a single one out, the app asks which item it belongs to the first time, then remembers.</p>
+            </div>
             <label for="fNotes">Notes</label>
             <input id="fNotes" maxlength="200" placeholder="optional">
             <div class="btnrow"><button type="submit" class="gold" id="itemSave">Save</button></div>
@@ -741,7 +751,7 @@
     function matches(it) {
         if (S.loc !== 'All' && (it.location || 'Other') !== S.loc) return false;
         if (!S.q) return true;
-        return ((it.name || '') + ' ' + (it.brand || '') + ' ' + (it.barcode || '') + ' ' + (it.category || '') + ' ' + (it.notes || '')).toLowerCase().indexOf(S.q) >= 0;
+        return ((it.name || '') + ' ' + (it.brand || '') + ' ' + (it.barcode || '') + ' ' + (it.caseBarcode || '') + ' ' + (it.category || '') + ' ' + (it.notes || '')).toLowerCase().indexOf(S.q) >= 0;
     }
     function byName(a, b) { return (a.name || '').localeCompare(b.name || ''); }
     function card(it, mode) {
@@ -869,6 +879,13 @@
         $('fUnit').value = src.unit || '';
         $('fExp').value = o.restock ? '' : (src.expires || '');
         $('fBarcode').value = src.barcode || '';
+        var cs = src.caseSize || packGuess(src.name);
+        var isC = !!src.caseBarcode || (!it && (!!p.caseSize || !!packGuess(p.name) || !!p.maybeCase));
+        $('fCaseCode').value = src.caseBarcode || '';
+        $('fCaseSize').value = cs || 24;
+        if (isC && !src.caseBarcode && !it && p.barcode) { $('fCaseCode').value = p.barcode; $('fBarcode').value = ''; }
+        $('fIsCase').checked = isC; $('caseBox').hidden = !isC;
+        if (isC && !it && !o.restock) $('fQty').value = p.qty || cs || 24;
         $('fNotes').value = src.notes || '';
         $('itemSave').textContent = o.restock ? 'Put back in the house' : it ? 'Save' : 'Add it';
         var head = '';
@@ -889,6 +906,14 @@
             if (!$('fName').value) setTimeout(function () { $('fName').focus(); }, 250);
         });
     }
+    $('fIsCase').onchange = function () {
+        var on = this.checked;
+        $('caseBox').hidden = !on;
+        if (on && !$('fCaseCode').value && $('fBarcode').value) { $('fCaseCode').value = $('fBarcode').value; $('fBarcode').value = ''; }
+        if (!on && !$('fBarcode').value && $('fCaseCode').value) { $('fBarcode').value = $('fCaseCode').value; $('fCaseCode').value = ''; }
+        if (on && editing && !editing.item) { var n = parseInt($('fCaseSize').value, 10) || 24; $('fQty').value = n; $('fUnit').value = $('fUnit').value || 'packs'; }
+    };
+    $('fCaseSize').oninput = function () { if ($('fIsCase').checked && editing && !editing.item) $('fQty').value = parseInt(this.value, 10) || 1; };
     function guessLoc(cat) {
         var L = locs(), pick = function (re) { for (var i = 0; i < L.length; i++) if (re.test(L[i])) return L[i]; return null; };
         var m = { 'Frozen': /freez/i, 'Fresh food': /fridge|refrig/i, 'Drinks': /fridge|pantry/i, 'Cleaning': /laundry|clean/i, 'Personal care': /bath/i, 'Medicine': /bath|medic/i, 'Paper goods': /storage|garage|bath/i };
@@ -916,7 +941,9 @@
             name: name, brand: $('fBrand').value.trim(), category: $('fCat').value, location: $('fLoc').value,
             qty: Math.max(0, parseInt($('fQty').value, 10) || 0), unit: $('fUnit').value.trim(),
             expires: $('fExp').value || '', barcode: $('fBarcode').value.replace(/\s/g, ''), notes: $('fNotes').value.trim(),
-            image: editing.image || '', updatedAt: TS(), updatedBy: me().name
+            image: editing.image || '', updatedAt: TS(), updatedBy: me().name,
+            caseBarcode: $('fIsCase').checked ? $('fCaseCode').value.replace(/\s/g, '') : '',
+            caseSize: $('fIsCase').checked ? Math.max(1, parseInt($('fCaseSize').value, 10) || 1) : 0
         };
         var it = editing.item, p;
         if (it && editing.restock) {
@@ -933,10 +960,10 @@
         }
         p.catch(fail);
         // remember the barcode's label for next time (shared)
-        if (data.barcode && (editing.source !== 'saved' || (it && it.name !== name))) {
-            db.collection('inventory_barcodes').doc(data.barcode).set({
-                name: name, brand: data.brand, category: data.category, image: data.image, savedAt: TS()
-            }, { merge: true }).catch(function () {});
+        if (editing.source !== 'saved' || (it && it.name !== name) || data.caseBarcode) {
+            var lab = { name: name, brand: data.brand, category: data.category, image: data.image, savedAt: TS() };
+            if (data.barcode) db.collection('inventory_barcodes').doc(data.barcode).set(lab, { merge: true }).catch(function () {});
+            if (data.caseBarcode) db.collection('inventory_barcodes').doc(data.caseBarcode).set(Object.assign({}, lab, { caseSize: data.caseSize, itemBarcode: data.barcode || '' }), { merge: true }).catch(function () {});
         }
         toast((it && !editing.restock ? 'Saved ' : 'Added ') + name);
         closeSheet('item', true);
@@ -958,12 +985,16 @@
     }
     async function lookup(code) {
         // 1) your household already has it
-        var mine = S.items.filter(function (i) { return i.barcode === code; })[0];
+        var mine = S.items.filter(function (i) { return codeMatch(i, code); })[0];
         if (mine) return { name: mine.name, brand: mine.brand, category: mine.category, image: mine.image, unit: mine.unit, location: mine.location, barcode: code, source: 'saved' };
         // 2) someone labeled it before
         try {
             var s = await db.collection('inventory_barcodes').doc(code).get();
-            if (s.exists && s.data().name) { var d = s.data(); return { name: d.name, brand: d.brand, category: d.category, image: d.image, barcode: code, source: 'saved' }; }
+            if (s.exists && s.data().name) {
+                var d = s.data();
+                return d.caseSize ? { name: d.name, brand: d.brand, category: d.category, image: d.image, caseBarcode: code, caseSize: d.caseSize, qty: d.caseSize, barcode: d.itemBarcode || '', source: 'saved' }
+                                  : { name: d.name, brand: d.brand, category: d.category, image: d.image, barcode: code, source: 'saved' };
+            }
         } catch (e) {}
         // 3) free public product lists
         var variants = [code]; if (/^\d{12}$/.test(code)) variants.push('0' + code);
@@ -983,18 +1014,72 @@
                 } catch (e) { /* offline or blocked: fall through */ }
             }
         }
-        return { name: '', barcode: code, source: 'new' };
+        return { name: '', barcode: code, source: 'new', maybeCase: /^\d{14}$/.test(code) };
+    }
+
+    // ------------------------------------------------------------------ barcode matching
+    // An item can have: barcode (one item), caseBarcode + caseSize (sealed case), extraCodes (other single codes)
+    function codeMatch(i, code) {
+        if (i.caseBarcode === code) return 'case';
+        if (i.barcode === code || (i.extraCodes || []).indexOf(code) >= 0) return 'one';
+        return null;
+    }
+    function packGuess(name) {
+        var m = /(\d{1,3})\s*(?:-|\s)?\s*(?:pack|pk|ct|count|cans|bottles|packets|pouches)\b/i.exec(name || '');
+        var n = m ? parseInt(m[1], 10) : 0;
+        return n > 1 && n <= 500 ? n : 0;
+    }
+    // Ask which existing item an unknown single barcode belongs to (e.g. a packet from a case)
+    async function linkToExisting(code, why) {
+        var cands = S.items.slice().sort(function (a, b) {
+            var ac = a.caseBarcode ? 0 : 1, bc = b.caseBarcode ? 0 : 1;
+            return ac - bc || byName(a, b);
+        }).slice(0, 40);
+        if (!cands.length) return null;
+        var opts = cands.map(function (i) {
+            return { label: esc(i.name) + (i.caseBarcode ? ' 📦' : '') + ' <span class="hint">(' + (i.status === 'out' ? 'out' : (i.qty || 0) + ' left') + ')</span>', value: i.id, cls: 'ghost' };
+        });
+        opts.push({ label: 'None of these', value: null, cls: 'ghost' });
+        var id = await choice('Which item is this?', '<p>' + why + '</p>', opts);
+        if (!id) return null;
+        var it = S.items.filter(function (i) { return i.id === id; })[0];
+        var upd = { updatedAt: TS(), updatedBy: me().name };
+        if (!it.barcode) upd.barcode = code; else upd.extraCodes = firebase.firestore.FieldValue.arrayUnion(code);
+        await itemsRef().doc(it.id).update(upd).catch(fail);
+        if (!it.barcode) it.barcode = code; else it.extraCodes = (it.extraCodes || []).concat([code]);
+        toast('Got it — this barcode is now ' + it.name);
+        return it;
+    }
+    async function addCase(it) {
+        var n = it.caseSize || 1;
+        var upd = { qty: (it.status === 'out' ? 0 : (it.qty || 0)) + n, status: 'in', outReason: '', updatedAt: TS(), updatedBy: me().name };
+        await itemsRef().doc(it.id).update(upd).catch(fail);
+        logIt('plus', it, '+' + n + ' (case)');
+        toast('+' + n + ' ' + it.name);
     }
 
     // ------------------------------------------------------------------ what a scan does
     async function handleCode(code, mode) {
-        var all = S.items.filter(function (i) { return i.barcode === code; });
+        var all = S.items.filter(function (i) { return codeMatch(i, code); });
+        var isCase = all.length && codeMatch(all[0], code) === 'case';
         var inH = all.filter(function (i) { return i.status !== 'out'; })
             .sort(function (a, b) { return (a.expires || '9999') < (b.expires || '9999') ? -1 : 1; });
         var outI = all.filter(function (i) { return i.status === 'out'; });
         ev('inventory_scan', { mode: mode });
 
         if (mode === 'in') {
+            if (isCase) {
+                var ci = inH[0] || all[0];
+                var rc = await choice('📦 Case of ' + ci.name, '<div class="prodhead">' + picHtml(ci) + '<div><b>' + esc(ci.name) + '</b><br><span class="hint">' +
+                    (ci.status === 'out' ? 'Currently out' : (ci.qty || 0) + ' in the house') + ' · ' + (ci.caseSize || 1) + ' per case</span><br>' + expBadge(ci) + '</div></div>',
+                    [{ label: '➕ Add the case (+' + (ci.caseSize || 1) + ')', value: 'case', cls: 'gold' },
+                     { label: '📅 Add as separate (different expiration date)', value: 'new', cls: 'ghost' },
+                     { label: 'Cancel', value: null, cls: 'ghost' }]);
+                if (rc === 'case') await addCase(ci);
+                else if (rc === 'new') await itemSheet({ prefill: { name: ci.name, brand: ci.brand, category: ci.category, location: ci.location, unit: ci.unit, image: ci.image,
+                    barcode: ci.barcode, caseBarcode: code, caseSize: ci.caseSize, qty: ci.caseSize, source: 'saved' } });
+                return;
+            }
             if (inH.length) {
                 var it = inH[0];
                 var r = await choice('You already have this', '<div class="prodhead">' + picHtml(it) + '<div><b>' + esc(it.name) + '</b><br><span class="hint">' +
@@ -1006,9 +1091,19 @@
                 else if (r === 'new') await itemSheet({ prefill: { name: it.name, brand: it.brand, category: it.category, location: it.location, unit: it.unit, image: it.image, barcode: code, source: 'saved' } });
                 return;
             }
-            if (outI.length) { await restock(outI[0]); return; }
+            if (outI.length) { await restock(outI[0]); return; }   // (case codes handled above)
             $('scanMsg').textContent = 'Looking up ' + code + '…';
             var info = await lookup(code);
+            if (S.items.length && !info.caseSize) {
+                var rn = await choice((info.name || 'New barcode'), '<p>Is this something new, or one of something you already have (like a single pack from a case you scanned)?</p>',
+                    [{ label: '🆕 Something new', value: 'new', cls: 'gold' }, { label: '🔗 One of something I already have', value: 'link', cls: 'ghost' }, { label: 'Cancel', value: null, cls: 'ghost' }]);
+                if (!rn) return;
+                if (rn === 'link') {
+                    var li0 = await linkToExisting(code, 'Pick the item this barcode belongs to. It adds 1.');
+                    if (li0) { await itemsRef().doc(li0.id).update({ qty: (li0.status === 'out' ? 0 : (li0.qty || 0)) + 1, status: 'in', outReason: '', updatedAt: TS(), updatedBy: me().name }).catch(fail); logIt('plus', li0); }
+                    return;
+                }
+            }
             await itemSheet({ prefill: info });
             return;
         }
@@ -1020,8 +1115,15 @@
                 return;
             }
             var nm = all[0] ? all[0].name : (await lookup(code)).name;
-            var r2 = await choice('Not in the house list', '<p>' + (nm ? '<b>' + esc(nm) + '</b>' : 'Barcode ' + esc(code)) + (outI.length ? ' is already marked out.' : " isn't in your inventory.") + '</p>',
-                [{ label: 'OK', value: null, cls: 'gold' }, { label: 'Put it on the shopping list', value: 'list', cls: 'ghost' }]);
+            var o2 = [{ label: 'OK', value: null, cls: 'gold' }];
+            if (!all.length && S.items.length) o2.push({ label: '🔗 It\'s one from a case / something I have', value: 'link', cls: 'ghost' });
+            o2.push({ label: 'Put it on the shopping list', value: 'list', cls: 'ghost' });
+            var r2 = await choice('Not in the house list', '<p>' + (nm ? '<b>' + esc(nm) + '</b>' : 'Barcode ' + esc(code)) + (outI.length ? ' is already marked out.' : " isn't in your inventory yet.") + '</p>', o2);
+            if (r2 === 'link') {
+                var lo = await linkToExisting(code, 'Pick what this came from. Next time this barcode is recognized automatically.');
+                if (lo && lo.status !== 'out') await outPrompt(lo, (lo.qty || 0) > 1 ? [{ label: '➖ Used one (' + (lo.qty - 1) + ' left)', value: 'one', cls: 'gold' }] : []);
+                return;
+            }
             if (r2 === 'list' && !outI.length) {
                 var inf = await lookup(code);
                 if (!inf.name) { await itemSheet({ prefill: Object.assign(inf, { qty: 0 }) }); return; }
