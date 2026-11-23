@@ -183,6 +183,8 @@
         .cam { position: relative; background: #000; border-radius: 14px; overflow: hidden; aspect-ratio: 4 / 3; }
         .cam video { width: 100%; height: 100%; object-fit: cover; display: block; }
         .cam .frame { position: absolute; left: 10%; right: 10%; top: 32%; bottom: 32%; border: 3px solid var(--gold); border-radius: 12px; box-shadow: 0 0 0 999px rgba(0,0,0,.35); }
+        .cam .torch { position: absolute; top: 10px; right: 10px; z-index: 2; background: rgba(0,0,0,.55); color: #fff; border: 1px solid #ffffff55; border-radius: 99px; padding: .45em .9em; font-size: .9rem; }
+        .cam .torch.on { background: var(--gold); color: #111; border-color: var(--gold); }
         .cam .line { position: absolute; left: 12%; right: 12%; top: 50%; height: 2px; background: #ff3b30; animation: scanline 1.6s ease-in-out infinite; }
         @keyframes scanline { 0%,100% { transform: translateY(-28px); } 50% { transform: translateY(28px); } }
         #scanMsg { text-align: center; margin: 8px 0; font-weight: 600; }
@@ -296,7 +298,7 @@
             <button data-mode="out" class="out">📤 Scan out</button>
             <button data-mode="check" class="chk">🔍 Check</button>
         </div>
-        <div class="cam"><video id="scanVideo" playsinline muted autoplay></video><div class="frame"></div><div class="line"></div></div>
+        <div class="cam"><video id="scanVideo" playsinline muted autoplay></video><div class="frame"></div><div class="line"></div><button type="button" id="torchBtn" class="torch" aria-pressed="false">🔦 Light</button></div>
         <div id="scanMsg">Starting camera…</div>
         <div class="manual">
             <input id="manualCode" inputmode="numeric" placeholder="Or type the barcode numbers" autocomplete="off">
@@ -1095,12 +1097,38 @@
                 await cam.reader.decodeFromConstraints({ video: { facingMode: { ideal: 'environment' } }, audio: false }, video, function (res) { if (res) gotCode(res.getText()); });
                 if (!cam.on) return stopCamera();
             }
+            showTorch(false);
+            if (torchWanted()) setTimeout(function () { applyTorch(true, true); }, 300);
             msg.textContent = { in: '📥 Point at a barcode to add it', out: '📤 Point at a barcode to take it out', check: '🔍 Point at a barcode to check' }[S.scanMode];
         } catch (e) {
             msg.textContent = (e && e.name === 'NotAllowedError') ? 'Camera permission is off. Allow the camera for this site, or type the barcode below.'
                 : 'Camera not available. Type the barcode numbers below.';
         }
     }
+    // ---- flashlight (remembered, so it stays on between scans)
+    function torchWanted() { try { return localStorage.getItem('inv_torch') === '1'; } catch (e) { return false; } }
+    function setTorchPref(on) { try { localStorage.setItem('inv_torch', on ? '1' : '0'); } catch (e) {} }
+    function videoTrack() {
+        var st = cam.stream || $('scanVideo').srcObject;
+        return st && st.getVideoTracks ? st.getVideoTracks()[0] : null;
+    }
+    function showTorch(on) { var b = $('torchBtn'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.textContent = on ? '🔦 Light on' : '🔦 Light'; }
+    function applyTorch(on, quiet) {
+        var t = videoTrack();
+        if (!t || !t.applyConstraints) { showTorch(false); return Promise.resolve(false); }
+        return t.applyConstraints({ advanced: [{ torch: on }] }).then(function () { showTorch(on); return true; }).catch(function () {
+            showTorch(false);
+            if (on && !quiet) toast("This phone's browser won't let the site turn on the light. Turn on your flashlight from the phone's quick settings / Control Center — scanning still works.", 6000);
+            return false;
+        });
+    }
+    $('torchBtn').onclick = function () {
+        var on = !$('torchBtn').classList.contains('on');
+        setTorchPref(on);
+        applyTorch(on, false).then(function (ok) { if (on && !ok) setTorchPref(false); });
+        ev('inventory_torch', { on: on });
+    };
+
     function stopCamera() {
         cam.on = false;
         clearInterval(cam.timer); cam.timer = null;
