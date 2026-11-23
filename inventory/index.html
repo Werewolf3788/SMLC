@@ -167,6 +167,8 @@
         .item .act { flex: none; font-size: .85rem; padding: .5em .8em; }
         .empty { text-align: center; color: var(--muted); padding: 40px 10px; }
         .empty .i { font-size: 2.6rem; }
+        .dupbar { background: rgba(255,193,14,.14); border: 1px solid var(--gold); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: .9rem; }
+        .dupbar button { padding: .4em .9em; margin-left: auto; }
         .log { display: grid; gap: 6px; }
         .log div { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-size: .9rem; }
         .log small { color: var(--muted); display: block; font-size: .75rem; }
@@ -920,6 +922,11 @@
         $('stIn').textContent = inH.length; $('stExp').textContent = exp.length; $('stOut').textContent = out.length;
         $('nIn').textContent = inH.length || ''; $('nExp').textContent = exp.length || ''; $('nOut').textContent = out.length || '';
         var h = '';
+        var dupGroups = {};
+        S.items.forEach(function (i) { var k = normName(i.name); if (k) (dupGroups[k] = dupGroups[k] || []).push(i); });
+        var dups = Object.keys(dupGroups).filter(function (k) { return dupGroups[k].length > 1; });
+        S.dups = dups.map(function (k) { return dupGroups[k]; });
+        if (dups.length && S.tab !== 'log') h += '<div class="dupbar">🔗 ' + dups.length + ' item' + (dups.length > 1 ? 's are' : ' is') + ' listed more than once under the same name. <button class="gold" data-act="mergeDups">Combine them</button></div>';
         if (S.tab === 'in') {
             var list = inH.filter(matches).sort(byName);
             if (!list.length) h = S.items.length ? emptyMsg('🔍', 'Nothing matches.') :
@@ -945,7 +952,7 @@
             h = o.length ? '<p class="hint" style="margin-top:0">Things that ran out, expired or got tossed — your shopping list. Tap <b>Got it again</b> (or scan it in) when it comes home.</p><div class="grid">' + o.map(function (i) { return card(i, 'out'); }).join('') + '</div>'
                 : emptyMsg('🛒', 'Nothing is out. When something is used up or expired, scan it out and it lands here.');
         } else {
-            var A = { added: '📥 added', restocked: '🔄 restocked', plus: '➕ added one more', used: '➖ used one', out: '📤 marked out', edited: '✏️ edited', deleted: '🗑️ deleted', joined: '👋 joined the household', left: '🚪 left the household' };
+            var A = { added: '📥 added', restocked: '🔄 restocked', plus: '➕ added one more', used: '➖ used one', out: '📤 marked out', edited: '✏️ edited', deleted: '🗑️ deleted', merged: '🔗 combined into', joined: '👋 joined the household', left: '🚪 left the household' };
             h = S.log.length ? '<div class="log">' + S.log.map(function (l) {
                 return '<div><b>' + esc(l.by) + '</b> ' + (A[l.action] || esc(l.action)) + (l.itemName ? ' <b>' + esc(l.itemName) + '</b>' : '') +
                     (l.extra ? ' <span class="hint">(' + esc(l.extra) + ')</span>' : '') + '<small>' + when(l.at) + '</small></div>';
@@ -956,6 +963,21 @@
 
     $('list').onclick = async function (e) {
         var b = e.target.closest('[data-act]'); if (!b) return;
+        if (b.dataset.act === 'mergeDups') {
+            var groups = (S.dups || []).slice();
+            var fresh = function (id) { return S.items.filter(function (x) { return x.id === id; })[0]; };
+            for (var gi = 0; gi < groups.length; gi++) {
+                var g = groups[gi];
+                var tid = g.slice().sort(function (a, c) { return (a.status === 'out') - (c.status === 'out'); })[0].id;
+                for (var ii = 0; ii < g.length; ii++) {
+                    if (g[ii].id === tid) continue;
+                    await mergeInto(fresh(tid), g[ii], g[ii].id);
+                    await new Promise(function (r) { setTimeout(r, 250); });   // let the list catch up
+                }
+            }
+            toast('Combined — each thing is one entry now');
+            return;
+        }
         if (b.dataset.act === 'outAllExpired') {
             var ex = S.items.filter(function (i) { return i.status !== 'out' && daysUntil(i.expires) < 0; });
             var ok = await choice('Mark ' + ex.length + ' expired item' + (ex.length > 1 ? 's' : '') + ' out?', '<p>They move to Out / Shopping.</p>',
@@ -1045,6 +1067,7 @@
         $('itemHead').innerHTML = head;
         $('itemExtra').innerHTML = (it && !o.restock) ? (
             (it.status === 'out' ? '<button type="button" class="ok" data-x="restock">Got it again</button>' : '<button type="button" class="danger" data-x="out">Mark out of the house</button>') +
+            '<button type="button" class="ghost" data-x="combine">🔗 Combine with…</button>' +
             '<button type="button" class="ghost" data-x="delete">Delete</button>') : '';
         return new Promise(function (resolve) {
             sheetDone.item = resolve;
@@ -1081,6 +1104,7 @@
         var it = editing.item;
         if (x.dataset.x === 'out') { closeSheet('item'); outPrompt(it); }
         else if (x.dataset.x === 'restock') { closeSheet('item'); restock(it); }
+        else if (x.dataset.x === 'combine') { closeSheet('item'); combinePrompt(it); }
         else if (x.dataset.x === 'delete') {
             closeSheet('item');
             choice('Delete ' + it.name + '?', '<p>This removes it completely (it will not go on the shopping list). To keep it on the list, use <b>Mark out</b> instead.</p>',
@@ -1104,9 +1128,21 @@
         if (it && editing.restock) {
             data.status = 'in'; data.outReason = ''; data.qty = data.qty || 1;
             p = itemsRef().doc(it.id).update(data); logIt('restocked', data);
+        } else if (it && normName(name) !== normName(it.name) && sameName(name, it.id)) {
+            var tg2 = sameName(name, it.id), merged = Object.assign({}, it, data);
+            p = mergeInto(tg2, merged, it.id);
+            toast('Same name as ' + tg2.name + ' — combined into one', 4000);
+            closeSheet('item', true);
+            return;
         } else if (it) {
             if (it.status === 'out' && data.qty > 0) { data.status = 'in'; data.outReason = ''; }
             p = itemsRef().doc(it.id).update(data); logIt('edited', data);
+        } else if (sameName(name)) {
+            var tgt = sameName(name);
+            p = mergeInto(tgt, data, null);
+            toast('Added to ' + tgt.name + ' (same name) — ' + ((tgt.status === 'out' ? 0 : (tgt.qty || 0)) + data.qty) + ' in the house now', 4000);
+            closeSheet('item', true);
+            return;
         } else {
             data.status = data.qty > 0 ? 'in' : 'out';
             data.addedAt = TS(); data.addedBy = me().name; data.addedByUid = me().uid;
@@ -1170,6 +1206,60 @@
             }
         }
         return { name: '', barcode: code, source: 'new', maybeCase: /^\d{14}$/.test(code) };
+    }
+
+    // ------------------------------------------------------------------ same thing = one entry
+    // "Top Ramen (2.04kg) (Box)" and "top ramen" are the same name: sizes/notes in ( ) and punctuation are ignored
+    function normName(n) {
+        return String(n || '').toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/&/g, ' and ')
+            .replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+    function sameName(name, exceptId) {
+        var k = normName(name); if (!k) return null;
+        return S.items.filter(function (i) { return i.id !== exceptId && normName(i.name) === k; })
+            .sort(function (a, b) { return (a.status === 'out') - (b.status === 'out'); })[0] || null;
+    }
+    // Put src (an item, or new form data) into tgt: quantities add up, every barcode is kept,
+    // the earliest expiration date wins. If src is an existing item (srcId), it is removed after.
+    function mergeInto(tgt, src, srcId) {
+        var srcIn = srcId ? src.status !== 'out' : true;
+        var addQ = srcIn ? (src.qty || 0) : 0;
+        var tq = tgt.status === 'out' ? 0 : (tgt.qty || 0);
+        var codes = (tgt.extraCodes || []).slice();
+        function keep(c) { if (c && c !== tgt.barcode && c !== tgt.caseBarcode && codes.indexOf(c) < 0) codes.push(c); }
+        var upd = { qty: tq + addQ, updatedAt: TS(), updatedBy: me().name };
+        if (tq + addQ > 0) { upd.status = 'in'; upd.outReason = ''; }
+        if (!tgt.barcode && src.barcode) upd.barcode = src.barcode; else keep(src.barcode);
+        (src.extraCodes || []).forEach(keep);
+        if (src.caseBarcode) {
+            if (!tgt.caseBarcode) { upd.caseBarcode = src.caseBarcode; upd.caseSize = src.caseSize || 1; } else keep(src.caseBarcode);
+        }
+        upd.extraCodes = codes;
+        var dates = [tgt.status === 'out' ? '' : tgt.expires, srcIn ? src.expires : ''].filter(Boolean).sort();
+        if (dates.length) upd.expires = dates[0];
+        if (!tgt.image && src.image) upd.image = src.image;
+        if (!tgt.brand && src.brand) upd.brand = src.brand;
+        var pr = itemsRef().doc(tgt.id).update(upd);
+        if (srcId) pr = pr.then(function () { return itemsRef().doc(srcId).delete(); });
+        logIt('merged', tgt, (srcId ? src.name + ' → ' : '+') + (srcId ? '' : addQ));
+        return pr.catch(fail);
+    }
+    // the edit screen's "Combine with…" button
+    async function combinePrompt(it) {
+        var others = S.items.filter(function (i) { return i.id !== it.id; }).sort(byName);
+        if (!others.length) { toast('Nothing else to combine with yet.'); return; }
+        var opts = others.slice(0, 60).map(function (i) {
+            return { label: esc(i.name) + ' <span class="hint">(' + (i.status === 'out' ? 'out' : (i.qty || 0) + ' left') + ')</span>', value: i.id, cls: 'ghost' };
+        });
+        opts.push({ label: 'Cancel', value: null, cls: 'ghost' });
+        var id = await choice('Combine ' + it.name + ' with…', '<p>Pick the entry that is the same thing. They become one: counts add up and every barcode keeps working.</p>', opts);
+        if (!id) return;
+        var other = S.items.filter(function (i) { return i.id === id; })[0];
+        var keepName = await choice('Which name should it keep?', '', [
+            { label: esc(other.name), value: 'other', cls: 'gold' }, { label: esc(it.name), value: 'this', cls: 'ghost' }, { label: 'Cancel', value: null, cls: 'ghost' }]);
+        if (!keepName) return;
+        if (keepName === 'other') await mergeInto(other, it, it.id); else await mergeInto(it, other, other.id);
+        toast('Combined into one: ' + (keepName === 'other' ? other.name : it.name), 3500);
     }
 
     // ------------------------------------------------------------------ barcode matching
@@ -1248,7 +1338,6 @@
                 var rc = await choice('📦 Case of ' + ci.name, '<div class="prodhead">' + picHtml(ci) + '<div><b>' + esc(ci.name) + '</b><br><span class="hint">' +
                     (ci.status === 'out' ? 'Currently out' : (ci.qty || 0) + ' in the house') + ' · ' + (ci.caseSize || 1) + ' per case</span><br>' + expBadge(ci) + '</div></div>',
                     [{ label: '➕ Add this case', value: 'case', cls: 'gold' },
-                     { label: '📅 Add as separate (different expiration date)', value: 'new', cls: 'ghost' },
                      { label: 'Cancel', value: null, cls: 'ghost' }]);
                 if (rc === 'case') await addCase(ci);
                 else if (rc === 'new') await itemSheet({ prefill: { name: ci.name, brand: ci.brand, category: ci.category, location: ci.location, unit: ci.unit, image: ci.image,
@@ -1260,7 +1349,6 @@
                 var r = await choice('You already have this', '<div class="prodhead">' + picHtml(it) + '<div><b>' + esc(it.name) + '</b><br><span class="hint">' +
                     inH.reduce(function (s, i) { return s + (i.qty || 0); }, 0) + ' in the house' + (it.location ? ' · ' + esc(it.location) : '') + '</span><br>' + expBadge(it) + '</div></div>',
                     [{ label: '➕ Add 1 more', value: 'inc', cls: 'gold' },
-                     { label: '📅 Add as separate (different expiration date)', value: 'new', cls: 'ghost' },
                      { label: 'Cancel', value: null, cls: 'ghost' }]);
                 if (r === 'inc') { await itemsRef().doc(it.id).update({ qty: (it.qty || 0) + 1, updatedAt: TS(), updatedBy: me().name }).catch(fail); logIt('plus', it); toast('+1 ' + it.name + ' — ' + ((it.qty || 0) + 1) + ' in the house now', 3000); }
                 else if (r === 'new') await itemSheet({ prefill: { name: it.name, brand: it.brand, category: it.category, location: it.location, unit: it.unit, image: it.image, barcode: code, source: 'saved' } });
