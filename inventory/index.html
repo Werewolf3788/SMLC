@@ -237,6 +237,27 @@
             #fab button { padding: .7em 1.05em; font-size: .95rem; }
             #nav button span:not(.ni):not(.count) { font-size: .68rem; white-space: nowrap; }
         }
+        /* ---------- phone: full-screen camera scanner ---------- */
+        @media (max-width: 899px) {
+            #scanSheet { background: #000; align-items: stretch; }
+            #scanSheet > .scanpanel { max-width: none; max-height: none; height: 100%; height: 100dvh; border-radius: 0; background: #000; color: #fff;
+                padding: 0; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+            .scanpanel h3 { position: absolute; top: 0; left: 0; right: 0; z-index: 3; margin: 0; padding: calc(env(safe-area-inset-top) + 10px) 14px 10px;
+                background: linear-gradient(rgba(0,0,0,.75), transparent); font-size: 1.05rem; }
+            .scanpanel .x { background: rgba(255,255,255,.18); color: #fff; width: 2.4em; height: 2.4em; font-size: 1rem; }
+            .scanpanel .cam { flex: 1; aspect-ratio: auto; border-radius: 0; min-height: 0; }
+            .scanpanel .cam .frame { left: 8%; right: 8%; top: 36%; bottom: 36%; border-radius: 16px; }
+            .scanpanel .cam .torch { top: auto; right: 50%; transform: translateX(50%); bottom: 18px; padding: .6em 1.2em; font-size: 1rem; }
+            .scanpanel .modes { position: absolute; z-index: 3; left: 12px; right: 12px; top: calc(env(safe-area-inset-top) + 58px); margin: 0; }
+            .scanpanel .modes button { background: rgba(0,0,0,.55); color: #fff; border-color: #ffffff44; padding: .6em .2em; backdrop-filter: blur(6px); }
+            .scanpanel .modes button.on { background: var(--navy); border-color: #fff; }
+            .scanpanel .modes button.on.out { background: var(--bad); }
+            .scanpanel .modes button.on.chk { background: var(--gold); color: #111; }
+            .scanpanel #scanMsg { margin: 0; padding: 12px 14px 4px; color: #fff; font-size: 1rem; }
+            .scanpanel .manual { margin: 6px 14px 0; }
+            .scanpanel .manual input { background: #1c1f25; color: #fff; border-color: #3a3f48; }
+            .scanpanel .scanhint { color: #b9bec8; margin: 8px 14px calc(env(safe-area-inset-bottom) + 12px); font-size: .8rem; }
+        }
         .goog-te-banner-frame, #goog-gt-tt, .skiptranslate iframe { display: none !important; }
     </style>
 </head>
@@ -331,7 +352,7 @@
 
 <!-- ================= Scanner ================= -->
 <div id="scanSheet" class="sheet" hidden>
-    <div class="panel">
+    <div class="panel scanpanel">
         <h3><span>Scan a barcode</span><button class="x" data-close="scan" aria-label="Close">✕</button></h3>
         <div class="modes">
             <button data-mode="in">📥 Scan in</button>
@@ -344,7 +365,7 @@
             <input id="manualCode" inputmode="numeric" placeholder="Or type the barcode numbers" autocomplete="off">
             <button id="manualGo">Go</button>
         </div>
-        <p class="hint" style="text-align:center">Keeps scanning after each item, so you can go shelf by shelf. Tap ✕ when you're done.</p>
+        <p class="hint scanhint" style="text-align:center">Keeps scanning after each item, so you can go shelf by shelf. Tap ✕ when you're done.</p>
     </div>
 </div>
 
