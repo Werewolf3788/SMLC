@@ -592,6 +592,15 @@
         if (n <= 7) return '<span class="badge warn">Expires ' + niceDate(it.expires) + '</span>';
         return '<span class="badge ok">Good until ' + niceDate(it.expires) + '</span>';
     }
+    function gotBadge(it) {
+        var t = it.gotAt || it.addedAt;
+        if (!t || !t.toDate) return '';
+        var d = t.toDate(), today = new Date(); today.setHours(0, 0, 0, 0);
+        var days = Math.round((today - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
+        var txt = days <= 0 ? 'Got today' : days === 1 ? 'Got yesterday' : days < 7 ? 'Got ' + days + ' days ago'
+            : 'Got ' + d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: d.getFullYear() === today.getFullYear() ? undefined : 'numeric' });
+        return ' <span class="badge gray">' + txt + '</span>';
+    }
     function picHtml(it) {
         return it.image ? '<img class="pic" src="' + esc(it.image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">'
                         : '<div class="pic emoji">' + (CAT_EMOJI[it.category] || '📦') + '</div>';
@@ -950,7 +959,7 @@
         }
         return '<div class="item">' + picHtml(it) + '<div class="info" data-act="edit" data-id="' + it.id + '"><b>' + esc(it.name) +
             (it.unit && mode !== 'out' ? ' <span class="hint">(' + esc(it.unit) + ')</span>' : '') + '</b><small>' + (meta || '&nbsp;') + '</small>' +
-            (mode === 'out' ? '' : expBadge(it)) + '</div>' + right + '</div>';
+            (mode === 'out' ? '' : expBadge(it) + gotBadge(it)) + '</div>' + right + '</div>';
     }
     function emptyMsg(icon, msg) { return '<div class="empty"><div class="i">' + icon + '</div>' + msg + '</div>'; }
 
@@ -1165,7 +1174,7 @@
         };
         var it = editing.item, p;
         if (it && editing.restock) {
-            data.status = 'in'; data.outReason = ''; data.qty = data.qty || 1;
+            data.status = 'in'; data.outReason = ''; data.qty = data.qty || 1; data.gotAt = TS();
             p = itemsRef().doc(it.id).update(data); logIt('restocked', data);
         } else if (it && normName(name) !== normName(it.name) && sameName(name, it.id)) {
             var tg2 = sameName(name, it.id), merged = Object.assign({}, it, data);
@@ -1184,7 +1193,7 @@
             return;
         } else {
             data.status = data.qty > 0 ? 'in' : 'out';
-            data.addedAt = TS(); data.addedBy = me().name; data.addedByUid = me().uid;
+            data.addedAt = TS(); data.addedBy = me().name; data.addedByUid = me().uid; data.gotAt = TS();
             p = itemsRef().add(data); logIt('added', data, data.qty > 1 ? data.qty + ' ' + (data.unit || '') : '');
             ev('inventory_item_added', { source: editing.source || 'manual' });
         }
@@ -1267,6 +1276,7 @@
         var codes = (tgt.extraCodes || []).slice();
         function keep(c) { if (c && c !== tgt.barcode && c !== tgt.caseBarcode && codes.indexOf(c) < 0) codes.push(c); }
         var upd = { qty: tq + addQ, updatedAt: TS(), updatedBy: me().name };
+        if (!srcId && addQ > 0) upd.gotAt = TS();
         if (tq + addQ > 0) { upd.status = 'in'; upd.outReason = ''; }
         if (!tgt.barcode && src.barcode) upd.barcode = src.barcode; else keep(src.barcode);
         (src.extraCodes || []).forEach(keep);
@@ -1369,7 +1379,7 @@
     }
     // A case: sealed = full count, opened = full count minus what's missing
     async function caseCount(size, name) {
-        var r = await choice('Is the case sealed?', '<p><b>' + esc(name) + '</b> · ' + size + ' per case</p>',
+        var r = await choice('Is it sealed?', '<p><b>' + esc(name) + '</b> · ' + size + ' inside</p>',
             [{ label: '📦 Sealed (+' + size + ')', value: 'sealed', cls: 'gold' }, { label: '✂️ Opened — some are missing', value: 'open', cls: 'ghost' }, { label: 'Cancel', value: null, cls: 'ghost' }]);
         if (!r) return null;
         if (r === 'sealed') return size;
@@ -1380,10 +1390,10 @@
     async function addCase(it) {
         var n = await caseCount(it.caseSize || 1, it.name);
         if (n === null) return;
-        var upd = { qty: (it.status === 'out' ? 0 : (it.qty || 0)) + n, status: 'in', outReason: '', updatedAt: TS(), updatedBy: me().name };
+        var upd = { qty: (it.status === 'out' ? 0 : (it.qty || 0)) + n, status: 'in', outReason: '', gotAt: TS(), updatedAt: TS(), updatedBy: me().name };
         await itemsRef().doc(it.id).update(upd).catch(fail);
         var total = (it.status === 'out' ? 0 : (it.qty || 0)) + n;
-        logIt('plus', it, '+' + n + ' from a case');
+        logIt('plus', it, '+' + n + ' from a box/pack');
         toast('+' + n + ' ' + it.name + ' — ' + total + ' in the house now', 3500);
     }
 
@@ -1399,9 +1409,9 @@
         if (mode === 'in') {
             if (isCase) {
                 var ci = inH[0] || all[0];
-                var rc = await choice('📦 Case of ' + ci.name, '<div class="prodhead">' + picHtml(ci) + '<div><b>' + esc(ci.name) + '</b><br><span class="hint">' +
-                    (ci.status === 'out' ? 'Currently out' : (ci.qty || 0) + ' in the house') + ' · ' + (ci.caseSize || 1) + ' per case</span><br>' + expBadge(ci) + '</div></div>',
-                    [{ label: '➕ Add this case', value: 'case', cls: 'gold' },
+                var rc = await choice('📦 ' + ci.name, '<div class="prodhead">' + picHtml(ci) + '<div><b>' + esc(ci.name) + '</b><br><span class="hint">' +
+                    (ci.status === 'out' ? 'Currently out' : (ci.qty || 0) + ' in the house') + ' · ' + (ci.caseSize || 1) + ' in each box/pack</span><br>' + expBadge(ci) + '</div></div>',
+                    [{ label: '➕ Add this box / pack', value: 'case', cls: 'gold' },
                      { label: 'Cancel', value: null, cls: 'ghost' }]);
                 if (rc === 'case') await addCase(ci);
                 else if (rc === 'new') await itemSheet({ prefill: { name: ci.name, brand: ci.brand, category: ci.category, location: ci.location, unit: ci.unit, image: ci.image,
@@ -1414,7 +1424,7 @@
                     inH.reduce(function (s, i) { return s + (i.qty || 0); }, 0) + ' in the house' + (it.location ? ' · ' + esc(it.location) : '') + '</span><br>' + expBadge(it) + '</div></div>',
                     [{ label: '➕ Add 1 more', value: 'inc', cls: 'gold' },
                      { label: 'Cancel', value: null, cls: 'ghost' }]);
-                if (r === 'inc') { await itemsRef().doc(it.id).update({ qty: (it.qty || 0) + 1, updatedAt: TS(), updatedBy: me().name }).catch(fail); logIt('plus', it); toast('+1 ' + it.name + ' — ' + ((it.qty || 0) + 1) + ' in the house now', 3000); }
+                if (r === 'inc') { await itemsRef().doc(it.id).update({ qty: (it.qty || 0) + 1, gotAt: TS(), updatedAt: TS(), updatedBy: me().name }).catch(fail); logIt('plus', it); toast('+1 ' + it.name + ' — ' + ((it.qty || 0) + 1) + ' in the house now', 3000); }
                 else if (r === 'new') await itemSheet({ prefill: { name: it.name, brand: it.brand, category: it.category, location: it.location, unit: it.unit, image: it.image, barcode: code, source: 'saved' } });
                 return;
             }
