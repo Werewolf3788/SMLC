@@ -1,18 +1,17 @@
-// ==========================================================================
-// Home Inventory (inventory/index.html) | Firestore rules | 2026-11-23
-// Firebase project: smlc-fuel-monitor -> Firestore Database -> Rules
-//
-// ADD the block between the START/END lines INSIDE your existing
-//   match /databases/{database}/documents { ... }
-// Keep every rule you already have (directory, smlc_events, local_news...).
-// Then press Publish.
-//
-// Who can see what:
-//   - Only people in a household can see or change that household's items.
-//   - People join with the household's invite code (or the invite link).
-//   - Anyone signed in can look up / save a product name for a barcode
-//     (shared barcode labels, so a label typed once helps everyone).
-// ==========================================================================
+// Full Firestore rules for smlc-fuel-monitor (existing SMLC rules + Home Inventory).
+// Firebase -> Firestore Database -> Rules: replace everything with this file, then Publish.
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /local_news/{document=**} {
+      allow read, write: if true;
+    }
+
+    match /smlc_events/{document=**} {
+      allow read, write: if true;
+    }
 
     // ----- Home Inventory START -----
     function invSignedIn() { return request.auth != null; }
@@ -66,3 +65,5 @@
         request.resource.data.name.size() > 0 && request.resource.data.name.size() < 200;
     }
     // ----- Home Inventory END -----
+  }
+}
