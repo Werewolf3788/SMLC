@@ -1069,6 +1069,7 @@
         }, function (e) { if (e.code === 'permission-denied') lostHouse(hid); else fail(e); }));
         S.unsubs.push(houseRef(hid).collection('items').onSnapshot(function (qs) {
             S.items = qs.docs.map(function (d) { var x = d.data(); x.id = d.id; return x; });
+            applyTrusted();
             S.items.forEach(function (i) {
                 var want = allCodes(i);
                 if (want.length && JSON.stringify(want) !== JSON.stringify(i.barcodes || [])) itemsRef().doc(i.id).update({ barcodes: want }).catch(function () {});
@@ -1692,6 +1693,28 @@
     function fromJson(t, code) {
         var nm = t.name + (t.size && t.name.indexOf(t.size) < 0 ? ' (' + t.size + ')' : '');
         return fromTrustedDoc({ name: nm, brand: t.brand, category: t.category, place: t.place, unit: t.unit, image: t.image, caseSize: t.each || 0 }, code);
+    }
+    // Existing items whose barcode is in the trusted list get its name, brand and picture automatically
+    var trustSeen = {};
+    async function applyTrusted() {
+        var hid = S.hid;
+        for (var k = 0; k < S.items.length; k++) {
+            var it = S.items[k], codes = allCodes(it);
+            if (!codes.length) continue;
+            var key = hid + '|' + it.id + '|' + codes.join(',');
+            if (trustSeen[key]) continue; trustSeen[key] = true;
+            var t = null;
+            for (var c = 0; c < codes.length && !t; c++) t = await trustedLookup(codes[c]).catch(function () { return null; });
+            if (!t || hid !== S.hid) continue;
+            var upd = {};
+            if (normName(t.name) !== normName(it.name)) upd.name = t.name;
+            if (t.image && t.image !== it.image) upd.image = t.image;
+            if (t.brand && t.brand !== it.brand) upd.brand = t.brand;
+            if (Object.keys(upd).length) {
+                upd.updatedAt = TS(); upd.updatedBy = 'trusted list';
+                itemsRef().doc(it.id).update(upd).catch(function () {});
+            }
+        }
     }
     async function trustedLookup(code) {
         var keys = [code, '0' + code, code.replace(/^0/, '')].filter(function (k, i, a) { return k && a.indexOf(k) === i; });
