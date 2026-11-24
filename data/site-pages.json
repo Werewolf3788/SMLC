@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-24T00:47:51+00:00",
+ "generated": "2026-11-24T00:50:34+00:00",
  "repo": "Werewolf3788/SMLC",
  "branch": "Claude-Test",
  "pages": [
@@ -77,8 +77,8 @@
    "path": "inventory/index.html",
    "url": "https://werewolf3788.github.io/SMLC/inventory/",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/inventory/index.html",
-   "updated": "2026-11-23T19:47:42-05:00",
-   "message": "Inventory: trusted product list (inventory/products.json) checked before shared labels and outside lists; Avocado Dip, Top Ramen case, Hefty"
+   "updated": "2026-11-23T19:50:23-05:00",
+   "message": "Inventory: one number per product (UPC-E -> UPC-A, 13-digit EAN -> UPC, 11 typed digits get the check digit)"
   },
   {
    "path": "louisville.html",
