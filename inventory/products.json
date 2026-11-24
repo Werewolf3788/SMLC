@@ -13,7 +13,10 @@
     "category": "Food",
     "place": "Pantry",
     "each": 24,
-    "unit": "packs"
+    "unit": "packs",
+    "image": "../images/barcode/070662010037.jpg",
+    "store": "walmart",
+    "link": "https://www.walmart.com/ip/738135969"
   },
   "013700016608": {
     "name": "Hefty Ultra Strong Tall Kitchen Trash Bags, Lavender & Sweet Vanilla",
@@ -55,5 +58,17 @@
     "image": "../images/barcode/049000050271.jpg",
     "store": "walmart",
     "link": "https://www.walmart.com/ip/15610634"
+  },
+  "070662010037": {
+    "name": "Top Ramen Chicken Flavor Ramen Noodle Soup",
+    "brand": "Nissin",
+    "size": "24 pack case, 3 oz bags",
+    "category": "Food",
+    "place": "Pantry",
+    "each": 24,
+    "unit": "packs",
+    "image": "../images/barcode/070662010037.jpg",
+    "store": "walmart",
+    "link": "https://www.walmart.com/ip/738135969"
   }
 }
