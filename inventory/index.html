@@ -240,6 +240,9 @@
         .member img, .member .ph { width: 32px; height: 32px; border-radius: 50%; background: var(--soft); display: grid; place-items: center; }
         .member div { flex: 1; min-width: 0; }
         .member small { color: var(--muted); display: block; font-size: .75rem; }
+        #toast span { vertical-align: middle; }
+        #toast button { margin-left: 10px; background: var(--gold); color: #111; padding: .35em .9em; border-radius: 8px; vertical-align: middle; }
+        .item .info b::after { content: " ✏️"; font-size: .7em; opacity: .45; }
         #toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--nav-h) + 90px + env(safe-area-inset-bottom)); z-index: 90; background: #222; color: #fff; padding: .7em 1.1em; border-radius: 12px; max-width: 90vw; box-shadow: 0 6px 20px rgba(0,0,0,.35); font-weight: 600; }
         @media (min-width: 900px) { #toast { bottom: 30px; } }
         /* ---------- never wider than the screen ---------- */
@@ -469,6 +472,7 @@
             </div>
             <label for="fBarcode">Barcode on one item</label>
             <input id="fBarcode" inputmode="numeric" maxlength="40" placeholder="(none — fills in when you scan one later)">
+            <p class="hint" id="fCodes" style="margin:4px 0 0;word-break:break-all"></p>
             <label class="checkline"><input type="checkbox" id="fIsCase"> <span>📦 This barcode is on a <b>box / pack with more than one inside</b> (trash bags, 24-pack…)</span></label>
             <div id="caseBox" hidden>
                 <div class="r2">
@@ -576,9 +580,34 @@
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
     function ev(name, p) { try { gtag('event', name, p || {}); } catch (e) {} }
     var toastT;
-    function toast(msg, ms) {
-        var t = $('toast'); t.textContent = msg; t.hidden = false;
-        clearTimeout(toastT); toastT = setTimeout(function () { t.hidden = true; }, ms || 2600);
+    // toast(message, ms, undo): undo = true adds an Undo button that puts the list back the way it was
+    function toast(msg, ms, undo) {
+        var t = $('toast'), snap = undo ? S.undoSnap : null;
+        t.innerHTML = '<span>' + esc(msg) + '</span>' + (snap ? ' <button type="button" id="undoBtn">Undo</button>' : '');
+        t.hidden = false;
+        if (snap) $('undoBtn').onclick = function () { t.hidden = true; doUndo(snap); };
+        clearTimeout(toastT); toastT = setTimeout(function () { t.hidden = true; }, snap ? Math.max(ms || 0, 7000) : (ms || 2600));
+    }
+    // A copy of the list is kept from just before each tap, so any change can be undone
+    function keepUndo(e) {
+        if (!S.hid || (e && e.target && e.target.closest && e.target.closest('#toast'))) return;
+        S.undoSnap = { hid: S.hid, items: S.items.map(function (i) { return Object.assign({}, i); }) };
+    }
+    document.addEventListener('click', keepUndo, true);
+    document.addEventListener('submit', keepUndo, true);
+    function bare(i) { var c = Object.assign({}, i); delete c.id; return c; }
+    async function doUndo(snap) {
+        if (!snap || snap.hid !== S.hid) return;
+        var before = {}, now = {}, b = db.batch(), n = 0;
+        snap.items.forEach(function (i) { before[i.id] = i; });
+        S.items.forEach(function (i) { now[i.id] = i; });
+        Object.keys(now).forEach(function (id) { if (!before[id]) { b.delete(itemsRef().doc(id)); n++; } });          // added -> removed
+        Object.keys(before).forEach(function (id) {
+            var was = bare(before[id]), is = now[id] ? bare(now[id]) : null;
+            if (!is || JSON.stringify(was) !== JSON.stringify(is)) { b.set(itemsRef().doc(id), was); n++; }            // changed/deleted -> put back
+        });
+        if (!n) { toast('Nothing to undo'); return; }
+        try { await b.commit(); logIt('undo', { name: '' }); toast('Undone ↩'); } catch (e) { fail(e); }
     }
     function showScreen(id) { ['signin', 'setup', 'app'].forEach(function (s) { $(s).hidden = s !== id; }); $('fab').hidden = id !== 'app'; $('about').hidden = id !== 'signin'; }
     function me() { var u = S.user || {}; return { uid: u.uid, name: u.displayName || (u.email || 'Someone').split('@')[0] }; }
@@ -900,6 +929,10 @@
         }, function (e) { if (e.code === 'permission-denied') lostHouse(hid); else fail(e); }));
         S.unsubs.push(houseRef(hid).collection('items').onSnapshot(function (qs) {
             S.items = qs.docs.map(function (d) { var x = d.data(); x.id = d.id; return x; });
+            S.items.forEach(function (i) {
+                var want = allCodes(i);
+                if (want.length && JSON.stringify(want) !== JSON.stringify(i.barcodes || [])) itemsRef().doc(i.id).update({ barcodes: want }).catch(function () {});
+            });
             render();
         }, fail));
         S.unsubs.push(houseRef(hid).collection('members').onSnapshot(function (qs) {
@@ -1168,7 +1201,7 @@
                 if (o.length) h += '<h2 class="group">Out of the house <span class="badge bad">' + o.length + '</span></h2><div class="grid">' + o.map(function (i) { return card(i, 'out'); }).join('') + '</div>';
             } else h = emptyMsg('🛒', 'Nothing to buy. When something is used up or gets down to the number you picked, it lands here.');
         } else {
-            var A = { added: '📥 added', restocked: '🔄 restocked', plus: '➕ added one more', used: '➖ used one', out: '📤 marked out', edited: '✏️ edited', deleted: '🗑️ deleted', merged: '🔗 combined into', joined: '👋 joined the household', left: '🚪 left the household' };
+            var A = { added: '📥 added', restocked: '🔄 restocked', plus: '➕ added one more', used: '➖ used one', out: '📤 marked out', edited: '✏️ edited', deleted: '🗑️ deleted', merged: '🔗 combined into', undo: '↩ undid the last change', joined: '👋 joined the household', left: '🚪 left the household' };
             h = S.log.length ? '<div class="log">' + S.log.map(function (l) {
                 return '<div><b>' + esc(l.by) + '</b> ' + (A[l.action] || esc(l.action)) + (l.itemName ? ' <b>' + esc(l.itemName) + '</b>' : '') +
                     (l.extra ? ' <span class="hint">(' + esc(l.extra) + ')</span>' : '') + '<small>' + when(l.at) + '</small></div>';
@@ -1191,7 +1224,7 @@
                     await new Promise(function (r) { setTimeout(r, 250); });   // let the list catch up
                 }
             }
-            toast('Combined — each thing is one entry now');
+            toast('Combined — each thing is one entry now', 0, true);
             return;
         }
         if (b.dataset.act === 'shareList') { shareList(); return; }
@@ -1205,7 +1238,7 @@
         }
         var it = S.items.filter(function (i) { return i.id === b.dataset.id; })[0]; if (!it) return;
         if (b.dataset.act === 'edit') itemSheet({ item: it });
-        else if (b.dataset.act === 'inc') { itemsRef().doc(it.id).update({ qty: (it.qty || 0) + 1, updatedAt: TS(), updatedBy: me().name }).catch(fail); logIt('plus', it); }
+        else if (b.dataset.act === 'inc') { itemsRef().doc(it.id).update({ qty: (it.qty || 0) + 1, updatedAt: TS(), updatedBy: me().name }).catch(fail); logIt('plus', it); toast('+1 ' + it.name + ' — ' + ((it.qty || 0) + 1) + ' now', 0, true); }
         else if (b.dataset.act === 'dec') useOne(it);
         else if (b.dataset.act === 'restock') restock(it);
         else if (b.dataset.act === 'store') storePick(it);
@@ -1216,7 +1249,7 @@
         if ((it.qty || 0) > 1) {
             itemsRef().doc(it.id).update({ qty: it.qty - 1, updatedAt: TS(), updatedBy: me().name }).catch(fail);
             logIt('used', it, (it.qty - 1) + ' left');
-            toast('−1 ' + it.name + ' — ' + (it.qty - 1) + ' left' + ((it.lowAt || 0) > 0 && it.qty - 1 <= it.lowAt ? ' · added to the shopping list' : ''), 3500);
+            toast('−1 ' + it.name + ' — ' + (it.qty - 1) + ' left' + ((it.lowAt || 0) > 0 && it.qty - 1 <= it.lowAt ? ' · added to the shopping list' : ''), 3500, true);
             return Promise.resolve();
         }
         return outPrompt(it);
@@ -1236,7 +1269,7 @@
     }
     function markOut(it, reason) {
         itemsRef().doc(it.id).update({ status: 'out', qty: 0, outReason: reason, outAt: TS(), outBy: me().name, updatedAt: TS(), updatedBy: me().name })
-            .then(function () { toast(it.name + ' moved to Out / Shopping'); }).catch(fail);
+            .then(function () { toast(it.name + ' moved to Out / Shopping', 0, true); }).catch(fail);
         logIt('out', it, OUT_REASONS[reason]);
         ev('inventory_item_out', { reason: reason });
     }
@@ -1264,6 +1297,7 @@
         $('fUnit').value = src.unit || '';
         $('fExp').value = o.restock ? '' : (src.expires || '');
         $('fBarcode').value = src.barcode || '';
+        $('fCodes').textContent = it && allCodes(it).length ? 'All barcodes for this item: ' + allCodes(it).join(', ') : '';
         var cs = src.caseSize || packGuess(src.name);
         var isC = !!src.caseBarcode || (!it && (!!p.caseSize || (!p.single && (!!packGuess(p.name) || !!p.maybeCase))));
         $('fCaseCode').value = src.caseBarcode || '';
@@ -1337,7 +1371,7 @@
             closeSheet('item');
             choice('Delete ' + it.name + '?', '<p>This removes it completely (it will not go on the shopping list). To keep it on the list, use <b>Mark out</b> instead.</p>',
                 [{ label: 'Delete', value: true, cls: 'danger' }, { label: 'Cancel', value: false, cls: 'ghost' }]).then(function (ok) {
-                if (ok) { itemsRef().doc(it.id).delete().catch(fail); logIt('deleted', it); }
+                if (ok) { itemsRef().doc(it.id).delete().catch(fail); logIt('deleted', it); toast('Deleted ' + it.name, 0, true); }
             });
         }
     };
@@ -1353,6 +1387,7 @@
             caseBarcode: $('fIsCase').checked ? $('fCaseCode').value.replace(/\s/g, '') : '',
             caseSize: $('fIsCase').checked ? Math.max(1, parseInt($('fCaseSize').value, 10) || 1) : 0
         };
+        data.barcodes = allCodes({ barcode: data.barcode, caseBarcode: data.caseBarcode, extraCodes: (editing.item && editing.item.extraCodes) || [] });
         var it = editing.item, p;
         if (it && editing.restock) {
             data.status = 'in'; data.outReason = ''; data.qty = data.qty || 1; data.gotAt = TS();
@@ -1360,7 +1395,7 @@
         } else if (it && normName(name) !== normName(it.name) && sameName(name, it.id)) {
             var tg2 = sameName(name, it.id), merged = Object.assign({}, it, data);
             p = mergeInto(tg2, merged, it.id);
-            toast('Same name as ' + tg2.name + ' — combined into one', 4000);
+            toast('Same name as ' + tg2.name + ' — combined into one', 4000, true);
             closeSheet('item', true);
             return;
         } else if (it) {
@@ -1369,7 +1404,7 @@
         } else if (sameName(name)) {
             var tgt = sameName(name);
             p = mergeInto(tgt, data, null);
-            toast('Added to ' + tgt.name + ' (same name) — ' + ((tgt.status === 'out' ? 0 : (tgt.qty || 0)) + data.qty) + ' in the house now', 4000);
+            toast('Added to ' + tgt.name + ' (same name) — ' + ((tgt.status === 'out' ? 0 : (tgt.qty || 0)) + data.qty) + ' in the house now', 4000, true);
             closeSheet('item', true);
             return;
         } else {
@@ -1382,10 +1417,10 @@
         // remember the barcode's label for next time (shared)
         if (editing.source !== 'saved' || name !== editing.origName || data.caseBarcode) {
             var lab = { name: name, brand: data.brand, category: data.category, image: data.image, savedAt: TS() };
-            if (data.barcode) col('barcodes').doc(labelId(data.barcode)).set(lab, { merge: true }).catch(function () {});
-            if (data.caseBarcode) col('barcodes').doc(labelId(data.caseBarcode)).set(Object.assign({}, lab, { caseSize: data.caseSize, itemBarcode: data.barcode || '' }), { merge: true }).catch(function () {});
+            if (data.barcode) col('barcodes').doc(labelId(data.barcode)).set(Object.assign({ barcode: data.barcode }, lab), { merge: true }).catch(function () {});
+            if (data.caseBarcode) col('barcodes').doc(labelId(data.caseBarcode)).set(Object.assign({ barcode: data.caseBarcode }, lab, { caseSize: data.caseSize, itemBarcode: data.barcode || '' }), { merge: true }).catch(function () {});
         }
-        toast((it && !editing.restock ? 'Saved ' : 'Added ') + name);
+        toast((it && !editing.restock ? 'Saved ' : 'Added ') + name, 0, true);
         closeSheet('item', true);
     };
     $('addManualBtn').onclick = $('addManualBtn2').onclick = function () { itemSheet({ prefill: {} }); };
@@ -1495,6 +1530,7 @@
             if (!tgt.caseBarcode) { upd.caseBarcode = src.caseBarcode; upd.caseSize = src.caseSize || 1; } else keep(src.caseBarcode);
         }
         upd.extraCodes = codes;
+        upd.barcodes = allCodes({ barcode: upd.barcode || tgt.barcode, caseBarcode: upd.caseBarcode || tgt.caseBarcode, extraCodes: codes });
         var dates = [tgt.status === 'out' ? '' : tgt.expires, srcIn ? src.expires : ''].filter(Boolean).sort();
         if (dates.length) upd.expires = dates[0];
         if (!tgt.image && src.image) upd.image = src.image;
@@ -1519,11 +1555,16 @@
             { label: esc(other.name), value: 'other', cls: 'gold' }, { label: esc(it.name), value: 'this', cls: 'ghost' }, { label: 'Cancel', value: null, cls: 'ghost' }]);
         if (!keepName) return;
         if (keepName === 'other') await mergeInto(other, it, it.id); else await mergeInto(it, other, other.id);
-        toast('Combined into one: ' + (keepName === 'other' ? other.name : it.name), 3500);
+        toast('Combined into one: ' + (keepName === 'other' ? other.name : it.name), 3500, true);
     }
 
     // ------------------------------------------------------------------ barcode matching
     // An item can have: barcode (one item), caseBarcode + caseSize (sealed case), extraCodes (other single codes)
+    function allCodes(i) {
+        var out = [];
+        [i.barcode, i.caseBarcode].concat(i.extraCodes || []).forEach(function (c) { if (c && out.indexOf(c) < 0) out.push(c); });
+        return out;
+    }
     function codeMatch(i, code) {
         if (i.caseBarcode === code) return 'case';
         if (i.barcode === code || (i.extraCodes || []).indexOf(code) >= 0) return 'one';
@@ -1575,9 +1616,10 @@
         var it = S.items.filter(function (i) { return i.id === id; })[0];
         var upd = { updatedAt: TS(), updatedBy: me().name };
         if (!it.barcode) upd.barcode = code; else upd.extraCodes = firebase.firestore.FieldValue.arrayUnion(code);
+        upd.barcodes = firebase.firestore.FieldValue.arrayUnion(code);
         await itemsRef().doc(it.id).update(upd).catch(fail);
         if (!it.barcode) it.barcode = code; else it.extraCodes = (it.extraCodes || []).concat([code]);
-        toast('Got it — this barcode is now ' + it.name);
+        toast('Got it — this barcode is now ' + it.name, 0, true);
         return it;
     }
     // askNumber(title, html, default) -> number or null
@@ -1605,7 +1647,7 @@
         await itemsRef().doc(it.id).update(upd).catch(fail);
         var total = (it.status === 'out' ? 0 : (it.qty || 0)) + n;
         logIt('plus', it, '+' + n + ' from a box/pack');
-        toast('+' + n + ' ' + it.name + ' — ' + total + ' in the house now', 3500);
+        toast('+' + n + ' ' + it.name + ' — ' + total + ' in the house now', 3500, true);
     }
 
     // ------------------------------------------------------------------ what a scan does
@@ -1635,7 +1677,7 @@
                     inH.reduce(function (s, i) { return s + (i.qty || 0); }, 0) + ' in the house' + (it.location ? ' · ' + esc(it.location) : '') + '</span><br>' + expBadge(it) + '</div></div>',
                     [{ label: '➕ Add 1 more', value: 'inc', cls: 'gold' },
                      { label: 'Cancel', value: null, cls: 'ghost' }]);
-                if (r === 'inc') { await itemsRef().doc(it.id).update({ qty: (it.qty || 0) + 1, gotAt: TS(), updatedAt: TS(), updatedBy: me().name }).catch(fail); logIt('plus', it); toast('+1 ' + it.name + ' — ' + ((it.qty || 0) + 1) + ' in the house now', 3000); }
+                if (r === 'inc') { await itemsRef().doc(it.id).update({ qty: (it.qty || 0) + 1, gotAt: TS(), updatedAt: TS(), updatedBy: me().name }).catch(fail); logIt('plus', it); toast('+1 ' + it.name + ' — ' + ((it.qty || 0) + 1) + ' in the house now', 3000, true); }
                 else if (r === 'new') await itemSheet({ prefill: { name: it.name, brand: it.brand, category: it.category, location: it.location, unit: it.unit, image: it.image, barcode: code, source: 'saved' } });
                 return;
             }
@@ -1677,9 +1719,9 @@
                 var inf = await lookup(code);
                 if (!inf.name) { await itemSheet({ prefill: Object.assign(inf, { qty: 0 }) }); return; }
                 await itemsRef().add({ name: inf.name, brand: inf.brand || '', category: inf.category || 'Other', location: guessLoc(inf.category), qty: 0, unit: '', expires: '',
-                    barcode: code, notes: '', image: inf.image || '', status: 'out', outReason: 'empty', outAt: TS(), outBy: me().name,
+                    barcode: code, barcodes: [code], notes: '', image: inf.image || '', status: 'out', outReason: 'empty', outAt: TS(), outBy: me().name,
                     addedAt: TS(), addedBy: me().name, addedByUid: me().uid, updatedAt: TS(), updatedBy: me().name }).catch(fail);
-                toast(inf.name + ' added to the shopping list');
+                toast(inf.name + ' added to the shopping list', 0, true);
             }
             return;
         }
