@@ -348,6 +348,8 @@
             <button id="wbGo" class="gold bigbtn">Continue</button>
             <p class="hint">This phone's browser cleared the sign-in. One tap and you're back. <a href="#" id="wbOther">Use a different account</a></p>
         </div>
+        <p class="hint" id="storageWarn" hidden style="background:rgba(179,38,30,.12);border:1px solid var(--bad);border-radius:10px;padding:8px 10px;text-align:left">
+            ⚠️ This browser isn't saving website data (a private tab, or a setting that clears data when it closes), so you'll be asked to sign in every time. Open it in a normal tab, or add it to your home screen.</p>
         <div class="signbtns">
             <button id="signinBtn" class="gold bigbtn">Sign in with Google</button>
             <button id="discordBtn" class="bigbtn discord">Sign in with Discord</button>
@@ -577,7 +579,15 @@
     var db = fbApp.firestore();
     try { db.enablePersistence({ synchronizeTabs: true }).catch(function () {}); } catch (e) {}
     var auth = fbApp.auth();
-    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function () {});   // stay signed in on this device
+    // ---- stay signed in on this device
+    // Firebase keeps the sign-in in IndexedDB. Phones sometimes clear IndexedDB alone (low storage),
+    // so a backup copy is kept in localStorage under the key Firebase itself checks next.
+    // If IndexedDB is wiped, Firebase finds the backup and you stay signed in.
+    var AUTH_BACKUP = 'firebase:authUser:' + FIREBASE_CONFIG.apiKey + ':[DEFAULT]';
+    var storageOK = (function () { try { localStorage.setItem('inv_t', '1'); localStorage.removeItem('inv_t'); return true; } catch (e) { return false; } })();
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function () {});
+    function backupAuth(u) { if (!u || !storageOK) return; try { localStorage.setItem(AUTH_BACKUP, JSON.stringify(u.toJSON())); } catch (e) {} }
+    auth.onIdTokenChanged(function (u) { backupAuth(u); });   // refreshed every hour while the app is open
     var TS = function () { return firebase.firestore.FieldValue.serverTimestamp(); };
     // Everything for this app lives together in Firestore under  home_inventory / data /
     //   households/{hid} (+ members, items, log) · invites/{code} · users/{uid} · barcodes/{code}
@@ -801,7 +811,7 @@
     auth.onAuthStateChanged(async function (u) {
         S.user = u;
         stopHouse();
-        if (!u) { $('houseBtn').hidden = $('avatarBtn').hidden = true; $('subtitle').textContent = 'Support My Local Community'; showWelcomeBack(); showScreen('signin'); return; }
+        if (!u) { $('houseBtn').hidden = $('avatarBtn').hidden = true; $('subtitle').textContent = 'Support My Local Community'; showWelcomeBack(); $('storageWarn').hidden = storageOK; showScreen('signin'); return; }
         $('avatarBtn').hidden = false;
         $('avatar').src = u.photoURL || '../icons/icon-192.png';
         fillAccount();
@@ -890,7 +900,11 @@
         lsSet('inv_device', { name: u.displayName || '', email: u.email || '', photo: u.photoURL || '', how: how, at: Date.now() });
         try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {}); } catch (e) {}
     }
-    function signOutHere() { lsSet('inv_device', null); auth.signOut(); }
+    function signOutHere() {
+        lsSet('inv_device', null);
+        try { localStorage.removeItem(AUTH_BACKUP); } catch (e) {}   // a real sign-out removes the backup too
+        auth.signOut();
+    }
     function showWelcomeBack() {
         var d = lsGet('inv_device');
         $('welcomeBack').hidden = !d;
@@ -911,6 +925,13 @@
         };
         $('wbOther').onclick = function (e) { e.preventDefault(); lsSet('inv_device', null); $('welcomeBack').hidden = true; };
     }
+    function homeScreenTip() {
+        var ios = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        var standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+        if (!ios || standalone || lsGet('inv_hs_tip')) return;
+        lsSet('inv_hs_tip', Date.now());
+        setTimeout(function () { toast('Tip: tap Share → "Add to Home Screen", open it from there and sign in once. iPhones keep that sign-in the longest.', 9000); }, 2500);
+    }
     function fillAccount() {
         var u = S.user; if (!u) return;
         var ids = (u.providerData || []).map(function (p) { return p.providerId; });
@@ -921,6 +942,8 @@
             $('acctPic').src = u.photoURL || '../icons/icon-192.png';
             $('avatarBtn').title = 'Signed in with ' + how + (u.email ? ' as ' + u.email : '');
             rememberDevice(u, how);
+            backupAuth(u);
+            homeScreenTip();
         };
         if (ids.indexOf('google.com') >= 0) return show('Google');
         if (ids.indexOf('password') >= 0) return show('Email');
