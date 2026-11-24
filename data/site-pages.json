@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-24T01:00:01+00:00",
+ "generated": "2026-11-24T01:01:57+00:00",
  "repo": "Werewolf3788/SMLC",
  "branch": "Claude-Test",
  "pages": [
@@ -77,8 +77,8 @@
    "path": "inventory/index.html",
    "url": "https://werewolf3788.github.io/SMLC/inventory/",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/inventory/index.html",
-   "updated": "2026-11-23T19:59:52-05:00",
-   "message": "Inventory: trusted list wins over the household's own entry; offer to fix an existing item's name/picture from it"
+   "updated": "2026-11-23T20:01:48-05:00",
+   "message": "Inventory: trusted products live in Firestore with the picture inside (owner-only writes), photo button on items, products.json auto-copied "
   },
   {
    "path": "louisville.html",
