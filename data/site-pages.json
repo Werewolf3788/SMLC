@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-24T00:50:34+00:00",
+ "generated": "2026-11-24T00:52:03+00:00",
  "repo": "Werewolf3788/SMLC",
  "branch": "Claude-Test",
  "pages": [
@@ -77,8 +77,8 @@
    "path": "inventory/index.html",
    "url": "https://werewolf3788.github.io/SMLC/inventory/",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/inventory/index.html",
-   "updated": "2026-11-23T19:50:23-05:00",
-   "message": "Inventory: one number per product (UPC-E -> UPC-A, 13-digit EAN -> UPC, 11 typed digits get the check digit)"
+   "updated": "2026-11-23T19:51:56-05:00",
+   "message": "Inventory: 'Got it on' date on the add/edit form (Today / Yesterday / pick a day), shows who first added it"
   },
   {
    "path": "louisville.html",
