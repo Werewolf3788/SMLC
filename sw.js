@@ -13,7 +13,7 @@
      isn't a plain GET request.
    Any connection counts: Wi-Fi, cell data, a hotspot or Bluetooth tethering.
    ========================================================================== */
-var SMLC_SW_VERSION = 'smlc-v1';
+var SMLC_SW_VERSION = 'smlc-v2';
 var PAGES = 'smlc-pages-' + SMLC_SW_VERSION;
 var FILES = 'smlc-files-' + SMLC_SW_VERSION;
 var EXT = 'smlc-ext-' + SMLC_SW_VERSION;

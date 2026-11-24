@@ -2664,6 +2664,7 @@ async function loadCommunityBulletinFeed() {
         {
             if (Array.isArray(elements) && elements.length > 0) {
                 window.calendarCachedEvents = elements;
+                if (window.smlcPublishEvents) window.smlcPublishEvents(elements.map(it => ({ name: it.name || it.title, start: it.start || it.date, end: it.end, allDay: it.isAllDay, location: it.location, description: it.details || it.description, image: it.imageUrl || it.image })), ACTIVE_TOWN.primaryName);
                 applyHighDensityScrollLimits(scroller, elements.length, 500);
 
                 const googleSubUrl = SMLC_SUBSCRIBE_GOOGLE;

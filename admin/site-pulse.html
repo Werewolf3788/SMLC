@@ -140,8 +140,18 @@
       <div class="legend"><span><i style="background:var(--bar)"></i>Page views</span><span><i style="background:var(--bar2)"></i>Visitors</span></div>
     </section>
 
+    <section class="card" id="seo-card">
+      <h2>Search ranking</h2>
+      <div class="stats" id="seo-tiles"></div>
+      <p class="muted" id="seo-note"></p>
+      <div class="grid2" style="margin-top:12px">
+        <div><h3 style="margin:0 0 6px">Google searches that showed SMLC</h3><div id="t-queries"></div></div>
+        <div><h3 style="margin:0 0 6px">Pages in Google results</h3><div id="t-gpages"></div></div>
+      </div>
+    </section>
+
     <div class="grid2">
-      <section class="card"><h2>Pages</h2><div id="t-pages"></div></section>
+      <section class="card"><h2>Page ranking</h2><p class="muted">Your pages ranked by visits for the period above (#1 = most visited).</p><div id="t-pages"></div></section>
       <section class="card"><h2>Towns viewed</h2><p class="muted">Town pages switch towns without reloading, so this counts each town shown.</p><div id="t-towns"></div></section>
     </div>
 
@@ -252,7 +262,7 @@
     $('status').textContent = 'Loading…';
     db.ref('community_pulse/days').orderByKey().startAt(iso(from)).once('value').then(function (snap) {
       var data = snap.val() || {};
-      var T = { views:{}, towns:{}, sources:{}, devices:{}, hosts:{}, events:{}, ga:{}, biz:{}, partners:{}, visitors:0, newVisitors:0, daily:[] };
+      var T = { views:{}, towns:{}, sources:{}, devices:{}, hosts:{}, events:{}, ga:{}, biz:{}, partners:{}, visitors:0, newVisitors:0, daily:[], seo:[] };
       for (var i = 0; i < days; i++) {
         var d = new Date(from); d.setDate(from.getDate() + i);
         var k = iso(d), day = data[k] || {};
@@ -261,6 +271,7 @@
         addInto(T.views, day.views); addInto(T.towns, day.towns); addInto(T.sources, day.sources);
         addInto(T.devices, day.devices); addInto(T.hosts, day.hosts); addInto(T.events, day.events); addInto(T.ga, day.ga);
         T.visitors += Number(day.visitors) || 0; T.newVisitors += Number(day.newVisitors) || 0;
+        if (day.seo) T.seo.push({ day: k, seo: day.seo });
         Object.keys(day.businesses || {}).forEach(function (b) { T.biz[b] = (T.biz[b] || 0) + (Number(day.businesses[b].clicks) || 0); });
         Object.keys(day.partners || {}).forEach(function (p) {
           var x = T.partners[p] || (T.partners[p] = { views: 0, clicks: 0 });
@@ -289,6 +300,51 @@
         return '<tr><td>' + esc(r[0]) + '</td><td class="barcell"><div class="minibar" style="width:' + (r[1] / max * 100).toFixed(1) + '%"></div></td><td class="n">' + fmt(r[1]) + '</td></tr>';
       }).join('') + '</tbody></table>';
   }
+  function rankTable(obj) {
+    var rows = Object.keys(obj).map(function (k) { return [k, obj[k]]; }).sort(function (a, b) { return b[1] - a[1]; });
+    if (!rows.length) return '<p class="muted">Nothing yet.</p>';
+    var total = sum(obj) || 1, max = rows[0][1] || 1;
+    return '<table><thead><tr><th class="n">#</th><th>Page</th><th class="barcell"></th><th class="n">Views</th><th class="n">Share</th></tr></thead><tbody>' +
+      rows.map(function (r, i) {
+        return '<tr><td class="n"><b>' + (i + 1) + '</b></td><td>' + esc(r[0]) + '</td><td class="barcell"><div class="minibar" style="width:' + (r[1] / max * 100).toFixed(1) + '%"></div></td>' +
+               '<td class="n">' + fmt(r[1]) + '</td><td class="n">' + (r[1] / total * 100).toFixed(1) + '%</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+  // seo snapshots are written once a day by the "SMLC SEO Pulse" Apps Script (apps-script/SeoPulse.gs)
+  function drawSeo(list) {
+    var withA = list.filter(function (x) { return x.seo.authority && x.seo.authority.score != null; });
+    var withG = list.filter(function (x) { return x.seo.google && x.seo.google.totals; });
+    var a = withA.length ? withA[withA.length - 1].seo.authority : null, a0 = withA.length > 1 ? withA[0].seo.authority : null;
+    var g = withG.length ? withG[withG.length - 1].seo.google : null;
+    var trend = function (now, then, lowerIsBetter) {
+      if (now == null || then == null || now === then) return '';
+      var up = lowerIsBetter ? now < then : now > then;
+      return ' <span style="color:' + (up ? 'var(--ok)' : 'var(--bad)') + '">' + (up ? '▲' : '▼') + '</span>';
+    };
+    var tiles = [];
+    tiles.push([a ? Number(a.score).toFixed(2) + ' / 10' + trend(a.score, a0 && a0.score) : '—', 'Authority score (Open PageRank)']);
+    tiles.push([a && a.rank ? '#' + fmt(a.rank) : '—', 'Rank among all websites']);
+    if (g) {
+      var t = g.totals;
+      tiles.push([t.position ? t.position.toFixed(1) : '—', 'Avg. Google position (28 days)']);
+      tiles.push([fmt(t.clicks), 'Clicks from Google (28 days)']);
+      tiles.push([fmt(t.impressions), 'Times shown in Google (28 days)']);
+    }
+    $('seo-tiles').innerHTML = tiles.map(function (x) { return '<div class="stat"><b>' + x[0] + '</b><span>' + x[1] + '</span></div>'; }).join('');
+    var notes = [];
+    if (!a) notes.push('Authority score: waiting for the first daily check (needs the openpagerank_api_key row in the Keys sheet).');
+    if (!g) notes.push('Google positions: show up once the domain is verified in Google Search Console and the SEO Pulse script can read it (see admin/seo-setup.html).');
+    if (a && a.day) notes.push('Authority checked ' + a.day + '.');
+    if (g && g.range) notes.push('Google data covers ' + g.range + ' (Google reports run about 2 days behind).');
+    $('seo-note').textContent = notes.join(' ');
+    var qt = function (rows, label) {
+      if (!rows || !rows.length) return '<p class="muted">Nothing yet.</p>';
+      return '<table><thead><tr><th>' + label + '</th><th class="n">Position</th><th class="n">Clicks</th><th class="n">Shown</th></tr></thead><tbody>' +
+        rows.map(function (r) { return '<tr><td>' + esc(r.key) + '</td><td class="n">' + (r.position ? r.position.toFixed(1) : '—') + '</td><td class="n">' + fmt(r.clicks) + '</td><td class="n">' + fmt(r.impressions) + '</td></tr>'; }).join('') + '</tbody></table>';
+    };
+    $('t-queries').innerHTML = qt(g && g.queries, 'Search');
+    $('t-gpages').innerHTML = qt(g && g.pages && g.pages.map(function (r) { return Object.assign({}, r, { key: String(r.key).replace(/^https?:\/\/(www\.)?supportmylocalcommunity\.com/, '') || '/' }); }), 'Page');
+  }
   function draw(T) {
     var views = sum(T.views), gaLoaded = T.ga.loaded || 0, gaBlocked = T.ga.blocked || 0;
     var gaShare = (gaLoaded + gaBlocked) ? gaLoaded / (gaLoaded + gaBlocked) : 1;
@@ -313,7 +369,8 @@
     $('ax-from').textContent = T.daily.length ? T.daily[0].day : '';
     $('ax-to').textContent = T.daily.length ? T.daily[T.daily.length - 1].day : '';
 
-    $('t-pages').innerHTML = table(T.views, 'Page');
+    $('t-pages').innerHTML = rankTable(T.views);
+    drawSeo(T.seo);
     $('t-towns').innerHTML = table(T.towns, 'Town');
     $('t-sources').innerHTML = table(T.sources, 'Source', 15);
     $('t-devices').innerHTML = table(T.devices, 'Device');

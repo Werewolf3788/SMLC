@@ -16,11 +16,16 @@
     "unit": "packs"
   },
   "013700016608": {
-    "name": "Hefty Ultra Strong 13 Gal Tall Kitchen Trash Bags, Lavender & Sweet Vanilla",
+    "name": "Hefty Ultra Strong Tall Kitchen Trash Bags, Lavender & Sweet Vanilla",
     "brand": "Hefty",
     "category": "Cleaning",
     "place": "Laundry / cleaning",
-    "unit": "bags"
+    "unit": "bags",
+    "size": "13 gal, 40 bags",
+    "each": 40,
+    "image": "../images/barcode/013700016608.jpg",
+    "store": "walmart",
+    "link": "https://www.walmart.com/ip/1177157724"
   },
   "194346122233": {
     "name": "Great Value Thick & Chunky Salsa, Mild",

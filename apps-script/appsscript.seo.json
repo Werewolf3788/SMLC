@@ -1,0 +1,21 @@
+{
+  "timeZone": "America/Chicago",
+  "dependencies": {
+    "libraries": [
+      {
+        "userSymbol": "Keys",
+        "libraryId": "1emE23LNgeKskBDA8eaJQV16bbw2B6pR6IEq35CTaea2ne30YcUXyQMmZ",
+        "version": "0",
+        "developmentMode": true
+      }
+    ]
+  },
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/script.scriptapp",
+    "https://www.googleapis.com/auth/webmasters.readonly",
+    "https://www.googleapis.com/auth/spreadsheets.readonly"
+  ],
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8"
+}

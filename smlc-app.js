@@ -280,3 +280,80 @@
     })();
     window.addEventListener('load', function () { setTimeout(maybeShowInstall, 6000); });
 })();
+
+/* 5. EVENTS FOR GOOGLE: window.smlcPublishEvents(list) turns the events a page
+      shows into schema.org Event data, so Google / AI answers can list them
+      ("events in Flora this weekend"). Each item: {name, start, end, allDay,
+      location, description, image}. Replaces any earlier copy on the page. */
+window.smlcPublishEvents = function (list, townName) {
+    try {
+        var page = location.href.split('#')[0].split('?')[0];
+        var iso = function (d, dateOnly) {
+            var t = d instanceof Date ? d : new Date(d);
+            if (isNaN(t)) return null;
+            return dateOnly ? t.toISOString().slice(0, 10) : t.toISOString();
+        };
+        var out = (list || []).filter(function (e) { return e && e.name && e.start; }).slice(0, 25).map(function (e) {
+            var where = String(e.location || '').trim() || ((townName || 'Clay County') + ', IL');
+            var ev = {
+                '@type': 'Event',
+                name: String(e.name).slice(0, 150),
+                startDate: iso(e.start, e.allDay),
+                eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+                eventStatus: 'https://schema.org/EventScheduled',
+                location: { '@type': 'Place', name: where.split(',')[0],
+                    address: { '@type': 'PostalAddress', streetAddress: where, addressLocality: townName || undefined, addressRegion: 'IL', addressCountry: 'US' } },
+                organizer: { '@type': 'Organization', name: 'Support My Local Community', url: 'https://supportmylocalcommunity.com/' },
+                url: page
+            };
+            var end = iso(e.end, e.allDay); if (end) ev.endDate = end;
+            if (e.description) ev.description = String(e.description).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300);
+            if (e.image && /^https?:/.test(e.image)) ev.image = [e.image];
+            return ev;
+        }).filter(function (ev) { return ev.startDate; });
+        var old = document.getElementById('smlc-events-ld'); if (old) old.remove();
+        if (!out.length) return;
+        var tag = document.createElement('script');
+        tag.type = 'application/ld+json'; tag.id = 'smlc-events-ld';
+        tag.textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': out });
+        document.head.appendChild(tag);
+    } catch (err) { console.warn('Event data notice:', err.message); }
+};
+
+/* 6. AMAZON TAG: every Amazon link on SMLC carries the SMLC Associates tag
+      (supportmylocalcommunity-20). window.smlcAmazonTag(url) adds it (or swaps
+      a different tag for it); links on the page are fixed when tapped, so
+      links added later by Firebase / the Sheet are covered too. Amazon short
+      links (amzn.to, a.co, link.amazon) can't carry a tag and are left alone. */
+window.SMLC_AMAZON_TAG = 'supportmylocalcommunity-20';
+window.smlcAmazonTag = function (url) {
+    try {
+        var u = new URL(url, location.href);
+        if (!/(^|\.)amazon\.(com|ca|co\.uk|de|fr|it|es|com\.mx|co\.jp|in|com\.au)$/i.test(u.hostname)) return url;
+        if (u.searchParams.get('tag') === window.SMLC_AMAZON_TAG) return url;
+        u.searchParams.set('tag', window.SMLC_AMAZON_TAG);
+        return u.toString();
+    } catch (e) { return url; }
+};
+(function () {
+    var fix = function (ev) {
+        var a = ev.target && ev.target.closest && ev.target.closest('a[href]');
+        if (a && /amazon\./i.test(a.href)) {
+            a.href = window.smlcAmazonTag(a.href);
+            if (!/sponsored/.test(a.rel || '')) a.rel = ((a.rel || '') + ' sponsored noopener').trim();
+        }
+    };
+    document.addEventListener('click', fix, true);
+    document.addEventListener('auxclick', fix, true);
+    // Amazon requires a short notice wherever its links appear.
+    var note = function () {
+        if (document.getElementById('smlc-amazon-note') || !document.querySelector('a[href*="amazon."]')) return;
+        var p = document.createElement('p');
+        p.id = 'smlc-amazon-note';
+        p.style.cssText = 'font-size:.75rem;opacity:.75;text-align:center;margin:10px auto;max-width:900px;padding:0 12px';
+        p.textContent = 'As an Amazon Associate, Support My Local Community earns from qualifying purchases.';
+        (document.querySelector('footer') || document.body).appendChild(p);
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(note, 3000); });
+    else setTimeout(note, 3000);
+})();

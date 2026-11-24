@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<!-- SMLC Search Setup Guide | v1.0 | 2026-11-23 9:05 PM ET
+     Team page (noindex) for Scott and Kevin: one-time steps to connect
+     supportmylocalcommunity.com to Google Search Console, Bing Webmaster Tools and IndexNow,
+     and to feed the "Search ranking" card on site-pulse.html (apps-script/SeoPulse.gs). -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light dark">
+<title>SMLC Search Setup</title>
+<link rel="icon" href="../icons/icon-192.png">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FHJNXDB9BB"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-FHJNXDB9BB');</script>
+<style>
+  :root { --navy:#001B37; --accent:#FFC10E; --ink:#111; --muted:#555; --card:#fff; --bg:#f3f5f8; --line:#d5dbe3;
+          --ok:#137333; --okbg:#e6f4ea; --warn:#8a5a00; --warnbg:#fff4d6; --bad:#b3261e; --badbg:#fce8e6; --chip:#eef2f7; }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink:#ececf0; --muted:#b5b5bd; --card:#1d1d20; --bg:#121214; --line:#3a3f48;
+            --ok:#6fd28a; --okbg:#173322; --warn:#ffd36b; --warnbg:#3a2f12; --bad:#ff8a80; --badbg:#3d1c1a; --chip:#2a2e36; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+  header { background:var(--navy); color:#fff; padding:16px 20px; border-bottom:4px solid var(--accent); }
+  header .wrap { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  header h1 { margin:0; font-size:1.3rem; }
+  header small { opacity:.85; }
+  nav { display:flex; gap:8px; flex-wrap:wrap; }
+  nav a { color:#fff; text-decoration:none; font-size:.85rem; padding:6px 12px; border:1px solid rgba(255,255,255,.35); border-radius:999px; }
+  nav a:hover { background:rgba(255,255,255,.12); }
+  .wrap { width:min(80vw, 1500px); margin:0 auto; }
+  main.wrap { padding:20px 0 40px; display:grid; gap:20px; }
+  @media (max-width: 820px) { .wrap { width:auto; } main.wrap { padding:14px; } header { padding:14px; } }
+  section.card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px; }
+  h2 { margin:0 0 6px; font-size:1.2rem; }
+  h3 { margin:14px 0 6px; font-size:1rem; }
+  p { margin:6px 0; }
+  .lead { color:var(--muted); margin-bottom:12px; }
+  .grid4 { display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; }
+  .grid3 { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width: 1100px) { .grid4 { grid-template-columns:1fr 1fr; } .grid3 { grid-template-columns:1fr; } }
+  @media (max-width: 820px) { .grid4, .grid2 { grid-template-columns:1fr; } }
+  .tile { border:1px solid var(--line); border-radius:12px; padding:14px; background:var(--bg); }
+  .tile .tag { display:inline-block; font-weight:800; font-size:.8rem; letter-spacing:.04em; background:var(--navy); color:#fff; padding:3px 9px; border-radius:6px; }
+  .tile h3 { margin:8px 0 4px; }
+  .tile .use { font-size:.85rem; color:var(--muted); margin-top:8px; }
+  .callout { border-left:5px solid var(--accent); background:var(--warnbg); padding:12px 14px; border-radius:8px; margin:12px 0; }
+  .callout.good { border-color:var(--ok); background:var(--okbg); }
+  ul { margin:6px 0; padding-left:20px; }
+  li { margin:3px 0; }
+  code { background:var(--chip); padding:1px 6px; border-radius:5px; font-size:.88em; }
+  table { width:100%; border-collapse:collapse; font-size:.92rem; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+  .tablewrap { overflow-x:auto; }
+  .pill { display:inline-block; padding:2px 9px; border-radius:999px; font-size:.78rem; font-weight:700; white-space:nowrap; margin:1px 2px 1px 0; }
+  .pill.ok { background:var(--okbg); color:var(--ok); }
+  .pill.warn { background:var(--warnbg); color:var(--warn); }
+  .pill.bad { background:var(--badbg); color:var(--bad); }
+  .pill.info { background:var(--chip); color:var(--ink); }
+  .thumb { width:84px; height:42px; object-fit:contain; border-radius:6px; background:var(--chip); display:block; }
+  button { font:inherit; font-weight:700; border:0; border-radius:8px; padding:10px 16px; cursor:pointer; background:var(--navy); color:#fff; }
+  button.gold { background:var(--accent); color:#111; }
+  button:disabled { opacity:.5; cursor:wait; }
+  .toolbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:10px 0 14px; }
+  select, input[type=number] { font:inherit; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); }
+  input[type=number] { width:100%; }
+  label { display:block; font-weight:600; font-size:.88rem; margin:10px 0 4px; }
+  .summary { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  .stat { background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 14px; min-width:120px; }
+  .stat b { display:block; font-size:1.4rem; }
+  .stat span { font-size:.8rem; color:var(--muted); }
+  .result { background:var(--navy); color:#fff; border-radius:12px; padding:14px; margin-top:14px; }
+  .result b { color:var(--accent); font-size:1.25rem; }
+  .muted { color:var(--muted); font-size:.85rem; }
+  .check-row { display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); }
+  /* Bait elements for the ad-blocker test. Named like ads on purpose; never shown to the eye. */
+  .smlc-bait { position:absolute; left:-9999px; top:0; width:10px; height:10px; }
+</style>
+<style>
+  ol li { margin:6px 0; } code { background:var(--chip); padding:1px 6px; border-radius:6px; word-break:break-all; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; } @media (max-width:820px){ .grid2{ grid-template-columns:1fr; } }
+  .who { display:inline-block; font-size:.75rem; font-weight:700; padding:2px 10px; border-radius:999px; background:var(--warnbg); color:var(--warn); }
+  .done { background:var(--okbg); color:var(--ok); }
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div><h1>Search Setup</h1><small>Get SMLC found on Google, Bing and AI answer tools</small></div>
+  <nav><a href="#google">Google</a><a href="#bing">Bing</a><a href="#indexnow">IndexNow</a><a href="#pulse">Ranking card</a><a href="site-pulse.html">Site Pulse &rarr;</a></nav>
+</div></header>
+<main class="wrap">
+
+<section class="card">
+  <h2>What is already done on the site</h2>
+  <ul>
+    <li><span class="who done">Done</span> Every page has a title, description, canonical link and share preview (Open Graph).</li>
+    <li><span class="who done">Done</span> <b>Questions &amp; answers</b> on the home page and every town page, tagged as FAQ so Google and AI tools can quote them.</li>
+    <li><span class="who done">Done</span> Upcoming <b>events</b> are tagged as Events on the home and town pages, so they can show up in Google's event results.</li>
+    <li><span class="who done">Done</span> <code>sitemap.xml</code>, <code>robots.txt</code> and <code>llms.txt</code> (the page list for AI tools).</li>
+    <li><span class="who done">Done</span> IndexNow key file and an automatic ping to Bing whenever pages change on main.</li>
+  </ul>
+  <p>The steps below are the parts only the site owner can do, because Google and Bing need proof that you own the domain.</p>
+</section>
+
+<div class="grid2">
+<section class="card" id="google">
+  <h2>1. Google Search Console</h2><span class="who">Scott, one time, ~10 min</span>
+  <ol>
+    <li>Go to <a href="https://search.google.com/search-console" target="_blank" rel="noopener">search.google.com/search-console</a> and sign in.</li>
+    <li>Click <b>Add property</b> &rarr; choose <b>Domain</b> &rarr; type <code>supportmylocalcommunity.com</code>.</li>
+    <li>Google shows a <b>TXT record</b>. Add it in the domain's DNS settings (where the domain was bought), then click <b>Verify</b>. It can take up to an hour.</li>
+    <li>Left menu &rarr; <b>Sitemaps</b> &rarr; enter <code>sitemap.xml</code> &rarr; <b>Submit</b>.</li>
+    <li>Left menu &rarr; <b>Settings</b> &rarr; <b>Users and permissions</b> &rarr; <b>Add user</b> &rarr; <code>raykevin71888@gmail.com</code>, permission <b>Restricted</b> (read only). This lets the Site Pulse ranking card read your search positions.</li>
+  </ol>
+  <p>After a few days Search Console shows which searches bring people to SMLC and where each page ranks.</p>
+</section>
+
+<section class="card" id="bing">
+  <h2>2. Bing Webmaster Tools</h2><span class="who">Scott, one time, ~3 min</span>
+  <ol>
+    <li>Go to <a href="https://www.bing.com/webmasters" target="_blank" rel="noopener">bing.com/webmasters</a> and sign in (a Google account works).</li>
+    <li>Choose <b>Import from Google Search Console</b>. It copies the verified site and sitemap over, no extra DNS work. (Do step 1 first.)</li>
+    <li>Bing also feeds ChatGPT search, Copilot and DuckDuckGo, so this covers most AI answer tools too.</li>
+  </ol>
+</section>
+</div>
+
+<div class="grid2">
+<section class="card" id="indexnow">
+  <h2>3. IndexNow (automatic)</h2><span class="who done">Nothing to do</span>
+  <p>When a page changes on <b>main</b>, the GitHub workflow <code>.github/workflows/indexnow.yml</code> tells Bing, Yandex, Seznam and Naver the same minute, instead of waiting for them to crawl.</p>
+  <p>Key file: <a href="../1281c43a4c58737ba44a202409aef432.txt"><code>/1281c43a4c58737ba44a202409aef432.txt</code></a>. It must stay in the site root. If the site moves to another host, copy that file too.</p>
+  <p>To send every page right now: GitHub &rarr; <b>Actions</b> &rarr; <b>Ping search engines (IndexNow)</b> &rarr; <b>Run workflow</b>.</p>
+</section>
+
+<section class="card" id="pulse">
+  <h2>4. Ranking card on Site Pulse</h2><span class="who">Kevin, one time</span>
+  <ol>
+    <li>Get a free key at <a href="https://www.domcop.com/openpagerank/" target="_blank" rel="noopener">domcop.com/openpagerank</a> and paste it into the Keys sheet row <code>openpagerank_api_key</code> (already added).</li>
+    <li>Make a new Apps Script project, paste <code>apps-script/SeoPulse.gs</code>, and turn on <b>Show appsscript.json</b> in Project Settings; paste <code>apps-script/appsscript.seo.json</code> into it (adds the Keys library).</li>
+    <li>Run <code>setupSeoPulse</code> once and allow access. It then runs by itself every morning.</li>
+  </ol>
+  <p>The card shows the <b>Authority score (0&ndash;10)</b>, Google clicks / views / average position, the top searches and top pages. Google numbers appear once step 1 is done and Kevin is added as a user.</p>
+</section>
+</div>
+
+<section class="card">
+  <h2>Free ways to get more links to SMLC</h2>
+  <ul>
+    <li>Ask every business in the directory to link to its SMLC listing from its own site or Facebook page.</li>
+    <li>Ask the Flora, Louisville, Clay City, Xenia and Sailor Springs village sites, the Chamber and the schools to add SMLC to their "community links".</li>
+    <li>Create a free <b>Google Business Profile</b> for SMLC and list the website there.</li>
+    <li>Post each new event on Facebook with a link back to the town page.</li>
+  </ul>
+</section>
+</main>
+</body>
+</html>
