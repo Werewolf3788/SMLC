@@ -1664,12 +1664,12 @@
         return null;
     }
     async function lookup(code) {
-        // 1) your household already has it
+        // 1) the trusted list (products.json) always wins
+        var tr0 = await trustedLookup(code);
+        if (tr0) return tr0;
+        // 2) your household already has it
         var mine = S.items.filter(function (i) { return codeMatch(i, code); })[0];
         if (mine) return { name: mine.name, brand: mine.brand, category: mine.category, image: mine.image, unit: mine.unit, location: mine.location, barcode: code, source: 'saved', from: 'your household' };
-        // 2) the trusted list (products.json)
-        var tr = await trustedLookup(code);
-        if (tr) return tr;
         // 3) someone labeled it before
         try {
             var s = await col('barcodes').doc(labelId(code)).get();
@@ -1861,6 +1861,20 @@
             }
             if (inH.length) {
                 var it = inH[0];
+                var tinfo = await trustedLookup(code);
+                if (tinfo && (normName(tinfo.name) !== normName(it.name) || (tinfo.image && !it.image))) {
+                    var fx = await choice('Fix this item\'s info?', '<div class="prodhead">' + (tinfo.image ? '<img src="' + esc(tinfo.image) + '" alt="">' : '') +
+                        '<div>Your list calls it <b>' + esc(it.name) + '</b>.<br>The trusted list says <b>' + esc(tinfo.name) + '</b>.</div></div>',
+                        [{ label: '✅ Use the trusted name and picture', value: 'fix', cls: 'gold' }, { label: 'Keep mine', value: 'keep', cls: 'ghost' }]);
+                    if (fx === 'fix') {
+                        var fu = { name: tinfo.name, updatedAt: TS(), updatedBy: me().name };
+                        if (tinfo.image) fu.image = tinfo.image;
+                        if (tinfo.brand) fu.brand = tinfo.brand;
+                        await itemsRef().doc(it.id).update(fu).catch(fail);
+                        it = Object.assign({}, it, fu);
+                        toast('Updated to ' + tinfo.name, 0, true);
+                    }
+                }
                 var r = await choice('You already have this', '<div class="prodhead">' + picHtml(it) + '<div><b>' + esc(it.name) + '</b><br><span class="hint">' +
                     inH.reduce(function (s, i) { return s + (i.qty || 0); }, 0) + ' in the house' + (it.location ? ' · ' + esc(it.location) : '') + '</span><br>' + expBadge(it) + '</div></div>',
                     [{ label: '➕ Add 1 more', value: 'inc', cls: 'gold' },
