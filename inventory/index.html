@@ -1253,7 +1253,7 @@
     }
     function itemSheet(o) {
         var it = o.item || null, p = o.prefill || {};
-        editing = { item: it, restock: !!o.restock, image: (it && it.image) || p.image || '', source: p.source || '' };
+        editing = { item: it, restock: !!o.restock, image: (it && it.image) || p.image || '', source: p.source || '', origName: (it || p).name || '' };
         var src = it || p;
         $('itemTitle').textContent = o.restock ? 'Back in the house' : it ? 'Edit item' : 'Add to the house';
         $('fName').value = src.name || '';
@@ -1279,12 +1279,20 @@
         var head = '';
         if (editing.image || p.source) {
             head = (editing.image ? '<img src="' + esc(editing.image) + '" alt="" referrerpolicy="no-referrer">' : '') +
-                '<div class="hint">' + (p.source === 'found' ? '✅ Found this barcode online — check the name and add an expiration date if it has one.'
-                    : p.source === 'saved' ? '✅ Your household (or another SMLC user) labeled this barcode before.'
-                    : p.source === 'new' ? "🆕 This barcode isn't in the product lists yet. Type what it is once — it's remembered for next time."
-                    : '') + '</div>';
+                '<div class="hint">' + (p.source === 'found' ? '✅ Filled in from <b>' + esc(p.from || 'a product list') + '</b>. Check it: these lists can be wrong.'
+                    : p.source === 'saved' ? '✅ Filled in from <b>' + esc(p.from || 'a saved label') + '</b>.'
+                    : p.source === 'new' ? "🆕 This barcode isn't in the product lists yet. Type what it is once — it's remembered for everyone."
+                    : '') + (p.source === 'found' || p.source === 'saved' ? ' <a href="#" id="notRight">Not right? Clear it</a>' : '') + '</div>';
         }
         $('itemHead').innerHTML = head;
+        if ($('notRight')) $('notRight').onclick = function (e) {
+            e.preventDefault();
+            ['fName', 'fBrand', 'fUnit'].forEach(function (k) { $(k).value = ''; });
+            editing.image = ''; editing.source = 'fixed';
+            var im = $('itemHead').querySelector('img'); if (im) im.remove();
+            this.parentNode.innerHTML = '✏️ Type what it really is. Your fix replaces the wrong label for everyone who scans it.';
+            $('fName').focus();
+        };
         $('itemExtra').innerHTML = (it && !o.restock) ? (
             (it.status === 'out' ? '<button type="button" class="ok" data-x="restock">Got it again</button>' : '<button type="button" class="danger" data-x="out">Mark out of the house</button>') +
             '<button type="button" class="ghost" data-x="combine">🔗 Combine with…</button>' +
@@ -1372,10 +1380,10 @@
         }
         p.catch(fail);
         // remember the barcode's label for next time (shared)
-        if (editing.source !== 'saved' || (it && it.name !== name) || data.caseBarcode) {
+        if (editing.source !== 'saved' || name !== editing.origName || data.caseBarcode) {
             var lab = { name: name, brand: data.brand, category: data.category, image: data.image, savedAt: TS() };
-            if (data.barcode) col('barcodes').doc(data.barcode).set(lab, { merge: true }).catch(function () {});
-            if (data.caseBarcode) col('barcodes').doc(data.caseBarcode).set(Object.assign({}, lab, { caseSize: data.caseSize, itemBarcode: data.barcode || '' }), { merge: true }).catch(function () {});
+            if (data.barcode) col('barcodes').doc(labelId(data.barcode)).set(lab, { merge: true }).catch(function () {});
+            if (data.caseBarcode) col('barcodes').doc(labelId(data.caseBarcode)).set(Object.assign({}, lab, { caseSize: data.caseSize, itemBarcode: data.barcode || '' }), { merge: true }).catch(function () {});
         }
         toast((it && !editing.restock ? 'Saved ' : 'Added ') + name);
         closeSheet('item', true);
@@ -1395,6 +1403,7 @@
         if (/dairy|milk|cheese|yogurt|egg|meat|fresh|fruit|vegetable/.test(t)) return 'Fresh food';
         return fallback || 'Food';
     }
+    function labelId(code) { return String(code).replace(/\//g, '%2F').slice(0, 300); }
     function firstHit(promises, ms) {
         return new Promise(function (resolve) {
             var left = promises.length, done = false;
@@ -1414,7 +1423,8 @@
                 if (!nm) return null;
                 if (pr.quantity && nm.indexOf(pr.quantity) < 0) nm += ' (' + pr.quantity + ')';
                 return { name: nm, brand: (pr.brands || '').split(',')[0].trim(), category: catFromTags(pr.categories_tags, fallbackCat),
-                         image: pr.image_front_small_url || pr.image_small_url || '', barcode: code, source: 'found' };
+                         image: pr.image_front_small_url || pr.image_small_url || '', barcode: code, source: 'found',
+                         from: { 'world.openfoodfacts.org': 'Open Food Facts', 'world.openbeautyfacts.org': 'Open Beauty Facts', 'world.openproductsfacts.org': 'Open Products Facts', 'world.openpetfoodfacts.org': 'Open Pet Food Facts' }[host] || host };
             });
     }
     // UPCitemdb free lookup: strong on household goods (trash bags, cleaners, paper towels)
@@ -1430,23 +1440,24 @@
                     : /health|beauty|personal|shampoo|soap|tooth/i.test(cat) ? 'Personal care'
                     : /pet/i.test(cat) ? 'Pet' : /beverage|drink/i.test(cat) ? 'Drinks' : /food|grocery|snack/i.test(cat) ? 'Food' : 'Other';
                 return { name: it.title.replace(/\s+/g, ' ').trim(), brand: it.brand || '', category: c,
-                         image: (it.images || []).filter(function (u) { return /^https:/.test(u); })[0] || '', barcode: code, source: 'found' };
+                         image: (it.images || []).filter(function (u) { return /^https:/.test(u); })[0] || '', barcode: code, source: 'found', from: 'UPCitemdb' };
             });
     }
     async function lookup(code) {
         // 1) your household already has it
         var mine = S.items.filter(function (i) { return codeMatch(i, code); })[0];
-        if (mine) return { name: mine.name, brand: mine.brand, category: mine.category, image: mine.image, unit: mine.unit, location: mine.location, barcode: code, source: 'saved' };
+        if (mine) return { name: mine.name, brand: mine.brand, category: mine.category, image: mine.image, unit: mine.unit, location: mine.location, barcode: code, source: 'saved', from: 'your household' };
         // 2) someone labeled it before
         try {
-            var s = await col('barcodes').doc(code).get();
+            var s = await col('barcodes').doc(labelId(code)).get();
             if (s.exists && s.data().name) {
                 var d = s.data();
-                return d.caseSize ? { name: d.name, brand: d.brand, category: d.category, image: d.image, caseBarcode: code, caseSize: d.caseSize, qty: d.caseSize, barcode: d.itemBarcode || '', source: 'saved' }
-                                  : { name: d.name, brand: d.brand, category: d.category, image: d.image, barcode: code, source: 'saved' };
+                return d.caseSize ? { name: d.name, brand: d.brand, category: d.category, image: d.image, caseBarcode: code, caseSize: d.caseSize, qty: d.caseSize, barcode: d.itemBarcode || '', source: 'saved', from: 'a label someone typed' }
+                                  : { name: d.name, brand: d.brand, category: d.category, image: d.image, barcode: code, source: 'saved', from: 'a label someone typed' };
             }
         } catch (e) {}
         // 3) free public product lists, all asked at the same time; first match wins
+        if (!/^\d{8,14}$/.test(code)) return { name: '', barcode: code, source: 'new' };   // Amazon sticker, QR, tool code: you label it once
         var variants = [code]; if (/^\d{12}$/.test(code)) variants.push('0' + code);
         var jobs = [];
         OFF.forEach(function (o) { variants.forEach(function (v) { jobs.push(offLookup(o[0], o[1], v, code)); }); });
@@ -1690,7 +1701,7 @@
 
     // ------------------------------------------------------------------ camera scanner
     var cam = { stream: null, timer: null, reader: null, busy: false, last: '', lastAt: 0, on: false };
-    var WANT = ['ean_13', 'ean_8', 'upc_a', 'upc_e'];   // product barcodes only
+    var WANT = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'code_93', 'itf', 'codabar', 'qr_code', 'data_matrix'];
     function setMode(m) {
         S.scanMode = m;
         document.querySelectorAll('[data-mode]').forEach(function (b) { b.classList.toggle('on', b.dataset.mode === m); });
@@ -1727,7 +1738,7 @@
         });
         return wasmReady;
     }
-    var WFMT = ['EAN-13', 'EAN-8', 'UPC-A', 'UPC-E'];
+    var WFMT = ['EAN-13', 'EAN-8', 'UPC-A', 'UPC-E', 'Code128', 'Code39', 'Code93', 'ITF', 'Codabar', 'QRCode', 'DataMatrix'];
     // middle-of-frame crops [width share, height share, longest side in px]; tried in turn, one per tick
     var WCROPS = [[.6, .4, 640], [.85, .6, 720], [.6, .4, 900], [.45, .3, 520]];
     var zcan = document.createElement('canvas'), zctx = zcan.getContext('2d', { willReadFrequently: true });
@@ -1815,7 +1826,7 @@
         clearTimeout(cam.hintT);
         cam.hintT = setTimeout(function () {
             if (cam.on && !cam.paused && !$('scanSheet').hidden)
-                $('scanMsg').textContent = 'No product barcode found yet. Only store products have one (business cards, mail and receipts don\'t). Use ✏️ Add for those.';
+                $('scanMsg').textContent = 'No barcode found yet. Hold it steady inside the box. Things without a barcode (business cards, mail, leftovers) can be added with ✏️ Add.';
         }, 9000);
     }
     function stopCamera() {
@@ -1834,9 +1845,18 @@
             o.frequency.value = 1150; g.gain.value = .08; o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + .09);
         } catch (e) {}
     }
+    // UPC/EAN are checked by their own check digit. Other kinds can misfire on printed text,
+    // so they must be long enough (case codes are 14 digits, Amazon stickers start with X00).
+    function plausible(code) {
+        if (/^\d{8}$|^\d{12,13}$/.test(code)) return true;                 // UPC / EAN
+        if (/^\d{14}$/.test(code)) return true;                              // case / carton (ITF-14, GTIN-14)
+        if (/^X00[0-9A-Z]{7}$/i.test(code)) return true;                       // Amazon sticker (FNSKU)
+        if (/^https?:\/\//i.test(code)) return code.length < 300;            // QR link on packaging
+        return code.length >= 6 && code.length <= 60 && /[0-9]/.test(code);   // other product / tool codes
+    }
     function gotCode(code) {
         code = String(code || '').trim();
-        if (!code || !cam.on || cam.paused) return;
+        if (!code || !cam.on || cam.paused || !plausible(code)) return;
         var now = Date.now();
         if (now - (cam.resumedAt || 0) < 900) return;                                  // let the camera show a fresh picture first
         if (code === cam.last && now - Math.max(cam.lastAt, cam.resumedAt || 0) < 4000) return;   // same item again right away = old picture
