@@ -484,6 +484,13 @@
                 <div><label for="fQty">How many</label>
                     <div style="display:flex;gap:6px"><input id="fQty" type="number" min="0" step="1" value="1" style="width:5em"><input id="fUnit" placeholder="cans, boxes…" maxlength="20"></div></div>
             </div>
+            <label for="fGot">Got it on</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <input id="fGot" type="date" style="flex:1;min-width:150px">
+                <button type="button" class="ghost" data-got="0">Today</button>
+                <button type="button" class="ghost" data-got="1">Yesterday</button>
+            </div>
+            <p class="hint" id="fGotWho" style="margin:4px 0 0"></p>
             <label for="fExp">Expires / best by <span class="hint">(optional)</span></label>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
                 <input id="fExp" type="date" style="flex:1;min-width:150px">
@@ -1408,6 +1415,10 @@
         if (isC && !it && !o.restock) $('fQty').value = p.qty || cs || 24;
         $('fNotes').value = src.notes || '';
         $('fLow').value = src.lowAt || 0;
+        var gt = it && (it.gotAt || it.addedAt);
+        $('fGot').value = (gt && gt.toDate && !o.restock) ? dateStr(gt.toDate()) : dateStr(new Date());
+        editing.gotWas = $('fGot').value;
+        $('fGotWho').textContent = it ? 'First added' + (it.addedBy ? ' by ' + it.addedBy : '') + (it.addedAt && it.addedAt.toDate ? ' on ' + it.addedAt.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '') : '';
         $('itemSave').textContent = o.restock ? 'Put back in the house' : it ? 'Save' : 'Add it';
         var head = '';
         if (editing.image || p.source) {
@@ -1459,6 +1470,8 @@
         return (m[cat] && pick(m[cat])) || pick(/pantry/i) || L[0];
     }
     $('itemForm').onclick = function (e) {
+        var g = e.target.closest('[data-got]');
+        if (g) { var gd = new Date(); gd.setDate(gd.getDate() - (+g.dataset.got)); $('fGot').value = dateStr(gd); return; }
         var d = e.target.closest('[data-exp]');
         if (d) { var n = d.dataset.exp; if (n === '') { $('fExp').value = ''; return; } var t = new Date(); t.setDate(t.getDate() + +n); $('fExp').value = dateStr(t); return; }
         var x = e.target.closest('[data-x]'); if (!x || !editing || !editing.item) return;
@@ -1486,10 +1499,16 @@
             caseBarcode: $('fIsCase').checked ? $('fCaseCode').value.replace(/\s/g, '') : '',
             caseSize: $('fIsCase').checked ? Math.max(1, parseInt($('fCaseSize').value, 10) || 1) : 0
         };
+        var gotPick = $('fGot').value;
+        var gotTs = (gotPick && gotPick !== dateStr(new Date())) ? firebase.firestore.Timestamp.fromDate(new Date(gotPick + 'T12:00:00')) : null;
+        if (editing.item && !editing.restock && gotPick === editing.gotWas) gotTs = 'same';
         data.barcodes = allCodes({ barcode: data.barcode, caseBarcode: data.caseBarcode, extraCodes: (editing.item && editing.item.extraCodes) || [] });
         var it = editing.item, p;
+        if (gotTs === 'same') { /* unchanged */ }
+        else if (gotTs) data.gotAt = gotTs;      // a day you picked
+        else data.gotAt = TS();                  // today
         if (it && editing.restock) {
-            data.status = 'in'; data.outReason = ''; data.qty = data.qty || 1; data.gotAt = TS();
+            data.status = 'in'; data.outReason = ''; data.qty = data.qty || 1; if (!data.gotAt) data.gotAt = TS();
             p = itemsRef().doc(it.id).update(data); logIt('restocked', data);
         } else if (it && normName(name) !== normName(it.name) && sameName(name, it.id)) {
             var tg2 = sameName(name, it.id), merged = Object.assign({}, it, data);
@@ -1508,7 +1527,7 @@
             return;
         } else {
             data.status = data.qty > 0 ? 'in' : 'out';
-            data.addedAt = TS(); data.addedBy = me().name; data.addedByUid = me().uid; data.gotAt = TS();
+            data.addedAt = TS(); data.addedBy = me().name; data.addedByUid = me().uid; if (!data.gotAt) data.gotAt = TS();
             p = itemsRef().add(data); logIt('added', data, data.qty > 1 ? data.qty + ' ' + (data.unit || '') : '');
             ev('inventory_item_added', { source: editing.source || 'manual' });
         }
@@ -1645,7 +1664,7 @@
         var codes = (tgt.extraCodes || []).slice();
         function keep(c) { if (c && c !== tgt.barcode && c !== tgt.caseBarcode && codes.indexOf(c) < 0) codes.push(c); }
         var upd = { qty: tq + addQ, updatedAt: TS(), updatedBy: me().name };
-        if (!srcId && addQ > 0) upd.gotAt = TS();
+        if (!srcId && addQ > 0) upd.gotAt = (src.gotAt && src.gotAt.toDate) ? src.gotAt : TS();
         if (tq + addQ > 0) { upd.status = 'in'; upd.outReason = ''; }
         if (!tgt.barcode && src.barcode) upd.barcode = src.barcode; else keep(src.barcode);
         (src.extraCodes || []).forEach(keep);
