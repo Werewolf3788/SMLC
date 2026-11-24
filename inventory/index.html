@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-11-23 8:05 PM ET -->
+<!-- BUILD: 2026-11-23 8:15 PM ET -->
 <!-- ==========================================================================
      SMLC Home Inventory | v1.0 | 2026-11-23 4:30 PM ET
      Scan everything in the house, share one list with everyone who lives there.
@@ -21,7 +21,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="build" content="2026-11-23 8:05 PM ET">
+    <meta name="build" content="2026-11-23 8:15 PM ET">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <title>Free Home Inventory App: Scan Barcodes, Track Expiration Dates, Share With Your Household | Support My Local Community</title>
@@ -539,6 +539,10 @@
             </div>
             <label for="fNotes">Notes</label>
             <input id="fNotes" maxlength="200" placeholder="optional">
+            <div class="r2">
+                <div><label for="fStore">Store it's from</label><select id="fStore"></select></div>
+                <div><label for="fLink">Store page link <span class="hint">(optional)</span></label><input id="fLink" type="url" maxlength="500" placeholder="https://www.walmart.com/ip/…"></div>
+            </div>
             <label for="fLow">Put it on the shopping list when it gets down to</label>
             <div style="display:flex;gap:8px;align-items:center"><input id="fLow" type="number" min="0" step="1" value="0" style="width:6em"><span class="hint">0 = only when it's all gone</span></div>
             <label class="checkline" id="fTrustRow" hidden><input type="checkbox" id="fTrust"> <span>⭐ Save as a <b>trusted product</b> (name, picture and details become the correct info for everyone who scans this barcode)</span></label>
@@ -1278,13 +1282,44 @@
     };
     function myStores() { var l = S.house && S.house.stores; return (l && l.length ? l : ['walmart', 'sams', 'publix', 'dg']).filter(function (k) { return STORES[k]; }); }
     function searchText(it) { return [it.brand && (it.name || '').toLowerCase().indexOf(it.brand.toLowerCase()) < 0 ? it.brand : '', (it.name || '').replace(/\([^)]*\)/g, ' ')].join(' ').replace(/\s+/g, ' ').trim(); }
+    // Store brands tell us where something is from (Great Value = Walmart, Member's Mark = Sam's Club...)
+    var STORE_BRANDS = [
+        ['walmart', /\b(great value|equate|mainstays|marketside|freshness guaranteed|parent'?s choice|ol'? roy|special kitty|hyper tough|sam'?s choice|bettergoods|pure balance|spring valley|athletic works|ozark trail)\b/i],
+        ['sams', /\bmember'?s mark\b/i],
+        ['target', /\b(good ?& ?gather|up ?& ?up|market pantry|favorite day|room essentials)\b/i],
+        ['kroger', /\b(kroger|simple truth|private selection|heritage farm)\b/i],
+        ['publix', /\b(publix|greenwise)\b/i],
+        ['aldi', /\b(clancy'?s|millville|simply nature|friendly farms|baker'?s corner|happy farms|specially selected)\b/i],
+        ['costco', /\bkirkland\b/i],
+        ['dg', /\b(clover valley|dg home|dg health)\b/i],
+        ['amazon', /\b(amazon basics|happy belly|solimo|presto!)\b/i]
+    ];
+    function guessStore(it) {
+        var txt = (it.brand || '') + ' ' + (it.name || '');
+        for (var i = 0; i < STORE_BRANDS.length; i++) if (STORE_BRANDS[i][1].test(txt)) return STORE_BRANDS[i][0];
+        var c = allCodes(it).join(' ');
+        if (/\b0?78742|\b0?68113/.test(c)) return 'walmart';      // Walmart's own barcode prefixes
+        return '';
+    }
+    function storeOf(it) { return it.store || guessStore(it); }
+    function upcOf(it) { var c = allCodes(it).filter(function (x) { return /^\d{12,13}$/.test(x); }); return c[0] || ''; }
+    function storeUrl(k, it) {
+        var upc = upcOf(it);
+        if (upc && (k === 'walmart' || k === 'kroger')) return STORES[k][1] + upc;   // exact item + size
+        return STORES[k][1] + encodeURIComponent(searchText(it));
+    }
     async function storePick(it) {
-        var opts = myStores().map(function (k) { return { label: STORES[k][0], value: k, cls: 'ghost' }; });
+        var home = storeOf(it), opts = [];
+        if (it.storeLink) opts.push({ label: '🔗 Open its ' + (STORES[home] ? STORES[home][0] : 'store') + ' page', value: '__link', cls: 'gold' });
+        var list = myStores().slice();
+        if (home && STORES[home] && list.indexOf(home) < 0) list.unshift(home);
+        if (home) list.sort(function (a, b) { return (b === home) - (a === home); });
+        list.forEach(function (k) { opts.push({ label: STORES[k][0] + (k === home ? ' <span class="hint">(where it\'s from)</span>' : ''), value: k, cls: it.storeLink || k !== home ? 'ghost' : 'gold' }); });
         opts.push({ label: 'Cancel', value: null, cls: 'ghost' });
-        var k = await choice('Find ' + it.name + ' at…', '<p class="hint">Opens the store\'s own site or app, searching for it. Add it to that store\'s list or cart there.</p>', opts);
+        var k = await choice('Find ' + it.name + ' at…', '<p class="hint">Opens the store\'s own site or app. Walmart and Kroger look it up by barcode, so you get the exact item and size.</p>', opts);
         if (!k) return;
-        ev('inventory_store_link', { store: k });
-        window.open(STORES[k][1] + encodeURIComponent(searchText(it)), '_blank', 'noopener');
+        ev('inventory_store_link', { store: k === '__link' ? home || 'link' : k });
+        window.open(k === '__link' ? it.storeLink : storeUrl(k, it), '_blank', 'noopener');
     }
     async function pickStores() {
         var cur = myStores();
@@ -1458,6 +1493,10 @@
         $('fNotes').value = src.notes || '';
         $('fLow').value = src.lowAt || 0;
         $('fKeep').value = src.keepDays || 0;
+        var st = src.store || guessStore(src);
+        $('fStore').innerHTML = '<option value="">—</option>' + Object.keys(STORES).filter(function (k) { return k !== 'instacart'; })
+            .map(function (k) { return '<option value="' + k + '"' + (k === st ? ' selected' : '') + '>' + STORES[k][0] + '</option>'; }).join('');
+        $('fLink').value = src.storeLink || '';
         $('fOpened').value = o.restock ? '' : (src.openedOn || '');
         var gt = it && (it.gotAt || it.addedAt);
         $('fGot').value = (gt && gt.toDate && !o.restock) ? dateStr(gt.toDate()) : dateStr(new Date());
@@ -1511,6 +1550,11 @@
     }
     $('fCaseSize').oninput = $('fMissing').oninput = caseQtyFromForm;
     $('fOpened').onchange = function () { $('openedBox').hidden = !this.checked; if (this.checked) $('openedBox').style.display = 'flex'; caseQtyFromForm(); };
+    $('fLink').addEventListener('change', function () {
+        var u = this.value.trim(), m = /\/\/(?:www\.)?([a-z]+)\./i.exec(u), host = m ? m[1].toLowerCase() : '';
+        var map = { walmart: 'walmart', samsclub: 'sams', publix: 'publix', dollargeneral: 'dg', target: 'target', aldi: 'aldi', kroger: 'kroger', costco: 'costco', amazon: 'amazon' };
+        if (map[host]) $('fStore').value = map[host];
+    });
     $('fPhoto').onchange = async function () {
         var f = this.files && this.files[0]; if (!f) return;
         var url = URL.createObjectURL(f);
@@ -1568,6 +1612,8 @@
             image: editing.image || '', updatedAt: TS(), updatedBy: me().name,
             lowAt: Math.max(0, parseInt($('fLow').value, 10) || 0),
             keepDays: Math.max(0, parseInt($('fKeep').value, 10) || 0),
+            store: $('fStore').value || '',
+            storeLink: /^https:\/\//i.test($('fLink').value.trim()) ? $('fLink').value.trim() : '',
             openedOn: $('fOpened').value || '',
             caseBarcode: $('fIsCase').checked ? $('fCaseCode').value.replace(/\s/g, '') : '',
             caseSize: $('fIsCase').checked ? Math.max(1, parseInt($('fCaseSize').value, 10) || 1) : 0
@@ -1610,7 +1656,7 @@
         if (isAdmin() && $('fTrust').checked) {
             var tcode = data.caseBarcode || data.barcode;
             if (!tcode) toast('Add the barcode first, then save it as trusted', 4000);
-            else saveTrusted(tcode, { name: name, brand: data.brand, category: data.category, place: data.location, unit: data.unit,
+            else saveTrusted(tcode, { name: name, brand: data.brand, category: data.category, place: data.location, unit: data.unit, store: data.store, storeLink: data.storeLink,
                 caseSize: data.caseBarcode ? data.caseSize : 0, image: editing.image }).then(function () { toast('⭐ Saved as a trusted product', 3000); }).catch(fail);
         } else if (editing.source !== 'saved' || name !== editing.origName || data.caseBarcode) {
             var lab = { name: name, brand: data.brand, category: data.category, image: data.image, savedAt: TS() };
@@ -1689,13 +1735,13 @@
     function isAdmin() { return !!(S.user && (S.user.email || '').toLowerCase() === ADMIN_EMAIL); }
     function fromTrustedDoc(d, code) {
         var info = { name: d.name, brand: d.brand || '', category: d.category || 'Other', location: d.place || '', unit: d.unit || '',
-                     image: d.imageThumb || d.image || '', barcode: code, source: 'saved', from: 'the SMLC trusted list' };
+                     image: d.imageThumb || d.image || '', store: d.store || '', storeLink: d.link || '', barcode: code, source: 'saved', from: 'the SMLC trusted list' };
         if (d.caseSize > 1) { info.caseBarcode = code; info.barcode = ''; info.caseSize = d.caseSize; info.qty = d.caseSize; }
         return info;
     }
     function fromJson(t, code) {
         var nm = t.name + (t.size && t.name.indexOf(t.size) < 0 ? ' (' + t.size + ')' : '');
-        return fromTrustedDoc({ name: nm, brand: t.brand, category: t.category, place: t.place, unit: t.unit, image: t.image, caseSize: t.each || 0 }, code);
+        return fromTrustedDoc({ name: nm, brand: t.brand, category: t.category, place: t.place, unit: t.unit, image: t.image, caseSize: t.each || 0, store: t.store, link: t.link }, code);
     }
     // Existing items whose barcode is in the trusted list get its name, brand and picture automatically
     var trustSeen = {};
@@ -1713,6 +1759,8 @@
             if (normName(t.name) !== normName(it.name)) upd.name = t.name;
             if (t.image && t.image !== it.image) upd.image = t.image;
             if (t.brand && t.brand !== it.brand) upd.brand = t.brand;
+            if (t.store && !it.store) upd.store = t.store;
+            if (t.storeLink && !it.storeLink) upd.storeLink = t.storeLink;
             if (Object.keys(upd).length) {
                 upd.updatedAt = TS(); upd.updatedBy = 'trusted list';
                 itemsRef().doc(it.id).update(upd).catch(function () {});
@@ -1753,7 +1801,7 @@
         if (!isAdmin() || !code) return false;
         var full = await imgToData(info.image, 400, 0.82), thumb = await imgToData(info.image, 160, 0.8);
         var doc = { barcode: code, name: info.name, brand: info.brand || '', category: info.category || 'Other', place: info.place || '',
-                    unit: info.unit || '', caseSize: info.caseSize || 0, trusted: true, trustedBy: S.user.email, savedAt: TS(), ver: info.ver || '' };
+                    unit: info.unit || '', caseSize: info.caseSize || 0, store: info.store || '', link: info.storeLink || '', trusted: true, trustedBy: S.user.email, savedAt: TS(), ver: info.ver || '' };
         if (full) { doc.imageData = full; doc.imageThumb = thumb || full; }
         await col('barcodes').doc(labelId(code)).set(doc, { merge: true });
         return true;
@@ -1769,7 +1817,7 @@
                 var cur = await col('barcodes').doc(labelId(code)).get();
                 if (cur.exists && cur.data().trusted && cur.data().ver === ver) continue;
                 var nm = t.name + (t.size && t.name.indexOf(t.size) < 0 ? ' (' + t.size + ')' : '');
-                await saveTrusted(code, { name: nm, brand: t.brand, category: t.category, place: t.place, unit: t.unit, caseSize: t.each || 0,
+                await saveTrusted(code, { name: nm, brand: t.brand, category: t.category, place: t.place, unit: t.unit, caseSize: t.each || 0, store: t.store, storeLink: t.link,
                     image: t.image ? new URL(t.image, location.href).href : '', ver: ver });
                 n++;
             } catch (e) { console.warn('[trusted sync]', code, e); }

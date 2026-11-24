@@ -1,5 +1,5 @@
 {
-  "_about": "Home Inventory trusted product list. The app checks this BEFORE any outside product list, so whatever is here always wins. Key = the barcode number (12-digit UPC, or 13-digit EAN). Fields: name, brand, size, category (Food, Fresh food, Drinks, Snacks, Frozen, Cleaning, Personal care, Medicine, Paper goods, Pet, Baby, Other), place (where it's usually kept), each (how many are inside, for boxes/packs), unit (what one of them is called), image (a picture path, pictures go in images/barcode/<barcode>.jpg, written as ../images/barcode/<barcode>.jpg).",
+  "_about": "Home Inventory trusted product list. The app checks this BEFORE any outside product list, so whatever is here always wins. Key = the barcode number (12-digit UPC, or 13-digit EAN). Fields: name, brand, size, category (Food, Fresh food, Drinks, Snacks, Frozen, Cleaning, Personal care, Medicine, Paper goods, Pet, Baby, Other), place (where it's usually kept), each (how many are inside, for boxes/packs), unit (what one of them is called), store (walmart, sams, publix, dg, target, aldi, kroger, costco, amazon), link (the product's store page), image (a picture path, pictures go in images/barcode/<barcode>.jpg, written as ../images/barcode/<barcode>.jpg).",
   "072878262552": {
     "name": "Avocado Dip",
     "size": "15 oz",
@@ -28,6 +28,17 @@
     "size": "16 oz",
     "category": "Food",
     "place": "Pantry",
-    "image": "../images/barcode/194346122233.jpg"
+    "image": "../images/barcode/194346122233.jpg",
+    "store": "walmart",
+    "link": "https://www.walmart.com/ip/1959652540"
+  },
+  "078742377469": {
+    "name": "Great Value Classic Ranch Salad Dressing & Recipe Mix",
+    "brand": "Great Value",
+    "size": "8 oz canister",
+    "category": "Food",
+    "place": "Pantry",
+    "store": "walmart",
+    "link": "https://www.walmart.com/ip/868694067"
   }
 }
