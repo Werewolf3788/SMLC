@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-11-23 8:21 PM ET -->
+<!-- BUILD: 2026-11-23 8:30 PM ET -->
 <!-- ==========================================================================
      SMLC Home Inventory | v1.0 | 2026-11-23 4:30 PM ET
      Scan everything in the house, share one list with everyone who lives there.
@@ -21,7 +21,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="build" content="2026-11-23 8:21 PM ET">
+    <meta name="build" content="2026-11-23 8:30 PM ET">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <title>Free Home Inventory App: Scan Barcodes, Track Expiration Dates, Share With Your Household | Support My Local Community</title>
@@ -1284,7 +1284,7 @@
         instacart: ['Instacart (any store)', 'https://www.instacart.com/store/s?k=']
     };
     function myStores() { var l = S.house && S.house.stores; return (l && l.length ? l : ['walmart', 'sams', 'publix', 'dg']).filter(function (k) { return STORES[k]; }); }
-    function searchText(it) { return [it.brand && (it.name || '').toLowerCase().indexOf(it.brand.toLowerCase()) < 0 ? it.brand : '', (it.name || '').replace(/\([^)]*\)/g, ' ')].join(' ').replace(/\s+/g, ' ').trim(); }
+    function searchText(it) { return [it.brand && (it.name || '').toLowerCase().indexOf(it.brand.toLowerCase()) < 0 ? it.brand : '', (it.name || '').replace(/[()]/g, ' ')].join(' ').replace(/\s+/g, ' ').trim(); }
     // Store brands tell us where something is from (Great Value = Walmart, Member's Mark = Sam's Club...)
     var STORE_BRANDS = [
         ['walmart', /\b(great value|equate|mainstays|marketside|freshness guaranteed|parent'?s choice|ol'? roy|special kitty|hyper tough|sam'?s choice|bettergoods|pure balance|spring valley|athletic works|ozark trail)\b/i],
@@ -1307,8 +1307,7 @@
     function storeOf(it) { return it.store || guessStore(it); }
     function upcOf(it) { var c = allCodes(it).filter(function (x) { return /^\d{12,13}$/.test(x); }); return c[0] || ''; }
     function storeUrl(k, it) {
-        var upc = upcOf(it);
-        if (upc && (k === 'walmart' || k === 'kroger')) return STORES[k][1] + upc;   // exact item + size
+        // store searches don't understand barcode numbers, so search by name + size (brand included)
         return STORES[k][1] + encodeURIComponent(searchText(it));
     }
     async function storePick(it) {
@@ -1319,7 +1318,7 @@
         if (home) list.sort(function (a, b) { return (b === home) - (a === home); });
         list.forEach(function (k) { opts.push({ label: STORES[k][0] + (k === home ? ' <span class="hint">(where it\'s from)</span>' : ''), value: k, cls: it.storeLink || k !== home ? 'ghost' : 'gold' }); });
         opts.push({ label: 'Cancel', value: null, cls: 'ghost' });
-        var k = await choice('Find ' + it.name + ' at…', '<p class="hint">Opens the store\'s own site or app. Walmart and Kroger look it up by barcode, so you get the exact item and size.</p>', opts);
+        var k = await choice('Find ' + it.name + ' at…', '<p class="hint">Opens the store\'s own site or app, searching for it by name and size. Save the product\'s store page link on the item to go straight to it.</p>', opts);
         if (!k) return;
         ev('inventory_store_link', { store: k === '__link' ? home || 'link' : k });
         window.open(k === '__link' ? it.storeLink : storeUrl(k, it), '_blank', 'noopener');
