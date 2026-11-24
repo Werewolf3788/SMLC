@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-24T00:19:06+00:00",
+ "generated": "2026-11-24T00:25:52+00:00",
  "repo": "Werewolf3788/SMLC",
  "branch": "Claude-Test",
  "pages": [
@@ -77,8 +77,8 @@
    "path": "inventory/index.html",
    "url": "https://werewolf3788.github.io/SMLC/inventory/",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/inventory/index.html",
-   "updated": "2026-11-23T19:18:59-05:00",
-   "message": "Inventory: read all product barcode kinds (Amazon stickers, QR, case, tool codes) with misread guards; show where info came from; 'Not right"
+   "updated": "2026-11-23T19:25:37-05:00",
+   "message": "Inventory: Undo on every change, edit hint on items, 'barcodes' list saved on every product (+ number in shared labels)"
   },
   {
    "path": "louisville.html",
