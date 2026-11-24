@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-23T23:28:34+00:00",
+ "generated": "2026-11-24T00:09:50+00:00",
  "repo": "Werewolf3788/SMLC",
  "branch": "Claude-Test",
  "pages": [
@@ -77,8 +77,8 @@
    "path": "inventory/index.html",
    "url": "https://werewolf3788.github.io/SMLC/inventory/",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/inventory/index.html",
-   "updated": "2026-11-23T18:28:25-05:00",
-   "message": "Inventory: 'running low' level per item, store buttons on the shopping list, send list"
+   "updated": "2026-11-23T19:09:37-05:00",
+   "message": "Inventory: all data under home_inventory/data (auto-move), signed-in account shown, leave/delete household, faster scanner, Done scanning bu"
   },
   {
    "path": "louisville.html",
