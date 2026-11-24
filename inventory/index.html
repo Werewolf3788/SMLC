@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-11-23 8:35 PM ET -->
+<!-- BUILD: 2026-11-23 8:36 PM ET -->
 <!-- ==========================================================================
      SMLC Home Inventory | v1.0 | 2026-11-23 4:30 PM ET
      Scan everything in the house, share one list with everyone who lives there.
@@ -21,7 +21,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="build" content="2026-11-23 8:35 PM ET">
+    <meta name="build" content="2026-11-23 8:36 PM ET">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <title>Free Home Inventory App: Scan Barcodes, Track Expiration Dates, Share With Your Household | Support My Local Community</title>
@@ -89,7 +89,7 @@
         .hwrap { width: min(100%, 80vw); margin: 0 auto; display: flex; align-items: center; gap: 12px; }
         @media (max-width: 899px) { .hwrap { width: 100%; } }
         .brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
-        .brand img { width: 34px; height: 34px; border-radius: 8px; }
+        .brand img { height: 46px; width: auto; max-width: 220px; object-fit: contain; display: block; }
         .homeLogo { display: flex; flex: none; border-radius: 8px; }
         .homeLogo:hover img, .homeLogo:focus-visible img { outline: 2px solid var(--gold); outline-offset: 2px; }
         .brand b { display: block; font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -268,7 +268,7 @@
             html { font-size: 16px; }
             .screen { padding: 12px 12px; }
             header { padding: calc(env(safe-area-inset-top) + 8px) 12px 8px; }
-            .brand img { width: 30px; height: 30px; }
+            .brand img { height: 36px; width: auto; max-width: 140px; }
             .brand small { display: none; }
             #houseBtn { font-size: .8rem; max-width: 42vw; }
             #app { gap: 10px; }
@@ -330,7 +330,7 @@
 <header>
     <div class="hwrap">
         <div class="brand">
-            <a href="../index.html" class="homeLogo" title="Support My Local Community home" aria-label="Support My Local Community home"><img src="../icons/icon-192.png" alt=""></a>
+            <a href="../index.html" class="homeLogo" title="Support My Local Community home" aria-label="Support My Local Community home"><img src="https://raw.githubusercontent.com/skventuresigns-design/media/main/smlc-web.png" alt="Support My Local Community" onerror="this.onerror=null;this.src='../icons/banner-wide.png'"></a>
             <div><b id="title">Home Inventory</b><small id="subtitle">Support My Local Community</small></div>
         </div>
         <button id="houseBtn" hidden>🏠 Household</button>
