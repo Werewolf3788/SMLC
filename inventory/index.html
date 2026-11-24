@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-11-23 8:48 PM ET -->
+<!-- BUILD: 2026-11-23 9:22 PM ET -->
 <!-- ==========================================================================
      SMLC Home Inventory | v1.0 | 2026-11-23 4:30 PM ET
      Scan everything in the house, share one list with everyone who lives there.
@@ -21,7 +21,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="build" content="2026-11-23 8:48 PM ET">
+    <meta name="build" content="2026-11-23 9:22 PM ET">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <title>Free Home Inventory App: Scan Barcodes, Track Expiration Dates, Share With Your Household | Support My Local Community</title>
@@ -1075,6 +1075,7 @@
         S.unsubs.push(houseRef(hid).onSnapshot(function (s) {
             if (!s.exists) return lostHouse(hid);
             S.house = s.data();
+            syncLocalStores();
             $('houseBtn').textContent = '🏠 ' + S.house.name;
             $('subtitle').textContent = S.house.name;
             if (S.userDoc.households && S.userDoc.households[hid] !== S.house.name) saveUserHouse(hid, S.house.name).catch(function () {});
@@ -1286,6 +1287,16 @@
         amazon: ['Amazon', 'https://www.amazon.com/s?k='],
         instacart: ['Instacart (any store)', 'https://www.instacart.com/store/s?k=']
     };
+    // Local stores the household added (near-me search or by name), saved on the household as localStores
+    function mapsUrl(q) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q); }
+    function syncLocalStores() {
+        Object.keys(STORES).forEach(function (k) { if (k.indexOf('l_') === 0) delete STORES[k]; });
+        ((S.house && S.house.localStores) || []).forEach(function (ls) {
+            if (!ls || !ls.id || !ls.name) return;
+            STORES['l_' + ls.id] = [ls.name, ls.url || mapsUrl(ls.name + ' ' + (ls.addr || '')), { local: true, addr: ls.addr || '', url: ls.url || '' }];
+        });
+    }
+    function isLocal(k) { return !!(STORES[k] && STORES[k][2] && STORES[k][2].local); }
     function myStores() { var l = S.house && S.house.stores; return (l && l.length ? l : ['walmart', 'sams', 'publix', 'dg']).filter(function (k) { return STORES[k]; }); }
     function searchText(it) { return [it.brand && (it.name || '').toLowerCase().indexOf(it.brand.toLowerCase()) < 0 ? it.brand : '', (it.name || '').replace(/[()]/g, ' ')].join(' ').replace(/\s+/g, ' ').trim(); }
     // Store brands tell us where something is from (Great Value = Walmart, Member's Mark = Sam's Club...)
@@ -1310,16 +1321,17 @@
     function storeOf(it) { return it.store || guessStore(it); }
     function upcOf(it) { var c = allCodes(it).filter(function (x) { return /^\d{12,13}$/.test(x); }); return c[0] || ''; }
     function storeUrl(k, it) {
+        if (isLocal(k)) return STORES[k][1];   // local store: its own website, or its spot on the map
         // store searches don't understand barcode numbers, so search by name + size (brand included)
         return STORES[k][1] + encodeURIComponent(searchText(it));
     }
     async function storePick(it) {
         var home = storeOf(it), opts = [];
-        if (it.storeLink) opts.push({ label: '🔗 Open its ' + (STORES[home] ? STORES[home][0] : 'store') + ' page', value: '__link', cls: 'gold' });
+        if (it.storeLink) opts.push({ label: '🔗 Open its ' + (STORES[home] ? esc(STORES[home][0]) : 'store') + ' page', value: '__link', cls: 'gold' });
         var list = myStores().slice();
         if (home && STORES[home] && list.indexOf(home) < 0) list.unshift(home);
         if (home) list.sort(function (a, b) { return (b === home) - (a === home); });
-        list.forEach(function (k) { opts.push({ label: STORES[k][0] + (k === home ? ' <span class="hint">(where it\'s from)</span>' : ''), value: k, cls: it.storeLink || k !== home ? 'ghost' : 'gold' }); });
+        list.forEach(function (k) { opts.push({ label: esc(STORES[k][0]) + (isLocal(k) ? ' <span class="hint">(' + (STORES[k][2].url ? 'website' : 'map') + ')</span>' : '') + (k === home ? ' <span class="hint">(where it\'s from)</span>' : ''), value: k, cls: it.storeLink || k !== home ? 'ghost' : 'gold' }); });
         opts.push({ label: 'Cancel', value: null, cls: 'ghost' });
         var k = await choice('Find ' + it.name + ' at…', '<p class="hint">Opens the store\'s own site or app, searching for it by name and size. Save the product\'s store page link on the item to go straight to it.</p>' + (list.indexOf('amazon') >= 0 || home === 'amazon' ? '<p class="hint" style="font-size:.75rem">As an Amazon Associate, Support My Local Community earns from qualifying purchases.</p>' : ''), opts);
         if (!k) return;
@@ -1328,12 +1340,78 @@
     }
     async function pickStores() {
         var cur = myStores();
-        var body = '<p class="hint">Which stores does your household shop at? These show up when you tap 🛒.</p><div class="stack" id="storeChecks">' +
-            Object.keys(STORES).map(function (k) { return '<label class="checkline"><input type="checkbox" value="' + k + '"' + (cur.indexOf(k) >= 0 ? ' checked' : '') + '> <span>' + STORES[k][0] + '</span></label>'; }).join('') + '</div>';
-        var r = await choice('🏬 My stores', body, [{ label: 'Save', value: 'ok', cls: 'gold' }, { label: 'Cancel', value: null, cls: 'ghost' }]);
-        if (r !== 'ok') return;
+        var keys = Object.keys(STORES).filter(function (k) { return !isLocal(k); }), locals = Object.keys(STORES).filter(isLocal);
+        var line = function (k) { return '<label class="checkline"><input type="checkbox" value="' + k + '"' + (cur.indexOf(k) >= 0 || isLocal(k) ? ' checked' : '') + '> <span>' + esc(STORES[k][0]) +
+            (isLocal(k) && STORES[k][2].addr ? ' <span class="hint">' + esc(STORES[k][2].addr) + '</span>' : '') + '</span></label>'; };
+        var body = '<p class="hint">Which stores does your household shop at? These show up when you tap 🛒 and in "Store it\'s from".</p>' +
+            (locals.length ? '<p class="hint" style="margin:8px 0 2px"><b>Your local stores</b> (untick to remove)</p>' : '') +
+            '<div class="stack" id="storeChecks">' + locals.map(line).join('') + keys.map(line).join('') + '</div>';
+        var r = await choice('🏬 My stores', body, [{ label: 'Save', value: 'ok', cls: 'gold' }, { label: '📍 Find stores near me', value: 'near', cls: 'ghost' },
+            { label: '➕ Add a store by name', value: 'add', cls: 'ghost' }, { label: 'Cancel', value: null, cls: 'ghost' }]);
+        if (!r) return;
         var pick = [].slice.call(document.querySelectorAll('#storeChecks input:checked')).map(function (x) { return x.value; });
-        houseRef().update({ stores: pick }).then(function () { toast('Stores saved'); }).catch(fail);
+        var keepLocal = ((S.house && S.house.localStores) || []).filter(function (ls) { return pick.indexOf('l_' + ls.id) >= 0; });
+        await houseRef().update({ stores: pick, localStores: keepLocal }).catch(fail);
+        if (r === 'ok') { toast('Stores saved'); return; }
+        if (r === 'near') await nearbyStores(); else await addStoreByName();
+        setTimeout(pickStores, 350);
+    }
+    async function addLocalStores(list) {
+        if (!list.length) return;
+        var have = ((S.house && S.house.localStores) || []).slice(), stores = (S.house && S.house.stores && S.house.stores.length ? S.house.stores : myStores()).slice();
+        list.forEach(function (ls) {
+            if (!have.some(function (h) { return h.id === ls.id; })) have.push(ls);
+            if (stores.indexOf('l_' + ls.id) < 0) stores.push('l_' + ls.id);
+        });
+        await houseRef().update({ localStores: have, stores: stores }).then(function () { toast(list.length === 1 ? list[0].name + ' added' : list.length + ' stores added'); }).catch(fail);
+    }
+    async function addStoreByName() {
+        var body = '<div class="stack"><label>Store name<input id="lsName" placeholder="Enson Market" autocomplete="off"></label>' +
+            '<label>Address <span class="hint">(optional)</span><input id="lsAddr" placeholder="3045 SW 34th St, Gainesville, FL"></label>' +
+            '<label>Website <span class="hint">(optional)</span><input id="lsUrl" placeholder="https://"></label></div>';
+        var r = await choice('➕ Add a store', body, [{ label: 'Add', value: 'ok', cls: 'gold' }, { label: 'Cancel', value: null, cls: 'ghost' }]);
+        if (r !== 'ok') return;
+        var name = ($('lsName').value || '').trim(); if (!name) return;
+        var url = ($('lsUrl').value || '').trim(); if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
+        await addLocalStores([{ id: 'm' + Date.now().toString(36), name: name.slice(0, 60), addr: ($('lsAddr').value || '').trim().slice(0, 120), url: url.slice(0, 300) }]);
+    }
+    function whereAmI() {
+        return new Promise(function (ok, no) {
+            if (!navigator.geolocation) return no(new Error('no location on this device'));
+            navigator.geolocation.getCurrentPosition(function (p) { ok(p.coords); }, no, { enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 });
+        });
+    }
+    async function nearbyStores() {
+        var c;
+        try { c = await whereAmI(); } catch (e) { toast("Couldn't get your location. Allow location for this site, or add the store by name.", 5000); return; }
+        toast('Looking for stores near you…', 2500);
+        // OpenStreetMap's free store list (no key). Only your rough location is sent, and it isn't saved.
+        var q = '[out:json][timeout:20];nwr["shop"~"^(supermarket|convenience|grocery|greengrocer|department_store|variety_store|wholesale|beverages|butcher|bakery|health_food|chemist|general)$"]["name"](around:10000,' +
+            c.latitude.toFixed(4) + ',' + c.longitude.toFixed(4) + ');out center 120;';
+        var data;
+        try {
+            var res = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+            data = await res.json();
+        } catch (e) { toast("Couldn't reach the store list right now. Try again, or add the store by name.", 5000); return; }
+        var km = function (la, lo) { var R = 6371, d1 = (la - c.latitude) * Math.PI / 180, d2 = (lo - c.longitude) * Math.PI / 180;
+            var x = Math.sin(d1 / 2) * Math.sin(d1 / 2) + Math.cos(c.latitude * Math.PI / 180) * Math.cos(la * Math.PI / 180) * Math.sin(d2 / 2) * Math.sin(d2 / 2); return 2 * R * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x)); };
+        var seen = {}, found = (data.elements || []).map(function (el) {
+            var t = el.tags || {}, la = el.lat || (el.center && el.center.lat), lo = el.lon || (el.center && el.center.lon);
+            var addr = [[t['addr:housenumber'], t['addr:street']].filter(Boolean).join(' '), t['addr:city']].filter(Boolean).join(', ');
+            return { id: el.type[0] + el.id, name: t.name, addr: addr, url: t.website || t['contact:website'] || '', mi: la ? km(la, lo) * 0.621 : 99, kind: (t.shop || '').replace(/_/g, ' ') };
+        }).filter(function (x) { var k = x.name.toLowerCase(); if (seen[k + x.addr]) return false; seen[k + x.addr] = 1; return true; })
+          .sort(function (a, b) { return a.mi - b.mi; }).slice(0, 40);
+        var have = ((S.house && S.house.localStores) || []).map(function (h) { return h.id; });
+        found = found.filter(function (f) { return have.indexOf(f.id) < 0; });
+        if (!found.length) { toast('No new stores found nearby. Add it by name instead.', 4500); return addStoreByName(); }
+        var body = '<p class="hint">Stores within about 6 miles, closest first. Tick the ones you shop at.</p><div class="stack" id="nearChecks" style="max-height:50vh;overflow:auto">' +
+            found.map(function (f, i) { return '<label class="checkline"><input type="checkbox" value="' + i + '"> <span>' + esc(f.name) +
+                ' <span class="hint">' + esc([f.addr, f.mi.toFixed(1) + ' mi', f.kind].filter(Boolean).join(' · ')) + '</span></span></label>'; }).join('') + '</div>' +
+            '<p class="hint" style="font-size:.72rem">Store list © OpenStreetMap contributors. Missing one? Use "Add a store by name".</p>';
+        var r = await choice('📍 Stores near you', body, [{ label: 'Add these', value: 'ok', cls: 'gold' }, { label: 'Cancel', value: null, cls: 'ghost' }]);
+        if (r !== 'ok') return;
+        var pick = [].slice.call(document.querySelectorAll('#nearChecks input:checked')).map(function (x) { var f = found[+x.value]; return { id: f.id, name: f.name.slice(0, 60), addr: f.addr.slice(0, 120), url: (f.url || '').slice(0, 300) }; });
+        await addLocalStores(pick);
     }
     function shareList() {
         var out = S.items.filter(function (i) { return i.status === 'out'; }).sort(byName);
@@ -1500,7 +1578,7 @@
         $('fKeep').value = src.keepDays || 0;
         var st = src.store || guessStore(src);
         $('fStore').innerHTML = '<option value="">—</option>' + Object.keys(STORES).filter(function (k) { return k !== 'instacart'; })
-            .map(function (k) { return '<option value="' + k + '"' + (k === st ? ' selected' : '') + '>' + STORES[k][0] + '</option>'; }).join('');
+            .map(function (k) { return '<option value="' + k + '"' + (k === st ? ' selected' : '') + '>' + esc(STORES[k][0]) + '</option>'; }).join('');
         $('fLink').value = src.storeLink || '';
         $('fOpened').value = o.restock ? '' : (src.openedOn || '');
         var gt = it && (it.gotAt || it.addedAt);
@@ -1729,7 +1807,11 @@
     // ---- trusted list (inventory/products.json): always wins over shared labels and outside lists
     var TRUSTED = null;
     function loadTrusted() {
-        if (!TRUSTED) TRUSTED = fetch('products.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; });
+        if (!TRUSTED) TRUSTED = fetch('products.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : {}; }).then(function (list) {
+            // "alsoCodes": the same product sold with another barcode (another store, size run or country)
+            Object.keys(list).forEach(function (k) { var t = list[k]; if (t && t.alsoCodes) t.alsoCodes.forEach(function (c) { if (!list[c]) list[c] = t; }); });
+            return list;
+        }).catch(function () { return {}; });
         return TRUSTED;
     }
     // The trusted list lives in Firestore: home_inventory/data/barcodes/{barcode} with trusted: true
