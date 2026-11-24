@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-24T01:49:10+00:00",
+ "generated": "2026-11-24T02:22:52+00:00",
  "repo": "Werewolf3788/SMLC",
  "branch": "Claude-Test",
  "pages": [
@@ -84,8 +84,8 @@
    "path": "inventory/index.html",
    "url": "https://werewolf3788.github.io/SMLC/inventory/",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/inventory/index.html",
-   "updated": "2026-11-23T20:48:59-05:00",
-   "message": "SEO/AEO boost: Q&A on home + towns, Event data, page/search ranking on Site Pulse, IndexNow, install/tct fixes, Amazon tag, Hefty trusted pr"
+   "updated": "2026-11-23T21:22:43-05:00",
+   "message": "Inventory: local stores (find stores near me via OpenStreetMap, or add by name) in My stores and Store it's from; trusted list alsoCodes"
   },
   {
    "path": "louisville.html",
