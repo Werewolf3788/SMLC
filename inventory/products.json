@@ -40,5 +40,13 @@
     "place": "Pantry",
     "store": "walmart",
     "link": "https://www.walmart.com/ip/868694067"
+  },
+  "049000050271": {
+    "name": "Fanta Strawberry Soda",
+    "brand": "Fanta",
+    "size": "2 liter (67.6 fl oz)",
+    "category": "Drinks",
+    "place": "Pantry",
+    "image": "../images/barcode/049000050271.jpg"
   }
 }
