@@ -231,6 +231,11 @@
         .checkline { display: flex; gap: 8px; align-items: center; font-weight: 600; margin: .8em 0 .2em; }
         .checkline input { width: 22px; height: 22px; flex: none; }
         .codebox { font: 800 2rem/1 ui-monospace, Menlo, monospace; letter-spacing: .2em; text-align: center; background: var(--soft); border-radius: 12px; padding: 16px; margin: 10px 0; user-select: all; }
+        .acct { display: flex; gap: 12px; align-items: center; background: var(--soft); border-radius: 12px; padding: 10px 12px; margin: 6px 0 4px; }
+        .acct img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; background: #fff3; }
+        .acct div { min-width: 0; }
+        .acct b, .acct small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .acct small { color: var(--muted); font-size: .8rem; }
         .member { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
         .member img, .member .ph { width: 32px; height: 32px; border-radius: 50%; background: var(--soft); display: grid; place-items: center; }
         .member div { flex: 1; min-width: 0; }
@@ -286,7 +291,7 @@
             .scanpanel .cam { flex: 1; aspect-ratio: auto; border-radius: 0; min-height: 0; }
             .scanpanel .cam .frame { left: 20%; right: 20%; top: 30%; bottom: 30%; border-radius: 16px; }
             .scanpanel .cam .torch { top: auto; right: 50%; transform: translateX(50%); bottom: 18px; padding: .6em 1.2em; font-size: 1rem; }
-            .scanpanel .modes { position: absolute; z-index: 3; left: 12px; right: 12px; top: calc(env(safe-area-inset-top) + 58px); margin: 0; }
+            .scanpanel .modes { position: absolute; z-index: 3; left: 12px; right: 12px; top: calc(env(safe-area-inset-top) + 74px); margin: 0; }
             .scanpanel .modes button { background: rgba(0,0,0,.55); color: #fff; border-color: #ffffff44; padding: .6em .2em; backdrop-filter: blur(6px); }
             .scanpanel .modes button.on { background: var(--navy); border-color: #fff; }
             .scanpanel .modes button.on.out { background: var(--bad); }
@@ -295,6 +300,11 @@
             .scanpanel .manual { margin: 6px 14px 0; }
             .scanpanel .manual input { background: #1c1f25; color: #fff; border-color: #3a3f48; }
             .scanpanel .scanhint { color: #b9bec8; margin: 8px 14px calc(env(safe-area-inset-bottom) + 12px); font-size: .8rem; }
+        }
+        .scandone { display: block; width: 100%; margin-top: 10px; background: var(--soft); color: var(--ink); border: 1px solid var(--line); padding: .8em; font-size: 1rem; }
+        @media (max-width: 899px) {
+            .scanpanel .scandone { width: auto; margin: 10px 14px 0; background: #fff; color: #111; border: 0; font-size: 1.05rem; }
+            .scanpanel h3 .x { width: 2.8em; height: 2.8em; font-size: 1.15rem; background: rgba(255,255,255,.3); }
         }
         .goog-te-banner-frame, #goog-gt-tt, .skiptranslate iframe { display: none !important; }
     </style>
@@ -427,7 +437,8 @@
             <input id="manualCode" inputmode="numeric" placeholder="Or type the barcode numbers" autocomplete="off">
             <button id="manualGo">Go</button>
         </div>
-        <p class="hint scanhint" style="text-align:center">Keeps scanning after each item, so you can go shelf by shelf. Tap ✕ when you're done.</p>
+        <button type="button" class="scandone" data-close="scan">✕ Done scanning</button>
+        <p class="hint scanhint" style="text-align:center">Keeps scanning after each item, so you can go shelf by shelf. Tap <b>Done scanning</b> when you're finished.</p>
     </div>
 </div>
 
@@ -494,6 +505,7 @@
 <div id="houseSheet" class="sheet" hidden>
     <div class="panel">
         <h3><span>⚙️ Household</span><button class="x" data-close="house" aria-label="Close">✕</button></h3>
+        <div class="acct"><img id="acctPic" alt="" referrerpolicy="no-referrer"><div><small>Signed in with <b id="acctHow">…</b></small><b id="acctName"></b><small id="acctEmail"></small></div></div>
         <label for="hName">Household name</label>
         <div style="display:flex;gap:8px"><input id="hName" maxlength="60"><button id="hNameSave">Save</button></div>
 
@@ -542,6 +554,10 @@
     try { db.enablePersistence({ synchronizeTabs: true }).catch(function () {}); } catch (e) {}
     var auth = fbApp.auth();
     var TS = function () { return firebase.firestore.FieldValue.serverTimestamp(); };
+    // Everything for this app lives together in Firestore under  home_inventory / data /
+    //   households/{hid} (+ members, items, log) · invites/{code} · users/{uid} · barcodes/{code}
+    var ROOT = db.collection('home_inventory').doc('data');
+    function col(name) { return ROOT.collection(name); }
 
     var DEFAULT_LOCS = ['Pantry', 'Fridge', 'Freezer', 'Kitchen cabinet', 'Bathroom', 'Laundry / cleaning', 'Garage / storage', 'Other'];
     var CATS = [
@@ -615,7 +631,7 @@
         return s;
     }
     function locs() { return (S.house && S.house.locations && S.house.locations.length) ? S.house.locations : DEFAULT_LOCS; }
-    function houseRef(hid) { return db.collection('households').doc(hid || S.hid); }
+    function houseRef(hid) { return col('households').doc(hid || S.hid); }
     function itemsRef() { return houseRef().collection('items'); }
     function logIt(action, it, extra) {
         houseRef().collection('log').add({
@@ -630,7 +646,7 @@
     function openSheet(name) { $(name + 'Sheet').hidden = false; }
     function closeSheet(name, val) {
         $(name + 'Sheet').hidden = true;
-        if (name === 'scan') { stopCamera(); }
+        if (name === 'scan') { stopCamera(); try { if (history.state && history.state.scan) history.back(); } catch (e) {} }
         var cb = sheetDone[name]; sheetDone[name] = null;
         if (cb) cb(val);
     }
@@ -740,8 +756,9 @@
         if (!u) { $('houseBtn').hidden = $('avatarBtn').hidden = true; $('subtitle').textContent = 'Support My Local Community'; showScreen('signin'); return; }
         $('avatarBtn').hidden = false;
         $('avatar').src = u.photoURL || '../icons/icon-192.png';
-        var snap = await db.collection('inventory_users').doc(u.uid).get().catch(function () { return null; });
-        S.userDoc = (snap && snap.exists) ? snap.data() : {};
+        var snap = await col('users').doc(u.uid).get().catch(function () { return null; });
+        S.userDoc = (snap && snap.exists) ? snap.data() : await moveOldData(u).catch(function (e) { console.warn('[move]', e); return {}; });
+        fillAccount();
         var join = params.get('join');
         if (join) {
             params.delete('join');
@@ -754,6 +771,63 @@
         if (hid) openHouse(hid); else { $('houseBtn').hidden = true; showScreen('setup'); }
     });
 
+    // ---- one-time move from the first version's separate collections into home_inventory/data
+    async function moveOldData(u) {
+        var old = await db.collection('inventory_users').doc(u.uid).get().catch(function () { return null; });
+        if (!old || !old.exists) return {};
+        var od = old.data(), hs = od.households || {}, kept = {};
+        toast('Moving your list to its new spot…', 4000);
+        for (var hid in hs) {
+            var already = await houseRef(hid).get().then(function (d) { return d.exists; }).catch(function () { return false; });
+            if (!already) {
+                var oh = await db.collection('households').doc(hid).get().catch(function () { return null; });
+                if (!oh || !oh.exists || oh.data().ownerUid !== u.uid) continue;   // the person who started it moves it
+                var h = oh.data(), oref = db.collection('households').doc(hid);
+                await houseRef(hid).set(h);
+                var ms = await oref.collection('members').get();
+                var mine = ms.docs.filter(function (d) { return d.id === u.uid; })[0];
+                await houseRef(hid).collection('members').doc(u.uid).set(mine ? mine.data() : memberDoc(''));
+                for (var i = 0; i < ms.docs.length; i++) if (ms.docs[i].id !== u.uid) await houseRef(hid).collection('members').doc(ms.docs[i].id).set(ms.docs[i].data());
+                var sub = ['items', 'log'];
+                for (var k = 0; k < sub.length; k++) {
+                    var qs = await oref.collection(sub[k]).get(), b = db.batch(), n = 0;
+                    for (var j = 0; j < qs.docs.length; j++) {
+                        b.set(houseRef(hid).collection(sub[k]).doc(qs.docs[j].id), qs.docs[j].data());
+                        if (++n === 400) { await b.commit(); b = db.batch(); n = 0; }
+                    }
+                    if (n) await b.commit();
+                }
+                if (h.inviteCode) await col('invites').doc(h.inviteCode).set({ householdId: hid, householdName: h.name, createdBy: u.uid });
+            }
+            kept[hid] = hs[hid];
+        }
+        try {   // shared barcode labels
+            var bq = await db.collection('inventory_barcodes').get(), bb = db.batch(), bn = 0;
+            for (var x = 0; x < bq.docs.length; x++) { bb.set(col('barcodes').doc(bq.docs[x].id), bq.docs[x].data(), { merge: true }); if (++bn === 400) { await bb.commit(); bb = db.batch(); bn = 0; } }
+            if (bn) await bb.commit();
+        } catch (e) {}
+        var nu = { households: kept, current: kept[od.current] ? od.current : (Object.keys(kept)[0] || null) };
+        await col('users').doc(u.uid).set(nu);
+        return nu;
+    }
+
+    // ---- who is signed in (and with what)
+    function fillAccount() {
+        var u = S.user; if (!u) return;
+        var ids = (u.providerData || []).map(function (p) { return p.providerId; });
+        var show = function (how) {
+            $('acctHow').textContent = how;
+            $('acctName').textContent = u.displayName || (u.email || '').split('@')[0] || 'You';
+            $('acctEmail').textContent = u.email || '';
+            $('acctPic').src = u.photoURL || '../icons/icon-192.png';
+            $('avatarBtn').title = 'Signed in with ' + how + (u.email ? ' as ' + u.email : '');
+        };
+        if (ids.indexOf('google.com') >= 0) return show('Google');
+        if (ids.indexOf('password') >= 0) return show('Email');
+        show('Discord');
+        u.getIdTokenResult().then(function (r) { show(r.claims && r.claims.discord_id ? 'Discord' : 'Email'); }).catch(function () {});
+    }
+
     // ------------------------------------------------------------------ households
     function memberDoc(code) {
         var u = S.user;
@@ -762,16 +836,16 @@
     async function saveUserHouse(hid, name) {
         var upd = { households: {}, current: hid };
         upd.households[hid] = name;
-        await db.collection('inventory_users').doc(S.user.uid).set(upd, { merge: true });
+        await col('users').doc(S.user.uid).set(upd, { merge: true });
         S.userDoc.households = S.userDoc.households || {};
         S.userDoc.households[hid] = name; S.userDoc.current = hid;
     }
     async function createHouse(name) {
         name = (name || '').trim() || 'Our House';
-        var ref = db.collection('households').doc(), code = makeCode();
+        var ref = col('households').doc(), code = makeCode();
         await ref.set({ name: name, ownerUid: S.user.uid, inviteCode: code, locations: DEFAULT_LOCS, createdAt: TS() });
         await ref.collection('members').doc(S.user.uid).set(memberDoc(''));
-        await db.collection('household_invites').doc(code).set({ householdId: ref.id, householdName: name, createdBy: S.user.uid });
+        await col('invites').doc(code).set({ householdId: ref.id, householdName: name, createdBy: S.user.uid });
         await saveUserHouse(ref.id, name);
         ev('inventory_household_created');
         openHouse(ref.id);
@@ -781,7 +855,7 @@
         code = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
         if (!code) { toast('Enter the invite code'); return false; }
         try {
-            var inv = await db.collection('household_invites').doc(code).get();
+            var inv = await col('invites').doc(code).get();
             if (!inv.exists) { toast("That invite code wasn't found. Ask for a new one.", 4500); return false; }
             var d = inv.data();
             if (S.userDoc.households && S.userDoc.households[d.householdId]) { openHouse(d.householdId); return true; }
@@ -800,10 +874,17 @@
         } catch (e) { fail(e); return false; }
     }
     function stopHouse() { S.unsubs.forEach(function (f) { try { f(); } catch (e) {} }); S.unsubs = []; S.items = []; S.members = []; S.log = []; S.house = null; }
+    function preloadScanner() {
+        if (preloadScanner.done) return; preloadScanner.done = true;
+        if ('BarcodeDetector' in window) return;          // Android has a built-in reader
+        var go = function () { loadWasm().catch(function () { preloadScanner.done = false; }); };
+        if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 3000 }); else setTimeout(go, 1500);
+    }
     function openHouse(hid) {
+        preloadScanner();
         stopHouse();
         S.hid = hid;
-        if (S.userDoc.current !== hid) db.collection('inventory_users').doc(S.user.uid).set({ current: hid }, { merge: true }).catch(function () {});
+        if (S.userDoc.current !== hid) col('users').doc(S.user.uid).set({ current: hid }, { merge: true }).catch(function () {});
         S.userDoc.current = hid;
         showScreen('app');
         $('houseBtn').hidden = false;
@@ -836,7 +917,7 @@
         if (S.userDoc.households) delete S.userDoc.households[hid];
         var upd = { current: firebase.firestore.FieldValue.delete() };
         upd['households.' + hid] = firebase.firestore.FieldValue.delete();
-        await db.collection('inventory_users').doc(S.user.uid).update(upd).catch(function () {});
+        await col('users').doc(S.user.uid).update(upd).catch(function () {});
         S.userDoc.current = null;
         var next = Object.keys(S.userDoc.households || {})[0];
         if (next) openHouse(next); else { $('houseBtn').hidden = true; showScreen('setup'); }
@@ -868,7 +949,7 @@
     $('hNameSave').onclick = function () {
         var n = $('hName').value.trim(); if (!n) return;
         houseRef().update({ name: n }).then(function () {
-            db.collection('household_invites').doc(S.house.inviteCode).set({ householdId: S.hid, householdName: n, createdBy: S.user.uid }).catch(function () {});
+            col('invites').doc(S.house.inviteCode).set({ householdId: S.hid, householdName: n, createdBy: S.user.uid }).catch(function () {});
             toast('Saved');
         }).catch(fail);
     };
@@ -896,8 +977,8 @@
         var old = S.house.inviteCode, code = makeCode();
         try {
             await houseRef().update({ inviteCode: code });
-            await db.collection('household_invites').doc(code).set({ householdId: S.hid, householdName: S.house.name, createdBy: S.user.uid });
-            await db.collection('household_invites').doc(old).delete().catch(function () {});
+            await col('invites').doc(code).set({ householdId: S.hid, householdName: S.house.name, createdBy: S.user.uid });
+            await col('invites').doc(old).delete().catch(function () {});
             toast('New code: ' + code);
         } catch (err) { fail(err); }
         openSheet('house');
@@ -917,14 +998,46 @@
         if (v !== S.hid) openHouse(v);
     };
     $('hLeave').onclick = async function () {
-        var ok = await choice('Leave ' + (S.house ? S.house.name : 'this household') + '?', '<p>You can rejoin later with an invite code.</p>',
-            [{ label: 'Leave household', value: true, cls: 'danger' }, { label: 'Cancel', value: false, cls: 'ghost' }]);
-        if (!ok) return;
-        var hid = S.hid;
+        var hid = S.hid, hn = S.house ? S.house.name : 'this household';
+        var others = S.members.filter(function (m) { return m.uid !== me().uid; });
+        var owner = S.house && S.house.ownerUid === me().uid;
+        if (!others.length) {
+            // last one in the household
+            var r = await choice('Leave ' + hn + '?', '<p>You are the only one in this household.</p><p><b>Keep it</b>: the list stays saved and you can come back with the invite code <b>' + esc(S.house.inviteCode) + '</b>.<br><b>Delete it</b>: the household, its whole list and its history are erased for good.</p>',
+                [{ label: 'Leave, keep the list', value: 'keep', cls: 'gold' }, { label: '🗑️ Delete the household for good', value: 'delete', cls: 'danger' }, { label: 'Cancel', value: null, cls: 'ghost' }]);
+            if (!r) return;
+            if (r === 'delete') {
+                var sure = await choice('Delete ' + hn + ' for good?', '<p>This erases ' + S.items.length + ' items and all history. It can\'t be undone.</p>',
+                    [{ label: 'Yes, delete everything', value: true, cls: 'danger' }, { label: 'Cancel', value: false, cls: 'ghost' }]);
+                if (!sure) return;
+                await deleteHouse(hid).catch(fail);
+                return lostHouse(hid);
+            }
+        } else {
+            var r2 = await choice('Leave ' + hn + '?', '<p>You stop seeing this household\'s list. <b>Everyone else keeps it</b>, nothing is erased.' +
+                (owner ? ' Since you started it, <b>' + esc(others[0].name) + '</b> takes over as the one in charge.' : '') +
+                '</p><p>You can come back any time with the invite code.</p>',
+                [{ label: 'Leave household', value: true, cls: 'danger' }, { label: 'Cancel', value: false, cls: 'ghost' }]);
+            if (!r2) return;
+            if (owner) await houseRef(hid).update({ ownerUid: others[0].uid }).catch(fail);
+        }
         logIt('left', { name: '' });
         await houseRef(hid).collection('members').doc(S.user.uid).delete().catch(fail);
         lostHouse(hid);
+        toast('You left ' + hn);
     };
+    async function deleteHouse(hid) {
+        var ref = houseRef(hid);
+        for (var sub of ['items', 'log']) {
+            var qs = await ref.collection(sub).get(), b = db.batch(), n = 0;
+            for (var j = 0; j < qs.docs.length; j++) { b.delete(qs.docs[j].ref); if (++n === 400) { await b.commit(); b = db.batch(); n = 0; } }
+            if (n) await b.commit();
+        }
+        if (S.house && S.house.inviteCode) await col('invites').doc(S.house.inviteCode).delete().catch(function () {});
+        await ref.collection('members').doc(S.user.uid).delete();
+        await ref.delete();
+        ev('inventory_household_deleted');
+    }
     $('hSignout').onclick = function () { closeSheet('house'); auth.signOut(); };
 
     // ------------------------------------------------------------------ list rendering
@@ -1261,8 +1374,8 @@
         // remember the barcode's label for next time (shared)
         if (editing.source !== 'saved' || (it && it.name !== name) || data.caseBarcode) {
             var lab = { name: name, brand: data.brand, category: data.category, image: data.image, savedAt: TS() };
-            if (data.barcode) db.collection('inventory_barcodes').doc(data.barcode).set(lab, { merge: true }).catch(function () {});
-            if (data.caseBarcode) db.collection('inventory_barcodes').doc(data.caseBarcode).set(Object.assign({}, lab, { caseSize: data.caseSize, itemBarcode: data.barcode || '' }), { merge: true }).catch(function () {});
+            if (data.barcode) col('barcodes').doc(data.barcode).set(lab, { merge: true }).catch(function () {});
+            if (data.caseBarcode) col('barcodes').doc(data.caseBarcode).set(Object.assign({}, lab, { caseSize: data.caseSize, itemBarcode: data.barcode || '' }), { merge: true }).catch(function () {});
         }
         toast((it && !editing.restock ? 'Saved ' : 'Added ') + name);
         closeSheet('item', true);
@@ -1282,37 +1395,64 @@
         if (/dairy|milk|cheese|yogurt|egg|meat|fresh|fruit|vegetable/.test(t)) return 'Fresh food';
         return fallback || 'Food';
     }
+    function firstHit(promises, ms) {
+        return new Promise(function (resolve) {
+            var left = promises.length, done = false;
+            var t = setTimeout(function () { if (!done) { done = true; resolve(null); } }, ms);
+            promises.forEach(function (p) {
+                p.then(function (v) { if (v && !done) { done = true; clearTimeout(t); resolve(v); } })
+                 .catch(function () {})
+                 .then(function () { if (--left === 0 && !done) { done = true; clearTimeout(t); resolve(null); } });
+            });
+        });
+    }
+    function offLookup(host, fallbackCat, v, code) {
+        return fetch('https://' + host + '/api/v2/product/' + v + '.json?fields=product_name,product_name_en,generic_name,brands,image_front_small_url,image_small_url,categories_tags,quantity')
+            .then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+                if (!j || j.status !== 1 || !j.product) return null;
+                var pr = j.product, nm = pr.product_name_en || pr.product_name || pr.generic_name || '';
+                if (!nm) return null;
+                if (pr.quantity && nm.indexOf(pr.quantity) < 0) nm += ' (' + pr.quantity + ')';
+                return { name: nm, brand: (pr.brands || '').split(',')[0].trim(), category: catFromTags(pr.categories_tags, fallbackCat),
+                         image: pr.image_front_small_url || pr.image_small_url || '', barcode: code, source: 'found' };
+            });
+    }
+    // UPCitemdb free lookup: strong on household goods (trash bags, cleaners, paper towels)
+    function upcdbLookup(code) {
+        if (!/^\d{8,14}$/.test(code)) return Promise.resolve(null);
+        return fetch('https://api.upcitemdb.com/prod/trial/lookup?upc=' + code)
+            .then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+                var it = j && j.items && j.items[0];
+                if (!it || !it.title) return null;
+                var cat = String(it.category || '');
+                var c = /trash|bag|clean|laundry|detergent|household/i.test(cat + ' ' + it.title) ? 'Cleaning'
+                    : /paper|towel|tissue|toilet/i.test(cat + ' ' + it.title) ? 'Paper goods'
+                    : /health|beauty|personal|shampoo|soap|tooth/i.test(cat) ? 'Personal care'
+                    : /pet/i.test(cat) ? 'Pet' : /beverage|drink/i.test(cat) ? 'Drinks' : /food|grocery|snack/i.test(cat) ? 'Food' : 'Other';
+                return { name: it.title.replace(/\s+/g, ' ').trim(), brand: it.brand || '', category: c,
+                         image: (it.images || []).filter(function (u) { return /^https:/.test(u); })[0] || '', barcode: code, source: 'found' };
+            });
+    }
     async function lookup(code) {
         // 1) your household already has it
         var mine = S.items.filter(function (i) { return codeMatch(i, code); })[0];
         if (mine) return { name: mine.name, brand: mine.brand, category: mine.category, image: mine.image, unit: mine.unit, location: mine.location, barcode: code, source: 'saved' };
         // 2) someone labeled it before
         try {
-            var s = await db.collection('inventory_barcodes').doc(code).get();
+            var s = await col('barcodes').doc(code).get();
             if (s.exists && s.data().name) {
                 var d = s.data();
                 return d.caseSize ? { name: d.name, brand: d.brand, category: d.category, image: d.image, caseBarcode: code, caseSize: d.caseSize, qty: d.caseSize, barcode: d.itemBarcode || '', source: 'saved' }
                                   : { name: d.name, brand: d.brand, category: d.category, image: d.image, barcode: code, source: 'saved' };
             }
         } catch (e) {}
-        // 3) free public product lists
+        // 3) free public product lists, all asked at the same time; first match wins
         var variants = [code]; if (/^\d{12}$/.test(code)) variants.push('0' + code);
-        for (var i = 0; i < OFF.length; i++) {
-            for (var v = 0; v < variants.length; v++) {
-                try {
-                    var r = await fetch('https://' + OFF[i][0] + '/api/v2/product/' + variants[v] + '.json?fields=product_name,product_name_en,generic_name,brands,image_front_small_url,image_small_url,categories_tags,quantity');
-                    if (!r.ok) continue;
-                    var j = await r.json();
-                    if (j && j.status === 1 && j.product) {
-                        var pr = j.product, nm = pr.product_name_en || pr.product_name || pr.generic_name || '';
-                        if (!nm) continue;
-                        if (pr.quantity && nm.indexOf(pr.quantity) < 0) nm += ' (' + pr.quantity + ')';
-                        return { name: nm, brand: (pr.brands || '').split(',')[0].trim(), category: catFromTags(pr.categories_tags, OFF[i][1]),
-                                 image: pr.image_front_small_url || pr.image_small_url || '', barcode: code, source: 'found' };
-                    }
-                } catch (e) { /* offline or blocked: fall through */ }
-            }
-        }
+        var jobs = [];
+        OFF.forEach(function (o) { variants.forEach(function (v) { jobs.push(offLookup(o[0], o[1], v, code)); }); });
+        jobs.push(upcdbLookup(code));
+        var hit = await firstHit(jobs, 7000);
+        if (hit) return hit;
         return { name: '', barcode: code, source: 'new', maybeCase: /^\d{14}$/.test(code) };
     }
 
@@ -1559,8 +1699,11 @@
     document.querySelectorAll('[data-mode]').forEach(function (b) { b.onclick = function () { setMode(b.dataset.mode); }; });
     document.querySelectorAll('[data-scan]').forEach(function (b) { b.onclick = function () { openScanner(b.dataset.scan); }; });
 
+    window.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('scanSheet').hidden) { S.scanLoop = false; closeSheet('scan'); } });
+    window.addEventListener('popstate', function () { if (!$('scanSheet').hidden) { S.scanLoop = false; closeSheet('scan'); } });
     function openScanner(mode) {
         if (!S.hid) return;
+        try { if (!history.state || !history.state.scan) history.pushState({ scan: 1 }, ''); } catch (e) {}
         if (mode) setMode(mode);
         S.scanLoop = true;
         $('manualCode').value = '';
@@ -1586,7 +1729,7 @@
     }
     var WFMT = ['EAN-13', 'EAN-8', 'UPC-A', 'UPC-E', 'Code128', 'Code39', 'ITF', 'QRCode'];
     // middle-of-frame crops [width share, height share, longest side in px]; tried in turn, one per tick
-    var WCROPS = [[.6, .4, 600], [.6, .4, 900], [.85, .6, 720], [.45, .3, 520], [1, 1, 900]];
+    var WCROPS = [[.6, .4, 640], [.85, .6, 720], [.6, .4, 900], [.45, .3, 520]];
     var zcan = document.createElement('canvas'), zctx = zcan.getContext('2d', { willReadFrequently: true });
     async function decodeFrame(src, k) {
         var c = WCROPS[k % WCROPS.length];
@@ -1602,7 +1745,7 @@
 
     async function startCamera() {
         var video = $('scanVideo'), msg = $('scanMsg');
-        stopCamera(); cam.on = true;
+        stopCamera(); cam.on = true; cam.paused = false;
         msg.textContent = 'Starting camera…';
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { msg.textContent = 'This browser can’t use the camera here. Type the barcode numbers below.'; return; }
         try {
@@ -1614,7 +1757,7 @@
                 video.srcObject = cam.stream; await video.play().catch(function () {});
                 var det = new BarcodeDetector({ formats: fmts });
                 cam.timer = setInterval(async function () {
-                    if (cam.busy || video.readyState < 2) return;
+                    if (cam.busy || cam.paused || video.readyState < 2) return;
                     cam.busy = true;
                     try { var r = await det.detect(video); if (r && r.length) gotCode(r[0].rawValue); } catch (e) {}
                     cam.busy = false;
@@ -1629,11 +1772,11 @@
                       if (cp.focusMode && cp.focusMode.indexOf('continuous') >= 0) tk.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(function () {}); } catch (e) {}
                 var turn = 0;
                 cam.timer = setInterval(async function () {
-                    if (cam.busy || video.readyState < 2 || !video.videoWidth) return;
+                    if (cam.busy || cam.paused || video.readyState < 2 || !video.videoWidth) return;
                     cam.busy = true;
                     try { var t = await decodeFrame(video, turn++); if (t) gotCode(t); } catch (e) {}
                     cam.busy = false;
-                }, 70);
+                }, 30);
                 if (!cam.on) return stopCamera();
             }
             showTorch(false);
@@ -1685,7 +1828,7 @@
     }
     function gotCode(code) {
         code = String(code || '').trim();
-        if (!code || !cam.on) return;
+        if (!code || !cam.on || cam.paused) return;
         var now = Date.now();
         if (code === cam.last && now - cam.lastAt < 2500) return;
         cam.last = code; cam.lastAt = now;
@@ -1697,10 +1840,14 @@
     function runCode(code) {
         code = normCode(code);
         var mode = S.scanMode;
-        stopCamera();
-        $('scanSheet').hidden = true;          // keep the loop going
+        cam.paused = true;                      // camera keeps running, reading pauses
+        $('scanSheet').hidden = true;
         handleCode(code, mode).catch(fail).then(function () {
-            if (S.scanLoop) { $('scanSheet').hidden = false; startCamera(); }
+            if (S.scanLoop) {
+                $('scanSheet').hidden = false;
+                if (cam.stream && cam.stream.active) { cam.paused = false; $('scanVideo').play().catch(function () {}); if (torchWanted()) applyTorch(true, true); }
+                else startCamera();
+            } else stopCamera();
         });
     }
     $('manualGo').onclick = function () {
