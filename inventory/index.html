@@ -1690,7 +1690,7 @@
 
     // ------------------------------------------------------------------ camera scanner
     var cam = { stream: null, timer: null, reader: null, busy: false, last: '', lastAt: 0, on: false };
-    var WANT = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf', 'qr_code'];
+    var WANT = ['ean_13', 'ean_8', 'upc_a', 'upc_e'];   // product barcodes only
     function setMode(m) {
         S.scanMode = m;
         document.querySelectorAll('[data-mode]').forEach(function (b) { b.classList.toggle('on', b.dataset.mode === m); });
@@ -1727,7 +1727,7 @@
         });
         return wasmReady;
     }
-    var WFMT = ['EAN-13', 'EAN-8', 'UPC-A', 'UPC-E', 'Code128', 'Code39', 'ITF', 'QRCode'];
+    var WFMT = ['EAN-13', 'EAN-8', 'UPC-A', 'UPC-E'];
     // middle-of-frame crops [width share, height share, longest side in px]; tried in turn, one per tick
     var WCROPS = [[.6, .4, 640], [.85, .6, 720], [.6, .4, 900], [.45, .3, 520]];
     var zcan = document.createElement('canvas'), zctx = zcan.getContext('2d', { willReadFrequently: true });
@@ -1745,7 +1745,7 @@
 
     async function startCamera() {
         var video = $('scanVideo'), msg = $('scanMsg');
-        stopCamera(); cam.on = true; cam.paused = false;
+        stopCamera(); cam.on = true; cam.paused = false; cam.resumedAt = Date.now(); cam.cand = ''; startHint();
         msg.textContent = 'Starting camera…';
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { msg.textContent = 'This browser can’t use the camera here. Type the barcode numbers below.'; return; }
         try {
@@ -1811,7 +1811,15 @@
         ev('inventory_torch', { on: on });
     };
 
+    function startHint() {
+        clearTimeout(cam.hintT);
+        cam.hintT = setTimeout(function () {
+            if (cam.on && !cam.paused && !$('scanSheet').hidden)
+                $('scanMsg').textContent = 'No product barcode found yet. Only store products have one (business cards, mail and receipts don\'t). Use ✏️ Add for those.';
+        }, 9000);
+    }
     function stopCamera() {
+        clearTimeout(cam.hintT);
         cam.on = false;
         clearInterval(cam.timer); cam.timer = null;
         if (cam.reader) { try { cam.reader.reset(); } catch (e) {} cam.reader = null; }
@@ -1830,8 +1838,10 @@
         code = String(code || '').trim();
         if (!code || !cam.on || cam.paused) return;
         var now = Date.now();
-        if (code === cam.last && now - cam.lastAt < 2500) return;
-        cam.last = code; cam.lastAt = now;
+        if (now - (cam.resumedAt || 0) < 900) return;                                  // let the camera show a fresh picture first
+        if (code === cam.last && now - Math.max(cam.lastAt, cam.resumedAt || 0) < 4000) return;   // same item again right away = old picture
+        if (cam.cand !== code || now - cam.candAt > 1500) { cam.cand = code; cam.candAt = now; return; }   // needs a 2nd matching read
+        cam.cand = ''; cam.last = code; cam.lastAt = now;
         beep();
         runCode(code);
     }
@@ -1845,7 +1855,7 @@
         handleCode(code, mode).catch(fail).then(function () {
             if (S.scanLoop) {
                 $('scanSheet').hidden = false;
-                if (cam.stream && cam.stream.active) { cam.paused = false; $('scanVideo').play().catch(function () {}); if (torchWanted()) applyTorch(true, true); }
+                if (cam.stream && cam.stream.active) { startHint(); cam.resumedAt = Date.now(); cam.cand = ''; cam.paused = false; $('scanVideo').play().catch(function () {}); if (torchWanted()) applyTorch(true, true); }
                 else startCamera();
             } else stopCamera();
         });
