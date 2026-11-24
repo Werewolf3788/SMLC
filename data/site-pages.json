@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-24T01:15:54+00:00",
+ "generated": "2026-11-24T01:21:20+00:00",
  "repo": "Werewolf3788/SMLC",
  "branch": "Claude-Test",
  "pages": [
@@ -77,8 +77,8 @@
    "path": "inventory/index.html",
    "url": "https://werewolf3788.github.io/SMLC/inventory/",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/inventory/index.html",
-   "updated": "2026-11-23T20:15:44-05:00",
-   "message": "Inventory: store each item is from (store brands auto-detected), saved store page link, Walmart/Kroger lookup by barcode; ranch + salsa Walm"
+   "updated": "2026-11-23T20:21:13-05:00",
+   "message": "Inventory: live trusted products (changes apply to everyone right away), 'new version ready' bar instead of hard refresh"
   },
   {
    "path": "louisville.html",
