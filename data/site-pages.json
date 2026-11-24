@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-24T00:55:55+00:00",
+ "generated": "2026-11-24T01:00:01+00:00",
  "repo": "Werewolf3788/SMLC",
  "branch": "Claude-Test",
  "pages": [
@@ -77,8 +77,8 @@
    "path": "inventory/index.html",
    "url": "https://werewolf3788.github.io/SMLC/inventory/",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/inventory/index.html",
-   "updated": "2026-11-23T19:55:47-05:00",
-   "message": "Inventory: one 'Shopping list' name, 'In the house N days' + 'Opened N days ago', 'Good for N days' (after getting/opening) drives the goes-"
+   "updated": "2026-11-23T19:59:52-05:00",
+   "message": "Inventory: trusted list wins over the household's own entry; offer to fix an existing item's name/picture from it"
   },
   {
    "path": "louisville.html",
