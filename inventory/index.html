@@ -367,8 +367,18 @@
 </section>
 
 <!-- ================= No household yet ================= -->
+<section id="problem" class="screen" hidden>
+    <div class="center card">
+        <div style="font-size:2.6rem">⚠️</div>
+        <h1 style="font-size:1.3rem">Can't open your household right now</h1>
+        <p id="problemText"></p>
+        <div class="btnrow"><button class="gold" id="problemRetry">Try again</button><button class="ghost" id="problemOut">Sign out</button></div>
+    </div>
+</section>
+
 <section id="setup" class="screen" hidden>
     <div class="center" style="max-width:820px">
+        <p class="hint" id="setupWho"></p>
         <h1>Set up your household</h1>
         <p>Start a new household list, or join the one someone in your house already made.</p>
         <div class="two">
@@ -557,6 +567,7 @@
     var db = fbApp.firestore();
     try { db.enablePersistence({ synchronizeTabs: true }).catch(function () {}); } catch (e) {}
     var auth = fbApp.auth();
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function () {});   // stay signed in on this device
     var TS = function () { return firebase.firestore.FieldValue.serverTimestamp(); };
     // Everything for this app lives together in Firestore under  home_inventory / data /
     //   households/{hid} (+ members, items, log) · invites/{code} · users/{uid} · barcodes/{code}
@@ -609,7 +620,7 @@
         if (!n) { toast('Nothing to undo'); return; }
         try { await b.commit(); logIt('undo', { name: '' }); toast('Undone ↩'); } catch (e) { fail(e); }
     }
-    function showScreen(id) { ['signin', 'setup', 'app'].forEach(function (s) { $(s).hidden = s !== id; }); $('fab').hidden = id !== 'app'; $('about').hidden = id !== 'signin'; }
+    function showScreen(id) { ['signin', 'setup', 'app', 'problem'].forEach(function (s) { $(s).hidden = s !== id; }); $('fab').hidden = id !== 'app'; $('about').hidden = id !== 'signin'; }
     function me() { var u = S.user || {}; return { uid: u.uid, name: u.displayName || (u.email || 'Someone').split('@')[0] }; }
     function pad(n) { return (n < 10 ? '0' : '') + n; }
     function dateStr(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
@@ -709,8 +720,6 @@
     // ------------------------------------------------------------------ auth
     $('signinBtn').onclick = function () {
         var p = new firebase.auth.GoogleAuthProvider();
-        var standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-        if (standalone) return auth.signInWithRedirect(p);
         auth.signInWithPopup(p).catch(function (e) {
             if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment')) return auth.signInWithRedirect(p);
             if (e && e.code !== 'auth/popup-closed-by-user') toast('Sign-in failed: ' + e.message, 5000);
@@ -785,9 +794,21 @@
         if (!u) { $('houseBtn').hidden = $('avatarBtn').hidden = true; $('subtitle').textContent = 'Support My Local Community'; showScreen('signin'); return; }
         $('avatarBtn').hidden = false;
         $('avatar').src = u.photoURL || '../icons/icon-192.png';
-        var snap = await col('users').doc(u.uid).get().catch(function () { return null; });
-        S.userDoc = (snap && snap.exists) ? snap.data() : await moveOldData(u).catch(function (e) { console.warn('[move]', e); return {}; });
         fillAccount();
+        $('setupWho').innerHTML = 'Signed in as <b>' + esc(u.email || u.displayName || 'you') + '</b> · <a href="#" id="setupOut">not you? Sign out</a>';
+        $('setupOut').onclick = function (e) { e.preventDefault(); auth.signOut(); };
+        var snap;
+        try { snap = await col('users').doc(u.uid).get(); }
+        catch (e) {
+            // offline: use what this phone remembers
+            snap = await col('users').doc(u.uid).get({ source: 'cache' }).catch(function () { return null; });
+            if (!snap) return showProblem(e);
+        }
+        if (snap.exists) S.userDoc = snap.data();
+        else {
+            try { S.userDoc = await moveOldData(u); }
+            catch (e) { return showProblem(e); }
+        }
         var join = params.get('join');
         if (join) {
             params.delete('join');
@@ -839,6 +860,17 @@
         await col('users').doc(u.uid).set(nu);
         return nu;
     }
+
+    function showProblem(e) {
+        var code = e && e.code || '';
+        $('problemText').innerHTML = code === 'permission-denied'
+            ? 'The database rules for Home Inventory need to be updated (Firebase → <b>Firestore Database</b> → Rules). <b>Your list is safe</b>, it just can\'t be opened until then.'
+            : 'No connection, or the database didn\'t answer. <b>Your list is safe.</b> Check your signal and try again.';
+        $('houseBtn').hidden = true;
+        showScreen('problem');
+    }
+    $('problemRetry').onclick = function () { location.reload(); };
+    $('problemOut').onclick = function () { auth.signOut(); };
 
     // ---- who is signed in (and with what)
     function fillAccount() {
