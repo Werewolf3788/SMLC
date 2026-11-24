@@ -232,6 +232,8 @@
         #scanMsg { text-align: center; margin: 8px 0; font-weight: 600; }
         .manual { display: flex; gap: 8px; margin-top: 8px; }
         .manual input { flex: 1; }
+        .photoRow { display: flex; gap: 8px; margin: 2px 0 6px; flex-wrap: wrap; }
+        .photoBtn { display: inline-block; margin: 0; padding: .55em 1em; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; font-weight: 700; }
         .checkline { display: flex; gap: 8px; align-items: center; font-weight: 600; margin: .8em 0 .2em; }
         .checkline input { width: 22px; height: 22px; flex: none; }
         .codebox { font: 800 2rem/1 ui-monospace, Menlo, monospace; letter-spacing: .2em; text-align: center; background: var(--soft); border-radius: 12px; padding: 16px; margin: 10px 0; user-select: all; }
@@ -473,6 +475,10 @@
         <h3><span id="itemTitle">Add item</span><button class="x" data-close="item" aria-label="Close">✕</button></h3>
         <div class="prodhead" id="itemHead"></div>
         <form id="itemForm" autocomplete="off">
+            <div class="photoRow">
+                <label class="ghost photoBtn">📷 Take / pick a photo<input type="file" id="fPhoto" accept="image/*" capture="environment" hidden></label>
+                <button type="button" class="ghost" id="fPhotoClear" hidden>Remove photo</button>
+            </div>
             <label for="fName">What is it?</label>
             <input id="fName" required maxlength="120" placeholder="e.g. Peanut butter">
             <div class="r2">
@@ -533,6 +539,7 @@
             <input id="fNotes" maxlength="200" placeholder="optional">
             <label for="fLow">Put it on the shopping list when it gets down to</label>
             <div style="display:flex;gap:8px;align-items:center"><input id="fLow" type="number" min="0" step="1" value="0" style="width:6em"><span class="hint">0 = only when it's all gone</span></div>
+            <label class="checkline" id="fTrustRow" hidden><input type="checkbox" id="fTrust"> <span>⭐ Save as a <b>trusted product</b> (name, picture and details become the correct info for everyone who scans this barcode)</span></label>
             <div class="btnrow"><button type="submit" class="gold" id="itemSave">Save</button></div>
             <div class="btnrow" id="itemExtra"></div>
         </form>
@@ -1043,6 +1050,7 @@
     }
     function openHouse(hid) {
         preloadScanner();
+        setTimeout(function () { syncTrusted().catch(function () {}); }, 2500);
         stopHouse();
         S.hid = hid;
         if (S.userDoc.current !== hid) col('users').doc(S.user.uid).set({ current: hid }, { merge: true }).catch(function () {});
@@ -1462,6 +1470,8 @@
                     : '') + (p.source === 'found' || p.source === 'saved' ? ' <a href="#" id="notRight">Not right? Clear it</a>' : '') + '</div>';
         }
         $('itemHead').innerHTML = head;
+        $('fTrustRow').hidden = !isAdmin(); $('fTrust').checked = false;
+        $('fPhotoClear').hidden = !editing.image; $('fPhoto').value = '';
         if ($('notRight')) $('notRight').onclick = function (e) {
             e.preventDefault();
             ['fName', 'fBrand', 'fUnit'].forEach(function (k) { $(k).value = ''; });
@@ -1497,6 +1507,19 @@
     }
     $('fCaseSize').oninput = $('fMissing').oninput = caseQtyFromForm;
     $('fOpened').onchange = function () { $('openedBox').hidden = !this.checked; if (this.checked) $('openedBox').style.display = 'flex'; caseQtyFromForm(); };
+    $('fPhoto').onchange = async function () {
+        var f = this.files && this.files[0]; if (!f) return;
+        var url = URL.createObjectURL(f);
+        var data = await imgToData(url, 400, 0.82);
+        URL.revokeObjectURL(url);
+        if (!data) { toast("Couldn't read that picture"); return; }
+        editing.image = data; editing.newPhoto = true;
+        var h = $('itemHead'), im = h.querySelector('img');
+        if (!im) { im = document.createElement('img'); im.alt = ''; h.insertBefore(im, h.firstChild); }
+        im.src = data; $('fPhotoClear').hidden = false;
+        if (isAdmin()) $('fTrust').checked = true;
+    };
+    $('fPhotoClear').onclick = function () { editing.image = ''; var im = $('itemHead').querySelector('img'); if (im) im.remove(); this.hidden = true; };
     function goesBadHint() {
         var keep = parseInt($('fKeep').value, 10) || 0;
         var probe = { expires: $('fExp').value, keepDays: keep, openedOn: $('fOpened').value, gotAt: $('fGot').value ? { toDate: function () { return new Date($('fGot').value + 'T12:00:00'); } } : null };
@@ -1550,6 +1573,7 @@
         if (editing.item && !editing.restock && gotPick === editing.gotWas) gotTs = 'same';
         data.barcodes = allCodes({ barcode: data.barcode, caseBarcode: data.caseBarcode, extraCodes: (editing.item && editing.item.extraCodes) || [] });
         var it = editing.item, p;
+        if (editing.newPhoto && /^data:/.test(data.image)) { /* already small (400px) */ }
         if (gotTs === 'same') { /* unchanged */ }
         else if (gotTs) data.gotAt = gotTs;      // a day you picked
         else data.gotAt = TS();                  // today
@@ -1579,7 +1603,12 @@
         }
         p.catch(fail);
         // remember the barcode's label for next time (shared)
-        if (editing.source !== 'saved' || name !== editing.origName || data.caseBarcode) {
+        if (isAdmin() && $('fTrust').checked) {
+            var tcode = data.caseBarcode || data.barcode;
+            if (!tcode) toast('Add the barcode first, then save it as trusted', 4000);
+            else saveTrusted(tcode, { name: name, brand: data.brand, category: data.category, place: data.location, unit: data.unit,
+                caseSize: data.caseBarcode ? data.caseSize : 0, image: editing.image }).then(function () { toast('⭐ Saved as a trusted product', 3000); }).catch(fail);
+        } else if (editing.source !== 'saved' || name !== editing.origName || data.caseBarcode) {
             var lab = { name: name, brand: data.brand, category: data.category, image: data.image, savedAt: TS() };
             if (data.barcode) col('barcodes').doc(labelId(data.barcode)).set(Object.assign({ barcode: data.barcode }, lab), { merge: true }).catch(function () {});
             if (data.caseBarcode) col('barcodes').doc(labelId(data.caseBarcode)).set(Object.assign({ barcode: data.caseBarcode }, lab, { caseSize: data.caseSize, itemBarcode: data.barcode || '' }), { merge: true }).catch(function () {});
@@ -1648,20 +1677,78 @@
         if (!TRUSTED) TRUSTED = fetch('products.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; });
         return TRUSTED;
     }
+    // The trusted list lives in Firestore: home_inventory/data/barcodes/{barcode} with trusted: true
+    // (name, brand, size, type, place, how many inside, and the picture itself as imageData).
+    // Only the owner account can write trusted entries (see firestore.rules). products.json is a backup
+    // that the owner's app copies into Firestore automatically.
+    var ADMIN_EMAIL = 'raykevin71888@gmail.com';
+    function isAdmin() { return !!(S.user && (S.user.email || '').toLowerCase() === ADMIN_EMAIL); }
+    function fromTrustedDoc(d, code) {
+        var info = { name: d.name, brand: d.brand || '', category: d.category || 'Other', location: d.place || '', unit: d.unit || '',
+                     image: d.imageThumb || d.image || '', barcode: code, source: 'saved', from: 'the SMLC trusted list' };
+        if (d.caseSize > 1) { info.caseBarcode = code; info.barcode = ''; info.caseSize = d.caseSize; info.qty = d.caseSize; }
+        return info;
+    }
+    function fromJson(t, code) {
+        var nm = t.name + (t.size && t.name.indexOf(t.size) < 0 ? ' (' + t.size + ')' : '');
+        return fromTrustedDoc({ name: nm, brand: t.brand, category: t.category, place: t.place, unit: t.unit, image: t.image, caseSize: t.each || 0 }, code);
+    }
     async function trustedLookup(code) {
-        var list = await loadTrusted();
-        var keys = [code, '0' + code, code.replace(/^0/, '')];
+        var keys = [code, '0' + code, code.replace(/^0/, '')].filter(function (k, i, a) { return k && a.indexOf(k) === i; });
         for (var i = 0; i < keys.length; i++) {
-            var t = list[keys[i]];
-            if (t && t.name) {
-                var nm = t.name + (t.size && t.name.indexOf(t.size) < 0 ? ' (' + t.size + ')' : '');
-                var info = { name: nm, brand: t.brand || '', category: t.category || 'Other', location: t.place || '', unit: t.unit || '', image: t.image || '',
-                             barcode: code, source: 'saved', from: 'the SMLC trusted list' };
-                if (t.each > 1) { info.caseBarcode = code; info.barcode = ''; info.caseSize = t.each; info.qty = t.each; }
-                return info;
-            }
+            try {
+                var snap = await col('barcodes').doc(labelId(keys[i])).get();
+                if (snap.exists && snap.data().trusted && snap.data().name) return fromTrustedDoc(snap.data(), code);
+            } catch (e) {}
         }
+        var list = await loadTrusted();
+        for (var j = 0; j < keys.length; j++) { var t = list[keys[j]]; if (t && t.name) return fromJson(t, code); }
         return null;
+    }
+    // shrink a picture to a JPEG data URL (stored inside the Firestore record)
+    function imgToData(src, max, q) {
+        return new Promise(function (resolve) {
+            if (!src) return resolve('');
+            if (/^data:/.test(src) && !max) return resolve(src);
+            var im = new Image(); im.crossOrigin = 'anonymous';
+            im.onload = function () {
+                try {
+                    var sc = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight));
+                    var c = document.createElement('canvas'); c.width = Math.round(im.naturalWidth * sc); c.height = Math.round(im.naturalHeight * sc);
+                    var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height);
+                    resolve(c.toDataURL('image/jpeg', q || 0.82));
+                } catch (e) { resolve(''); }   // picture from a site that blocks copying
+            };
+            im.onerror = function () { resolve(''); };
+            im.src = src;
+        });
+    }
+    async function saveTrusted(code, info) {
+        if (!isAdmin() || !code) return false;
+        var full = await imgToData(info.image, 400, 0.82), thumb = await imgToData(info.image, 160, 0.8);
+        var doc = { barcode: code, name: info.name, brand: info.brand || '', category: info.category || 'Other', place: info.place || '',
+                    unit: info.unit || '', caseSize: info.caseSize || 0, trusted: true, trustedBy: S.user.email, savedAt: TS(), ver: info.ver || '' };
+        if (full) { doc.imageData = full; doc.imageThumb = thumb || full; }
+        await col('barcodes').doc(labelId(code)).set(doc, { merge: true });
+        return true;
+    }
+    // owner only: copy products.json into Firestore (new or changed entries)
+    async function syncTrusted() {
+        if (!isAdmin() || syncTrusted.done) return; syncTrusted.done = true;
+        var list = await loadTrusted(), n = 0;
+        for (var code in list) {
+            if (code[0] === '_' || !list[code] || !list[code].name) continue;
+            var t = list[code], ver = String(JSON.stringify(t).length) + ':' + JSON.stringify(t).split('').reduce(function (h, ch) { return (h * 31 + ch.charCodeAt(0)) | 0; }, 7);
+            try {
+                var cur = await col('barcodes').doc(labelId(code)).get();
+                if (cur.exists && cur.data().trusted && cur.data().ver === ver) continue;
+                var nm = t.name + (t.size && t.name.indexOf(t.size) < 0 ? ' (' + t.size + ')' : '');
+                await saveTrusted(code, { name: nm, brand: t.brand, category: t.category, place: t.place, unit: t.unit, caseSize: t.each || 0,
+                    image: t.image ? new URL(t.image, location.href).href : '', ver: ver });
+                n++;
+            } catch (e) { console.warn('[trusted sync]', code, e); }
+        }
+        if (n) toast(n + ' trusted product' + (n > 1 ? 's' : '') + ' saved to Firestore', 3500);
     }
     async function lookup(code) {
         // 1) the trusted list (products.json) always wins

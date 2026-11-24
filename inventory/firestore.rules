@@ -27,6 +27,16 @@ service cloud.firestore {
     function invHouse(hid) {
       return get(/databases/$(database)/documents/home_inventory/data/households/$(hid)).data;
     }
+    function invAdmin() {
+      return invSignedIn() && request.auth.token.email == 'raykevin71888@gmail.com' &&
+        request.auth.token.email_verified == true;
+    }
+    function invLabelOK() {
+      return invSignedIn() && request.resource.data.name is string &&
+        request.resource.data.name.size() > 0 && request.resource.data.name.size() < 200 &&
+        request.resource.data.get('imageData', '').size() < 400000 &&
+        request.resource.data.get('imageThumb', '').size() < 100000;
+    }
     function invMember(hid) {
       return invSignedIn() &&
         exists(/databases/$(database)/documents/home_inventory/data/households/$(hid)/members/$(request.auth.uid));
@@ -72,10 +82,15 @@ service cloud.firestore {
         allow delete: if invMember(resource.data.householdId);
       }
 
+      // Shared labels anyone can add or fix; TRUSTED products (trusted: true, with the picture inside)
+      // can only be written by the owner account.
       match /barcodes/{code} {
         allow read: if invSignedIn();
-        allow create, update: if invSignedIn() && request.resource.data.name is string &&
-          request.resource.data.name.size() > 0 && request.resource.data.name.size() < 200;
+        allow create: if invLabelOK() &&
+          (request.resource.data.get('trusted', false) == false || invAdmin());
+        allow update: if invLabelOK() &&
+          (invAdmin() || (resource.data.get('trusted', false) == false &&
+                          request.resource.data.get('trusted', false) == false));
       }
     }
 
