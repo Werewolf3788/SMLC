@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-11-23 8:30 PM ET -->
+<!-- BUILD: 2026-11-23 8:35 PM ET -->
 <!-- ==========================================================================
      SMLC Home Inventory | v1.0 | 2026-11-23 4:30 PM ET
      Scan everything in the house, share one list with everyone who lives there.
@@ -21,7 +21,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="build" content="2026-11-23 8:30 PM ET">
+    <meta name="build" content="2026-11-23 8:35 PM ET">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <title>Free Home Inventory App: Scan Barcodes, Track Expiration Dates, Share With Your Household | Support My Local Community</title>
@@ -90,6 +90,8 @@
         @media (max-width: 899px) { .hwrap { width: 100%; } }
         .brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
         .brand img { width: 34px; height: 34px; border-radius: 8px; }
+        .homeLogo { display: flex; flex: none; border-radius: 8px; }
+        .homeLogo:hover img, .homeLogo:focus-visible img { outline: 2px solid var(--gold); outline-offset: 2px; }
         .brand b { display: block; font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .brand small { opacity: .8; font-size: .78rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         #houseBtn { background: rgba(255,255,255,.12); padding: .45em .8em; font-size: .85rem; max-width: 45vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -328,7 +330,7 @@
 <header>
     <div class="hwrap">
         <div class="brand">
-            <img src="../icons/icon-192.png" alt="">
+            <a href="../index.html" class="homeLogo" title="Support My Local Community home" aria-label="Support My Local Community home"><img src="../icons/icon-192.png" alt=""></a>
             <div><b id="title">Home Inventory</b><small id="subtitle">Support My Local Community</small></div>
         </div>
         <button id="houseBtn" hidden>🏠 Household</button>
