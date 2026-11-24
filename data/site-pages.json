@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-24T01:37:12+00:00",
+ "generated": "2026-11-24T01:49:10+00:00",
  "repo": "Werewolf3788/SMLC",
  "branch": "Claude-Test",
  "pages": [
@@ -18,11 +18,18 @@
    "message": "Add Site Pulse (own visit counter) and SMLC GA tag on every page"
   },
   {
+   "path": "admin/seo-setup.html",
+   "url": "https://werewolf3788.github.io/SMLC/admin/seo-setup",
+   "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/admin/seo-setup.html",
+   "updated": "2026-11-23T20:48:59-05:00",
+   "message": "SEO/AEO boost: Q&A on home + towns, Event data, page/search ranking on Site Pulse, IndexNow, install/tct fixes, Amazon tag, Hefty trusted pr"
+  },
+  {
    "path": "admin/site-pulse.html",
    "url": "https://werewolf3788.github.io/SMLC/admin/site-pulse",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/admin/site-pulse.html",
-   "updated": "2026-11-20T13:42:32-05:00",
-   "message": "Add Site Pulse (own visit counter) and SMLC GA tag on every page"
+   "updated": "2026-11-23T20:48:59-05:00",
+   "message": "SEO/AEO boost: Q&A on home + towns, Event data, page/search ranking on Site Pulse, IndexNow, install/tct fixes, Amazon tag, Hefty trusted pr"
   },
   {
    "path": "admin/team.html",
@@ -35,8 +42,8 @@
    "path": "clay-city.html",
    "url": "https://werewolf3788.github.io/SMLC/clay-city",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/clay-city.html",
-   "updated": "2026-11-20T13:42:32-05:00",
-   "message": "Add Site Pulse (own visit counter) and SMLC GA tag on every page"
+   "updated": "2026-11-23T20:48:59-05:00",
+   "message": "SEO/AEO boost: Q&A on home + towns, Event data, page/search ranking on Site Pulse, IndexNow, install/tct fixes, Amazon tag, Hefty trusted pr"
   },
   {
    "path": "directory.html",
@@ -49,8 +56,8 @@
    "path": "flora.html",
    "url": "https://werewolf3788.github.io/SMLC/flora",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/flora.html",
-   "updated": "2026-11-20T13:42:32-05:00",
-   "message": "Add Site Pulse (own visit counter) and SMLC GA tag on every page"
+   "updated": "2026-11-23T20:48:59-05:00",
+   "message": "SEO/AEO boost: Q&A on home + towns, Event data, page/search ranking on Site Pulse, IndexNow, install/tct fixes, Amazon tag, Hefty trusted pr"
   },
   {
    "path": "gallery.html",
@@ -63,36 +70,36 @@
    "path": "index.html",
    "url": "https://werewolf3788.github.io/SMLC/",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/index.html",
-   "updated": "2026-11-23T20:34:36-05:00",
-   "message": "Menu: Business Directory in the backup menu links (main menu comes from the sheet's Menu tab)"
+   "updated": "2026-11-23T20:48:59-05:00",
+   "message": "SEO/AEO boost: Q&A on home + towns, Event data, page/search ranking on Site Pulse, IndexNow, install/tct fixes, Amazon tag, Hefty trusted pr"
   },
   {
    "path": "install.html",
    "url": "https://werewolf3788.github.io/SMLC/install",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/install.html",
-   "updated": "2026-11-20T13:42:32-05:00",
-   "message": "Add Site Pulse (own visit counter) and SMLC GA tag on every page"
+   "updated": "2026-11-23T20:48:59-05:00",
+   "message": "SEO/AEO boost: Q&A on home + towns, Event data, page/search ranking on Site Pulse, IndexNow, install/tct fixes, Amazon tag, Hefty trusted pr"
   },
   {
    "path": "inventory/index.html",
    "url": "https://werewolf3788.github.io/SMLC/inventory/",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/inventory/index.html",
-   "updated": "2026-11-23T20:36:58-05:00",
-   "message": "Inventory: wide SMLC banner logo in the header (same as the main site's menu bar), links home"
+   "updated": "2026-11-23T20:48:59-05:00",
+   "message": "SEO/AEO boost: Q&A on home + towns, Event data, page/search ranking on Site Pulse, IndexNow, install/tct fixes, Amazon tag, Hefty trusted pr"
   },
   {
    "path": "louisville.html",
    "url": "https://werewolf3788.github.io/SMLC/louisville",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/louisville.html",
-   "updated": "2026-11-20T13:42:32-05:00",
-   "message": "Add Site Pulse (own visit counter) and SMLC GA tag on every page"
+   "updated": "2026-11-23T20:48:59-05:00",
+   "message": "SEO/AEO boost: Q&A on home + towns, Event data, page/search ranking on Site Pulse, IndexNow, install/tct fixes, Amazon tag, Hefty trusted pr"
   },
   {
    "path": "sailor-springs.html",
    "url": "https://werewolf3788.github.io/SMLC/sailor-springs",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/sailor-springs.html",
-   "updated": "2026-11-20T13:42:32-05:00",
-   "message": "Add Site Pulse (own visit counter) and SMLC GA tag on every page"
+   "updated": "2026-11-23T20:48:59-05:00",
+   "message": "SEO/AEO boost: Q&A on home + towns, Event data, page/search ranking on Site Pulse, IndexNow, install/tct fixes, Amazon tag, Hefty trusted pr"
   },
   {
    "path": "share-photos.html",
@@ -105,8 +112,8 @@
    "path": "tct.html",
    "url": "https://werewolf3788.github.io/SMLC/tct",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/tct.html",
-   "updated": "2026-11-20T13:42:32-05:00",
-   "message": "Add Site Pulse (own visit counter) and SMLC GA tag on every page"
+   "updated": "2026-11-23T20:48:59-05:00",
+   "message": "SEO/AEO boost: Q&A on home + towns, Event data, page/search ranking on Site Pulse, IndexNow, install/tct fixes, Amazon tag, Hefty trusted pr"
   },
   {
    "path": "update-gas.html",
@@ -119,8 +126,8 @@
    "path": "xenia.html",
    "url": "https://werewolf3788.github.io/SMLC/xenia",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/xenia.html",
-   "updated": "2026-11-20T13:42:32-05:00",
-   "message": "Add Site Pulse (own visit counter) and SMLC GA tag on every page"
+   "updated": "2026-11-23T20:48:59-05:00",
+   "message": "SEO/AEO boost: Q&A on home + towns, Event data, page/search ranking on Site Pulse, IndexNow, install/tct fixes, Amazon tag, Hefty trusted pr"
   }
  ]
 }
