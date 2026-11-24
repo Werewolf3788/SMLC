@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BUILD: 2026-11-23 8:15 PM ET -->
+<!-- BUILD: 2026-11-23 8:21 PM ET -->
 <!-- ==========================================================================
      SMLC Home Inventory | v1.0 | 2026-11-23 4:30 PM ET
      Scan everything in the house, share one list with everyone who lives there.
@@ -21,7 +21,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="build" content="2026-11-23 8:15 PM ET">
+    <meta name="build" content="2026-11-23 8:21 PM ET">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <title>Free Home Inventory App: Scan Barcodes, Track Expiration Dates, Share With Your Household | Support My Local Community</title>
@@ -248,6 +248,8 @@
         .member img, .member .ph { width: 32px; height: 32px; border-radius: 50%; background: var(--soft); display: grid; place-items: center; }
         .member div { flex: 1; min-width: 0; }
         .member small { color: var(--muted); display: block; font-size: .75rem; }
+        #updateBar { position: fixed; top: 0; left: 0; right: 0; z-index: 95; background: var(--gold); color: #111; font-weight: 700; text-align: center; padding: calc(env(safe-area-inset-top) + 8px) 12px 8px; }
+        #updateBar button { margin-left: 10px; background: #111; color: #fff; padding: .35em .9em; border-radius: 8px; }
         #toast span { vertical-align: middle; }
         #toast button { margin-left: 10px; background: var(--gold); color: #111; padding: .35em .9em; border-radius: 8px; vertical-align: middle; }
         .item .info b::after { content: " ✏️"; font-size: .7em; opacity: .45; }
@@ -1057,6 +1059,7 @@
     }
     function openHouse(hid) {
         preloadScanner();
+        startLiveTrusted();
         setTimeout(function () { syncTrusted().catch(function () {}); }, 2500);
         stopHouse();
         S.hid = hid;
@@ -1767,8 +1770,22 @@
             }
         }
     }
+    var LIVE_TRUSTED = null, liveTrustedUnsub = null;
+    function startLiveTrusted() {
+        if (liveTrustedUnsub) return;
+        liveTrustedUnsub = col('barcodes').where('trusted', '==', true).onSnapshot(function (qs) {
+            var m = {};
+            qs.forEach(function (d) { m[d.id] = d.data(); });
+            var first = !LIVE_TRUSTED;
+            LIVE_TRUSTED = m;
+            if (!first) { trustSeen = {}; applyTrusted(); render(); }   // someone changed a trusted product: update now
+        }, function () { liveTrustedUnsub = null; });
+    }
     async function trustedLookup(code) {
         var keys = [code, '0' + code, code.replace(/^0/, '')].filter(function (k, i, a) { return k && a.indexOf(k) === i; });
+        if (LIVE_TRUSTED) {
+            for (var q = 0; q < keys.length; q++) { var lt = LIVE_TRUSTED[labelId(keys[q])]; if (lt && lt.name) return fromTrustedDoc(lt, code); }
+        }
         for (var i = 0; i < keys.length; i++) {
             try {
                 var snap = await col('barcodes').doc(labelId(keys[i])).get();
@@ -2331,6 +2348,26 @@
         var t = params.get('tab'); if (t && /^(in|exp|out|log)$/.test(t)) setTab(t);
         var s = params.get('scan'); if (s && /^(in|out|check)$/.test(s)) setTimeout(function () { openScanner(s); }, 400);
     };
+
+    // ---- new version published? offer a one-tap update (no hard refresh needed)
+    var MY_BUILD = (document.querySelector('meta[name=build]') || {}).content || '';
+    var lastCheck = 0;
+    function checkForUpdate() {
+        if (!MY_BUILD || Date.now() - lastCheck < 60000) return;
+        lastCheck = Date.now();
+        fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (html) {
+            var m = /<meta name="build" content="([^"]+)"/.exec(html);
+            if (m && m[1] !== MY_BUILD && !$('updateBar')) {
+                var b = document.createElement('div'); b.id = 'updateBar';
+                b.innerHTML = '✨ A new version is ready (' + esc(m[1]) + ') <button type="button">Update now</button>';
+                b.querySelector('button').onclick = function () { location.reload(); };
+                document.body.appendChild(b);
+            }
+        }).catch(function () {});
+    }
+    setInterval(checkForUpdate, 180000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) checkForUpdate(); });
+    window.addEventListener('focus', checkForUpdate);
 
     // re-render once a minute so "x min ago" and expiration badges stay current
     setInterval(function () { if (S.hid && !document.hidden) render(); }, 60000);
