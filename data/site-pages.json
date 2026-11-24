@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-24T00:45:10+00:00",
+ "generated": "2026-11-24T00:47:51+00:00",
  "repo": "Werewolf3788/SMLC",
  "branch": "Claude-Test",
  "pages": [
@@ -77,8 +77,8 @@
    "path": "inventory/index.html",
    "url": "https://werewolf3788.github.io/SMLC/inventory/",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/inventory/index.html",
-   "updated": "2026-11-23T19:45:03-05:00",
-   "message": "Inventory: backup copy of the sign-in in localStorage (Firebase falls back to it if IndexedDB is wiped), private-mode warning, iPhone home-s"
+   "updated": "2026-11-23T19:47:42-05:00",
+   "message": "Inventory: trusted product list (inventory/products.json) checked before shared labels and outside lists; Avocado Dip, Top Ramen case, Hefty"
   },
   {
    "path": "louisville.html",
