@@ -1,0 +1,6 @@
+{
+  "_about": "Home Inventory trusted product list. The app checks this BEFORE any outside product list, so whatever is here always wins. Key = the barcode number (12-digit UPC, or 13-digit EAN). Fields: name, brand, size, category (Food, Fresh food, Drinks, Snacks, Frozen, Cleaning, Personal care, Medicine, Paper goods, Pet, Baby, Other), place (where it's usually kept), each (how many are inside, for boxes/packs), unit (what one of them is called).",
+  "072878262552": { "name": "Avocado Dip", "size": "15 oz", "category": "Fresh food", "place": "Fridge" },
+  "070662013038": { "name": "Top Ramen Chicken Flavor", "brand": "Nissin", "size": "24 pack case", "category": "Food", "place": "Pantry", "each": 24, "unit": "packs" },
+  "013700016608": { "name": "Hefty Ultra Strong 13 Gal Tall Kitchen Trash Bags, Lavender & Sweet Vanilla", "brand": "Hefty", "category": "Cleaning", "place": "Laundry / cleaning", "unit": "bags" }
+}

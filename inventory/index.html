@@ -999,6 +999,7 @@
     function stopHouse() { S.unsubs.forEach(function (f) { try { f(); } catch (e) {} }); S.unsubs = []; S.items = []; S.members = []; S.log = []; S.house = null; }
     function preloadScanner() {
         if (preloadScanner.done) return; preloadScanner.done = true;
+        loadTrusted();
         if ('BarcodeDetector' in window) return;          // Android has a built-in reader
         var go = function () { loadWasm().catch(function () { preloadScanner.done = false; }); };
         if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 3000 }); else setTimeout(go, 1500);
@@ -1576,11 +1577,35 @@
                          image: (it.images || []).filter(function (u) { return /^https:/.test(u); })[0] || '', barcode: code, source: 'found', from: 'UPCitemdb' };
             });
     }
+    // ---- trusted list (inventory/products.json): always wins over shared labels and outside lists
+    var TRUSTED = null;
+    function loadTrusted() {
+        if (!TRUSTED) TRUSTED = fetch('products.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; });
+        return TRUSTED;
+    }
+    async function trustedLookup(code) {
+        var list = await loadTrusted();
+        var keys = [code, '0' + code, code.replace(/^0/, '')];
+        for (var i = 0; i < keys.length; i++) {
+            var t = list[keys[i]];
+            if (t && t.name) {
+                var nm = t.name + (t.size && t.name.indexOf(t.size) < 0 ? ' (' + t.size + ')' : '');
+                var info = { name: nm, brand: t.brand || '', category: t.category || 'Other', location: t.place || '', unit: t.unit || '', image: t.image || '',
+                             barcode: code, source: 'saved', from: 'the SMLC trusted list' };
+                if (t.each > 1) { info.caseBarcode = code; info.barcode = ''; info.caseSize = t.each; info.qty = t.each; }
+                return info;
+            }
+        }
+        return null;
+    }
     async function lookup(code) {
         // 1) your household already has it
         var mine = S.items.filter(function (i) { return codeMatch(i, code); })[0];
         if (mine) return { name: mine.name, brand: mine.brand, category: mine.category, image: mine.image, unit: mine.unit, location: mine.location, barcode: code, source: 'saved', from: 'your household' };
-        // 2) someone labeled it before
+        // 2) the trusted list (products.json)
+        var tr = await trustedLookup(code);
+        if (tr) return tr;
+        // 3) someone labeled it before
         try {
             var s = await col('barcodes').doc(labelId(code)).get();
             if (s.exists && s.data().name) {
@@ -1589,7 +1614,7 @@
                                   : { name: d.name, brand: d.brand, category: d.category, image: d.image, barcode: code, source: 'saved', from: 'a label someone typed' };
             }
         } catch (e) {}
-        // 3) free public product lists, all asked at the same time; first match wins
+        // 4) free public product lists, all asked at the same time; first match wins
         if (!/^\d{8,14}$/.test(code)) return { name: '', barcode: code, source: 'new' };   // Amazon sticker, QR, tool code: you label it once
         var variants = [code]; if (/^\d{12}$/.test(code)) variants.push('0' + code);
         var jobs = [];
