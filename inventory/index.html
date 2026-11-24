@@ -104,6 +104,10 @@
         .steps { text-align: left; display: grid; gap: 10px; margin: 18px 0; }
         .steps > div { display: flex; gap: 10px; align-items: flex-start; }
         .steps span { background: var(--gold); color: #111; font-weight: 800; border-radius: 50%; min-width: 1.7em; height: 1.7em; display: grid; place-items: center; }
+        .wb { display: grid; grid-template-columns: 52px 1fr; gap: 10px 12px; align-items: center; text-align: left; background: var(--soft); border: 1px solid var(--gold); border-radius: 14px; padding: 14px; margin-bottom: 14px; }
+        .wb img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; background: #fff3; }
+        .wb b, .wb small { display: block; } .wb small { color: var(--muted); font-size: .85rem; word-break: break-all; }
+        .wb button, .wb p { grid-column: 1 / -1; margin: 0; } .wb button { width: 100%; }
         .signbtns { display: grid; gap: 10px; }
         .signbtns button { width: 100%; }
         button.discord { background: #5865F2; color: #fff; }
@@ -337,6 +341,12 @@
             <div><span>1</span><div><b>Scan in</b> groceries and supplies when they come home.</div></div>
             <div><span>2</span><div><b>Scan out</b> when something is used up, empty or expired.</div></div>
             <div><span>3</span><div><b>Share</b> one list with your roommates or family. Everyone sees changes live.</div></div>
+        </div>
+        <div id="welcomeBack" class="wb" hidden>
+            <img id="wbPic" alt="" referrerpolicy="no-referrer">
+            <div><b id="wbName"></b><small id="wbMail"></small></div>
+            <button id="wbGo" class="gold bigbtn">Continue</button>
+            <p class="hint">This phone's browser cleared the sign-in. One tap and you're back. <a href="#" id="wbOther">Use a different account</a></p>
         </div>
         <div class="signbtns">
             <button id="signinBtn" class="gold bigbtn">Sign in with Google</button>
@@ -791,12 +801,12 @@
     auth.onAuthStateChanged(async function (u) {
         S.user = u;
         stopHouse();
-        if (!u) { $('houseBtn').hidden = $('avatarBtn').hidden = true; $('subtitle').textContent = 'Support My Local Community'; showScreen('signin'); return; }
+        if (!u) { $('houseBtn').hidden = $('avatarBtn').hidden = true; $('subtitle').textContent = 'Support My Local Community'; showWelcomeBack(); showScreen('signin'); return; }
         $('avatarBtn').hidden = false;
         $('avatar').src = u.photoURL || '../icons/icon-192.png';
         fillAccount();
         $('setupWho').innerHTML = 'Signed in as <b>' + esc(u.email || u.displayName || 'you') + '</b> · <a href="#" id="setupOut">not you? Sign out</a>';
-        $('setupOut').onclick = function (e) { e.preventDefault(); auth.signOut(); };
+        $('setupOut').onclick = function (e) { e.preventDefault(); signOutHere(); };
         var snap;
         try { snap = await col('users').doc(u.uid).get(); }
         catch (e) {
@@ -870,9 +880,37 @@
         showScreen('problem');
     }
     $('problemRetry').onclick = function () { location.reload(); };
-    $('problemOut').onclick = function () { auth.signOut(); };
+    $('problemOut').onclick = function () { signOutHere(); };
 
     // ---- who is signed in (and with what)
+    // ---- "this is my device": remember who signed in here, ask the browser not to wipe it
+    function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+    function lsSet(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+    function rememberDevice(u, how) {
+        lsSet('inv_device', { name: u.displayName || '', email: u.email || '', photo: u.photoURL || '', how: how, at: Date.now() });
+        try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {}); } catch (e) {}
+    }
+    function signOutHere() { lsSet('inv_device', null); auth.signOut(); }
+    function showWelcomeBack() {
+        var d = lsGet('inv_device');
+        $('welcomeBack').hidden = !d;
+        if (!d) return;
+        $('wbPic').src = d.photo || '../icons/icon-192.png';
+        $('wbName').textContent = 'Welcome back' + (d.name ? ', ' + d.name.split(' ')[0] : '') + '!';
+        $('wbMail').textContent = (d.email || '') + (d.how ? ' · ' + d.how : '');
+        $('wbGo').textContent = 'Continue with ' + (d.how || 'Google');
+        $('wbGo').onclick = function () {
+            if (d.how === 'Discord') return $('discordBtn').click();
+            if (d.how === 'Email') { $('eMail').value = d.email || ''; $('ePass').focus(); $('emailForm').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+            var p = new firebase.auth.GoogleAuthProvider();
+            if (d.email) p.setCustomParameters({ login_hint: d.email });
+            auth.signInWithPopup(p).catch(function (e) {
+                if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment')) return auth.signInWithRedirect(p);
+                if (e && e.code !== 'auth/popup-closed-by-user') toast('Sign-in failed: ' + e.message, 5000);
+            });
+        };
+        $('wbOther').onclick = function (e) { e.preventDefault(); lsSet('inv_device', null); $('welcomeBack').hidden = true; };
+    }
     function fillAccount() {
         var u = S.user; if (!u) return;
         var ids = (u.providerData || []).map(function (p) { return p.providerId; });
@@ -882,6 +920,7 @@
             $('acctEmail').textContent = u.email || '';
             $('acctPic').src = u.photoURL || '../icons/icon-192.png';
             $('avatarBtn').title = 'Signed in with ' + how + (u.email ? ' as ' + u.email : '');
+            rememberDevice(u, how);
         };
         if (ids.indexOf('google.com') >= 0) return show('Google');
         if (ids.indexOf('password') >= 0) return show('Email');
@@ -1107,7 +1146,7 @@
         await ref.delete();
         ev('inventory_household_deleted');
     }
-    $('hSignout').onclick = function () { closeSheet('house'); auth.signOut(); };
+    $('hSignout').onclick = function () { closeSheet('house'); signOutHere(); };
 
     // ------------------------------------------------------------------ list rendering
     function setTab(t) {
