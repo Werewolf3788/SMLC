@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-24T00:41:48+00:00",
+ "generated": "2026-11-24T00:45:10+00:00",
  "repo": "Werewolf3788/SMLC",
  "branch": "Claude-Test",
  "pages": [
@@ -77,8 +77,8 @@
    "path": "inventory/index.html",
    "url": "https://werewolf3788.github.io/SMLC/inventory/",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/inventory/index.html",
-   "updated": "2026-11-23T19:41:33-05:00",
-   "message": "Inventory: remember this device (welcome-back one-tap sign-in), ask browser to keep storage, sign-out forgets the device"
+   "updated": "2026-11-23T19:45:03-05:00",
+   "message": "Inventory: backup copy of the sign-in in localStorage (Firebase falls back to it if IndexedDB is wiped), private-mode warning, iPhone home-s"
   },
   {
    "path": "louisville.html",
