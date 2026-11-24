@@ -1916,7 +1916,7 @@
         zcan.width = dw; zcan.height = dh;
         zctx.drawImage(src, sx, sy, sw, sh, 0, 0, dw, dh);
         var r = await ZXingWASM.readBarcodes(zctx.getImageData(0, 0, dw, dh), { tryHarder: true, formats: WFMT, maxNumberOfSymbols: 1 });
-        return r && r.length && r[0].isValid !== false ? r[0].text : null;
+        return r && r.length && r[0].isValid !== false ? (/UPC-?E/i.test(r[0].format || '') ? 'E:' + r[0].text : r[0].text) : null;
     }
 
     async function startCamera() {
@@ -1935,7 +1935,7 @@
                 cam.timer = setInterval(async function () {
                     if (cam.busy || cam.paused || video.readyState < 2) return;
                     cam.busy = true;
-                    try { var r = await det.detect(video); if (r && r.length) gotCode(r[0].rawValue); } catch (e) {}
+                    try { var r = await det.detect(video); if (r && r.length) gotCode(r[0].format === 'upc_e' ? 'E:' + r[0].rawValue : r[0].rawValue); } catch (e) {}
                     cam.busy = false;
                 }, 180);
             } else {
@@ -2031,7 +2031,32 @@
         runCode(code);
     }
     // same product, same code on every phone: a 13-digit EAN that starts with 0 is really the 12-digit UPC
-    function normCode(c) { c = String(c || '').replace(/\s/g, ''); return /^0\d{12}$/.test(c) ? c.slice(1) : c; }
+    // One number per product, however it was read or typed:
+    //  - 13-digit EAN starting with 0  -> the 12-digit UPC
+    //  - short UPC-E (small packages)  -> the full 12-digit UPC-A
+    //  - 11 digits typed (no check digit, like on Walmart receipts) -> check digit added
+    function upcCheck(d11) { var s = 0; for (var i = 0; i < 11; i++) s += (+d11[i]) * (i % 2 ? 1 : 3); return String((10 - s % 10) % 10); }
+    function upcEtoA(e) {
+        e = e.replace(/\D/g, '');
+        if (e.length === 6) e = '0' + e + '?';
+        else if (e.length === 7) e = e + '?';
+        if (e.length !== 8 || !/^[01]/.test(e)) return null;
+        var n = e[0], d = e.slice(1, 7), m;
+        var x = d[5];
+        if (x <= '2') m = d.slice(0, 2) + x + '0000' + d.slice(2, 5);
+        else if (x === '3') m = d.slice(0, 3) + '00000' + d.slice(3, 5);
+        else if (x === '4') m = d.slice(0, 4) + '00000' + d[4];
+        else m = d.slice(0, 5) + '0000' + x;
+        var a11 = n + m;
+        return a11 + upcCheck(a11);
+    }
+    function normCode(c) {
+        c = String(c || '').replace(/\s/g, '');
+        if (/^E:/.test(c)) { var a = upcEtoA(c.slice(2)); return a || c.slice(2); }
+        if (/^0\d{12}$/.test(c)) c = c.slice(1);
+        if (/^\d{11}$/.test(c)) c = c + upcCheck(c);
+        return c;
+    }
     function runCode(code) {
         code = normCode(code);
         var mode = S.scanMode;
