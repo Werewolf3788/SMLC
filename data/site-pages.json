@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-24T00:09:50+00:00",
+ "generated": "2026-11-24T00:14:05+00:00",
  "repo": "Werewolf3788/SMLC",
  "branch": "Claude-Test",
  "pages": [
@@ -77,8 +77,8 @@
    "path": "inventory/index.html",
    "url": "https://werewolf3788.github.io/SMLC/inventory/",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/inventory/index.html",
-   "updated": "2026-11-23T19:09:37-05:00",
-   "message": "Inventory: all data under home_inventory/data (auto-move), signed-in account shown, leave/delete household, faster scanner, Done scanning bu"
+   "updated": "2026-11-23T19:13:56-05:00",
+   "message": "Inventory scanner: product barcodes only, confirm each read twice, ignore the leftover picture after resuming, hint when nothing scannable"
   },
   {
    "path": "louisville.html",
