@@ -1041,10 +1041,14 @@
         if (!ok) return openSheet('house');
         var old = S.house.inviteCode, code = makeCode();
         try {
-            await houseRef().update({ inviteCode: code });
-            await col('invites').doc(code).set({ householdId: S.hid, householdName: S.house.name, createdBy: S.user.uid });
-            await col('invites').doc(old).delete().catch(function () {});
-            toast('New code: ' + code);
+            // one step: new code on the household + new invite + old invite deleted (all or nothing)
+            var bt = db.batch();
+            bt.update(houseRef(), { inviteCode: code });
+            bt.set(col('invites').doc(code), { householdId: S.hid, householdName: S.house.name, createdBy: S.user.uid });
+            if (old && old !== code) bt.delete(col('invites').doc(old));
+            await bt.commit();
+            logIt('newcode', { name: '' });
+            toast('New code: ' + code + ' (old code deleted)', 4000);
         } catch (err) { fail(err); }
         openSheet('house');
     };
@@ -1233,7 +1237,7 @@
                 if (o.length) h += '<h2 class="group">Out of the house <span class="badge bad">' + o.length + '</span></h2><div class="grid">' + o.map(function (i) { return card(i, 'out'); }).join('') + '</div>';
             } else h = emptyMsg('🛒', 'Nothing to buy. When something is used up or gets down to the number you picked, it lands here.');
         } else {
-            var A = { added: '📥 added', restocked: '🔄 restocked', plus: '➕ added one more', used: '➖ used one', out: '📤 marked out', edited: '✏️ edited', deleted: '🗑️ deleted', merged: '🔗 combined into', undo: '↩ undid the last change', joined: '👋 joined the household', left: '🚪 left the household' };
+            var A = { added: '📥 added', restocked: '🔄 restocked', plus: '➕ added one more', used: '➖ used one', out: '📤 marked out', edited: '✏️ edited', deleted: '🗑️ deleted', merged: '🔗 combined into', undo: '↩ undid the last change', newcode: '🔑 made a new invite code (old one deleted)', joined: '👋 joined the household', left: '🚪 left the household' };
             h = S.log.length ? '<div class="log">' + S.log.map(function (l) {
                 return '<div><b>' + esc(l.by) + '</b> ' + (A[l.action] || esc(l.action)) + (l.itemName ? ' <b>' + esc(l.itemName) + '</b>' : '') +
                     (l.extra ? ' <span class="hint">(' + esc(l.extra) + ')</span>' : '') + '<small>' + when(l.at) + '</small></div>';
