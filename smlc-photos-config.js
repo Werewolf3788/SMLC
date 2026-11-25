@@ -17,7 +17,7 @@ window.SMLC_PHOTOS = {
         storageBucket: "smlc-fuel-monitor.firebasestorage.app",
         messagingSenderId: "22397440085",
         appId: "1:22397440085:web:c00e716858ed58895bc4dc",
-        measurementId: "G-TJRXX8TCT4"
+        measurementId: "G-FHJNXDB9BB"
     },
 
     // Gallery photos (Sheet "Gallery" tab, Column A = town) are synced by Code.gs to

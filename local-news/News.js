@@ -20,7 +20,7 @@ const firebaseConfig = {
     storageBucket: "smlc-fuel-monitor.firebasestorage.app",
     messagingSenderId: "22397440085",
     appId: "1:22397440085:web:c00e716858ed58895bc4dc",
-    measurementId: "G-687D605K75"
+    measurementId: "G-FHJNXDB9BB"
 };
 
 const app = initializeApp(firebaseConfig);
