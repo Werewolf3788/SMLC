@@ -21,7 +21,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="build" content="2026-11-25 12:45 AM ET">
+    <meta name="build" content="2026-11-24 11:48 PM ET">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <title>Free Home Inventory App: Scan Barcodes, Track Expiration Dates, Share With Your Household | Support My Local Community</title>
@@ -2075,6 +2075,18 @@
         }
         var list = await loadTrusted();
         for (var j = 0; j < keys.length; j++) { var t = list[keys[j]]; if (t && t.name) return fromJson(t, code); }
+        // A camera (or a person copying the digits) can lose the odd digit off a barcode. If what we
+        // have is a run of 8+ digits sitting inside a known barcode, use it when exactly one product matches.
+        if (/^\d{8,11}$/.test(code)) {
+            var hit = null, seen = [];
+            Object.keys(list).forEach(function (k) {
+                var t = list[k];
+                if (k === '_about' || !t || !t.name) return;
+                var found = k.indexOf(code) >= 0 || (t.alsoCodes || []).some(function (c) { return String(c).indexOf(code) >= 0; });
+                if (found && seen.indexOf(t) < 0) { seen.push(t); hit = hit ? 'many' : t; }
+            });
+            if (hit && hit !== 'many') return fromJson(hit, code);
+        }
         return null;
     }
     // shrink a picture to a JPEG data URL (stored inside the Firestore record)
