@@ -1788,21 +1788,18 @@
                          from: { 'world.openfoodfacts.org': 'Open Food Facts', 'world.openbeautyfacts.org': 'Open Beauty Facts', 'world.openproductsfacts.org': 'Open Products Facts', 'world.openpetfoodfacts.org': 'Open Pet Food Facts' }[host] || host };
             });
     }
-    // UPCitemdb free lookup: strong on household goods (trash bags, cleaners, paper towels)
-    function upcdbLookup(code) {
+    // SMLC product lookup relay: the big product databases (retailerapi, UPCitemdb) only
+    // answer servers, so this relay does the lookup and hands back the name, brand and picture.
+    var UPC_RELAY = 'https://smlc-barcode-lookup-0r5r2m.freebuff.site/';
+    function relayLookup(code) {
         if (!/^\d{8,14}$/.test(code)) return Promise.resolve(null);
-        return fetch('https://api.upcitemdb.com/prod/trial/lookup?upc=' + code)
+        return fetch(UPC_RELAY + '?upc=' + encodeURIComponent(code))
             .then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
-                var it = j && j.items && j.items[0];
-                if (!it || !it.title) return null;
-                var cat = String(it.category || '');
-                var c = /trash|bag|clean|laundry|detergent|household/i.test(cat + ' ' + it.title) ? 'Cleaning'
-                    : /paper|towel|tissue|toilet/i.test(cat + ' ' + it.title) ? 'Paper goods'
-                    : /health|beauty|personal|shampoo|soap|tooth/i.test(cat) ? 'Personal care'
-                    : /pet/i.test(cat) ? 'Pet' : /beverage|drink/i.test(cat) ? 'Drinks' : /food|grocery|snack/i.test(cat) ? 'Food' : 'Other';
-                return { name: it.title.replace(/\s+/g, ' ').trim(), brand: it.brand || '', category: c,
-                         image: (it.images || []).filter(function (u) { return /^https:/.test(u); })[0] || '', barcode: code, source: 'found', from: 'UPCitemdb' };
-            });
+                if (!j || !j.found || !j.name) return null;
+                return { name: j.name, brand: j.brand || '', category: j.category || 'Other',
+                         image: j.image || '', storeLink: j.storeLink || '', barcode: code,
+                         source: 'found', from: 'the SMLC product lookup' };
+            }).catch(function () { return null; });
     }
     // ---- trusted list (inventory/products.json): always wins over shared labels and outside lists
     var TRUSTED = null;
@@ -1946,7 +1943,7 @@
         var variants = [code]; if (/^\d{12}$/.test(code)) variants.push('0' + code);
         var jobs = [];
         OFF.forEach(function (o) { variants.forEach(function (v) { jobs.push(offLookup(o[0], o[1], v, code)); }); });
-        jobs.push(upcdbLookup(code));
+        jobs.push(relayLookup(code));
         var hit = await firstHit(jobs, 7000);
         if (hit) return hit;
         return { name: '', barcode: code, source: 'new', maybeCase: /^\d{14}$/.test(code) };
