@@ -49,6 +49,17 @@
     "store": "walmart",
     "link": "https://www.walmart.com/ip/868694067"
   },
+  "810031480326": {
+    "name": "Reese's Peanut Butter Filled Pretzels",
+    "brand": "Reese's",
+    "size": "18 oz jar",
+    "category": "Snacks",
+    "place": "Pantry",
+    "alsoCodes": ["1003148032", "0810031480326"],
+    "image": "../images/barcode/810031480326.jpg",
+    "store": "walmart",
+    "link": "https://www.walmart.com/ip/14640855367"
+  },
   "049000050271": {
     "name": "Fanta Strawberry Soda Pop Bottle",
     "brand": "Fanta",
