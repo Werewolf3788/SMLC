@@ -1,0 +1,22 @@
+name: Apply seasoning category
+on: push
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: contains(github.event.head_commit.message, 'Apply seasoning category')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: Claude-Test
+      - name: Unpack and apply
+        run: |
+          base64 -d ci/seasoning.b64 | gunzip > /tmp/change.patch
+          git apply --verbose /tmp/change.patch
+          git rm -q ci/seasoning.b64 .github/workflows/apply-seasoning.yml
+          git config user.name "SMLC Bot"
+          git config user.email "bot@supportmylocalcommunity.com"
+          git add -A
+          git commit -m "Inventory: add a Seasoning category"
+          git push origin HEAD:Claude-Test
