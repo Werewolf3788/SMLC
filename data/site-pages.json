@@ -1,8 +1,15 @@
 {
- "generated": "2026-11-24T02:22:52+00:00",
+ "generated": "2026-11-25T02:07:44+00:00",
  "repo": "Werewolf3788/SMLC",
  "branch": "Claude-Test",
  "pages": [
+  {
+   "path": "BILLBOARD.html",
+   "url": "https://werewolf3788.github.io/SMLC/BILLBOARD",
+   "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/BILLBOARD.html",
+   "updated": "2026-11-02T16:22:06-05:00",
+   "message": "Create BILLBOARD.html"
+  },
   {
    "path": "admin/ads-guide.html",
    "url": "https://werewolf3788.github.io/SMLC/admin/ads-guide",
@@ -21,15 +28,15 @@
    "path": "admin/seo-setup.html",
    "url": "https://werewolf3788.github.io/SMLC/admin/seo-setup",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/admin/seo-setup.html",
-   "updated": "2026-11-23T20:48:59-05:00",
-   "message": "SEO/AEO boost: Q&A on home + towns, Event data, page/search ranking on Site Pulse, IndexNow, install/tct fixes, Amazon tag, Hefty trusted pr"
+   "updated": "2026-11-24T21:07:34-05:00",
+   "message": "SEO Pulse: use the new Open PageRank API (Bearer opr_live_ key), show linking sites on Site Pulse"
   },
   {
    "path": "admin/site-pulse.html",
    "url": "https://werewolf3788.github.io/SMLC/admin/site-pulse",
    "github": "https://github.com/Werewolf3788/SMLC/blob/Claude-Test/admin/site-pulse.html",
-   "updated": "2026-11-23T20:48:59-05:00",
-   "message": "SEO/AEO boost: Q&A on home + towns, Event data, page/search ranking on Site Pulse, IndexNow, install/tct fixes, Amazon tag, Hefty trusted pr"
+   "updated": "2026-11-24T21:07:34-05:00",
+   "message": "SEO Pulse: use the new Open PageRank API (Bearer opr_live_ key), show linking sites on Site Pulse"
   },
   {
    "path": "admin/team.html",
