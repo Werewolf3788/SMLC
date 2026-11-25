@@ -52,14 +52,29 @@ function runSeoPulse() {
 function seoAuthority_(day) {
   var key = "";
   try { key = Keys.get("openpagerank_api_key"); } catch (e) {}
+  key = String(key || "").trim();
   if (!key) throw new Error("openpagerank_api_key is empty in the Keys sheet");
-  var r = UrlFetchApp.fetch("https://openpagerank.com/api/v1.0/getPageRank?domains%5B0%5D=" + encodeURIComponent(SEO_DOMAIN), {
+  // New Open PageRank API (openpagerank.keywordseverywhere.com): keys start with opr_live_
+  if (/^opr_/.test(key)) {
+    var r = UrlFetchApp.fetch("https://openpagerank.keywordseverywhere.com/v1/domains/bulk", {
+      method: "post", contentType: "application/json", muteHttpExceptions: true,
+      headers: { Authorization: "Bearer " + key },
+      payload: JSON.stringify({ domains: [SEO_DOMAIN], include_history: false })
+    });
+    var j = JSON.parse(r.getContentText() || "{}");
+    var row = j.results && j.results[0];
+    if (r.getResponseCode() !== 200 || !row) throw new Error("Open PageRank said: " + r.getContentText().slice(0, 300));
+    return { score: row.found ? Number(row.open_page_rank) || 0 : 0, rank: row.rank || null,
+             referring: row.referring_domains || 0, asOf: j.as_of || "", day: day };
+  }
+  // Older DomCop key
+  var r2 = UrlFetchApp.fetch("https://openpagerank.com/api/v1.0/getPageRank?domains%5B0%5D=" + encodeURIComponent(SEO_DOMAIN), {
     headers: { "API-OPR": key }, muteHttpExceptions: true
   });
-  var j = JSON.parse(r.getContentText() || "{}");
-  var row = j.response && j.response[0];
-  if (!row || String(row.status_code) !== "200") throw new Error("Open PageRank said: " + r.getContentText().slice(0, 300));
-  return { score: Number(row.page_rank_decimal) || 0, rank: row.rank ? Number(row.rank) : null, day: day };
+  var j2 = JSON.parse(r2.getContentText() || "{}");
+  var row2 = j2.response && j2.response[0];
+  if (!row2 || String(row2.status_code) !== "200") throw new Error("Open PageRank said: " + r2.getContentText().slice(0, 300));
+  return { score: Number(row2.page_rank_decimal) || 0, rank: row2.rank ? Number(row2.rank) : null, day: day };
 }
 
 // ---- Google Search Console (last 28 days) -------------------------------------------

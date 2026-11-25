@@ -324,6 +324,7 @@
     var tiles = [];
     tiles.push([a ? Number(a.score).toFixed(2) + ' / 10' + trend(a.score, a0 && a0.score) : '—', 'Authority score (Open PageRank)']);
     tiles.push([a && a.rank ? '#' + fmt(a.rank) : '—', 'Rank among all websites']);
+    if (a && a.referring != null) tiles.push([fmt(a.referring) + trend(a.referring, a0 && a0.referring), 'Sites linking to SMLC (weighted)']);
     if (g) {
       var t = g.totals;
       tiles.push([t.position ? t.position.toFixed(1) : '—', 'Avg. Google position (28 days)']);
