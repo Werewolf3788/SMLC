@@ -1,0 +1,28 @@
+# Temporary helper (v2): applies the gzipped patch in ci/change2.b64, checks it landed, then deletes both.
+# It only runs for a commit whose message says APPLY-INV-LINK-PATCH2.
+name: Apply inventory store-link patch (v2)
+
+on:
+  push:
+    branches: [Claude-Test]
+
+jobs:
+  apply:
+    if: contains(github.event.head_commit.message, 'APPLY-INV-LINK-PATCH2')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: Claude-Test
+          fetch-depth: 0
+      - name: Apply patch
+        run: |
+          base64 -d ci/change2.b64 | gunzip > /tmp/change.patch
+          git apply --whitespace=nowarn /tmp/change.patch
+          grep -q 'saved for this barcode' inventory/index.html
+          git rm -q ci/change2.b64 .github/workflows/apply-inv-link2.yml
+          git add -A
+          git commit -m "Inventory: one store page link per product, remembered on the barcode"
+          git push origin HEAD:Claude-Test
