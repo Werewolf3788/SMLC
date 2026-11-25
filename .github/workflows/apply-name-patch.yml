@@ -1,0 +1,22 @@
+name: apply inv name patch
+on:
+  push:
+    branches: [Claude-Test]
+jobs:
+  apply:
+    if: contains(github.event.head_commit.message, 'APPLY-INV-NAME-PATCH')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: apply
+        run: base64 -d ci/change.b64 | gunzip > /tmp/change.patch && git apply /tmp/change.patch && git diff --stat
+      - name: commit
+        run: |
+          git config user.name "SMLC Patch Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git rm -q ci/change.b64 .github/workflows/apply-name-patch.yml
+          git add -A
+          git commit -m "Inventory: type your name so your household list shows who you are"
+          git push origin HEAD:Claude-Test
