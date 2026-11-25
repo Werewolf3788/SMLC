@@ -1404,7 +1404,8 @@
         kroger: ['Kroger', 'https://www.kroger.com/search?query='],
         costco: ['Costco', 'https://www.costco.com/s?keyword='],
         amazon: ['Amazon', 'https://www.amazon.com/s?k='],
-        instacart: ['Instacart (any store)', 'https://www.instacart.com/store/s?k=']
+        instacart: ['Instacart (any store)', 'https://www.instacart.com/store/s?k='],
+        doordash: ['DoorDash (delivery)', 'https://www.doordash.com/search/store/']
     };
     // Local stores the household added (near-me search or by name), saved on the household as localStores
     function mapsUrl(q) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q); }
@@ -1449,7 +1450,7 @@
     function storeFromLink(u) {
         var m = /\/\/(?:www\.)?([a-z0-9-]+)\./i.exec(String(u || ''));
         var host = m ? m[1].toLowerCase() : '';
-        var map = { walmart: 'walmart', samsclub: 'sams', publix: 'publix', dollargeneral: 'dg', target: 'target', aldi: 'aldi', kroger: 'kroger', costco: 'costco', amazon: 'amazon', smile: 'amazon' };
+        var map = { walmart: 'walmart', samsclub: 'sams', publix: 'publix', dollargeneral: 'dg', target: 'target', aldi: 'aldi', kroger: 'kroger', costco: 'costco', amazon: 'amazon', smile: 'amazon', doordash: 'doordash', instacart: 'instacart' };
         return map[host] || '';
     }
     // Keep a typed link only if it is a web address; a bare "www.walmart.com/ip/…" gets https:// added.
@@ -1808,7 +1809,7 @@
         $('fLow').value = src.lowAt || 0;
         $('fKeep').value = src.keepDays || 0;
         var st = src.store || guessStore(src);
-        $('fStore').innerHTML = '<option value="">—</option>' + Object.keys(STORES).filter(function (k) { return k !== 'instacart'; })
+        $('fStore').innerHTML = '<option value="">—</option>' + Object.keys(STORES).filter(function (k) { return k !== 'instacart' && k !== 'doordash'; })
             .map(function (k) { return '<option value="' + k + '"' + (k === st ? ' selected' : '') + '>' + esc(STORES[k][0]) + '</option>'; }).join('');
         $('fLink').value = src.storeLink || '';
         $('fOpened').value = o.restock ? '' : (src.openedOn || '');
