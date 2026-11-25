@@ -2,10 +2,10 @@
    File: smlc-coffee.js  |  2026-11-25
    Load this in the <head> of every SMLC public page.
 
-   COFFEE LINK: shows a small "Buy me a coffee" button in the bottom-left
+   COFFEE LINK: shows a small "Buy me a coffee" button in the bottom-right
    corner of the page. It opens https://buymeacoffee.com/raykevin71b in a new
-   tab. The button sits on the left because the "back to top" button already
-   lives in the bottom-right corner of the town pages.
+   tab. On pages that also have the "back to top" arrow in the bottom-right
+   corner, the button sits just above the arrow so the two never overlap.
    ========================================================================== */
 (function () {
     'use strict';
@@ -13,6 +13,13 @@
     window.smlcCoffee = true;
 
     var COFFEE_URL = 'https://buymeacoffee.com/raykevin71b';
+
+    function bottomOffset() {
+        // The back-to-top arrow is a 44px square 16px above the bottom edge.
+        // Sit above it (plus a small gap) when it is on the page.
+        var stack = document.getElementById('back-to-top-anchor') ? '74px' : '14px';
+        return 'calc(' + stack + ' + env(safe-area-inset-bottom, 0px))';
+    }
 
     function build() {
         if (document.getElementById('smlc-coffee-link') || !document.body) return;
@@ -25,8 +32,8 @@
         a.setAttribute('aria-label', 'Buy me a coffee - opens Buy Me a Coffee in a new tab');
         a.style.cssText = [
             'position:fixed',
-            'left:14px',
-            'bottom:calc(14px + env(safe-area-inset-bottom, 0px))',
+            'right:14px',
+            'bottom:' + bottomOffset(),
             'z-index:800',
             'display:inline-flex',
             'align-items:center',
