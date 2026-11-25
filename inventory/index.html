@@ -21,7 +21,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="build" content="2026-11-25 12:50 AM ET">
+    <meta name="build" content="2026-11-25 1:00 AM ET">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <title>Free Home Inventory App: Scan Barcodes, Track Expiration Dates, Share With Your Household | Support My Local Community</title>
@@ -1443,11 +1443,30 @@
         // store searches don't understand barcode numbers, so search by name + size (brand included)
         return STORES[k][1] + encodeURIComponent(searchText(it));
     }
+    // Which store a saved link belongs to, so "Open its … page" names the right store
+    // (Amazon links from other countries and the smile. address still count as Amazon).
+    function storeFromLink(u) {
+        var m = /\/\/(?:www\.)?([a-z0-9-]+)\./i.exec(String(u || ''));
+        var host = m ? m[1].toLowerCase() : '';
+        var map = { walmart: 'walmart', samsclub: 'sams', publix: 'publix', dollargeneral: 'dg', target: 'target', aldi: 'aldi', kroger: 'kroger', costco: 'costco', amazon: 'amazon', smile: 'amazon' };
+        return map[host] || '';
+    }
+    // Keep a typed link only if it is a web address; a bare "www.walmart.com/ip/…" gets https:// added.
+    // Amazon links always come out carrying the SMLC Associates tag, whoever typed them.
+    function cleanLink(v) {
+        var u = String(v || '').trim();
+        if (!u) return '';
+        if (/^(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:[\/?#]|$)/i.test(u)) u = 'https://' + u;
+        if (!/^https?:\/\//i.test(u)) return '';
+        return window.smlcAmazonTag ? window.smlcAmazonTag(u) : u;
+    }
     async function storePick(it) {
-        var home = storeOf(it), opts = [];
-        if (it.storeLink) opts.push({ label: '🔗 Open its ' + (STORES[home] ? esc(STORES[home][0]) : 'store') + ' page', value: '__link', cls: 'gold' });
+        var home = storeOf(it), linkStore = storeFromLink(it.storeLink), opts = [];
+        if (it.storeLink) opts.push({ label: '🔗 Open its ' + (STORES[linkStore || home] ? esc(STORES[linkStore || home][0]) : 'store') + ' page', value: '__link', cls: 'gold' });
         var list = myStores().slice();
         if (home && STORES[home] && list.indexOf(home) < 0) list.unshift(home);
+        if (linkStore && STORES[linkStore] && list.indexOf(linkStore) < 0) list.unshift(linkStore);
+        if (list.indexOf('amazon') < 0) list.push('amazon');   // most of these can be bought at Amazon too
         if (home) list.sort(function (a, b) { return (b === home) - (a === home); });
         list.forEach(function (k) { opts.push({ label: esc(STORES[k][0]) + (isLocal(k) ? ' <span class="hint">(' + (STORES[k][2].url ? 'website' : 'map') + ')</span>' : '') + (k === home ? ' <span class="hint">(where it\'s from)</span>' : ''), value: k, cls: it.storeLink || k !== home ? 'ghost' : 'gold' }); });
         opts.push({ label: 'Cancel', value: null, cls: 'ghost' });
@@ -1929,7 +1948,7 @@
             lowAt: Math.max(0, parseInt($('fLow').value, 10) || 0),
             keepDays: Math.max(0, parseInt($('fKeep').value, 10) || 0),
             store: $('fStore').value || '',
-            storeLink: /^https:\/\//i.test($('fLink').value.trim()) ? (window.smlcAmazonTag ? window.smlcAmazonTag($('fLink').value.trim()) : $('fLink').value.trim()) : '',
+            storeLink: cleanLink($('fLink').value),
             openedOn: $('fOpened').value || '',
             serial: isFoodCat($('fCat').value) ? '' : $('fSerial').value.trim(),
             caseBarcode: $('fIsCase').checked ? $('fCaseCode').value.replace(/\s/g, '') : '',
