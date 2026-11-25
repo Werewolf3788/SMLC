@@ -1,0 +1,24 @@
+name: Apply expiry reminder changes
+on:
+  push:
+    branches: [Claude-Test]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: contains(github.event.head_commit.message, 'Apply expiry reminder changes')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: Claude-Test
+      - name: Apply the patch
+        run: |
+          base64 -d ci/expiry.b64 | gunzip > /tmp/p.patch
+          git apply --verbose /tmp/p.patch
+          git config user.name "SMLC Bot"
+          git config user.email "smlc-bot@users.noreply.github.com"
+          rm -rf ci .github/workflows/apply-expiry-reminders.yml
+          git add -A
+          git commit -m "Inventory: phone reminders before food goes bad"
+          git push origin HEAD:Claude-Test
