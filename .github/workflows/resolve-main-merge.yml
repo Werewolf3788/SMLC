@@ -1,0 +1,46 @@
+name: Merge main into Claude-Test
+# Temporary one-off helper: merges main into this branch and settles the two
+# add/add conflicts (tct.html, admin/ads-guide.html) by keeping this branch's
+# copies, which already contain everything main has. Delete after it runs.
+on:
+  push:
+    paths:
+      - '.github/workflows/resolve-main-merge.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: resolve-main-merge
+  cancel-in-progress: false
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: Claude-Test
+          fetch-depth: 0
+
+      - name: Merge main into Claude-Test
+        run: |
+          set -e
+          git config user.name "smlc-merge-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git fetch origin main
+          git merge origin/main --no-edit --no-commit || true
+          echo "Conflicted files:"
+          git diff --name-only --diff-filter=U
+          git checkout --ours -- tct.html admin/ads-guide.html
+          git add tct.html admin/ads-guide.html
+          remaining=$(git diff --name-only --diff-filter=U)
+          if [ -n "$remaining" ]; then
+            echo "Still conflicted: $remaining"
+            exit 1
+          fi
+          if git rev-parse -q --verify MERGE_HEAD > /dev/null; then
+            git commit -m "Merge main into Claude-Test" -m "Keeps the Claude-Test versions of tct.html and admin/ads-guide.html; those already include everything added on main."
+          fi
+          git push origin HEAD:Claude-Test
