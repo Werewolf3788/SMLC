@@ -1,0 +1,38 @@
+name: Apply DoorDash store option
+# Temporary one-off helper: decodes ci/doordash.b64 into a patch against
+# inventory/index.html, applies it, then deletes itself and the patch file.
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-doordash.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-doordash
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Apply the change
+        run: |
+          set -e
+          base64 -d ci/doordash.b64 > /tmp/doordash.patch
+          patch -p1 --forward < /tmp/doordash.patch
+          grep -qF "doordash: ['DoorDash (delivery)'" inventory/index.html
+          grep -qF "k !== 'doordash'" inventory/index.html
+          grep -qF "doordash: 'doordash'" inventory/index.html
+          git rm -q ci/doordash.b64 .github/workflows/apply-doordash.yml
+          git config user.name "SMLC bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Inventory: DoorDash is a store option for finding an item"
+          git push origin HEAD:${{ github.ref_name }}
