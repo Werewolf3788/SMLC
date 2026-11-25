@@ -1,0 +1,22 @@
+name: apply patch
+on:
+  push:
+    branches: [Claude-Test]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: contains(github.event.head_commit.message, 'apply honest save patch')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply
+        run: |
+          base64 -d ci/change.b64 | gunzip > /tmp/change.patch
+          git apply /tmp/change.patch
+          git config user.name 'SMLC bot'
+          git config user.email 'bot@users.noreply.github.com'
+          git rm -q .github/workflows/apply-honest-save.yml ci/change.b64
+          git add -A
+          git commit -m 'Inventory: only say saved when the save actually happened'
+          git push origin HEAD:Claude-Test
