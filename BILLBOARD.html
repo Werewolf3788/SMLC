@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Billboard Player</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;cursor:none}
+  #stage{position:fixed;inset:0;background:#000}
+  .slide{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s}
+  .slide.on{opacity:1}
+  #msg{position:fixed;inset:0;display:none;align-items:center;justify-content:center;color:#fff;font:700 6vmin system-ui,sans-serif;text-align:center;padding:4vmin;background:#001B37}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="msg"></div>
+<script>
+/* ============ SETTINGS (edit these) ============ */
+const SHEET_ID = "PASTE-SHEET-ID-HERE";          // from the Google Sheet address bar
+const FALLBACK_IMAGE = "";                          // optional: picture shown if no ads match this screen
+const REFRESH_MINUTES = 5;                          // how often to re-read the sheet
+const FIT = "cover";                                // "cover" fills the screen (crops edges) | "contain" shows everything (may have bars)
+/* ================================================ */
+
+const params = new URLSearchParams(location.search);
+const SIGN = (params.get("sign") || "").trim();
+const SHEET = params.get("sheet") || SHEET_ID;       // ?sheet= lets you test another sheet
+const stage = document.getElementById("stage");
+const msg = document.getElementById("msg");
+document.documentElement.style.setProperty("--fit", FIT);
+
+function showMsg(t){ msg.textContent = t; msg.style.display = "flex"; }
+function hideMsg(){ msg.style.display = "none"; }
+
+/* --- tiny CSV reader (handles quotes) --- */
+function parseCSV(text){
+  const rows=[]; let row=[], cur="", q=false;
+  for (let i=0;i<text.length;i++){
+    const c=text[i];
+    if (q){ if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; }
+    else if (c==='"') q=true;
+    else if (c===",") { row.push(cur); cur=""; }
+    else if (c==="\n"||c==="\r"){ if(c==="\r"&&text[i+1]==="\n") i++; row.push(cur); rows.push(row); row=[]; cur=""; }
+    else cur+=c;
+  }
+  if (cur!==""||row.length){ row.push(cur); rows.push(row); }
+  const head=(rows.shift()||[]).map(h=>h.trim());
+  return rows.filter(r=>r.some(x=>x.trim()!=="")).map(r=>Object.fromEntries(head.map((h,i)=>[h,(r[i]||"").trim()])));
+}
+async function getTab(name){
+  const url=`https://docs.google.com/spreadsheets/d/${SHEET}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
+  const r=await fetch(url,{cache:"no-store"});
+  if(!r.ok) throw new Error(name+" "+r.status);
+  return parseCSV(await r.text());
+}
+
+/* --- Google Drive share link -> direct image --- */
+function fixUrl(u){
+  const m=u.match(/drive\.google\.com\/file\/d\/([^/]+)/)||u.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([^&]+)/);
+  return m ? `https://drive.google.com/thumbnail?id=${m[1]}&sz=w2000` : u;
+}
+const isVideo=u=>/\.(mp4|webm|mov)(\?|$)/i.test(u);
+
+/* --- is this ad meant for this screen, and is it live today? --- */
+function today(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function normDate(s){            // accepts 2026-11-30 or 11/30/2026
+  s=(s||"").trim(); if(!s) return "";
+  let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if(m) return m[1]+"-"+m[2].padStart(2,"0")+"-"+m[3].padStart(2,"0");
+  m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);  if(m) return m[3]+"-"+m[1].padStart(2,"0")+"-"+m[2].padStart(2,"0");
+  return "";
+}
+function targets(ad){ return (ad["Targets"]||"").split(",").map(t=>t.trim().toLowerCase()).filter(Boolean); }
+function forThisScreen(ad, screen){
+  if(/^no$/i.test(ad["Active"]||"")) return false;
+  if(!ad["File URL (image or video)"]) return false;
+  const t=today(), s=normDate(ad["Start Date"]), e=normDate(ad["End Date"]);
+  if(s && t<s) return false;
+  if(e && t>e) return false;
+  const want=new Set([ "global", screen["Sign ID"].toLowerCase(), screen["Town"].toLowerCase(), screen["County"].toLowerCase() ]);
+  return targets(ad).some(x=>want.has(x));
+}
+
+/* --- load, filter, remember last good copy in case the internet drops --- */
+async function loadPlaylist(){
+  let screens, ads;
+  try{
+    [screens, ads] = await Promise.all([getTab("Screens"), getTab("Ads")]);
+    localStorage.setItem("bb_cache_"+SIGN, JSON.stringify({screens,ads}));
+  }catch(err){
+    const c=localStorage.getItem("bb_cache_"+SIGN);
+    if(!c) throw err;
+    ({screens,ads}=JSON.parse(c));
+  }
+  const screen=screens.find(s=>s["Sign ID"]===SIGN);
+  if(!screen) throw new Error("Sign ID "+SIGN+" is not on the Screens tab");
+  const defSecs=parseInt(screen["Ad Seconds"])||12;
+  const list=ads.filter(a=>forThisScreen(a,screen)).map(a=>({
+    url:fixUrl(a["File URL (image or video)"]), name:a["Advertiser"],
+    secs:parseInt(a["Seconds (blank = screen default)"])||defSecs
+  }));
+  if(!list.length && FALLBACK_IMAGE) list.push({url:FALLBACK_IMAGE,name:"fallback",secs:defSecs});
+  return list;
+}
+
+/* --- play loop --- */
+let playlist=[], idx=0, timer=null, current=null;
+function makeEl(item){
+  const el=document.createElement(isVideo(item.url)?"video":"img");
+  el.className="slide"; el.style.objectFit=FIT;
+  if(el.tagName==="VIDEO"){ el.muted=true; el.playsInline=true; el.loop=true; el.autoplay=true; }
+  el.src=item.url; return el;
+}
+function next(){
+  clearTimeout(timer);
+  if(!playlist.length){ showMsg(SIGN? "No ads scheduled for this screen":"Add ?sign=SIGNID to the address"); timer=setTimeout(refresh,30000); return; }
+  hideMsg();
+  const item=playlist[idx % playlist.length]; idx++;
+  const el=makeEl(item);
+  let started=false;
+  const go=()=>{
+    if(started) return; started=true;
+    stage.appendChild(el); requestAnimationFrame(()=>el.classList.add("on"));
+    const old=current; current=el;
+    if(old){ old.classList.remove("on"); setTimeout(()=>old.remove(),500); }
+    timer=setTimeout(next,item.secs*1000);
+  };
+  el.onload=go; el.oncanplay=go;
+  el.onerror=()=>{ console.warn("Could not load",item.url); timer=setTimeout(next,500); };  // skip broken ad
+  setTimeout(go,4000);                                                                       // don't hang on a slow file
+  if(playlist.length===1 && current && current.src===el.src){ started=true; timer=setTimeout(next,item.secs*1000); }
+}
+async function refresh(){
+  try{
+    const fresh=await loadPlaylist();
+    const same=JSON.stringify(fresh)===JSON.stringify(playlist);
+    playlist=fresh;
+    if(!same || !timer){ idx=0; next(); }
+  }catch(err){ showMsg(String(err.message||err)); }
+}
+if(!SIGN) showMsg("Add ?sign=SIGNID to the address, e.g. player.html?sign=10101");
+else{ refresh(); setInterval(refresh_keep, REFRESH_MINUTES*60000); }
+async function refresh_keep(){   // refresh the list without interrupting the ad on screen
+  try{
+    const fresh=await loadPlaylist();
+    if(JSON.stringify(fresh)!==JSON.stringify(playlist)){ playlist=fresh; idx=0; }
+    if(!playlist.length) next();
+  }catch(e){}
+}
+</script>
+</body>
+</html>
