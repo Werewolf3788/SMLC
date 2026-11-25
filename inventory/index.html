@@ -21,7 +21,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="build" content="2026-11-24 11:48 PM ET">
+    <meta name="build" content="2026-11-24 11:53 PM ET">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <title>Free Home Inventory App: Scan Barcodes, Track Expiration Dates, Share With Your Household | Support My Local Community</title>
@@ -801,6 +801,33 @@
         }).catch(function () {});
     }
     function fail(e) { console.error(e); toast((e && e.code === 'permission-denied') ? "Not allowed — the household's Firestore rules may not be set up yet." : 'Something went wrong: ' + (e && e.message || e), 5000); }
+    // Why a save did not reach Firestore, in words a person can act on.
+    function saveReason(e) {
+        var c = (e && e.code) || '';
+        if (c === 'permission-denied') return 'Your account is signed in but not allowed to write to this household. That means it is not a member of it: open 🏠 at the top and join with the invite code.';
+        if (c === 'resource-exhausted') return 'Firestore is over its free daily limit today, so nothing can be saved until the limit resets (about midnight Pacific). Reading may work while saving does not.';
+        if (c === 'unavailable' || c === 'deadline-exceeded' || !navigator.onLine) return 'No connection to the list right now. It should go through once you are back online — try again when you have signal.';
+        if (c === 'unauthenticated') return 'You are signed out. Sign in again, then try once more.';
+        return (e && e.message) || 'Unknown problem.';
+    }
+    // Only say "saved" when Firestore says saved. If the write is refused, say so and offer a retry.
+    function saveWithProof(label, p, retry) {
+        var done = false;
+        var slow = setTimeout(function () {
+            if (done) return;
+            toast(label + ' — still waiting for the server. If you are offline it will go through when you are back on.', 7000);
+        }, 6000);
+        p.then(function () { done = true; clearTimeout(slow); toast(label, 3000); })
+         .catch(function (e) {
+            done = true; clearTimeout(slow); fail(e);
+            var what = label.replace(/^(Saved|Added|Put back)\s+/, '');
+            choice('⚠️ Not saved',
+                '<p><b>' + esc(what) + '</b> did not reach your household list, so it will not be there when the page reloads.</p><p>' + esc(saveReason(e)) + '</p>' +
+                '<p class="hint">Nothing you typed is lost — press Try again as many times as you like.</p>',
+                [{ label: '🔁 Try again', value: 'retry', cls: 'gold' }, { label: 'Close', value: null, cls: 'ghost' }])
+              .then(function (r) { if (r === 'retry') saveWithProof(label, retry(), retry); });
+         });
+    }
 
     // ------------------------------------------------------------------ sheets
     var sheetDone = {};
@@ -1902,7 +1929,10 @@
             p = itemsRef().add(data); logIt('added', data, data.qty > 1 ? data.qty + ' ' + (data.unit || '') : '');
             ev('inventory_item_added', { source: editing.source || 'manual' });
         }
-        p.catch(fail);
+        var saveLabel = (it && !editing.restock ? 'Saved ' : (editing.restock ? 'Put back ' : 'Added ')) + name;
+        saveWithProof(saveLabel, p, function () {
+            return (it ? itemsRef().doc(it.id).update(data) : itemsRef().add(data));
+        });
         // remember the barcode's label for next time (shared)
         if (isAdmin() && $('fTrust').checked) {
             var tcode = data.caseBarcode || data.barcode;
@@ -1914,7 +1944,6 @@
             if (data.barcode) col('barcodes').doc(labelId(data.barcode)).set(Object.assign({ barcode: data.barcode }, lab), { merge: true }).catch(function () {});
             if (data.caseBarcode) col('barcodes').doc(labelId(data.caseBarcode)).set(Object.assign({ barcode: data.caseBarcode }, lab, { caseSize: data.caseSize, itemBarcode: data.barcode || '' }), { merge: true }).catch(function () {});
         }
-        toast((it && !editing.restock ? 'Saved ' : 'Added ') + name, 0, true);
         closeSheet('item', true);
     };
     $('addManualBtn').onclick = $('addManualBtn2').onclick = function () { itemSheet({ prefill: {} }); };
