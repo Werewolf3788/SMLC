@@ -21,7 +21,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="build" content="2026-11-25 12:31 AM ET">
+    <meta name="build" content="2026-11-25 12:50 AM ET">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <title>Free Home Inventory App: Scan Barcodes, Track Expiration Dates, Share With Your Household | Support My Local Community</title>
@@ -572,7 +572,7 @@
             <input id="fNotes" maxlength="200" placeholder="optional">
             <div class="r2">
                 <div><label for="fStore">Store it's from</label><select id="fStore"></select></div>
-                <div><label for="fLink">Store page link <span class="hint">(optional)</span></label><input id="fLink" type="url" maxlength="500" placeholder="https://www.walmart.com/ip/…"></div>
+                <div><label for="fLink">Store page link <span class="hint">(optional — saved for this barcode, so everyone who scans it gets it)</span></label><input id="fLink" type="url" maxlength="500" placeholder="https://www.walmart.com/ip/…"></div>
             </div>
             <label for="fLow">Put it on the shopping list when it gets down to</label>
             <div style="display:flex;gap:8px;align-items:center"><input id="fLow" type="number" min="0" step="1" value="0" style="width:6em"><span class="hint">0 = only when it's all gone</span></div>
@@ -1451,7 +1451,7 @@
         if (home) list.sort(function (a, b) { return (b === home) - (a === home); });
         list.forEach(function (k) { opts.push({ label: esc(STORES[k][0]) + (isLocal(k) ? ' <span class="hint">(' + (STORES[k][2].url ? 'website' : 'map') + ')</span>' : '') + (k === home ? ' <span class="hint">(where it\'s from)</span>' : ''), value: k, cls: it.storeLink || k !== home ? 'ghost' : 'gold' }); });
         opts.push({ label: 'Cancel', value: null, cls: 'ghost' });
-        var k = await choice('Find ' + it.name + ' at…', '<p class="hint">Opens the store\'s own site or app, searching for it by name and size. Save the product\'s store page link on the item to go straight to it.</p>' + (list.indexOf('amazon') >= 0 || home === 'amazon' ? '<p class="hint" style="font-size:.75rem">As an Amazon Associate, Support My Local Community earns from qualifying purchases.</p>' : ''), opts);
+        var k = await choice('Find ' + it.name + ' at…', '<p class="hint">Opens the store\'s own site or app, searching for it by name and size.</p>' + (list.indexOf('amazon') >= 0 || home === 'amazon' ? '<p class="hint" style="font-size:.75rem">As an Amazon Associate, Support My Local Community earns from qualifying purchases.</p>' : ''), opts);
         if (!k) return;
         ev('inventory_store_link', { store: k === '__link' ? home || 'link' : k });
         var go = k === '__link' ? it.storeLink : storeUrl(k, it); window.open(window.smlcAmazonTag ? window.smlcAmazonTag(go) : go, '_blank', 'noopener');
@@ -1986,6 +1986,9 @@
                 caseSize: data.caseBarcode ? data.caseSize : 0, image: editing.image }).then(function () { toast('⭐ Saved as a trusted product', 3000); }).catch(fail);
         } else if (editing.source !== 'saved' || name !== editing.origName || data.caseBarcode) {
             var lab = { name: name, brand: data.brand, category: data.category, image: data.image, savedAt: TS() };
+            // A store page belongs to the product, not to one person's list: when someone has the link,
+            // it is saved on the barcode itself, so the next person who scans it gets it already filled in.
+            if (data.storeLink) { lab.link = data.storeLink; lab.store = data.store || ''; }
             if (data.barcode) col('barcodes').doc(labelId(data.barcode)).set(Object.assign({ barcode: data.barcode }, lab), { merge: true }).catch(function () {});
             if (data.caseBarcode) col('barcodes').doc(labelId(data.caseBarcode)).set(Object.assign({ barcode: data.caseBarcode }, lab, { caseSize: data.caseSize, itemBarcode: data.barcode || '' }), { merge: true }).catch(function () {});
         }
@@ -2118,7 +2121,7 @@
             if (t.image && t.image !== it.image) upd.image = t.image;
             if (t.brand && t.brand !== it.brand) upd.brand = t.brand;
             if (t.store && !it.store) upd.store = t.store;
-            if (t.storeLink && !it.storeLink) upd.storeLink = t.storeLink;
+            if (t.storeLink && t.storeLink !== it.storeLink) upd.storeLink = t.storeLink;   // one page per product: the barcode's link wins
             if (Object.keys(upd).length) {
                 upd.updatedAt = TS(); upd.updatedBy = 'trusted list';
                 itemsRef().doc(it.id).update(upd).catch(function () {});
@@ -2220,8 +2223,8 @@
             var s = await col('barcodes').doc(labelId(code)).get();
             if (s.exists && s.data().name) {
                 var d = s.data();
-                return d.caseSize ? { name: d.name, brand: d.brand, category: d.category, image: d.image, caseBarcode: code, caseSize: d.caseSize, qty: d.caseSize, barcode: d.itemBarcode || '', source: 'saved', from: 'a label someone typed' }
-                                  : { name: d.name, brand: d.brand, category: d.category, image: d.image, barcode: code, source: 'saved', from: 'a label someone typed' };
+                return d.caseSize ? { name: d.name, brand: d.brand, category: d.category, image: d.image, store: d.store || '', storeLink: d.link || '', caseBarcode: code, caseSize: d.caseSize, qty: d.caseSize, barcode: d.itemBarcode || '', source: 'saved', from: 'a label someone typed' }
+                                  : { name: d.name, brand: d.brand, category: d.category, image: d.image, store: d.store || '', storeLink: d.link || '', barcode: code, source: 'saved', from: 'a label someone typed' };
             }
         } catch (e) {}
         // 4) free public product lists, all asked at the same time; first match wins
