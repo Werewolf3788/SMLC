@@ -21,7 +21,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="build" content="2026-11-24 11:53 PM ET">
+    <meta name="build" content="2026-11-25 12:10 AM ET">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <title>Free Home Inventory App: Scan Barcodes, Track Expiration Dates, Share With Your Household | Support My Local Community</title>
@@ -586,6 +586,11 @@
     <div class="panel">
         <h3><span>⚙️ Household</span><button class="x" data-close="house" aria-label="Close">✕</button></h3>
         <div class="acct"><img id="acctPic" alt="" referrerpolicy="no-referrer"><div><small>Signed in with <b id="acctHow">…</b></small><b id="acctName"></b><small id="acctEmail"></small></div></div>
+
+        <label for="myName">Your name (what the others in this household see)</label>
+        <div style="display:flex;gap:8px"><input id="myName" maxlength="40" autocomplete="name" placeholder="e.g. Kevin"><button id="myNameSave">Save</button></div>
+        <p class="hint">This is the name next to the things you add. If the list shows <b>Someone</b> for you, type your name here and tap Save.</p>
+
         <label for="hName">Household name</label>
         <div style="display:flex;gap:8px"><input id="hName" maxlength="60"><button id="hNameSave">Save</button></div>
 
@@ -1191,6 +1196,11 @@
     function fillHouseSheet() {
         if (!S.house) return;
         if (document.activeElement !== $('hName')) $('hName').value = S.house.name || '';
+        var mineMember = (S.members || []).filter(function (m) { return m.uid === me().uid; })[0];
+        if ($('myName') && document.activeElement !== $('myName')) {
+            var mn = mineMember && mineMember.name;
+            $('myName').value = (mn && mn !== 'Someone') ? mn : (S.user.displayName || '');
+        }
         $('hCode').textContent = S.house.inviteCode || '——';
         if (document.activeElement !== $('hLocs')) $('hLocs').value = locs().join(', ');
         $('hMembers').innerHTML = S.members.map(function (m) {
@@ -1212,6 +1222,24 @@
             col('invites').doc(S.house.inviteCode).set({ householdId: S.hid, householdName: n, createdBy: S.user.uid }).catch(function () {});
             toast('Saved');
         }).catch(fail);
+    };
+    $('myNameSave').onclick = async function () {
+        var n = $('myName').value.trim().replace(/\s+/g, ' ').slice(0, 40);
+        if (!n) { toast('Type your name first', 4000); $('myName').focus(); return; }
+        this.disabled = true;
+        try {
+            await houseRef().collection('members').doc(S.user.uid).set({
+                name: n,
+                email: S.user.email || '',
+                photo: S.user.photoURL || ''
+            }, { merge: true });
+            await S.user.updateProfile({ displayName: n }).catch(function () {});
+            S.user = auth.currentUser || S.user;
+            fillAccount();
+            fillHouseSheet();
+            toast('Name saved — that is what your household sees now.', 4000);
+        } catch (e) { fail(e); }
+        this.disabled = false;
     };
     $('hLocsSave').onclick = function () {
         var list = $('hLocs').value.split(/[,\n]/).map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 30);
