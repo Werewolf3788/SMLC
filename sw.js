@@ -13,7 +13,7 @@
      isn't a plain GET request.
    Any connection counts: Wi-Fi, cell data, a hotspot or Bluetooth tethering.
    ========================================================================== */
-var SMLC_SW_VERSION = 'smlc-v2';
+var SMLC_SW_VERSION = 'smlc-v3';
 var PAGES = 'smlc-pages-' + SMLC_SW_VERSION;
 var FILES = 'smlc-files-' + SMLC_SW_VERSION;
 var EXT = 'smlc-ext-' + SMLC_SW_VERSION;
@@ -103,4 +103,78 @@ self.addEventListener('fetch', function (event) {
     }
     if (EXTRA_HOSTS && EXTRA_HOSTS.test(url)) { event.respondWith(networkFirst(req, FILES, 5000)); return; }   // SMLC files on GitHub (WordPress)
     if (EXT_OK.test(url)) { event.respondWith(staleWhileRevalidate(req, EXT, true)); return; }
+});
+
+/* ==========================================================================
+   Expiry reminders from the Home Inventory app.
+   The app saves what is about to go bad in IndexedDB ('inv_reminders').
+   On phones that allow it (Android Chrome, app added to the home screen) the
+   browser wakes this worker roughly twice a day and one notification is shown
+   per day; on the others the app shows it itself while it is open.
+   ========================================================================== */
+function dayStamp() {
+    var d = new Date();
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+function invDb() {
+    return new Promise(function (resolve, reject) {
+        var r = indexedDB.open('smlc-offline', 1);
+        r.onupgradeneeded = function () { r.result.createObjectStore('kv'); };
+        r.onsuccess = function () { resolve(r.result); };
+        r.onerror = function () { reject(r.error); };
+    });
+}
+function invRead() {
+    return invDb().then(function (db) {
+        return new Promise(function (resolve) {
+            var g = db.transaction('kv', 'readonly').objectStore('kv').get('inv_reminders');
+            g.onsuccess = function () { resolve(g.result || null); };
+            g.onerror = function () { resolve(null); };
+        });
+    }).catch(function () { return null; });
+}
+function invWrite(val) {
+    return invDb().then(function (db) {
+        return new Promise(function (resolve) {
+            var t = db.transaction('kv', 'readwrite');
+            t.objectStore('kv').put(val, 'inv_reminders');
+            t.oncomplete = resolve; t.onerror = resolve; t.onabort = resolve;
+        });
+    }).catch(function () {});
+}
+function invLine(x) {
+    return x.name + (x.n < 0 ? ' (expired)' : x.n === 0 ? ' (today)' : x.n === 1 ? ' (tomorrow)' : ' (' + x.n + ' days)');
+}
+function invRemind() {
+    return invRead().then(function (data) {
+        if (!data || !data.items || !data.items.length) return;
+        if (data.day === dayStamp()) return;                       // already told them today
+        var total = data.total || data.items.length;
+        var body = data.items.slice(0, 4).map(invLine).join(' · ') + (total > 4 ? ' · and ' + (total - 4) + ' more' : '');
+        data.day = dayStamp();
+        return invWrite(data).then(function () {
+            return self.registration.showNotification(total + ' thing' + (total > 1 ? 's are' : ' is') + ' about to go bad', {
+                body: body,
+                tag: 'inv-expiry',
+                icon: new URL('icons/icon-192.png', self.registration.scope).href,
+                badge: new URL('icons/icon-192.png', self.registration.scope).href,
+                data: { url: new URL('inventory/?tab=exp', self.registration.scope).href }
+            });
+        });
+    }).catch(function () {});
+}
+
+self.addEventListener('periodicsync', function (event) {
+    if (event.tag === 'inv-expiry') event.waitUntil(invRemind());
+});
+
+self.addEventListener('notificationclick', function (event) {
+    event.notification.close();
+    var url = (event.notification.data && event.notification.data.url) || new URL('inventory/?tab=exp', self.registration.scope).href;
+    event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (list) {
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].url.indexOf('/inventory/') >= 0) return list[i].focus();
+        }
+        return self.clients.openWindow(url);
+    }));
 });

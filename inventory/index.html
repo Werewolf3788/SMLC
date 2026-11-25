@@ -21,7 +21,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="build" content="2026-11-23 9:22 PM ET">
+    <meta name="build" content="2026-11-25 9:40 AM ET">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <title>Free Home Inventory App: Scan Barcodes, Track Expiration Dates, Share With Your Household | Support My Local Community</title>
@@ -204,6 +204,10 @@
         .item .act + .act { margin-left: 4px; }
         .dupbar { background: rgba(255,193,14,.14); border: 1px solid var(--gold); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: .9rem; }
         .dupbar button { padding: .4em .9em; margin-left: auto; }
+        .remindbar { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--gold); border-radius: 12px; padding: 10px 12px; margin-bottom: 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: .9rem; }
+        .remindbar b { font-weight: 700; }
+        .remindbar .hint { flex: 1 1 100%; margin: 0; }
+        .remindbar button { padding: .4em .9em; }
         .log { display: grid; gap: 6px; }
         .log div { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-size: .9rem; }
         .log small { color: var(--muted); display: block; font-size: .75rem; }
@@ -1465,6 +1469,95 @@
     }
     function emptyMsg(icon, msg) { return '<div class="empty"><div class="i">' + icon + '</div>' + msg + '</div>'; }
 
+    // ---------------------------------------------------------------- expiry reminders
+    // A notification on your phone before food goes bad. Everything is worked out on the
+    // phone itself: no server, no keys, works offline and for every household.
+    var RKEY = 'inv_remind';
+    function remindCfg() {
+        var c = lsGet(RKEY) || {};
+        return { on: !!c.on, days: (c.days === 0 || (c.days > 0)) ? +c.days : 3, last: c.last || '' };
+    }
+    function remindSave(c) { lsSet(RKEY, c); }
+    function needSoon(days) {
+        return S.items.filter(function (i) { return i.status !== 'out' && i.name; })
+            .map(function (i) { return { it: i, n: daysUntil(effExp(i)) }; })
+            .filter(function (x) { return x.n !== null && x.n <= days; })
+            .sort(function (a, b) { return a.n - b.n; });
+    }
+    function remindLine(x) {
+        return x.name + (x.n < 0 ? ' (expired)' : x.n === 0 ? ' (today)' : x.n === 1 ? ' (tomorrow)' : ' (' + x.n + ' days)');
+    }
+    function remindBar() {
+        if (!('Notification' in window)) return '';
+        var c = remindCfg(), n = needSoon(c.days).length;
+        if (!c.on) return '<div class="remindbar">🔔 <b>Get a notification before food goes bad.</b>' +
+            '<span class="hint">A notification on this phone, once a day, for anything about to expire. Nothing to sign up for.</span>' +
+            '<button class="gold" data-act="remindOn">Turn on reminders</button></div>';
+        return '<div class="remindbar">🔔 <b>Reminders on</b> — ' + c.days + ' day' + (c.days === 1 ? '' : 's') + ' before anything goes bad' +
+            (n ? ' · ' + n + ' waiting' : '') +
+            '<button class="ghost" data-act="remindDays">Change</button><button class="ghost" data-act="remindOff">Turn off</button></div>';
+    }
+    function remindSw() {
+        if (!navigator.serviceWorker || !navigator.serviceWorker.getRegistration) return Promise.resolve(null);
+        return navigator.serviceWorker.getRegistration().catch(function () { return null; });
+    }
+    function remindNote(list, total) {
+        var title = total + ' thing' + (total > 1 ? 's are' : ' is') + ' about to go bad';
+        var body = list.slice(0, 4).map(remindLine).join(' · ') + (total > 4 ? ' · and ' + (total - 4) + ' more' : '');
+        var icon = new URL('../icons/icon-192.png', location.href).href;
+        var opts = { body: body, tag: 'inv-expiry', renotify: true, icon: icon, badge: icon, data: { url: new URL('index.html?tab=exp', location.href).href } };
+        return remindSw().then(function (reg) {
+            if (reg && reg.showNotification) return reg.showNotification(title, opts);
+            if (typeof Notification === 'function') new Notification(title, opts);
+        }).catch(function () {});
+    }
+    // A copy is kept where the phone's background helper can read it, so a reminder can still
+    // arrive when the app is closed (on phones that allow it). 'day' = the last day it was shown.
+    function remindIdb(val) {
+        return new Promise(function (res) {
+            var r = indexedDB.open('smlc-offline', 1);
+            r.onupgradeneeded = function () { r.result.createObjectStore('kv'); };
+            r.onsuccess = function () {
+                try {
+                    var t = r.result.transaction('kv', 'readwrite');
+                    t.objectStore('kv').put(val, 'inv_reminders');
+                    t.oncomplete = res; t.onerror = res; t.onabort = res;
+                } catch (e) { res(); }
+            };
+            r.onerror = function () { res(); };
+        }).catch(function () {});
+    }
+    var remindChecked = 0;
+    function maybeRemind(force) {
+        var c = remindCfg();
+        if (!c.on || !S.hid || !('Notification' in window) || Notification.permission !== 'granted') return;
+        var today = dateStr(new Date());
+        if (!force && (c.last === today || Date.now() - remindChecked < 300000)) return;
+        remindChecked = Date.now();
+        var all = needSoon(c.days);
+        remindIdb({ day: all.length ? today : '', total: all.length, items: all.slice(0, 8).map(function (x) { return { name: x.it.name, n: x.n }; }) });
+        if (!all.length) return;
+        c.last = today; remindSave(c);
+        remindNote(all, all.length);
+        ev('inventory_reminder', { n: all.length });
+    }
+    async function remindAsk() {
+        // permission is asked for first, straight from the tap: iPhone only allows it then
+        var perm = 'granted';
+        try { if (Notification.permission !== 'granted') perm = await Notification.requestPermission(); } catch (e) { perm = 'denied'; }
+        if (perm !== 'granted') { toast('Notifications are blocked for this site. Allow them in the browser (the padlock by the address), then tap again. On an iPhone, add the app to your home screen first.', 8000); return; }
+        var d = await choice('🔔 When should I warn you?', '<p>One notification a day while something is about to go bad. You can change it any time.</p>',
+            [{ label: '1 day before', value: 1 }, { label: '3 days before', value: 3, cls: 'gold' }, { label: '1 week before', value: 7 }, { label: 'Cancel', value: null, cls: 'ghost' }]);
+        if (d === null) return;
+        var c = remindCfg(); c.on = true; c.days = +d; c.last = ''; remindSave(c);
+        try {
+            var reg = await remindSw();
+            if (reg && reg.periodicSync) await reg.periodicSync.register('inv-expiry', { minInterval: 12 * 3600 * 1000 }).catch(function () {});
+        } catch (e) {}
+        render(); maybeRemind(true);
+        toast('Reminders on — ' + d + ' day' + (d === 1 ? '' : 's') + ' before', 4000);
+    }
+
     function render() {
         var inH = S.items.filter(function (i) { return i.status !== 'out'; });
         var out = S.items.filter(function (i) { return i.status === 'out'; });
@@ -1491,6 +1584,7 @@
                 h += '<h2 class="group">' + esc(l) + ' <span class="badge gray">' + groups[l].length + '</span></h2><div class="grid">' + groups[l].map(function (i) { return card(i, 'in'); }).join('') + '</div>';
             });
         } else if (S.tab === 'exp') {
+            var bar = remindBar();
             var withDate = inH.filter(function (i) { return effExp(i); }).filter(matches).sort(function (a, b) { return effExp(a) < effExp(b) ? -1 : 1; });
             var bad = withDate.filter(function (i) { return daysUntil(effExp(i)) < 0; });
             var soon = withDate.filter(function (i) { var n = daysUntil(effExp(i)); return n >= 0 && n <= 7; });
@@ -1498,7 +1592,7 @@
             if (bad.length) h += '<h2 class="group">Already expired <span class="badge bad">' + bad.length + '</span> <button class="act danger" data-act="outAllExpired" style="margin-left:auto;padding:.35em .8em;font-size:.78rem;text-transform:none">Mark all out</button></h2><div class="grid">' + bad.map(function (i) { return card(i, 'in'); }).join('') + '</div>';
             if (soon.length) h += '<h2 class="group">This week <span class="badge warn">' + soon.length + '</span></h2><div class="grid">' + soon.map(function (i) { return card(i, 'in'); }).join('') + '</div>';
             if (later.length) h += '<h2 class="group">Later</h2><div class="grid">' + later.map(function (i) { return card(i, 'in'); }).join('') + '</div>';
-            if (!h) h = emptyMsg('✅', 'Nothing with an expiration date yet.<br>Add a date when you scan things in, and they show up here before they go bad.');
+            h = bar + (h || emptyMsg('✅', 'Nothing with an expiration date yet.<br>Add a date when you scan things in, and they show up here before they go bad.'));
         } else if (S.tab === 'out') {
             var o = out.filter(matches).sort(function (a, b) { return (b.outAt && b.outAt.seconds || 9e9) - (a.outAt && a.outAt.seconds || 9e9); });
             var lw = low.filter(matches).sort(byName);
@@ -1516,6 +1610,7 @@
             }).join('') + '</div>' : emptyMsg('🕘', 'No activity yet.');
         }
         $('list').innerHTML = h;
+        maybeRemind();
     }
 
     $('list').onclick = async function (e) {
@@ -1536,6 +1631,8 @@
             return;
         }
         if (b.dataset.act === 'shareList') { shareList(); return; }
+        if (b.dataset.act === 'remindOn' || b.dataset.act === 'remindDays') { remindAsk(); return; }
+        if (b.dataset.act === 'remindOff') { var rc = remindCfg(); rc.on = false; remindSave(rc); render(); toast('Reminders off'); return; }
         if (b.dataset.act === 'pickStores') { pickStores(); return; }
         if (b.dataset.act === 'outAllExpired') {
             var ex = S.items.filter(function (i) { return i.status !== 'out' && daysUntil(effExp(i)) < 0; });
@@ -2547,7 +2644,7 @@
         }).catch(function () {});
     }
     setInterval(checkForUpdate, 180000);
-    document.addEventListener('visibilitychange', function () { if (!document.hidden) checkForUpdate(); });
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) { checkForUpdate(); maybeRemind(); } });
     window.addEventListener('focus', checkForUpdate);
 
     // re-render once a minute so "x min ago" and expiration badges stay current
