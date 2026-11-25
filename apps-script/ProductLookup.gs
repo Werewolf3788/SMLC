@@ -18,7 +18,7 @@
  *   isFood tells the app whether to ask for an expiry date (food) or a purchase time + serial (everything else).
  */
 
-var FOOD_CATS = ['Food', 'Fresh food', 'Drinks', 'Snacks', 'Frozen'];
+var FOOD_CATS = ['Food', 'Fresh food', 'Drinks', 'Snacks', 'Seasoning', 'Frozen'];
 var CACHE_SECONDS = 6 * 60 * 60;   // a barcode's product data does not change hourly
 
 function doGet(e) {
@@ -146,6 +146,7 @@ function classify(text) {
   if (has(/\b(shirt|t-?shirt|pants|jeans|shorts|jacket|coat|dress|socks|shoes|sneakers|boots|hat)\b/)) return 'Clothing';
   if (has(/\bfrozen\b/)) return 'Frozen';
   if (has(/\b(juice|soda|water|drinks?|beverages?|cola|energy drink)\b/)) return 'Drinks';
+  if (has(/\b(spices?|seasonings?|condiments?|salt|pepper|paprika|cumin|oregano|basil|thyme|garlic powder|onion powder|vinegar|extract|sauce|dressing)\b/)) return 'Seasoning';
   if (has(/\b(ramen|noodles?|soups?|salsa|dips?|sauces?|pasta|cereal|snacks?|chips?|cookies?|crackers?|candy|chocolate|rice|beans?|flour|sugar|milk|cheese|yogurt|bread|eggs?|meat|chicken|beef|pork|fruit|vegetables?|canned|granola|oats?|oil|spices?|seasoning|coffee|tea)\b/)) return 'Food';
   return 'Other';
 }

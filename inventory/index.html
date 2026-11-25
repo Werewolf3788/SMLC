@@ -21,7 +21,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="build" content="2026-11-25 9:40 AM ET">
+    <meta name="build" content="2026-11-25 12:20 AM ET">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <title>Free Home Inventory App: Scan Barcodes, Track Expiration Dates, Share With Your Household | Support My Local Community</title>
@@ -651,7 +651,7 @@
 
     var DEFAULT_LOCS = ['Pantry', 'Fridge', 'Freezer', 'Kitchen cabinet', 'Bathroom', 'Laundry / cleaning', 'Garage / storage', 'Other'];
     var CATS = [
-        ['Food', '🥫'], ['Fresh food', '🥬'], ['Drinks', '🥤'], ['Snacks', '🍪'], ['Frozen', '🧊'], ['Cleaning', '🧽'],
+        ['Food', '🥫'], ['Fresh food', '🥬'], ['Drinks', '🥤'], ['Snacks', '🍪'], ['Seasoning', '🧂'], ['Frozen', '🧊'], ['Cleaning', '🧽'],
         ['Personal care', '🧴'], ['Medicine', '💊'], ['Paper goods', '🧻'], ['Pet', '🐾'], ['Baby', '🍼'],
         ['Electronics', '💻'], ['Appliances', '🔌'], ['Tools', '🔧'], ['Furniture', '🪑'], ['Clothing', '👕'], ['Other', '📦']
     ];
@@ -723,7 +723,7 @@
     // Food gets eaten, so the date that matters is when it goes bad. Everything else is kept for
     // years, so the app also remembers when you bought it (date AND time) and its serial number,
     // which is what tells you which one is yours when you need a repair, a claim or a resale.
-    var FOOD_CATS = ['Food', 'Fresh food', 'Drinks', 'Snacks', 'Frozen'];
+    var FOOD_CATS = ['Food', 'Fresh food', 'Drinks', 'Snacks', 'Seasoning', 'Frozen'];
     function isFoodCat(cat) { return FOOD_CATS.indexOf(cat) >= 0; }
     function tsDate(t) {
         if (!t) return null;
@@ -1817,7 +1817,7 @@
     $('fPurchased').addEventListener('change', ownBox);
     function guessLoc(cat) {
         var L = locs(), pick = function (re) { for (var i = 0; i < L.length; i++) if (re.test(L[i])) return L[i]; return null; };
-        var m = { 'Frozen': /freez/i, 'Fresh food': /fridge|refrig/i, 'Drinks': /fridge|pantry/i, 'Cleaning': /laundry|clean/i, 'Personal care': /bath/i, 'Medicine': /bath|medic/i, 'Paper goods': /storage|garage|bath/i,
+        var m = { 'Frozen': /freez/i, 'Fresh food': /fridge|refrig/i, 'Drinks': /fridge|pantry/i, 'Seasoning': /season|cabinet|pantry/i, 'Cleaning': /laundry|clean/i, 'Personal care': /bath/i, 'Medicine': /bath|medic/i, 'Paper goods': /storage|garage|bath/i,
             'Electronics': /garage|storage|other/i, 'Appliances': /garage|storage|kitchen/i, 'Tools': /garage|storage/i,
             'Furniture': /other|garage|storage/i, 'Clothing': /bath|other/i };
         return (m[cat] && pick(m[cat])) || pick(/pantry/i) || L[0];
@@ -1929,6 +1929,7 @@
         if (/frozen/.test(t)) return 'Frozen';
         if (/beverage|drink|water|juice|soda|coffee|tea/.test(t)) return 'Drinks';
         if (/snack|chip|cookie|biscuit|candy|chocolate|sweet/.test(t)) return 'Snacks';
+        if (/seasoning|spice|condiment|sauce|salt|pepper|herb|oregano|cumin|paprika|garlic powder|onion powder|vinegar|extract/.test(t)) return 'Seasoning';
         if (/dairy|milk|cheese|yogurt|egg|meat|fresh|fruit|vegetable/.test(t)) return 'Fresh food';
         return fallback || 'Food';
     }
