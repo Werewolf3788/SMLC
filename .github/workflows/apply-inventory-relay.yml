@@ -1,0 +1,65 @@
+name: Apply inventory relay lookup
+# Temporary one-off helper: rewrites the barcode lookup in inventory/index.html to use
+# the SMLC lookup relay. Delete after it runs.
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-inventory-relay.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-inventory-relay
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Rewrite the lookup to use the relay
+        run: |
+          set -e
+          python3 - <<'PY'
+          import sys
+          p = 'inventory/index.html'
+          s = open(p, encoding='utf-8').read()
+          if 'relayLookup' in s:
+              print('already applied')
+              sys.exit(0)
+          start = s.index('    // UPCitemdb free lookup:')
+          end = s.index('\n    // ---- trusted list (inventory/products.json)')
+          new = '''    // SMLC product lookup relay: the big product databases (retailerapi, UPCitemdb) only
+    // answer servers, so this relay does the lookup and hands back the name, brand and picture.
+    var UPC_RELAY = 'https://smlc-barcode-lookup-0r5r2m.freebuff.site/';
+    function relayLookup(code) {
+        if (!/^\\d{8,14}$/.test(code)) return Promise.resolve(null);
+        return fetch(UPC_RELAY + '?upc=' + encodeURIComponent(code))
+            .then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+                if (!j || !j.found || !j.name) return null;
+                return { name: j.name, brand: j.brand || '', category: j.category || 'Other',
+                         image: j.image || '', storeLink: j.storeLink || '', barcode: code,
+                         source: 'found', from: 'the SMLC product lookup' };
+            }).catch(function () { return null; });
+    }'''
+          s2 = s[:start] + new + s[end:]
+          s2 = s2.replace('jobs.push(upcdbLookup(code));', 'jobs.push(relayLookup(code));')
+          open(p, 'w', encoding='utf-8').write(s2)
+          print('patched')
+          PY
+
+      - name: Commit and push
+        run: |
+          set -e
+          git config user.name "smlc-merge-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if git diff --quiet -- inventory/index.html; then echo "nothing to change"; exit 0; fi
+          git add inventory/index.html
+          git commit -m "Inventory: identify products by barcode through the SMLC lookup relay"
+          git push origin HEAD:${{ github.ref_name }}
