@@ -21,7 +21,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="build" content="2026-11-25 12:20 AM ET">
+    <meta name="build" content="2026-11-25 12:45 AM ET">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <title>Free Home Inventory App: Scan Barcodes, Track Expiration Dates, Share With Your Household | Support My Local Community</title>
@@ -1924,13 +1924,16 @@
         ['world.openfoodfacts.org', null], ['world.openbeautyfacts.org', 'Personal care'],
         ['world.openproductsfacts.org', 'Cleaning'], ['world.openpetfoodfacts.org', 'Pet']
     ];
+    // The word list from the product database. One entry there ("plant-based foods and beverages")
+    // contains "beverage", so that one is dropped first; otherwise half the shop reads as Drinks.
     function catFromTags(tags, fallback) {
-        var t = (tags || []).join(' ');
-        if (/frozen/.test(t)) return 'Frozen';
-        if (/beverage|drink|water|juice|soda|coffee|tea/.test(t)) return 'Drinks';
-        if (/snack|chip|cookie|biscuit|candy|chocolate|sweet/.test(t)) return 'Snacks';
-        if (/seasoning|spice|condiment|sauce|salt|pepper|herb|oregano|cumin|paprika|garlic powder|onion powder|vinegar|extract/.test(t)) return 'Seasoning';
-        if (/dairy|milk|cheese|yogurt|egg|meat|fresh|fruit|vegetable/.test(t)) return 'Fresh food';
+        var t = (tags || []).join(' ').toLowerCase().replace(/plant-based-foods-and-beverages/g, ' ');
+        if (/\bfrozen\b/.test(t)) return 'Frozen';
+        if (/\b(dair(y|ies)|milks?|cheeses?|yogurts?|eggs?|meats?|poultry|fish|seafood|fresh-foods?|fruits?|vegetables?)\b/.test(t)) return 'Fresh food';
+        if (/\b(crisps?|chips?|potato-chips|crackers?|popcorn|pretzels?)\b/.test(t)) return 'Snacks';   // crisps are tagged with salt and vinegar too
+        if (/\b(beverages?|drinks?|waters?|juices?|sodas?|coffees?|teas?)\b/.test(t)) return 'Drinks';
+        if (/\b(seasonings?|spices?|spice|condiments?|salts?|peppers?|herbs?|oregano|cumin|paprika|vinegar|sauces?|dressings?)\b/.test(t)) return 'Seasoning';
+        if (/\b(snacks?|cookies?|biscuits?|cand(y|ies)|chocolates?|sweets?)\b/.test(t)) return 'Snacks';
         return fallback || 'Food';
     }
     function labelId(code) { return String(code).replace(/\//g, '%2F').slice(0, 300); }
