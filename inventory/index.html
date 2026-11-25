@@ -21,7 +21,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="build" content="2026-11-25 12:10 AM ET">
+    <meta name="build" content="2026-11-25 12:31 AM ET">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <title>Free Home Inventory App: Scan Barcodes, Track Expiration Dates, Share With Your Household | Support My Local Community</title>
@@ -325,6 +325,17 @@
             .scanpanel .scandone { width: auto; margin: 10px 14px 0; background: #fff; color: #111; border: 0; font-size: 1.05rem; }
             .scanpanel h3 .x { width: 2.8em; height: 2.8em; font-size: 1.15rem; background: rgba(255,255,255,.3); }
         }
+        /* ---------- tap a product picture to see it big (at the store, checking what it looks like) ---------- */
+        img.pic { cursor: zoom-in; }
+        #picView { position: fixed; inset: 0; z-index: 80; display: none; align-items: center; justify-content: center;
+            padding: 16px; background: rgba(6,8,12,.93); }
+        #picView.on { display: flex; }
+        #picView img { max-width: 100%; max-height: 84vh; width: auto; object-fit: contain; background: #fff;
+            border-radius: 14px; box-shadow: 0 16px 50px rgba(0,0,0,.55); }
+        #picView .cap { position: absolute; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 14px); text-align: center;
+            color: #e8ecf3; font-size: .95rem; font-weight: 600; padding: 0 18px; }
+        #picView .close { position: absolute; top: calc(env(safe-area-inset-top) + 10px); right: 12px; background: rgba(255,255,255,.2);
+            color: #fff; border: 0; border-radius: 99px; width: 2.6em; height: 2.6em; font-size: 1rem; padding: 0; }
         .goog-te-banner-frame, #goog-gt-tt, .skiptranslate iframe { display: none !important; }
     </style>
 </head>
@@ -619,6 +630,12 @@
 </div>
 
 <div id="toast" hidden></div>
+
+<div id="picView" aria-hidden="true">
+    <img id="picViewImg" alt="" referrerpolicy="no-referrer">
+    <div class="cap" id="picViewCap"></div>
+    <button type="button" class="close" id="picViewClose" aria-label="Close picture">✕</button>
+</div>
 
 <script>
 (function () {
@@ -2719,6 +2736,30 @@
     setInterval(checkForUpdate, 180000);
     document.addEventListener('visibilitychange', function () { if (!document.hidden) { checkForUpdate(); maybeRemind(); } });
     window.addEventListener('focus', checkForUpdate);
+
+    // ---- tap a product picture to see it big (at the store, checking what it looks like)
+    (function () {
+        var box = $('picView'), big = $('picViewImg'), cap = $('picViewCap');
+        function shut() { box.classList.remove('on'); box.setAttribute('aria-hidden', 'true'); big.removeAttribute('src'); cap.textContent = ''; }
+        function show(src, label) {
+            if (!src) return;
+            big.src = src; cap.textContent = label || '';
+            box.classList.add('on'); box.setAttribute('aria-hidden', 'false');
+        }
+        window.showPic = show;
+        box.addEventListener('click', shut);
+        $('picViewClose').addEventListener('click', function (e) { e.stopPropagation(); shut(); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape' || e.keyCode === 27) shut(); });
+        // any product picture, in a list row or at the top of an item card, opens it big
+        document.addEventListener('click', function (e) {
+            var t = e.target;
+            if (!t || t.tagName !== 'IMG' || !t.classList || !t.classList.contains('pic') || !t.closest) return;
+            var card = t.closest('.item') || t.closest('.prodhead');
+            var nm = card && card.querySelector('b') ? card.querySelector('b').textContent : '';
+            e.preventDefault(); e.stopPropagation();
+            show(t.currentSrc || t.src, nm);
+        }, true);
+    })();
 
     // re-render once a minute so "x min ago" and expiration badges stay current
     setInterval(function () { if (S.hid && !document.hidden) render(); }, 60000);
