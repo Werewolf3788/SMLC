@@ -1,269 +1,196 @@
-diff --git a/apps-script/ProductLookup.gs b/apps-script/ProductLookup.gs
-new file mode 100644
-index 0000000..a929e48
---- /dev/null
-+++ b/apps-script/ProductLookup.gs
-@@ -0,0 +1,263 @@
-+/**
-+ * SMLC Product Lookup — one barcode in, one clean product out.
-+ *
-+ * Deploy: Extensions → Apps Script → Deploy → New deployment → Web app
-+ *         Execute as: Me.  Who has access: Anyone.
-+ *   Then paste the /exec URL into the inventory page as LOOKUP_URL (inventory/index.html).
-+ *
-+ *   GET .../exec?upc=013700016608
-+ *   GET .../exec?upc=013700016608&callback=myFn     -> myFn({...}); (works from any page, no CORS)
-+ *   GET .../exec?status=1                          -> which keys the vault gave us (names only, never values)
-+ *
-+ * Keys are never written here. They come from the Key Vault through the shared Keys library,
-+ * so rotating a key in the "Keys" sheet is all it takes — no code change, no redeploy.
-+ *
-+ * The answer is the same shape for food and non-food:
-+ *   { found, upc, name, brand, category, isFood, image, storeLink, source }
-+ *   category is one of the inventory app's types (Food, Cleaning, Electronics, …);
-+ *   isFood tells the app whether to ask for an expiry date (food) or a purchase time + serial (everything else).
-+ */
-+
-+var FOOD_CATS = ['Food', 'Fresh food', 'Drinks', 'Snacks', 'Frozen'];
-+var CACHE_SECONDS = 6 * 60 * 60;   // a barcode's product data does not change hourly
-+
-+function doGet(e) {
-+  var p = (e && e.parameter) || {};
-+  var cb = p.callback || '';
-+
-+  if (p.status) {
-+    return reply({
-+      ok: true,
-+      service: 'SMLC product lookup',
-+      v: 1,
-+      keys: {
-+        retailerapi_api_key: !!secret('retailerapi_api_key'),
-+        kroger_client_id: !!secret('kroger_client_id'),
-+        kroger_client_secret: !!secret('kroger_client_secret'),
-+        usda_fdc_api_key: !!secret('usda_fdc_api_key')
-+      }
-+    }, cb);
-+  }
-+
-+  var code = String(p.upc || p.barcode || '').replace(/\D/g, '');
-+  if (!/^\d{8,14}$/.test(code)) {
-+    return reply({ found: false, error: 'send ?upc= with 8 to 14 digits' }, cb);
-+  }
-+
-+  var out;
-+  try {
-+    out = lookup(code);
-+  } catch (err) {
-+    out = { found: false, upc: code, error: String((err && err.message) || err).slice(0, 300) };
-+  }
-+  return reply(out, cb);
-+}
-+
-+function reply(obj, callback) {
-+  var body = JSON.stringify(obj);
-+  if (callback) {
-+    return ContentService.createTextOutput(callback + '(' + body + ');')
-+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
-+  }
-+  return ContentService.createTextOutput(body).setMimeType(ContentService.MimeType.JSON);
-+}
-+
-+// ---- keys -------------------------------------------------------------------
-+// Keys.get() is the shared Keys library. If a key is missing, add a row to the "Keys" sheet.
-+function secret(name) {
-+  try {
-+    return String(Keys.get(name) || '').trim();
-+  } catch (e) {
-+    return '';
-+  }
-+}
-+
-+// ---- lookup -----------------------------------------------------------------
-+function lookup(code) {
-+  var cache = CacheService.getScriptCache();
-+  var hit = cache.get('upc:' + code);
-+  if (hit) {
-+    try { return JSON.parse(hit); } catch (e) { /* fall through and ask again */ }
-+  }
-+
-+  var out = { found: false, upc: code, source: null, v: 1 };
-+  var codes = variants(code);
-+
-+  // 1) retailerapi: any UPC/EAN, food or not — the widest net we have
-+  for (var i = 0; i < codes.length && !out.found; i++) {
-+    var a = retailerApi(codes[i]);
-+    if (a && a.found) out = a;
-+  }
-+  // 2) Kroger: grocery, but its catalogue also carries household goods
-+  for (var j = 0; j < codes.length && !out.found; j++) {
-+    var k = kroger(codes[j]);
-+    if (k && k.found) out = k;
-+  }
-+  // 3) USDA FoodData Central: branded food, by UPC — food only, so last
-+  for (var m = 0; m < codes.length && !out.found; m++) {
-+    var u = usda(codes[m]);
-+    if (u && u.found) out = u;
-+  }
-+
-+  if (out.found) {
-+    out.isFood = FOOD_CATS.indexOf(out.category) >= 0;
-+    try { cache.put('upc:' + code, JSON.stringify(out), CACHE_SECONDS); } catch (e) { /* caching is optional */ }
-+  }
-+  return out;
-+}
-+
-+// The same product turns up as 12 digits (UPC-A), 13 (EAN-13) or 14 (GTIN); try each spelling
-+function variants(code) {
-+  var out = [code];
-+  if (/^\d{12}$/.test(code)) out.push('0' + code);
-+  if (/^\d{13}$/.test(code) && code.charAt(0) === '0') out.push(code.slice(1));
-+  if (/^\d{14}$/.test(code)) out.push(code.slice(1));
-+  if (/^\d{8}$/.test(code)) out.push('00000' + code);
-+  var seen = {}, uniq = [];
-+  for (var i = 0; i < out.length; i++) {
-+    if (!seen[out[i]]) { seen[out[i]] = 1; uniq.push(out[i]); }
-+  }
-+  return uniq;
-+}
-+
-+function clean(s) {
-+  return String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
-+}
-+
-+function httpsUrl(u) {
-+  return String(u || '').replace(/^http:/i, 'https:');
-+}
-+
-+// Food or not, from words in the product's name and categories.
-+// Anything that does not read as food stays "Other" — the app then treats it as a thing you keep.
-+function classify(text) {
-+  var s = ' ' + clean(text).toLowerCase().replace(/[^a-z0-9]+/g, ' ') + ' ';
-+  function has(re) { return re.test(s); }
-+  if (has(/\b(paper towels?|toilet paper|tissues?|napkins?|paper plates?|paper cups?)\b/)) return 'Paper goods';
-+  if (has(/\b(trash|garbage|detergent|laundry|bleach|disinfect\w*|cleaners?|cleaning|dish soap|dishwasher|mop|sponge)\b/)) return 'Cleaning';
-+  if (has(/\b(pet|pets|dog|cat|litter|bird|fish)\b/)) return 'Pet';
-+  if (has(/\b(shampoo|toothpaste|toothbrush|deodorant|razors?|lotion|body wash|soap|floss)\b/)) return 'Personal care';
-+  if (has(/\b(vitamins?|medicine|pain relief|first aid|bandages?|ibuprofen|acetaminophen)\b/)) return 'Medicine';
-+  if (has(/\b(diapers?|wipes|baby formula)\b/)) return 'Baby';
-+  if (has(/\b(laptop|computer|monitor|keyboard|mouse|headphones?|earbuds?|phone|tablet|television|tv|speaker|camera|charger|cable|console|router)\b/)) return 'Electronics';
-+  if (has(/\b(refrigerator|fridge|microwave|oven|washer|dryer|vacuum|blender|toaster|air fryer|coffee maker|dishwasher)\b/)) return 'Appliances';
-+  if (has(/\b(drill|hammer|wrench|screwdriver|saw|tool|toolbox|level|plier)\b/)) return 'Tools';
-+  if (has(/\b(chair|table|desk|sofa|couch|bookshelf|dresser|mattress|bed frame)\b/)) return 'Furniture';
-+  if (has(/\b(shirt|t-?shirt|pants|jeans|shorts|jacket|coat|dress|socks|shoes|sneakers|boots|hat)\b/)) return 'Clothing';
-+  if (has(/\bfrozen\b/)) return 'Frozen';
-+  if (has(/\b(juice|soda|water|drinks?|beverages?|cola|energy drink)\b/)) return 'Drinks';
-+  if (has(/\b(ramen|noodles?|soups?|salsa|dips?|sauces?|pasta|cereal|snacks?|chips?|cookies?|crackers?|candy|chocolate|rice|beans?|flour|sugar|milk|cheese|yogurt|bread|eggs?|meat|chicken|beef|pork|fruit|vegetables?|canned|granola|oats?|oil|spices?|seasoning|coffee|tea)\b/)) return 'Food';
-+  return 'Other';
-+}
-+
-+function fetchJson(url, options) {
-+  var res = UrlFetchApp.fetch(url, options || {});
-+  var code = res.getResponseCode();
-+  if (code < 200 || code >= 300) return null;
-+  try { return JSON.parse(res.getContentText()); } catch (e) { return null; }
-+}
-+
-+// retailerapi — lookup by UPC/EAN/GTIN/ASIN, current price + sellers. Free tier: 1,000/month.
-+function retailerApi(code) {
-+  var key = secret('retailerapi_api_key');
-+  if (!key) return null;
-+  var p = fetchJson('https://api.retailerapi.com/v1/products/' + encodeURIComponent(code), {
-+    method: 'get',
-+    headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + key },
-+    muteHttpExceptions: true
-+  });
-+  if (!p || !p.title) return null;
-+  var cats = Array.isArray(p.categories) ? p.categories.join(' ') : String(p.categories || '');
-+  return {
-+    found: true,
-+    upc: code,
-+    name: clean(p.title),
-+    brand: clean(p.brand),
-+    category: classify(cats + ' ' + p.title),
-+    image: httpsUrl(p.image_url),
-+    storeLink: clean(p.walmart_url),
-+    source: 'retailerapi'
-+  };
-+}
-+
-+// Kroger Products API — needs a token from the client id/secret, then product.compact lookup by UPC.
-+function krogerToken() {
-+  var cache = CacheService.getScriptCache();
-+  var got = cache.get('kroger:token');
-+  if (got) return got;
-+  var id = secret('kroger_client_id'), sec = secret('kroger_client_secret');
-+  if (!id || !sec) return '';
-+  var res = UrlFetchApp.fetch('https://api.kroger.com/v1/connect/oauth2/token', {
-+    method: 'post',
-+    contentType: 'application/x-www-form-urlencoded',
-+    headers: { 'Authorization': 'Basic ' + Utilities.base64Encode(id + ':' + sec) },
-+    payload: { grant_type: 'client_credentials', scope: 'product.compact' },
-+    muteHttpExceptions: true
-+  });
-+  if (res.getResponseCode() !== 200) return '';
-+  var tok = '';
-+  try { tok = (JSON.parse(res.getContentText()) || {}).access_token || ''; } catch (e) { tok = ''; }
-+  if (tok) cache.put('kroger:token', tok, 1500);   // tokens last 30 min; keep ours a little shorter
-+  return tok;
-+}
-+
-+function kroger(code) {
-+  var tok = krogerToken();
-+  if (!tok) return null;
-+  var upc = code.length === 12 ? '0' + code : code;
-+  var body = fetchJson('https://api.kroger.com/v1/products?filter.productId=' + encodeURIComponent(upc) + '&filter.limit=1', {
-+    method: 'get',
-+    headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + tok },
-+    muteHttpExceptions: true
-+  });
-+  var item = body && body.data && body.data[0];
-+  if (!item || !item.description) return null;
-+  var cats = (item.categories || []).join(' ');
-+  var image = '';
-+  var sizes = (item.images && item.images[0] && item.images[0].sizes) || [];
-+  for (var i = 0; i < sizes.length; i++) {
-+    if (sizes[i] && sizes[i].url) { image = sizes[i].url; break; }
-+  }
-+  return {
-+    found: true,
-+    upc: code,
-+    name: clean(item.description),
-+    brand: clean(item.brand),
-+    category: classify(cats + ' ' + item.description),
-+    image: httpsUrl(image),
-+    storeLink: 'https://www.kroger.com/search?query=' + encodeURIComponent(clean(item.description)),
-+    source: 'kroger'
-+  };
-+}
-+
-+// USDA FoodData Central — branded foods by UPC. Food only, so it is the last thing asked.
-+function usda(code) {
-+  var key = secret('usda_fdc_api_key');
-+  if (!key) return null;
-+  var body = fetchJson('https://api.nal.usda.gov/fdc/v1/foods/search?api_key=' + encodeURIComponent(key) +
-+    '&query=' + encodeURIComponent(code) + '&dataType=Branded&pageSize=5', {
-+    method: 'get',
-+    headers: { 'Accept': 'application/json' },
-+    muteHttpExceptions: true
-+  });
-+  var foods = (body && body.foods) || [];
-+  for (var i = 0; i < foods.length; i++) {
-+    var f = foods[i] || {};
-+    var gtin = String(f.gtinUpc || '').replace(/\D/g, '');
-+    if (gtin && gtin !== code && gtin !== '0' + code && code !== '0' + gtin) continue;   // must be this product
-+    if (!f.description) continue;
-+    var cat = classify((f.foodCategory || '') + ' ' + f.description);
-+    if (cat === 'Other') cat = 'Food';        // it came from the food database, so it is food
-+    return {
-+      found: true,
-+      upc: code,
-+      name: clean(f.description),
-+      brand: clean(f.brandOwner || f.brandName),
-+      category: cat,
-+      image: '',
-+      storeLink: '',
-+      source: 'usda'
-+    };
-+  }
-+  return null;
-+}
+diff --git a/inventory/index.html b/inventory/index.html
+index 226068a..408a673 100644
+--- a/inventory/index.html
++++ b/inventory/index.html
+@@ -504,6 +504,17 @@
+                 <button type="button" class="ghost" data-got="1">Yesterday</button>
+             </div>
+             <p class="hint" id="fGotWho" style="margin:4px 0 0"></p>
++            <div id="ownBox" hidden>
++                <p class="hint" style="margin:14px 0 4px">🧾 <b>Things you keep</b> — for anything that isn't food, so you always know which one is yours and how long you've had it.</p>
++                <label for="fPurchased">Bought on <span class="hint">(date and time — from the receipt, or just tap)</span></label>
++                <div style="display:flex;gap:6px;flex-wrap:wrap">
++                    <input id="fPurchased" type="datetime-local" style="flex:1;min-width:190px">
++                    <button type="button" class="ghost" data-buy="now">Just now</button>
++                </div>
++                <label for="fSerial">Serial number <span class="hint">(optional — on the label, the box or under the battery cover)</span></label>
++                <input id="fSerial" maxlength="60" placeholder="e.g. SN1234567890">
++                <p class="hint" id="fOwnedHint" style="margin:4px 0 0"></p>
++            </div>
+             <label for="fKeep">Good for how many days? <span class="hint">(optional: leftovers, produce, or after opening)</span></label>
+             <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+                 <input id="fKeep" type="number" min="0" step="1" value="0" style="width:6em">
+@@ -637,7 +648,8 @@
+     var DEFAULT_LOCS = ['Pantry', 'Fridge', 'Freezer', 'Kitchen cabinet', 'Bathroom', 'Laundry / cleaning', 'Garage / storage', 'Other'];
+     var CATS = [
+         ['Food', '🥫'], ['Fresh food', '🥬'], ['Drinks', '🥤'], ['Snacks', '🍪'], ['Frozen', '🧊'], ['Cleaning', '🧽'],
+-        ['Personal care', '🧴'], ['Medicine', '💊'], ['Paper goods', '🧻'], ['Pet', '🐾'], ['Baby', '🍼'], ['Other', '📦']
++        ['Personal care', '🧴'], ['Medicine', '💊'], ['Paper goods', '🧻'], ['Pet', '🐾'], ['Baby', '🍼'],
++        ['Electronics', '💻'], ['Appliances', '🔌'], ['Tools', '🔧'], ['Furniture', '🪑'], ['Clothing', '👕'], ['Other', '📦']
+     ];
+     var CAT_EMOJI = {}; CATS.forEach(function (c) { CAT_EMOJI[c[0]] = c[1]; });
+     var OUT_REASONS = { empty: 'Empty / used up', expired: 'Expired', tossed: 'Thrown out' };
+@@ -704,6 +716,35 @@
+     }
+     function addDays(ds, n) { var p = ds.split('-'); var d = new Date(+p[0], +p[1] - 1, +p[2] + n); return dateStr(d); }
+     function tsDay(t) { return t && t.toDate ? dateStr(t.toDate()) : ''; }
++    // Food gets eaten, so the date that matters is when it goes bad. Everything else is kept for
++    // years, so the app also remembers when you bought it (date AND time) and its serial number,
++    // which is what tells you which one is yours when you need a repair, a claim or a resale.
++    var FOOD_CATS = ['Food', 'Fresh food', 'Drinks', 'Snacks', 'Frozen'];
++    function isFoodCat(cat) { return FOOD_CATS.indexOf(cat) >= 0; }
++    function tsDate(t) {
++        if (!t) return null;
++        if (t instanceof Date) return isNaN(t.getTime()) ? null : t;
++        return t.toDate ? t.toDate() : null;
++    }
++    function dtLocal(t) {                       // -> "2026-04-17T22:54" for the date-and-time box
++        var d = tsDate(t); if (!d) return '';
++        return dateStr(d) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
++    }
++    function ownedText(t) {
++        var d = tsDate(t); if (!d) return '';
++        var n = Math.floor((Date.now() - d.getTime()) / 86400000);
++        if (n <= 0) return 'owned today';
++        if (n === 1) return 'owned 1 day';
++        if (n < 60) return 'owned ' + n + ' days';
++        if (n < 730) { var mo = Math.round(n / 30.44); return 'owned ' + mo + ' month' + (mo > 1 ? 's' : ''); }
++        return 'owned ' + (n / 365.25).toFixed(1).replace(/\.0$/, '') + ' years';
++    }
++    function ownedBadge(it) {
++        if (isFoodCat(it.category)) return '';
++        var t = it.purchasedAt || it.gotAt || it.addedAt, d = tsDate(t);
++        if (!d) return '';
++        return ' <span class="badge gray" title="Bought ' + esc(d.toLocaleString()) + '">🧾 ' + ownedText(t) + '</span>';
++    }
+     function effExp(it) {
+         var cands = [];
+         if (it.expires) cands.push(it.expires);
+@@ -1257,6 +1298,7 @@
+     function byName(a, b) { return (a.name || '').localeCompare(b.name || ''); }
+     function card(it, mode) {
+         var meta = [it.brand, it.location].filter(Boolean).map(esc).join(' · ');
++        if (it.serial && !isFoodCat(it.category)) meta += (meta ? ' · ' : '') + 'SN ' + esc(it.serial);
+         var right;
+         if (mode === 'low') {
+             meta = (it.qty || 0) + ' left · list at ' + it.lowAt + (it.location ? ' · ' + esc(it.location) : '');
+@@ -1271,7 +1313,7 @@
+         }
+         return '<div class="item">' + picHtml(it) + '<div class="info" data-act="edit" data-id="' + it.id + '"><b>' + esc(it.name) +
+             (it.unit && mode !== 'out' ? ' <span class="hint">(' + esc(it.unit) + ')</span>' : '') + '</b><small>' + (meta || '&nbsp;') + '</small>' +
+-            (mode === 'out' ? '' : expBadge(it) + gotBadge(it)) + '</div>' + right + '</div>';
++            (mode === 'out' ? '' : expBadge(it) + (isFoodCat(it.category) ? gotBadge(it) : ownedBadge(it))) + '</div>' + right + '</div>';
+     }
+     function isLow(i) { return i.status !== 'out' && (i.lowAt || 0) > 0 && (i.qty || 0) <= i.lowAt; }
+     // Stores: each opens the store's own site/app searching for the item (the store keeps the sale)
+@@ -1584,6 +1626,9 @@
+         var gt = it && (it.gotAt || it.addedAt);
+         $('fGot').value = (gt && gt.toDate && !o.restock) ? dateStr(gt.toDate()) : dateStr(new Date());
+         editing.gotWas = $('fGot').value;
++        $('fSerial').value = src.serial || '';
++        $('fPurchased').value = o.restock ? dtLocal(src.purchasedAt) : dtLocal(it ? it.purchasedAt : null);
++        ownBox();
+         goesBadHint();
+         $('fGotWho').textContent = it ? 'First added' + (it.addedBy ? ' by ' + it.addedBy : '') + (it.addedAt && it.addedAt.toDate ? ' on ' + it.addedAt.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '') : '';
+         $('itemSave').textContent = o.restock ? 'Put back in the house' : it ? 'Save' : 'Add it';
+@@ -1658,9 +1703,26 @@
+         $('fGoesBad').textContent = e ? 'Goes bad: ' + niceDate(e) + (keep && !$('fExp').value ? '' : keep ? ' (whichever comes first)' : '') : '';
+     }
+     ['fKeep', 'fOpened', 'fExp', 'fGot'].forEach(function (k) { $(k).addEventListener('input', goesBadHint); $(k).addEventListener('change', goesBadHint); });
++    // Things you keep (not food): when it was bought and its serial number.
++    // Left blank, "bought" starts as right now, so the age of the item is always known.
++    function ownBox() {
++        var keep = !isFoodCat($('fCat').value);
++        $('ownBox').hidden = !keep;
++        if (!keep) { $('fOwnedHint').textContent = ''; return; }
++        if (!$('fPurchased').value) $('fPurchased').value = dtLocal(new Date());
++        var t = $('fPurchased').value ? new Date($('fPurchased').value) : null;
++        if (!t || isNaN(t.getTime())) { $('fOwnedHint').textContent = ''; return; }
++        var n = Math.floor((Date.now() - t.getTime()) / 86400000);
++        $('fOwnedHint').textContent = (n < 0 ? 'That date is in the future' : n === 0 ? 'Bought today' : 'Bought ' + t.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' + ownedText(t));
++    }
++    $('fCat').onchange = ownBox;
++    $('fPurchased').addEventListener('input', ownBox);
++    $('fPurchased').addEventListener('change', ownBox);
+     function guessLoc(cat) {
+         var L = locs(), pick = function (re) { for (var i = 0; i < L.length; i++) if (re.test(L[i])) return L[i]; return null; };
+-        var m = { 'Frozen': /freez/i, 'Fresh food': /fridge|refrig/i, 'Drinks': /fridge|pantry/i, 'Cleaning': /laundry|clean/i, 'Personal care': /bath/i, 'Medicine': /bath|medic/i, 'Paper goods': /storage|garage|bath/i };
++        var m = { 'Frozen': /freez/i, 'Fresh food': /fridge|refrig/i, 'Drinks': /fridge|pantry/i, 'Cleaning': /laundry|clean/i, 'Personal care': /bath/i, 'Medicine': /bath|medic/i, 'Paper goods': /storage|garage|bath/i,
++            'Electronics': /garage|storage|other/i, 'Appliances': /garage|storage|kitchen/i, 'Tools': /garage|storage/i,
++            'Furniture': /other|garage|storage/i, 'Clothing': /bath|other/i };
+         return (m[cat] && pick(m[cat])) || pick(/pantry/i) || L[0];
+     }
+     $('itemForm').onclick = function (e) {
+@@ -1668,6 +1730,8 @@
+         if (kp) { $('fKeep').value = kp.dataset.keep; goesBadHint(); return; }
+         var op = e.target.closest('[data-open]');
+         if (op) { if (op.dataset.open === '') $('fOpened').value = ''; else $('fOpened').value = dateStr(new Date()); goesBadHint(); return; }
++        var bq = e.target.closest('[data-buy]');
++        if (bq) { $('fPurchased').value = dtLocal(new Date()); ownBox(); return; }
+         var g = e.target.closest('[data-got]');
+         if (g) { var gd = new Date(); gd.setDate(gd.getDate() - (+g.dataset.got)); $('fGot').value = dateStr(gd); return; }
+         var d = e.target.closest('[data-exp]');
+@@ -1698,6 +1762,7 @@
+             store: $('fStore').value || '',
+             storeLink: /^https:\/\//i.test($('fLink').value.trim()) ? (window.smlcAmazonTag ? window.smlcAmazonTag($('fLink').value.trim()) : $('fLink').value.trim()) : '',
+             openedOn: $('fOpened').value || '',
++            serial: isFoodCat($('fCat').value) ? '' : $('fSerial').value.trim(),
+             caseBarcode: $('fIsCase').checked ? $('fCaseCode').value.replace(/\s/g, '') : '',
+             caseSize: $('fIsCase').checked ? Math.max(1, parseInt($('fCaseSize').value, 10) || 1) : 0
+         };
+@@ -1710,6 +1775,12 @@
+         if (gotTs === 'same') { /* unchanged */ }
+         else if (gotTs) data.gotAt = gotTs;      // a day you picked
+         else data.gotAt = TS();                  // today
++        // non-food: the exact moment it was bought (date and time), kept even when the item is edited
++        if (!isFoodCat(data.category)) {
++            var bp = $('fPurchased').value;
++            if (bp) data.purchasedAt = firebase.firestore.Timestamp.fromDate(new Date(bp));
++            else if (editing.item && editing.item.purchasedAt) data.purchasedAt = '';
++        } else { data.serial = ''; data.purchasedAt = ''; }
+         if (it && editing.restock) {
+             data.status = 'in'; data.outReason = ''; data.qty = data.qty || 1; if (!data.gotAt) data.gotAt = TS();
+             p = itemsRef().doc(it.id).update(data); logIt('restocked', data);
+@@ -1788,6 +1859,34 @@
+                          from: { 'world.openfoodfacts.org': 'Open Food Facts', 'world.openbeautyfacts.org': 'Open Beauty Facts', 'world.openproductsfacts.org': 'Open Products Facts', 'world.openpetfoodfacts.org': 'Open Pet Food Facts' }[host] || host };
+             });
+     }
++    // Optional: the Product Lookup Apps Script in apps-script/ProductLookup.gs. After it is deployed as a
++    // web app, paste its /exec URL between the quotes — the keys stay in the Key Vault and never reach
++    // this page. Left empty, the page uses the free lists and the relay below, as it does today.
++    var LOOKUP_URL = '';
++    function scriptLookup(code) {
++        // asked with ?callback=… so the answer arrives as a script: Apps Script needs no CORS handshake
++        if (!LOOKUP_URL || !/^\d{8,14}$/.test(code)) return Promise.resolve(null);
++        return new Promise(function (resolve) {
++            var cb = '__smlcLU' + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
++            var s = document.createElement('script'), done = false;
++            var t = setTimeout(function () { finish(null); }, 9000);
++            function finish(v) {
++                if (done) return; done = true;
++                clearTimeout(t);
++                try { delete window[cb]; } catch (e) { window[cb] = null; }
++                if (s.parentNode) s.parentNode.removeChild(s);
++                resolve(v);
++            }
++            window[cb] = function (j) {
++                if (!j || !j.found || !j.name) return finish(null);
++                finish({ name: j.name, brand: j.brand || '', category: j.category || 'Other',
++                         image: j.image || '', barcode: code, source: 'found', from: j.source || 'product lookup' });
++            };
++            s.onerror = function () { finish(null); };
++            s.src = LOOKUP_URL + (LOOKUP_URL.indexOf('?') < 0 ? '?' : '&') + 'upc=' + encodeURIComponent(code) + '&callback=' + cb;
++            document.head.appendChild(s);
++        });
++    }
+     // SMLC product lookup relay: the big product databases (retailerapi, UPCitemdb) only
+     // answer servers, so this relay does the lookup and hands back the name, brand and picture.
+     var UPC_RELAY = 'https://smlc-barcode-lookup-0r5r2m.freebuff.site/';
+@@ -1944,6 +2043,7 @@
+         var jobs = [];
+         OFF.forEach(function (o) { variants.forEach(function (v) { jobs.push(offLookup(o[0], o[1], v, code)); }); });
+         jobs.push(relayLookup(code));
++        if (LOOKUP_URL) jobs.push(scriptLookup(code));
+         var hit = await firstHit(jobs, 7000);
+         if (hit) return hit;
+         return { name: '', barcode: code, source: 'new', maybeCase: /^\d{14}$/.test(code) };

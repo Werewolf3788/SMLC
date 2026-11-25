@@ -31,3 +31,4 @@ jobs:
           if git diff --cached --quiet; then echo "nothing to change"; exit 0; fi
           git commit -m "Inventory: non-food items keep a purchase date+time and serial number"
           git push origin HEAD:${{ github.ref_name }}
+# re-run 1
