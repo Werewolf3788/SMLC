@@ -1,0 +1,34 @@
+name: Apply inventory relay lookup
+# Temporary one-off helper: runs ci/apply-inventory-relay.py to point the barcode
+# lookup at the SMLC relay. Delete after it runs.
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-inventory-relay.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-inventory-relay
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Apply the change
+        run: python3 ci/apply-inventory-relay.py
+      - name: Commit and push
+        run: |
+          git config user.name "smlc-merge-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add inventory/index.html
+          if git diff --cached --quiet; then echo "nothing to change"; exit 0; fi
+          git commit -m "Inventory: identify products by barcode through the SMLC lookup relay"
+          git push origin HEAD:${{ github.ref_name }}
