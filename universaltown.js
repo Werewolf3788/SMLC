@@ -67,11 +67,18 @@
 
 // Line 54: Google Translate Global Callback & Dynamic Mutation Scanner
 window.googleTranslateElementInit = function() {
+    // Translation follows the device language (smlc-device-prefs.js).
+    // English devices never start the translator.
+    if (typeof window.smlcStartTranslate === 'function') {
+        try { window.smlcStartTranslate(); } catch (e) { console.warn("Google Translate initialization notice:", e.message); }
+        return;
+    }
+    if (window.SMLC_TRANSLATE_WANTED === false) return;
     try {
         if (window.google && window.google.translate) {
             new window.google.translate.TranslateElement({
                 pageLanguage: 'en',
-                layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE
+                autoDisplay: false
             }, 'google_translate_element');
         }
     } catch(e) {
@@ -200,7 +207,7 @@ const TOWN_ALIAS_MAP = {
         primaryName: "Sailor Springs", 
         dbTownKey: "Sailor Springs", 
         jsonKey: "sailor_springs", 
-        gasKey: ["louisville", "clay-city"], 
+        gasKey: [], 
         historyKey: "sailor_springs", 
         areaId: 5,
         linkedAreaIds: [5],
@@ -244,7 +251,7 @@ let ACTIVE_TOWN = getActiveTownConfig();
 const DEFAULT_APP_CONFIG = {
     regional_endpoints: {
         apps_script_bulletin_url: "//script.google.com/macros/s/AKfycbwtunjBquRf8yjnYdpMNMglMQB6n0j4pHSNke-9yADxZ3-9HvJqXT2DdVTUjdhRroGcxQ/exec",
-        gas_widget: "//werewolf3788.github.io/SMLC/update-gas.html"
+        gas_widget: "update-gas.html"   // same site, works on the test copy and on supportmylocalcommunity.com
     }
 };
 
@@ -289,6 +296,18 @@ function cleanRawUrl(urlStr) {
         .replace("/edit/", "/");
 }
 
+// Called by a slideshow <img> when its picture fails to load (expired/blocked link): hide that slide
+window.smlcSlideImageFailed = function (img) {
+    const slide = img && img.closest ? img.closest('.slider-slide') : null;
+    if (!slide) return;
+    slide.dataset.broken = '1';
+    slide.style.display = 'none';
+    slide.style.opacity = '0';
+    slide.style.zIndex = '0';
+    const viewport = slide.parentElement;
+    if (viewport) viewport.dispatchEvent(new Event('smlc-slide-broken'));
+};
+
 function normalizeImageUrl(rawUrl) {
     if (!rawUrl || typeof rawUrl !== 'string') return null;
     let url = rawUrl.trim();
@@ -309,6 +328,16 @@ function normalizeImageUrl(rawUrl) {
         url = /[?&]dl=0/.test(url) ? url.replace(/([?&])dl=0/, '$1raw=1') : (url.includes('raw=1') ? url : url + (url.includes('?') ? '&' : '?') + 'raw=1');
     }
     return url.replace(/^https?:/, '');
+}
+
+// Partner images: a relative path such as ./images/AE-28.png (or just AE-28.png)
+// is treated as coming from S&K Venture Signs. Full links are left alone.
+const SMLC_PARTNER_IMAGE_BASE = 'https://skventuresigns.com/images/';
+function resolvePartnerImage(raw) {
+    if (!raw || typeof raw !== 'string') return raw;
+    const u = raw.trim();
+    if (!u || /^(https?:)?\/\//i.test(u) || /^(data|blob):/i.test(u)) return u;
+    return SMLC_PARTNER_IMAGE_BASE + u.replace(/^\.?\/?(images\/)?/i, '').replace(/ /g, '%20');
 }
 
 function escapeJsString(str) {
@@ -363,7 +392,7 @@ function linkifyRawUrls(text) {
 }
 
 function buildTurnByTurnNavigationUrl(rawAddress) {
-    if (!rawAddress) return "#";
+    if (!rawAddress || !String(rawAddress).trim()) return "";
     const cleanAddress = encodeURIComponent(rawAddress.trim());
     const isAppleDevice = /iPad|iPhone|iPod|Macintosh/i.test(navigator.userAgent) && !window.MSStream;
 
@@ -672,11 +701,74 @@ function trackGa4Event(eventName, eventParams = {}) {
     }
 }
 
+// === REAL LINKS ONLY ===
+// A link is used only when it is a real address. Bare domains ("ourflora.com") get https://;
+// "N/A", "#", blanks and plain words give "" so no link is shown at all (never a dead "#" link).
+function smlcRealUrl(u) {
+    const s = String(u == null ? '' : u).trim();
+    if (!s || s === '#' || /^(n\/?a|none|null|tbd|-|find)$/i.test(s) || /\s/.test(s) && !/^https?:/i.test(s)) return '';
+    if (/^(https?:|mailto:|tel:)/i.test(s)) return s.replace(/^http:\/\//i, 'https://');
+    if (/^\/\//.test(s)) return 'https:' + s;
+    if (/^(\.{0,2}\/|[\w-]+\.html?(?:[?#].*)?$)/i.test(s)) return s;                 // this site's own pages
+    if (/^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(s)) return 'https://' + s;               // ourflora.com -> https://ourflora.com
+    return '';
+}
+window.smlcRealUrl = smlcRealUrl;
+
+// === BUSINESS DIRECTORY LINKS ===
+// Partners, the Business Spotlight, etc. link to the business's directory listing when they
+// have no website of their own. Names must match exactly (ignoring capitals, punctuation,
+// "The", "Inc", "LLC"), so a link never points at the wrong business.
+const SMLC_DIR_DOC = 'https://firestore.googleapis.com/v1/projects/smlc-fuel-monitor/databases/(default)/documents/directory/public?key=AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg';
+window.smlcDirIndexCache = null;
+function smlcDirKey(name) {
+    return String(name || '').toLowerCase().replace(/&/g, ' and ').replace(/\b(the|inc|llc|co|company|corp|corporation)\b\.?/g, ' ').replace(/[^a-z0-9]/g, '');
+}
+function smlcDirectoryIndex() {
+    if (window.smlcDirIndexPromise) return window.smlcDirIndexPromise;
+    const CK = 'smlc_dir_index_v1';
+    const build = list => {
+        const idx = {};
+        (list || []).forEach(b => { if (b && b.id && b.name) idx[smlcDirKey(b.name)] = { id: b.id, name: b.name, town: b.town || '' }; });
+        window.smlcDirIndexCache = idx;
+        return idx;
+    };
+    const fromFs = v => {
+        if (!v || typeof v !== 'object') return v;
+        if ('stringValue' in v) return v.stringValue;
+        if ('arrayValue' in v) return (v.arrayValue.values || []).map(fromFs);
+        if ('mapValue' in v) { const o = {}, f = v.mapValue.fields || {}; Object.keys(f).forEach(k => { o[k] = fromFs(f[k]); }); return o; }
+        return null;
+    };
+    window.smlcDirIndexPromise = (async () => {
+        try {
+            const c = JSON.parse(sessionStorage.getItem(CK) || 'null');
+            if (c && Date.now() - c.t < 30 * 60 * 1000) return build(c.b);
+        } catch (e) {}
+        let list = null;
+        try {
+            const r = await fetch(SMLC_DIR_DOC);
+            if (r.ok) list = fromFs(((await r.json()).fields || {}).businesses);
+        } catch (e) {}
+        if (!list || !list.length) {
+            try { const r = await fetch('data/directory.json'); if (r.ok) list = (await r.json()).businesses; } catch (e) {}
+        }
+        const slim = (list || []).map(b => ({ id: b.id, name: b.name, town: b.town }));
+        try { sessionStorage.setItem(CK, JSON.stringify({ t: Date.now(), b: slim })); } catch (e) {}
+        return build(slim);
+    })();
+    return window.smlcDirIndexPromise;
+}
+function smlcDirectoryHrefFor(name) {
+    const hit = window.smlcDirIndexCache && window.smlcDirIndexCache[smlcDirKey(name)];
+    return hit ? 'directory.html#' + encodeURIComponent(hit.id) : '';
+}
+
 function attachUtmParameters(urlStr) {
     if (!urlStr || urlStr === "#" || urlStr.startsWith("javascript:") || urlStr.startsWith("tel:") || urlStr.startsWith("mailto:")) return urlStr;
     try {
         const pageTitle = encodeURIComponent((document.title || "smlc_portal").trim());
-        const urlObj = new URL(urlStr, window.location.origin);
+        const urlObj = new URL(urlStr, window.location.href); // resolve from this page so /SMLC/ on the test copy is kept
         urlObj.searchParams.set("utm_source", "smlc_portal");
         urlObj.searchParams.set("utm_medium", "town_portal");
         urlObj.searchParams.set("utm_campaign", pageTitle);
@@ -841,11 +933,16 @@ function markImageMissingIfEmpty(imgElement) {
     if (imgElement && !imgElement.getAttribute('src')) showImageUnavailable(imgElement);
 }
 
+// Video links (mp4/webm/mov) are shown as a muted looping clip instead of an image.
+function isVideoUrl(u) { return /\.(mp4|webm|mov)(\?.*)?$/i.test(String(u || '').trim()); }
+
 function closeLightbox(event) {
     const overlay = document.getElementById('portal-global-lightbox');
     if (!overlay) return;
     if (!event || event.target === overlay || event.target.classList.contains('lightbox-close-btn') || event.target.tagName === 'BUTTON') {
         overlay.style.display = 'none';
+        const lv = document.getElementById('lightbox-target-video');
+        if (lv) { try { lv.pause(); } catch (e) {} lv.removeAttribute('src'); lv.load && lv.load(); }
     }
 }
 
@@ -861,7 +958,23 @@ function fireLightbox(imgSrc, title, dateText, bodyText, targetUrl, altText = ""
     const cleanAlt = altText || '';
     const cleanTargetUrl = targetUrl || '';
 
-    if (imgSrc && targetImg) {
+    let lightVideo = document.getElementById('lightbox-target-video');
+    if (imgSrc && targetImg && isVideoUrl(imgSrc)) {
+        if (!lightVideo) {
+            lightVideo = document.createElement('video');
+            lightVideo.id = 'lightbox-target-video';
+            lightVideo.controls = true; lightVideo.loop = true; lightVideo.muted = true; lightVideo.playsInline = true;
+            lightVideo.style.cssText = 'max-width:100%; max-height:70vh; display:block; margin:0 auto;';
+            targetImg.parentElement.insertBefore(lightVideo, targetImg);
+        }
+        targetImg.style.display = 'none';
+        lightVideo.style.display = 'block';
+        lightVideo.src = imgSrc.replace(/^\/\//, 'https://');
+        lightVideo.play && lightVideo.play().catch(() => {});
+        if (targetImg.parentElement) targetImg.parentElement.style.display = 'block';
+    } else if (imgSrc && targetImg) {
+        if (lightVideo) { try { lightVideo.pause(); } catch (e) {} lightVideo.style.display = 'none'; }
+        targetImg.style.display = '';
         safeSetImageSource(targetImg, normalizeImageUrl(imgSrc) || imgSrc, null, cleanAlt || cleanTitle);
         if (targetImg.parentElement) targetImg.parentElement.style.display = 'block';
     } else if (targetImg && targetImg.parentElement) {
@@ -933,9 +1046,27 @@ function openCalendarLightboxModal(idx) {
     const winLb = getEventWindow(targetItem);
     const tzNote = winLb && !winLb.allDay ? ` ${SMLC_TZ_LABEL}` : '';
     const yourTime = buildViewerTimeNote(winLb);
-    const metaHeader = `${dateText} &bull; ${timeText}${tzNote}${yourTime ? `<br><em>${yourTime}</em>` : ''}<br>Location: <a href="${navUrl}" target="_blank" rel="noopener" style="color:var(--primary); font-weight:bold; text-decoration:underline;">${rawLoc} (Directions &rarr;)</a>`;
+    const metaHeader = `${dateText} &bull; ${timeText}${tzNote}${yourTime ? `<br><em>${yourTime}</em>` : ''}<br>Location: ${navUrl ? '' : escapeHtmlText(rawLoc)}<a ${navUrl ? '' : 'hidden '}href="${navUrl}" target="_blank" rel="noopener" style="color:var(--primary); font-weight:bold; text-decoration:underline;">${rawLoc} (Directions &rarr;)</a>`;
 
     fireLightbox(finalEventImg, title, metaHeader, rawDetails, '', `${title} flyer`);
+}
+
+/** Small label for listings that aren't news: Jobs, For Rent, Real Estate, For Sale */
+function smlcNewsCategoryBadge(story) {
+    const c = String((story && story.category) || '').trim();
+    if (!c || /^news$/i.test(c)) return '';
+    const safe = c.replace(/[<>&"]/g, '');
+    return `<span class="news-category-badge" style="display:inline-block; background:var(--primary); color:#fff; border-radius:999px; padding:1px 8px; margin-right:6px; font-size:0.7rem; letter-spacing:.02em;">${safe}</span>`;
+}
+
+/** "Read the full story at wandtv.com ↗" - always shown when the story has a link */
+function smlcNewsSourceLink(story) {
+    const raw = String((story && story.link) || '').trim();
+    if (!/^https?:\/\//i.test(raw) || /google\.com\/alerts\/feeds\//i.test(raw)) return '';
+    let host = '';
+    try { host = new URL(raw).hostname.replace(/^www\./i, ''); } catch (e) { return ''; }
+    const safe = raw.replace(/"/g, '&quot;');
+    return `<a class="news-source-link" href="${safe}" target="_blank" rel="noopener" style="display:inline-block; color:var(--primary); font-weight:bold; margin-top:10px; text-decoration:underline;">Read the full story at ${host} &#8599;</a>`;
 }
 
 function openNewsLightboxModal(idx) {
@@ -1131,6 +1262,32 @@ function bindFirebaseWeatherForecastEngine(db) {
     }
 }
 
+// "Feels like" number color, following the usual weather-map scale (degrees F):
+// below 0 = purple/pink/white, 0-50 = blue to teal, 50-70 = green, 70-90 = yellow to orange, 90+ = red to dark maroon.
+// Colors are kept bright enough to read on the dark weather chip.
+const SMLC_FEELS_STOPS = [
+    [-20, '#ffffff'], [-10, '#ff8ad8'], [-1, '#a855f7'],
+    [0, '#3f6fff'], [25, '#3aa0ff'], [40, '#22d3ee'],
+    [50, '#34d399'], [60, '#4ade80'], [69, '#a3e635'],
+    [70, '#facc15'], [80, '#fbbf24'], [89, '#fb923c'],
+    [90, '#f87171'], [100, '#ef4444'], [110, '#dc2626'], [120, '#b4163a']
+];
+function smlcFeelsColor(f) {
+    const stops = SMLC_FEELS_STOPS;
+    if (!isFinite(f)) return '';
+    if (f <= stops[0][0]) return stops[0][1];
+    if (f >= stops[stops.length - 1][0]) return stops[stops.length - 1][1];
+    const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+    for (let i = 1; i < stops.length; i++) {
+        if (f <= stops[i][0]) {
+            const [t0, c0] = stops[i - 1], [t1, c1] = stops[i];
+            const k = (f - t0) / (t1 - t0), a = hex(c0), b = hex(c1);
+            return '#' + a.map((v, j) => Math.round(v + (b[j] - v) * k).toString(16).padStart(2, '0')).join('');
+        }
+    }
+    return '';
+}
+
 function renderNavbarWeatherWidget(current) {
     let widgetEl = document.getElementById('portal-weather-current-badge');
     const navBarTarget = document.getElementById('dynamic-menu-links')?.parentElement 
@@ -1163,6 +1320,12 @@ function renderNavbarWeatherWidget(current) {
     const condition = current.condition || 'Clear';
     const iconUrl = normalizeImageUrl(current.icon);
     const updatedCdt = formatToCentralTime(current.updatedAt);
+    // "Real feel": the weather feed may call it any of these; shows nothing if the feed has none
+    const feelsRaw = [current.feelsLike, current.feels_like, current.feelsLikeTemp, current.apparentTemperature,
+        current.temperatureApparent, current.realFeel, current.realFeelTemperature, current.heatIndex, current.windChill]
+        .find(v => v !== undefined && v !== null && v !== '' && isFinite(parseFloat(v)));
+    const feelsLike = feelsRaw !== undefined ? `Feels like ${Math.round(parseFloat(feelsRaw))}°` : '';
+    const feelsColor = feelsRaw !== undefined ? smlcFeelsColor(parseFloat(feelsRaw)) : '#fff';
 
     widgetEl.innerHTML = `
         <style>
@@ -1177,12 +1340,12 @@ function renderNavbarWeatherWidget(current) {
         ${iconUrl ? `<img src="${iconUrl}" alt="" class="weather-icon-img" onerror="this.style.display='none';">` : ''}
         <span class="weather-temp-num">${temp}</span>
         <span class="weather-desk-text">&bull; ${condition}</span>
-        <span class="weather-desk-text" style="font-size:0.6875rem; color:var(--town-accent, var(--flora-orange, #ff9800)); margin-left:2px;">(5-Day &rarr;)</span>
+        ${feelsLike ? `<span class="weather-desk-text" style="font-size:0.6875rem; font-weight:bold; color:${feelsColor}; margin-left:2px;">${feelsLike}</span>` : ''}
     `;
-    widgetEl.title = `Current Weather | Updated: ${updatedCdt} | Click to view 5-day forecast`;
+    widgetEl.title = `Current Weather${feelsLike ? ' | ' + feelsLike : ''} | Updated: ${updatedCdt}`;
 
     // Also fill the Weather pill on the page and the phone "More" menu
-    window.smlcCurrentWeather = { temp, condition };
+    window.smlcCurrentWeather = { temp, condition, feelsLike };
     const pillTemp = document.getElementById('weather-pill-temp');
     const pillIcon = document.getElementById('weather-pill-icon');
     const pillDetail = document.getElementById('weather-pill-detail');
@@ -1252,13 +1415,13 @@ window.openFiveDayForecastModal = function() {
 
 // ============================================================================
 // SPORTS SCOREBOARD ENGINE (ScoreStream widgets)
-// Reads: /master_county_data/towns/{Town}/sections/sports/[n]
-//   { school_grade, scorestream_code (widget id), score_widget_script, website }
-// Builds the ScoreStream container itself (only the widget id comes from the database)
-// and then (re)loads ScoreStream's embed script so it finds the new containers.
-// Home page shows every town's widgets.
+// Only Flora and Louisville have a scoreboard (see SPORTS_WIDGETS below). Other towns show nothing.
+// Builds the ScoreStream container itself and then (re)loads ScoreStream's embed script so it finds it.
 // ============================================================================
 const SCORESTREAM_EMBED_SRC = 'https://scorestream.com/apiJsCdn/widgets/embed.js';
+
+// County-wide scoreboard: shown on the home view, and on any town that has no Sports rows of its own.
+const SCORESTREAM_DEFAULT_WIDGET = { id: '71098', type: 'horzScoreboard', label: 'Clay County Scores', website: '' };
 
 function extractScoreStreamWidget(entry) {
     if (!entry) return null;
@@ -1266,13 +1429,17 @@ function extractScoreStreamWidget(entry) {
     const script = String(entry.score_widget_script ?? '');
     let id = null;
     let type = 'horzScoreboard';
-    if (/^\d+$/.test(code)) id = code;
+    // Column B: the widget number from ScoreStream's embed code (data-user-widget-id),
+    // optionally followed by "vertical", e.g. "69251 vertical"
+    const lead = code.match(/^(\d+)\b/);
+    if (lead) id = lead[1];
+    if (/\bvert(ical)?\b/i.test(code)) type = 'vertScoreboard';
     const fromHtml = (code + ' ' + script).match(/data-user-widget-id\s*=\s*["']?(\d+)/i);
     if (!id && fromHtml) id = fromHtml[1];
     const typeMatch = (code + ' ' + script).match(/data-ss_widget_type\s*=\s*["']?([A-Za-z]+)/);
     if (typeMatch) type = typeMatch[1];
     if (!id) return null;
-    return { id, type, label: String(entry.school_grade || '').trim(), website: String(entry.website || '').trim() };
+    return { id, type, label: String(entry.school_grade || '').trim(), website: smlcRealUrl(entry.website) };
 }
 
 function loadScoreStreamEmbed() {
@@ -1303,46 +1470,31 @@ function renderScoreStreamWidgets(container, widgets) {
         return `
             <div class="smlc-sports-block">
                 <div class="smlc-sports-head"><span class="smlc-sports-label">${heading}</span>${link}</div>
-                <div class="scorestream-widget-container" data-ss_widget_type="${w.type}" data-user-widget-id="${w.id}"></div>
+                <div class="scorestream-widget-container" data-ss_widget_type="${w.type}"${/^vert/i.test(w.type) ? ' style="height:600px;"' : ''} data-user-widget-id="${w.id}"></div>
             </div>`;
     }).join('');
     container.style.display = 'block';
     loadScoreStreamEmbed();
 }
 
+// Sports scoreboards: only Flora and Louisville (the most active sports towns) show one.
+// Each is a single ScoreStream widget with grade school + high school combined. Every other town page
+// shows no sports section; the Clay County home page shows both. The database sports entries are no longer used.
+const SPORTS_WIDGETS = {
+    'Flora':      { id: '68602', type: 'horzScoreboard', label: 'Flora Scores', website: '' },
+    'Louisville': { id: '68601', type: 'horzScoreboard', label: 'Louisville Scores', website: '' }
+};
+
 function bindFirebaseSportsEngine(db) {
-    if (!db) return;
     const sportsContainer = document.getElementById('town-sports-scoreboard-target');
     if (!sportsContainer) return;
 
-    try {
-        if (activeFbRefSports) activeFbRefSports.off();
-        lastScoreStreamSignature = '';
-
-        if (ACTIVE_TOWN.isHome) {
-            activeFbRefSports = db.ref('master_county_data/towns');
-            activeFbRefSports.on('value', (snap) => {
-                const towns = snap.val() || {};
-                const widgets = [];
-                Object.keys(towns).forEach(townName => {
-                    toPlainArray(towns[townName]?.sections?.sports).forEach(entry => {
-                        const w = extractScoreStreamWidget(entry);
-                        if (w) widgets.push({ ...w, townLabel: townName });
-                    });
-                });
-                renderScoreStreamWidgets(sportsContainer, widgets);
-            });
-            return;
-        }
-
-        activeFbRefSports = db.ref(`master_county_data/towns/${ACTIVE_TOWN.dbTownKey}/sections/sports`);
-        activeFbRefSports.on('value', (snap) => {
-            const widgets = toPlainArray(snap.val()).map(extractScoreStreamWidget).filter(Boolean);
-            renderScoreStreamWidgets(sportsContainer, widgets);
-        });
-    } catch (err) {
-        console.warn("Sports engine notice:", err.message);
-    }
+    if (activeFbRefSports) { activeFbRefSports.off(); activeFbRefSports = null; }
+    lastScoreStreamSignature = '';
+    const widgets = ACTIVE_TOWN.isHome
+        ? Object.values(SPORTS_WIDGETS)
+        : (SPORTS_WIDGETS[ACTIVE_TOWN.dbTownKey] ? [SPORTS_WIDGETS[ACTIVE_TOWN.dbTownKey]] : []);
+    renderScoreStreamWidgets(sportsContainer, widgets);
 }
 
 // === FIREBASE DATABASE INITIALIZATION ===
@@ -1360,8 +1512,10 @@ function bindFirebaseServices() {
 
     try {
         if (typeof firebase === 'undefined') return;
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        
+        // Start the main ([DEFAULT]) Firebase app unless it's already running.
+        // (Other scripts on the page may start their own named apps first.)
+        if (!firebase.apps.some(a => a.name === '[DEFAULT]')) firebase.initializeApp(firebaseConfig);
+        if (typeof window.smlcEnableOffline === 'function') window.smlcEnableOffline();   // saved copy when offline
         const db = firebase.database();
 
         initializeFirebaseGasMonitor(db);
@@ -1406,9 +1560,10 @@ function bindFirebaseMenuEngine(db) {
             const buildMenuLink = (item) => {
                 const name = escapeHtmlText(item.name || item.alt || 'Link');
                 const rawName = String(item.name || item.alt || '');
-                const targetUrl = attachUtmParameters(item.website || '#');
+                const realUrl = smlcRealUrl(item.website);
+                const targetUrl = realUrl ? attachUtmParameters(realUrl) : '';
                 const normImageUrl = normalizeImageUrl(item.imageUrl);
-                const linkTarget = resolveLinkTarget(item.website);
+                const linkTarget = resolveLinkTarget(realUrl);
 
                 const activeTownName = (ACTIVE_TOWN.primaryName || "").toUpperCase();
                 const itemNameUpper = String(item.town || rawName).toUpperCase();
@@ -1423,7 +1578,7 @@ function bindFirebaseMenuEngine(db) {
                     <li class="smlc-menu-dropdown">
                         <details>
                             <summary data-ga-label="Nav_${name.replace(/\s+/g, '')}">${imgTag}<span>${name}</span><span class="smlc-dd-caret" aria-hidden="true">&#9662;</span></summary>
-                            <ul class="smlc-submenu">${kids.map(k => `<li><a href="${attachUtmParameters(k.website || '#')}" target="${resolveLinkTarget(k.website)}" ${resolveLinkTarget(k.website) === '_blank' ? 'rel="noopener"' : ''} data-ga-label="Nav_${String(k.name).replace(/\s+/g, '')}" onclick="window.closeMobileMenu();"><span>${k.name}</span></a></li>`).join('')}</ul>
+                            <ul class="smlc-submenu">${kids.filter(k => smlcRealUrl(k.website)).map(k => `<li><a href="${attachUtmParameters(smlcRealUrl(k.website))}" target="${resolveLinkTarget(smlcRealUrl(k.website))}" ${resolveLinkTarget(smlcRealUrl(k.website)) === '_blank' ? 'rel="noopener"' : ''} data-ga-label="Nav_${String(k.name).replace(/\s+/g, '')}" onclick="window.closeMobileMenu();"><span>${k.name}</span></a></li>`).join('')}</ul>
                         </details>
                     </li>`;
                 }
@@ -1438,8 +1593,10 @@ function bindFirebaseMenuEngine(db) {
                 `;
             };
 
-            const mainItems = rawItems.filter(item => !isMoreItem(item));
-            const moreItems = rawItems.filter(isMoreItem);
+            // Only entries with a real link (or a dropdown of links) become menu items
+            const linkItems = rawItems.filter(item => smlcRealUrl(item.website) || smlcMenuChildren(item).some(k => smlcRealUrl(k.website)));
+            const mainItems = linkItems.filter(item => !isMoreItem(item));
+            const moreItems = linkItems.filter(isMoreItem);
             menuContainer.innerHTML = mainItems.map(buildMenuLink).join('') + (moreItems.length ? `
                     <li class="smlc-more-menu">
                         <button type="button" class="smlc-more-toggle" aria-expanded="false" aria-haspopup="true">
@@ -1448,12 +1605,12 @@ function bindFirebaseMenuEngine(db) {
                         <ul class="smlc-more-list">${moreItems.map(buildMenuLink).join('')}</ul>
                     </li>` : '');
             smlcWireMoreMenu(menuContainer);
-            window.smlcMenuItems = rawItems.map(item => ({
+            window.smlcMenuItems = rawItems.filter(item => smlcRealUrl(item.website)).map(item => ({
                 name: item.name || item.alt || 'Link',
                 town: item.town || '',
                 category: item.category || '',
-                href: attachUtmParameters(item.website || '#'),
-                target: resolveLinkTarget(item.website),
+                href: attachUtmParameters(smlcRealUrl(item.website)),
+                target: resolveLinkTarget(smlcRealUrl(item.website)),
                 img: normalizeImageUrl(item.imageUrl) || ''
             }));
             renderBottomNav();
@@ -1491,7 +1648,8 @@ function bindFirebaseLocalLinksEngine(db) {
                 applyHighDensityScrollLimits(linkTarget, filteredLinks.length, 360);
                 linkTarget.innerHTML = filteredLinks.map(link => {
                     const name = extractText(link.title || link.name || link.label || link.alt) || "Local Resource";
-                    const rawUrl = link.website || link.url || link.link || link.href || "#";
+                    const rawUrl = smlcRealUrl(link.website || link.url || link.link || link.href);
+                    if (!rawUrl) return '';                                   // no real link: leave it out
                     const targetUrl = attachUtmParameters(rawUrl);
                     const linkTargetAttr = resolveLinkTarget(rawUrl);
                     const displayLoc = link.location || link.town || ACTIVE_TOWN.primaryName;
@@ -1544,6 +1702,8 @@ function bindFirebaseLocalLinksEngine(db) {
 // ============================================================================
 // SEMANTIC SECTIONS ENGINE (Swaps POI into Spotlight & Slideshow above History)
 // ============================================================================
+const SLIDESHOW_MAX_PHOTOS = 30;   // newest uploads shown in a town slideshow
+
 function bindFirebaseSemanticSectionsEngine(db) {
     if (!db) return;
     const townName = ACTIVE_TOWN.dbTownKey || "Flora";
@@ -1554,6 +1714,8 @@ function bindFirebaseSemanticSectionsEngine(db) {
 
         let townSectionsData = {};
         let globalSectionsData = {};
+        const linkedGalleryData = {};   // linked town name -> its gallery rows
+        let allTownsData = {};          // home page only: every town's sections (for uploaded photos)
 
         const renderResolvedSections = () => {
             // --- 1. POINT OF INTEREST IN DISCOVER SPOTLIGHT (Guaranteed Image Rendering) ---
@@ -1563,9 +1725,15 @@ function bindFirebaseSemanticSectionsEngine(db) {
             const poiDescEl = document.getElementById('point-of-interest-landmark-desc') || document.getElementById('right-card-meta-desc1');
 
             if (poiTitleEl && poi.title) poiTitleEl.innerText = poi.title;
-            if (poiAboutEl && poi.about_text) poiAboutEl.innerText = poi.about_text;
+            // Paragraph 1 (sheet column G) shows first, Paragraph 2 (column H) under it.
+            // Strip a stray label pasted into a cell, e.g.  Description2": "Louisville, IL ...
+            const cleanParagraph = (t) => String(t == null ? '' : t)
+                .replace(/^\s*(?:Description|Paragraph)\s*\d*\s*["\u201d]?\s*:\s*["\u201c]?\s*/i, '')
+                .replace(/["\u201d]\s*$/, '')
+                .trim();
+            if (poiAboutEl && poi.about_text) poiAboutEl.innerText = cleanParagraph(poi.about_text);
             if (poiDescEl) {
-                if (poi.landmark_description) poiDescEl.innerHTML = linkifyRawUrls(poi.landmark_description);
+                if (poi.landmark_description) poiDescEl.innerHTML = linkifyRawUrls(cleanParagraph(poi.landmark_description));
                 else if (/^\s*Loading/i.test(poiDescEl.textContent)) poiDescEl.style.display = 'none';
             }
 
@@ -1604,12 +1772,38 @@ function bindFirebaseSemanticSectionsEngine(db) {
                 ? (Array.isArray(globalSectionsData.slideshow.items) ? globalSectionsData.slideshow.items : Object.values(globalSectionsData.slideshow.items))
                 : [];
 
-            const blendedSlides = [];
-            const maxLen = Math.max(townSlides.length, globalSlides.length);
-            for (let i = 0; i < maxLen; i++) {
-                if (townSlides[i]) blendedSlides.push(townSlides[i]);
-                if (globalSlides[i]) blendedSlides.push(globalSlides[i]);
+            // SLIDESHOW = photos people uploaded (photo uploader / Share Your Photos -> Gallery tab,
+            // stored at towns/<Town>/sections/gallery). Town pages show that town's uploads (plus linked
+            // towns, e.g. Louisville also shows Bible Grove / Hoosier); the Clay County home page shows
+            // uploads from every town. Newest first.
+            const asList = (v) => v ? (Array.isArray(v) ? v : Object.values(v)) : [];
+            const isShown = (v) => v === true || /^(true|yes|1|x|✓)$/i.test(String(v == null ? '' : v).trim());
+            const toUploadSlides = (rowSets) => {
+                const seen = new Set();
+                return rowSets.flatMap(asList)
+                    .filter(g => g && g.image && isShown(g.show))
+                    .sort((a, b) => String(b.added || '').localeCompare(String(a.added || '')))
+                    .filter(g => { const k = String(g.image); if (seen.has(k)) return false; seen.add(k); return true; })
+                    .slice(0, SLIDESHOW_MAX_PHOTOS)
+                    .map(g => ({
+                        title: g.caption || g.place || 'Community Photo',
+                        imageUrl: g.image,
+                        alt: g.alt || g.caption || g.place || 'Community photo',
+                        website: ''
+                    }));
+            };
+            const countyWideUploads = toUploadSlides([globalSectionsData.gallery]);
+
+            let blendedSlides;
+            if (ACTIVE_TOWN.isHome) {
+                const everyTownGallery = Object.values(allTownsData).map(t => t && t.sections ? t.sections.gallery : null);
+                blendedSlides = toUploadSlides([globalSectionsData.gallery, ...everyTownGallery]);
+            } else {
+                blendedSlides = toUploadSlides([townSectionsData.gallery, ...Object.values(linkedGalleryData)]);
+                if (blendedSlides.length === 0) blendedSlides = countyWideUploads;   // town has no uploads yet
             }
+            // Nothing uploaded anywhere yet: keep the old Slideshow tab so the slideshow isn't empty
+            if (blendedSlides.length === 0) blendedSlides = [...townSlides, ...globalSlides];
 
             const viewport = document.getElementById('flora-slideshow') || document.getElementById('xenia-slideshow') || document.querySelector('.slider-viewport');
             if (viewport && blendedSlides.length > 0) {
@@ -1620,11 +1814,11 @@ function bindFirebaseSemanticSectionsEngine(db) {
                     const safeImg = escapeJsString(imgUrl);
                     const safeCaption = escapeJsString(captionTitle);
                     const safeAlt = escapeJsString(altText);
-                    const safeWeb = escapeJsString(item.website || '');
+                    const safeWeb = escapeJsString(smlcRealUrl(item.website));
 
                     return `
                         <div class="slider-slide ${idx === 0 ? 'active' : ''}" style="position: absolute; inset: 0; opacity: ${idx === 0 ? 1 : 0}; transition: opacity 0.8s ease-in-out; z-index: ${idx === 0 ? 2 : 1};">
-                            ${imgUrl ? `<img src="${imgUrl}" alt="${safeAlt}" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'COMMUNITY VIEW', '${safeAlt}', '${safeWeb}', '${safeAlt}')" style="width:100%; height:100%; object-fit:contain; background-color:#0a0a0a; cursor:pointer;">` : `<div class="smlc-img-unavailable" role="img" aria-label="${SMLC_IMG_NOTICE_TEXT}"><span class="smlc-img-unavailable-icon" aria-hidden="true">&#9888;</span><span>${SMLC_IMG_NOTICE_TEXT}</span></div>`}
+                            ${imgUrl ? `<img src="${imgUrl}" alt="${safeAlt}" onerror="smlcSlideImageFailed(this)" onclick="fireLightbox('${safeImg}', '${safeCaption}', 'COMMUNITY VIEW', '${safeAlt}', '${safeWeb}', '${safeAlt}')" style="width:100%; height:100%; object-fit:contain; background-color:#0a0a0a; cursor:pointer;">` : `<div class="smlc-img-unavailable" role="img" aria-label="${SMLC_IMG_NOTICE_TEXT}"><span class="smlc-img-unavailable-icon" aria-hidden="true">&#9888;</span><span>${SMLC_IMG_NOTICE_TEXT}</span></div>`}
                             ${captionTitle ? `<div class="slider-caption">${captionTitle}</div>` : ''}
                         </div>
                     `;
@@ -1634,6 +1828,27 @@ function bindFirebaseSemanticSectionsEngine(db) {
                 if (slides.length > 1) {
                     let currentSlideIdx = 0;
                     let isSlideshowPaused = false;
+                    const isBroken = (i) => slides[i].dataset.broken === '1';
+
+                    // Move to the next slide whose image loaded (skips dead/expired links, e.g. Facebook CDN 403s)
+                    const advanceSlide = () => {
+                        let next = currentSlideIdx;
+                        for (let step = 0; step < slides.length; step++) {
+                            next = (next + 1) % slides.length;
+                            if (!isBroken(next)) break;
+                        }
+                        if (isBroken(next) || next === currentSlideIdx) return;
+                        slides[currentSlideIdx].style.opacity = "0";
+                        slides[currentSlideIdx].style.zIndex = "1";
+                        currentSlideIdx = next;
+                        slides[currentSlideIdx].style.opacity = "1";
+                        slides[currentSlideIdx].style.zIndex = "2";
+                    };
+
+                    // If the slide currently on screen fails to load, jump away from it right away
+                    viewport.addEventListener('smlc-slide-broken', () => {
+                        if (isBroken(currentSlideIdx)) advanceSlide();
+                    });
 
                     viewport.addEventListener('mouseenter', () => { isSlideshowPaused = true; });
                     viewport.addEventListener('mouseleave', () => { isSlideshowPaused = false; });
@@ -1643,11 +1858,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
                     if (globalSlideshowTicker) clearInterval(globalSlideshowTicker);
                     globalSlideshowTicker = setInterval(() => {
                         if (isSlideshowPaused) return;
-                        slides[currentSlideIdx].style.opacity = "0";
-                        slides[currentSlideIdx].style.zIndex = "1";
-                        currentSlideIdx = (currentSlideIdx + 1) % slides.length;
-                        slides[currentSlideIdx].style.opacity = "1";
-                        slides[currentSlideIdx].style.zIndex = "2";
+                        advanceSlide();
                     }, 4000);
                 }
             }
@@ -1705,9 +1916,20 @@ function bindFirebaseSemanticSectionsEngine(db) {
 
             if (spotNameEl && spot.name) spotNameEl.innerText = spot.name;
             if (spotDescEl && spot.description) spotDescEl.innerText = `"${spot.description}"`;
-            if (spotLinkEl && spot.website) {
-                spotLinkEl.href = attachUtmParameters(spot.website);
-                spotLinkEl.target = resolveLinkTarget(spot.website);
+            if (spotLinkEl) {
+                const web = smlcRealUrl(spot.website);
+                const showLink = (href, label, external) => {
+                    spotLinkEl.href = href; spotLinkEl.textContent = label; spotLinkEl.style.display = '';
+                    if (external) { spotLinkEl.target = resolveLinkTarget(href); spotLinkEl.rel = 'noopener'; } else { spotLinkEl.target = '_self'; spotLinkEl.removeAttribute('rel'); }
+                };
+                if (web) showLink(attachUtmParameters(web), 'Visit Business \u2192', true);
+                else {
+                    spotLinkEl.style.display = 'none';                   // never a dead "#" button
+                    smlcDirectoryIndex().then(() => {
+                        const d = smlcDirectoryHrefFor(spot.name);
+                        if (d) showLink(d, 'See directory listing \u2192', false);
+                    });
+                }
             }
 
             const spotImgUrl = normalizeImageUrl(spot.imageUrl);
@@ -1715,7 +1937,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
             if (spotImgEl && !spotImgUrl) safeSetImageSource(spotImgEl, null, null, spotAltText);
             if (spotImgEl && spotImgUrl) {
                 safeSetImageSource(spotImgEl, spotImgUrl, null, spotAltText);
-                spotImgEl.onclick = () => fireLightbox(escapeJsString(spotImgUrl), escapeJsString(spot.name || 'Merchant'), ACTIVE_TOWN.primaryName + ', IL', escapeJsString(spot.description || ''), escapeJsString(spot.website || ''), escapeJsString(spotAltText));
+                spotImgEl.onclick = () => fireLightbox(escapeJsString(spotImgUrl), escapeJsString(spot.name || 'Merchant'), ACTIVE_TOWN.primaryName + ', IL', escapeJsString(spot.description || ''), escapeJsString(smlcRealUrl(spot.website) || smlcDirectoryHrefFor(spot.name)), escapeJsString(spotAltText));
             }
 
             // --- 5. TOWN HISTORY TIMELINE & MERGED ABOUT SECTION ---
@@ -1735,6 +1957,7 @@ function bindFirebaseSemanticSectionsEngine(db) {
 
                 window.historyCachedTimeline = historyList;
                 applyHighDensityScrollLimits(historyTarget, historyList.length, 520);
+                historyTarget.classList.toggle('timeline-five-across', historyList.length >= 5);
 
                 historyTarget.innerHTML = historyList.map((evt, idx) => {
                     const desc = evt.description || "";
@@ -1768,6 +1991,22 @@ function bindFirebaseSemanticSectionsEngine(db) {
             globalSectionsData = snap.val() || {};
             renderResolvedSections();
         });
+
+        // Home page: uploads from every town
+        if (ACTIVE_TOWN.isHome) {
+            db.ref('master_county_data/towns').on('value', (snap) => {
+                allTownsData = snap.val() || {};
+                renderResolvedSections();
+            });
+        }
+
+        // Linked towns (e.g. Bible Grove, Hoosier on the Louisville page): include their uploaded photos
+        (ACTIVE_TOWN.linkedTownNames || []).filter(n => n && n !== townName && n !== ACTIVE_TOWN.primaryName).forEach(n => {
+            db.ref(`master_county_data/towns/${n}/sections/gallery`).on('value', (snap) => {
+                linkedGalleryData[n] = snap.val();
+                renderResolvedSections();
+            });
+        });
     } catch(err) {
         console.warn("Semantic sections engine error:", err.message);
     }
@@ -1790,8 +2029,16 @@ function bindFirebasePartnersEngine(db) {
             const uniquePartners = [];
             const seenNames = new Set();
 
+            // Hide partners that are not active or whose expiration date has passed
+            const todayIso = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })();
+            const partnerIsLive = (p) => {
+                if (p.status !== undefined && String(p.status).trim().toLowerCase() !== 'active') return false;
+                if (p.expirationDate && String(p.expirationDate).trim() < todayIso) return false;
+                return true;
+            };
+
             rawPool.forEach(p => {
-                if (p && (p.name || p.imageUrl || p.image1)) {
+                if (p && partnerIsLive(p) && (p.name || p.imageUrl || p.image1)) {
                     const key = (p.name || '').trim().toLowerCase();
                     if (!seenNames.has(key)) {
                         seenNames.add(key);
@@ -1802,17 +2049,11 @@ function bindFirebasePartnersEngine(db) {
 
             if (uniquePartners.length === 0) return;
 
-            const upperPool = [...uniquePartners];
-            const lowerPool = [...uniquePartners].reverse();
-            if (lowerPool.length > 2) {
-                const shiftCount = Math.floor(lowerPool.length / 2);
-                for (let i = 0; i < shiftCount; i++) {
-                    lowerPool.push(lowerPool.shift());
-                }
-            }
-
-            if (topGrid) renderCarouselPartnerRotator(topGrid, upperPool, 'top_strip', 0);
-            if (bottomGrid) renderCarouselPartnerRotator(bottomGrid, lowerPool, 'bottom_strip', 2);
+            // Videos are pinned in the first strip; images rotate. The two strips show different
+            // partners (5 cards max each): the second strip continues where the first one stops.
+            const videoPartners = uniquePartners.filter(isPartnerVideo);
+            const imagePartners = uniquePartners.filter(p => !isPartnerVideo(p));
+            renderCarouselPartnerRotator(topGrid, bottomGrid, imagePartners, videoPartners);
         };
 
         activeFbRefPartnersTown = db.ref(`master_county_data/towns/${townName}/sections/partners`);
@@ -1829,6 +2070,12 @@ function bindFirebasePartnersEngine(db) {
             window.globalPartnersPool = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
             renderCombinedPartners();
         });
+
+        // Partners with no website link to their directory listing once the directory has loaded
+        smlcDirectoryIndex().then(idx => {
+            const pool = [...window.townPartnersPool, ...window.globalPartnersPool];
+            if (pool.some(p => p && !smlcRealUrl(p.website) && idx[smlcDirKey(p.name)])) renderCombinedPartners();
+        });
     } catch(err) {
         console.warn("Partners engine error:", err.message);
     }
@@ -1838,7 +2085,7 @@ function bindFirebasePartnersEngine(db) {
 // re-fitting when the window is resized. No scrollbars, logos never stretched.
 const SMLC_PARTNER_CARD_MIN = 176;   // px a card needs to look right (5 fit at 1024px+)
 const SMLC_PARTNER_GAP = 16;
-const SMLC_PARTNER_MAX = 7;
+const SMLC_PARTNER_MAX = 5;
 const smlcPartnerStripObservers = {};
 const smlcPartnerRefitters = {};
 window.smlcRefitPartnerStrips = () => Object.values(smlcPartnerRefitters).forEach(fn => { try { fn(); } catch (e) {} });
@@ -1851,158 +2098,203 @@ function partnerCardsThatFit(containerElement, poolSize) {
     return Math.max(1, Math.min(fit, poolSize, SMLC_PARTNER_MAX));
 }
 
-function renderCarouselPartnerRotator(containerElement, partnerPool, stripKey, seedOffset = 0) {
-    if (!containerElement || !partnerPool.length) return;
+// Video partners are pinned (always shown, never rotated); only image partners rotate.
+function isPartnerVideo(p) {
+    return !!p && isVideoUrl(resolvePartnerImage(p.imageUrl || p.image1 || ''));
+}
 
-    if (stripKey === 'top_strip' && topCarouselInterval) {
-        clearInterval(topCarouselInterval);
-        topCarouselInterval = null;
-    }
-    if (stripKey === 'bottom_strip' && bottomCarouselInterval) {
-        clearInterval(bottomCarouselInterval);
-        bottomCarouselInterval = null;
-    }
+// Phones (iOS Safari especially) ignore the autoplay/muted attributes on videos added with innerHTML,
+// and pause videos that scroll off screen, which left partner videos frozen on the first frame.
+// Set the properties directly, call play(), and resume on visibility / first touch.
+const smlcVideoObserver = (typeof IntersectionObserver === 'function')
+    ? new IntersectionObserver(entries => entries.forEach(en => { if (en.isIntersecting) smlcPlayVideo(en.target); }), { threshold: 0.25 })
+    : null;
+function smlcPlayVideo(v) {
+    if (!v || v.ended) return;
+    v.muted = true; v.defaultMuted = true; v.loop = true;
+    v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+    const pr = v.play();
+    if (pr && typeof pr.catch === 'function') pr.catch(() => {});
+}
+function smlcKickPartnerVideos(root) {
+    (root || document).querySelectorAll('video.partner-logo-asset').forEach(v => {
+        if (v.dataset.kicked) { smlcPlayVideo(v); return; }
+        v.dataset.kicked = '1';
+        v.addEventListener('loadeddata', () => smlcPlayVideo(v));
+        v.addEventListener('canplay', () => smlcPlayVideo(v));
+        v.addEventListener('pause', () => { if (!v.ended && !document.hidden && v.dataset.userPaused !== '1') setTimeout(() => smlcPlayVideo(v), 300); });
+        if (smlcVideoObserver) smlcVideoObserver.observe(v);
+        smlcPlayVideo(v);
+    });
+}
+if (!window.smlcVideoGestureBound) {
+    window.smlcVideoGestureBound = true;
+    const again = () => smlcKickPartnerVideos(document);
+    ['touchstart', 'pointerdown', 'scroll', 'click'].forEach(ev => window.addEventListener(ev, again, { passive: true, once: true }));
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) again(); });
+}
 
-    const isMobileOrTablet = window.innerWidth < 768;
-    let poolIndex = seedOffset % partnerPool.length;
+function smlcPartnerCardMarkup(partner, pinned) {
+    const imgUrl = normalizeImageUrl(resolvePartnerImage(partner.imageUrl || partner.image1));
+    const name = partner.name || 'Local Community Partner';
+    const website = smlcRealUrl(partner.website);
+    const dirHref = website ? '' : smlcDirectoryHrefFor(name);          // no website: their directory listing, if any
+    const rawUrl = website || dirHref;
+    const link = website ? attachUtmParameters(website) : dirHref;     // our own directory page: no tracking tags
+    const linkTargetAttr = resolveLinkTarget(rawUrl);
+    const altText = partner.alt || name;
+    const open = `fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')`;
+
+    return `
+        <div class="community-partner-card"${pinned ? ' data-pinned="1"' : ''} data-partner-name="${escapeJsString(name)}" style="transition: opacity 0.6s ease;">
+            <div class="partner-logo-container">
+                ${isVideoUrl(imgUrl)
+                    ? `<video class="partner-logo-asset" src="${imgUrl.replace(/^\/\//, 'https://')}" aria-label="${escapeJsString(altText)}" autoplay muted loop playsinline webkit-playsinline preload="auto" onclick="${open}" style="cursor:pointer;"></video>`
+                    : `<img class="partner-logo-asset" src="${imgUrl}" alt="${escapeJsString(altText)} logo" loading="lazy" onclick="${open}" style="cursor:pointer;">`}
+            </div>
+            <h3 class="partner-title">${name}</h3>
+            ${website ? `<a class="directory-tile-link" href="${link}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} data-ga-label="partner_cta">Visit Partner &rarr;</a>`
+              : dirHref ? `<a class="directory-tile-link" href="${link}" data-ga-label="partner_directory">See directory listing &rarr;</a>` : ''}
+        </div>
+    `;
+}
+
+// Two partner strips, 5 cards max each, one shared rotation:
+//  - first strip: pinned videos, then images from the current spot in the image list
+//  - second strip: the NEXT images in the list, i.e. partners that are not in the first strip
+//  - every 8 seconds both strips move forward by one image
+function renderCarouselPartnerRotator(firstEl, secondEl, images, videos) {
+    if (topCarouselInterval) { clearInterval(topCarouselInterval); topCarouselInterval = null; }
+    if (bottomCarouselInterval) { clearInterval(bottomCarouselInterval); bottomCarouselInterval = null; }
+    const anchor = firstEl || secondEl;
+    if (!anchor) return;
+    const n = images.length;
+    if (!n && !(videos && videos.length)) return;
+    videos = videos || [];
+
+    let idx = 0;
     let isCarouselPaused = false;
     let hoverStartTime = 0;
+    const isMobile = () => window.innerWidth < 768;
+    const capacity = () => isMobile() ? 1 : partnerCardsThatFit(anchor, SMLC_PARTNER_MAX);
 
-    const createPartnerMarkup = (partner, slotIdx) => {
-        const imgUrl = normalizeImageUrl(partner.imageUrl || partner.image1);
-        const name = partner.name || 'Local Community Partner';
-        const rawUrl = partner.website || '#';
-        const link = attachUtmParameters(rawUrl);
-        const linkTargetAttr = resolveLinkTarget(rawUrl);
-        const altText = partner.alt || name;
-
-        return `
-            <div class="community-partner-card" data-partner-name="${escapeJsString(name)}" style="transition: transform 0.35s ease, opacity 0.35s ease;">
-                <div class="partner-logo-container">
-                    <img class="partner-logo-asset" src="${imgUrl}" alt="${escapeJsString(altText)} logo" loading="lazy" onclick="fireLightbox('${escapeJsString(imgUrl)}', '${escapeJsString(name)}', 'COMMUNITY DIRECTORY', 'Local Sponsor', '${escapeJsString(link)}', '${escapeJsString(altText)}')" style="cursor:pointer;">
-                </div>
-                <h3 class="partner-title">${name}</h3>
-                <a class="directory-tile-link" href="${link}" target="${linkTargetAttr}" ${linkTargetAttr === '_blank' ? 'rel="noopener"' : ''} data-ga-label="partner_cta">Visit Partner &rarr;</a>
-            </div>
-        `;
+    const layout = () => {
+        const cap = capacity();
+        const pinned = videos.length ? Math.min(videos.length, isMobile() ? 1 : (n ? Math.max(1, cap - 1) : cap)) : 0;
+        const firstRot = n ? Math.min(n, isMobile() ? 1 : Math.max(1, cap - pinned)) : 0;
+        const secondRot = n ? Math.max(0, Math.min(cap, n - firstRot)) : 0;
+        return { pinned, firstRot, secondRot };
     };
-
-    let visibleCount = partnerCardsThatFit(containerElement, partnerPool.length);
-    const drawCards = () => {
-        const cards = [];
-        for (let i = 0; i < visibleCount; i++) {
-            const p = partnerPool[(poolIndex + i) % partnerPool.length];
-            cards.push(createPartnerMarkup(p, i));
+    const window_ = (start, count) => {
+        let out = '';
+        for (let i = 0; i < count; i++) out += smlcPartnerCardMarkup(images[(start + i) % n], false);
+        return out;
+    };
+    const setSecondVisible = (on) => {
+        if (!secondEl) return;
+        const wrap = secondEl.closest('.widescreen-strip-container') || secondEl;
+        wrap.style.display = on ? '' : 'none';
+    };
+    const drawAll = () => {
+        const L = layout();
+        if (firstEl) {
+            const pinnedHtml = videos.slice(0, L.pinned).map(v => smlcPartnerCardMarkup(v, true)).join('');
+            firstEl.classList.toggle('has-pinned', !!pinnedHtml);
+            firstEl.innerHTML = pinnedHtml + window_(idx, L.firstRot);
         }
-        containerElement.innerHTML = cards.join('');
+        if (secondEl) {
+            secondEl.innerHTML = L.secondRot ? window_(idx + L.firstRot, L.secondRot) : '';
+            setSecondVisible(L.secondRot > 0);
+        }
+        [firstEl, secondEl].forEach(el => el && el.querySelectorAll('.community-partner-card').forEach(card => {
+            trackGa4Event('partner_card_impression', { partner_name: card.getAttribute('data-partner-name'), strip: el === firstEl ? 'top_strip' : 'bottom_strip' });
+        }));
     };
-    drawCards();
+    drawAll();
+    smlcKickPartnerVideos(anchor.parentElement || document);
+    setTimeout(() => smlcKickPartnerVideos(document), 800);
 
     // Re-fit when the strip changes width (window resize, rotate, sidebar, zoom)
-    if (smlcPartnerStripObservers[stripKey]) smlcPartnerStripObservers[stripKey].disconnect();
-    smlcPartnerRefitters[stripKey] = () => {
-        const next = partnerCardsThatFit(containerElement, partnerPool.length);
-        if (next !== visibleCount) { visibleCount = next; drawCards(); }
-    };
+    let lastCap = capacity();
+    const refit = () => { const c = capacity(); if (c !== lastCap) { lastCap = c; drawAll(); smlcKickPartnerVideos(document); } };
+    smlcPartnerRefitters.pair = refit;
+    if (smlcPartnerStripObservers.pair) smlcPartnerStripObservers.pair.disconnect();
     if (typeof ResizeObserver === 'function') {
         let fitTimer = null;
-        const ro = new ResizeObserver(() => {
-            clearTimeout(fitTimer);
-            fitTimer = setTimeout(() => {
-                const next = partnerCardsThatFit(containerElement, partnerPool.length);
-                if (next !== visibleCount) { visibleCount = next; drawCards(); }
-            }, 120);
-        });
-        ro.observe(containerElement.parentElement || containerElement);
-        smlcPartnerStripObservers[stripKey] = ro;
+        const ro = new ResizeObserver(() => { clearTimeout(fitTimer); fitTimer = setTimeout(refit, 120); });
+        ro.observe(anchor.parentElement || anchor);
+        smlcPartnerStripObservers.pair = ro;
     }
 
-    const onPauseEnter = () => {
-        isCarouselPaused = true;
-        hoverStartTime = Date.now();
-    };
-
+    const onPauseEnter = () => { isCarouselPaused = true; hoverStartTime = Date.now(); };
     const onPauseLeave = () => {
         isCarouselPaused = false;
         if (hoverStartTime > 0) {
             const durationSec = Math.round((Date.now() - hoverStartTime) / 1000);
-            const activeCard = containerElement.querySelector('.community-partner-card');
-            const pName = activeCard ? activeCard.getAttribute('data-partner-name') : 'Unknown';
+            const activeCard = anchor.querySelector('.community-partner-card');
             if (durationSec >= 1) {
                 trackGa4Event('partner_engagement_time', {
-                    partner_name: pName,
+                    partner_name: activeCard ? activeCard.getAttribute('data-partner-name') : 'Unknown',
                     seconds_viewed: durationSec
                 });
             }
             hoverStartTime = 0;
         }
     };
-
-    containerElement.addEventListener('mouseenter', onPauseEnter);
-    containerElement.addEventListener('mouseleave', onPauseLeave);
-    containerElement.addEventListener('touchstart', onPauseEnter, { passive: true });
-    containerElement.addEventListener('touchend', onPauseLeave);
-
-    containerElement.querySelectorAll('.community-partner-card').forEach(card => {
-        const pName = card.getAttribute('data-partner-name');
-        trackGa4Event('partner_card_impression', { partner_name: pName, strip: stripKey });
+    [firstEl, secondEl].forEach(el => {
+        if (!el || el.dataset.partnerHoverBound) return;
+        el.dataset.partnerHoverBound = '1';
+        el.addEventListener('mouseenter', onPauseEnter);
+        el.addEventListener('mouseleave', onPauseLeave);
+        el.addEventListener('touchstart', onPauseEnter, { passive: true });
+        el.addEventListener('touchend', onPauseLeave);
     });
 
-    const slideDuration = isMobileOrTablet ? 3800 : 5000;
-    const intervalId = setInterval(() => {
+    if (n <= 1) return;   // nothing to rotate
+    const slideDuration = 12000;  // 12 seconds on every device so people can read each partner
+    topCarouselInterval = setInterval(() => {
         if (isCarouselPaused) return;
+        idx = (idx + 1) % n;
+        const L = layout();
+        const fading = [];
+        if (firstEl) firstEl.querySelectorAll('.community-partner-card:not([data-pinned])').forEach(c => fading.push(c));
+        if (secondEl) secondEl.querySelectorAll('.community-partner-card').forEach(c => fading.push(c));
+        fading.forEach(c => { c.style.opacity = '0'; });   // fade out (no blink)
 
-        poolIndex = (poolIndex + 1) % partnerPool.length;
-        const nextPartner = partnerPool[poolIndex];
-
-        const cards = containerElement.querySelectorAll('.community-partner-card');
-        if (cards.length > 0) {
-            cards.forEach(c => {
-                c.style.opacity = '0.3';
-                c.style.transform = 'scale(0.96)';
-            });
-
-            setTimeout(() => {
-                if (isMobileOrTablet) {
-                    containerElement.innerHTML = createPartnerMarkup(nextPartner, 0);
-                } else {
-                    const newCards = [];
-                    for (let i = 0; i < visibleCount; i++) {
-                        const p = partnerPool[(poolIndex + i) % partnerPool.length];
-                        newCards.push(createPartnerMarkup(p, i));
-                    }
-                    containerElement.innerHTML = newCards.join('');
-                }
-
-                const updatedCards = containerElement.querySelectorAll('.community-partner-card');
-                updatedCards.forEach(c => {
-                    c.style.opacity = '1';
-                    c.style.transform = 'scale(1)';
-                    const pName = c.getAttribute('data-partner-name');
-                    trackGa4Event('partner_card_impression', { partner_name: pName, strip: stripKey });
-                });
-            }, 300);
-        }
+        setTimeout(() => {
+            if (firstEl) {
+                firstEl.querySelectorAll('.community-partner-card:not([data-pinned])').forEach(c => c.remove());
+                firstEl.insertAdjacentHTML('beforeend', window_(idx, L.firstRot));
+            }
+            if (secondEl) {
+                secondEl.innerHTML = L.secondRot ? window_(idx + L.firstRot, L.secondRot) : '';
+            }
+            const incoming = [];
+            [firstEl, secondEl].forEach(el => el && el.querySelectorAll('.community-partner-card:not([data-pinned])').forEach(c => {
+                c.style.opacity = '0';   // start hidden, then fade in
+                incoming.push(c);
+                trackGa4Event('partner_card_impression', { partner_name: c.getAttribute('data-partner-name'), strip: el === firstEl ? 'top_strip' : 'bottom_strip' });
+            }));
+            smlcKickPartnerVideos(document);
+            requestAnimationFrame(() => requestAnimationFrame(() => incoming.forEach(c => { c.style.opacity = '1'; })));
+        }, 600);   // matches the 0.6s fade-out
     }, slideDuration);
-
-    if (stripKey === 'top_strip') topCarouselInterval = intervalId;
-    if (stripKey === 'bottom_strip') bottomCarouselInterval = intervalId;
 }
 
 // === FUEL MONITOR BILLBOARD ===
 function initializeFirebaseGasMonitor(db) {
     const gasContainer = document.getElementById('fuel-monitor-target-box') || document.querySelector('.fuel-monitor-billboard-card');
     if (!gasContainer) return;
+    // A town with no gas station of its own gets no fuel widget
+    if (!ACTIVE_TOWN.isHome && Array.isArray(ACTIVE_TOWN.gasKey) && ACTIVE_TOWN.gasKey.length === 0) {
+        const grid = gasContainer.parentElement;
+        gasContainer.remove();
+        if (grid) grid.style.gridTemplateColumns = '1fr';
+        return;
+    }
 
-    const stationConfigs = {
-        "48100": { town: "flora", display: "Flora", name: "CASEY'S", logo: "Casey's.png" },      
-        "48101": { town: "flora", display: "Flora", name: "HUCK'S", logo: "Hucks.png" },      
-        "128128": { town: "flora", display: "Flora", name: "MACH 1", logo: "Mach 1.png" },    
-        "120226": { town: "flora", display: "Flora", name: "FAST STOP", logo: "Fast stop.png" },  
-        "48026": { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png" }, 
-        "171711": { town: "clay-city", display: "Clay City", name: "CASEY'S", logo: "Casey's.png" }, 
-        "181818": { town: "xenia", display: "Xenia", name: "KNAPP'S", logo: "Knapps.png" }   
-    };
+    // Station list lives in smlc-stations.js (shared with update-gas.html and the home page)
+    const stationConfigs = window.SMLC_STATIONS || {};
 
     // Which stations to show for this town:
     //   1st choice: /master_county_data/towns/{Town}/sections/gas_widget/[n] { station_id, title }
@@ -2019,7 +2311,13 @@ function initializeFirebaseGasMonitor(db) {
 
     const render = () => {
         if (townStations === null || priceData === null) return;
-        const list = townStations.length > 0 ? townStations : fallbackIds.map(id => ({ id, title: '' }));
+        // Only show stations that belong to this page's towns (gasKey). A Gas_Widget row for Xenia that carries
+        // another town's station number (e.g. Clay City's Casey's) is ignored; unknown station numbers are kept.
+        const ownStations = townStations.filter(st => {
+            const known = stationConfigs[st.id];
+            return !known || ACTIVE_TOWN.isHome || targetTowns.includes(known.town);
+        });
+        const list = ownStations.length > 0 ? ownStations : fallbackIds.map(id => ({ id, title: '' }));
         if (list.length === 0) { notAvailable("Fuel prices aren't available for this town yet."); return; }
         const configs = {};
         list.forEach(st => {
@@ -2029,7 +2327,8 @@ function initializeFirebaseGasMonitor(db) {
                 display: ACTIVE_TOWN.isHome ? (known.display || 'Clay County') : (ACTIVE_TOWN.primaryName || known.display || ''),
                 name: st.title || known.name || `Station ${st.id}`,
                 stationTown: known.display || '',
-                logo: known.logo || ''
+                logo: known.logo || '',
+                address: known.address || '', city: known.city || '', phone: known.phone || '', hours: known.hours || ''
             };
         });
         startGasRotator(priceData || {}, configs, list.map(st => st.id), gasContainer);
@@ -2061,45 +2360,66 @@ function initializeFirebaseGasMonitor(db) {
     }
 }
 
+// Unlit LED segments: every digit shown as an "8" behind the real number (e.g. 4.47 -> 8.88)
+function ledGhost(v) { const t = String(v == null ? '' : v); return /[0-9]/.test(t) ? t.replace(/[0-9]/g, '8') : '8.88'; }
+
 function startGasRotator(data, stationConfigs, stationIds, container) {
     if (gasMonitorRotator) { clearInterval(gasMonitorRotator); gasMonitorRotator = null; }
     let currentIdx = 0;
 
     const updatePortalUrl = cleanRawUrl(DEFAULT_APP_CONFIG.regional_endpoints.gas_widget);
 
-    const renderStation = () => {
-        const id = stationIds[currentIdx];
+    // Each station's panel is built once (not rebuilt every 5 seconds) so the page translator
+    // can translate all of them; rotating just shows one panel at a time.
+    const buildPane = (id) => {
         const config = stationConfigs[id];
         const info = data[id] || {};
 
-        const regPrice = info.reg || info.regular || info.price || "---";
-        let dslPrice = info.dsl || info.diesel || "---";
-        if (dslPrice === "0" || !dslPrice) dslPrice = "---";
+        const num = v => (!v || v === "0") ? "---" : v;
+        const regPrice = num(info.reg || info.regular || info.price);
+        const dslPrice = num(info.dsl || info.diesel);
+        // Regular + Diesel always show; Midgrade / Premium only when a price is posted
+        const midPrice = num(info.mid), prePrice = num(info.pre), e85Price = num(info.e85);
+        const rows = [['REGULAR', 'regular', regPrice]];
+        if (midPrice !== '---') rows.push(['MIDGRADE', 'midgrade', midPrice]);
+        if (prePrice !== '---') rows.push(['PREMIUM', 'premium', prePrice]);
+        if (e85Price !== '---') rows.push(['E85', 'e85', e85Price]);
+        rows.push(['DIESEL', 'diesel', dslPrice]);
+
+        const infoBits = [];
+        if (config.address) {
+            const maps = window.smlcMapsUrl({ name: config.name, address: config.address, city: config.city });
+            infoBits.push(`<a href="${maps}"${/^https?:/.test(maps) ? ' target="_blank" rel="noopener"' : ''} onclick="event.stopPropagation()">${config.address}${config.city ? ', ' + config.city : ''}</a>`);
+        }
+        if (config.phone) infoBits.push(`<a href="tel:+1${String(config.phone).replace(/\D/g, '')}" onclick="event.stopPropagation()">${config.phone}</a>`);
+        if (config.hours) infoBits.push(`<span>${config.hours}</span>`);
 
         const updateDate = info.date || info.updated || "Pending";
-        const safeLogo = config.logo ? encodeURIComponent(config.logo) : '';
+        const logoSrc = config.logo ? (window.smlcLogoUrl ? window.smlcLogoUrl(config.logo) : '') : '';
 
-        container.style.cursor = "pointer";
-        container.onclick = () => window.open(attachUtmParameters(updatePortalUrl), '_blank');
-
-        container.innerHTML = `
+        return `
             <div class="sidebar-widget-title">${config.display.toUpperCase()} FUEL INDEX MONITOR</div>
             <div class="fuel-station-header">
-                ${safeLogo ? `<div class="station-logo-frame"><img src="//raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/${safeLogo}" alt="" onerror="this.parentElement.style.display='none';"></div>` : ''}
+                ${logoSrc ? `<div class="station-logo-frame"><img src="${logoSrc}" alt="" onerror="this.parentElement.style.display='none';"></div>` : ''}
                 <div class="station-meta-title">${config.name}${config.stationTown && !String(config.name).toUpperCase().includes(String(config.stationTown).toUpperCase()) ? ` (${config.stationTown})` : ''}</div>
             </div>
-            <div class="fuel-pricing-grid">
-                <div class="price-box"><span class="price-type-label">REGULAR</span><span class="price-value-regular">${regPrice}</span></div>
-                <div class="price-box"><span class="price-type-label">DIESEL</span><span class="price-value-diesel">${dslPrice}</span></div>
+            ${infoBits.length ? `<div class="fuel-station-info">${infoBits.join('')}</div>` : ''}
+            <div class="fuel-pricing-grid${rows.length > 2 ? ' many-grades' : ''}">
+                ${rows.map(r => `<div class="price-box"><span class="price-type-label">${r[0]}</span><span class="price-value-${r[1]} led-digits" data-ghost="${ledGhost(r[2])}">${r[2]}</span></div>`).join('')}
             </div>
             <div class="sync-timestamp-label">Updated: ${updateDate} &bull; Click to Update</div>
         `;
-        currentIdx = (currentIdx + 1) % stationIds.length;
     };
 
-    renderStation();
-    if (stationIds.length > 1) {
-        gasMonitorRotator = setInterval(renderStation, 5000);
+    container.style.cursor = "pointer";
+    container.onclick = () => window.open(attachUtmParameters(updatePortalUrl), '_blank');
+    container.innerHTML = stationIds.map((id, i) => `<div class="gas-pane"${i ? ' hidden' : ''}>${buildPane(id)}</div>`).join('');
+    const panes = Array.from(container.querySelectorAll(':scope > .gas-pane'));
+    if (panes.length > 1) {
+        gasMonitorRotator = setInterval(() => {
+            currentIdx = (currentIdx + 1) % panes.length;
+            panes.forEach((el, i) => { el.hidden = i !== currentIdx; });
+        }, 5000);
     }
 }
 
@@ -2119,7 +2439,7 @@ function publishEventStructuredData(items) {
                 eventStatus: 'https://schema.org/EventScheduled',
                 eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
                 location: { '@type': 'Place', name: place, address: place },
-                organizer: { '@type': 'Organization', name: 'Support My Local Community', url: 'https://werewolf3788.github.io/SMLC/' }
+                organizer: { '@type': 'Organization', name: 'Support My Local Community', url: 'https://supportmylocalcommunity.com/' }
             };
             const desc = item.details || item.description || item.descShort || item.desc;
             if (desc) ev.description = String(desc).slice(0, 300);
@@ -2158,8 +2478,22 @@ function smlcCleanEventText(t) {
     return String(t || '').replace(/^\s*Visit ourflora\.com for more details\.?\s*$/i, '');
 }
 
+// Google gives all-day events as midnight in the calendar's own time zone (e.g. Nov 11 00:00 Eastern = Nov 10 11 PM Central),
+// which made them show a day early. The UTC date of that instant is the true calendar date for any US zone,
+// so rebuild start/end as Central midnight of that date.
+function smlcAllDayCentralDate(iso) {
+    const t = new Date(iso);
+    return centralWallTimeToDate(t.getUTCFullYear(), t.getUTCMonth() + 1, t.getUTCDate());
+}
+
 function smlcNormalizeEventDoc(d) {
     if (!d || !(d.title || d.name)) return null;
+    if (d.isAllDay === true && d.start && !isNaN(new Date(d.start).getTime())) {
+        const s0 = smlcAllDayCentralDate(d.start);
+        let e0 = d.end && !isNaN(new Date(d.end).getTime()) ? smlcAllDayCentralDate(d.end) : null;
+        if (!e0 || e0 <= s0) e0 = new Date(s0.getTime() + 24 * 3600000);
+        d = { ...d, start: s0.toISOString(), end: e0.toISOString() };
+    }
     const attachments = toPlainArray(d.attachments).filter(a => a && (a.fileUrl || a.url)).map(a => ({
         title: a.title || 'Attachment', fileUrl: a.fileUrl || a.url, mimeType: a.mimeType || '', isImage: smlcIsImageAttachment(a)
     }));
@@ -2254,7 +2588,7 @@ function smlcGoogleCalendarUrl(ev) {
         ? `${smlcCentralDateStamp(ev.start)}/${smlcCentralDateStamp(ev.end)}`
         : `${smlcUtcStamp(ev.start)}/${smlcUtcStamp(ev.end)}`;
     const extra = smlcAttachmentLines(ev);
-    const details = [ev.details, extra.length ? 'Attachments:\n' + extra.join('\n') : '', 'From Support My Local Community: https://werewolf3788.github.io/SMLC/']
+    const details = [ev.details, extra.length ? 'Attachments:\n' + extra.join('\n') : '', 'From Support My Local Community: https://supportmylocalcommunity.com/']
         .filter(Boolean).join('\n\n').slice(0, 1800);
     const params = new URLSearchParams({ action: 'TEMPLATE', text: ev.title, dates, details, location: ev.location, ctz: SMLC_TZ });
     return `https://calendar.google.com/calendar/render?${params.toString()}`;
@@ -2281,7 +2615,7 @@ function smlcBuildIcs(ev) {
         `SUMMARY:${smlcIcsEscape(ev.title)}`,
         `LOCATION:${smlcIcsEscape(ev.location)}`,
         `DESCRIPTION:${smlcIcsEscape(description)}`,
-        'URL:https://werewolf3788.github.io/SMLC/',
+        'URL:https://supportmylocalcommunity.com/',
         ...ev.attachments.map(a => `ATTACH${a.mimeType ? ';FMTTYPE=' + a.mimeType : ''}:${String(a.fileUrl).startsWith('//') ? 'https:' + a.fileUrl : a.fileUrl}`),
         'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${smlcIcsEscape(ev.title)}`, 'TRIGGER:-PT1H', 'END:VALARM',
         'END:VEVENT', 'END:VCALENDAR'
@@ -2330,6 +2664,7 @@ async function loadCommunityBulletinFeed() {
         {
             if (Array.isArray(elements) && elements.length > 0) {
                 window.calendarCachedEvents = elements;
+                if (window.smlcPublishEvents) window.smlcPublishEvents(elements.map(it => ({ name: it.name || it.title, start: it.start || it.date, end: it.end, allDay: it.isAllDay, location: it.location, description: it.details || it.description, image: it.imageUrl || it.image })), ACTIVE_TOWN.primaryName);
                 applyHighDensityScrollLimits(scroller, elements.length, 500);
 
                 const googleSubUrl = SMLC_SUBSCRIBE_GOOGLE;
@@ -2367,6 +2702,8 @@ async function loadCommunityBulletinFeed() {
                     const fileAttachments = toPlainArray(item.attachments).filter(a => a && !a.isImage && a.fileUrl);
                     const attachmentChips = fileAttachments.length ? `<div class="smlc-event-attachments">${fileAttachments.map(a => `<a href="${escapeHtmlText(a.fileUrl)}" target="_blank" rel="noopener" class="smlc-attachment-chip" data-ga-label="event_attachment">&#128206; ${escapeHtmlText(a.title)}</a>`).join('')}</div>` : '';
                     const turnByTurnNavUrl = buildTurnByTurnNavigationUrl(eventLoc);
+                    // Only offer "Read Details" when the popup would show something the card doesn't (description, flyer or attachments)
+                    const hasMoreToRead = !!(String(rawDetails).trim() || finalEventImg || toPlainArray(item.attachments).some(a => a && a.fileUrl));
 
                     const thumbnailHtml = finalEventImg ? `
                         <div style="float: right; margin: 0 0 10px 12px;">
@@ -2391,8 +2728,8 @@ async function loadCommunityBulletinFeed() {
                             <div class="smlc-event-desc" style="font-size:0.8125rem; color:var(--card-text-secondary, #444); margin-top:4px;">${linkifyRawUrls(rawDetails.substring(0, 110))}${rawDetails.length > 110 ? '...' : ''}</div>
                             
                             <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                                <div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:var(--primary); font-weight:bold; cursor:pointer; font-size:0.75rem; text-decoration:underline;">Read Details &rarr;</div>
-                                <span style="color:var(--card-muted, #999); font-size:0.6875rem;">|</span>
+                                ${hasMoreToRead ? `<div class="read-more-btn" onclick="openCalendarLightboxModal(${idx})" style="color:var(--primary); font-weight:bold; cursor:pointer; font-size:0.75rem; text-decoration:underline;">Read Details &rarr;</div>
+                                <span style="color:var(--card-muted, #999); font-size:0.6875rem;">|</span>` : ''}
                                 <a href="${singleGoogleUrl}" target="_blank" rel="noopener" style="font-size:0.6875rem; color:#1a73e8; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_google" aria-label="Add ${escapeHtmlText(eventTitle)} to Google Calendar">+ Google Cal</a>
                                 <span style="color:var(--card-muted, #999); font-size:0.6875rem;">|</span>
                                 <a href="#" role="button" onclick="return smlcAddEventToIcs(${idx});" style="font-size:0.6875rem; color:#1e7e34; font-weight:bold; text-decoration:none;" data-ga-label="single_cal_ical" aria-label="Add ${escapeHtmlText(eventTitle)} to Apple or Outlook calendar">+ Apple / Outlook</a>
@@ -2504,6 +2841,7 @@ async function loadLocalNewsDispatches() {
                             location: unwrapVal(f.location) || '',
                             source_name: unwrapVal(f.source_name) || '',
                             source_url: unwrapVal(f.source_url) || '',
+                            category: unwrapVal(f.category) || '',
                             tags: unwrapVal(f.tags) || [],
                             tagNames: unwrapVal(f.tagNames) || [],
                             towns: unwrapVal(f.towns) || [],
@@ -2531,10 +2869,11 @@ async function loadLocalNewsDispatches() {
                     return `
                         <div class="news-matrix-card" style="background:#fff; border:1px solid #ddd; padding:18px; border-radius:6px; margin-bottom:16px;">
                             ${imgUrl ? `<img src="${imgUrl}" alt="" style="width:100%; height:160px; object-fit:cover; border-radius:4px; cursor:pointer;" onclick="openNewsLightboxModal(${idx})">` : ''}
-                            <div style="font-size:0.75rem; color:var(--primary); font-weight:bold; margin-top:10px;">${cleanCalendarDate(story.date)}</div>
+                            <div style="font-size:0.75rem; color:var(--primary); font-weight:bold; margin-top:10px;">${smlcNewsCategoryBadge(story)}${cleanCalendarDate(story.date)}</div>
                             <div style="font-weight:bold; font-size:1rem; margin:6px 0; color:#1a1a1a;">${cleanTitle}</div>
                             <div style="font-size:0.875rem; color:var(--card-text-secondary, #444);">${linkifyRawUrls(displayStory)}</div>
                             ${isLong ? `<div class="read-more-btn" onclick="openNewsLightboxModal(${idx})" style="color: var(--primary); font-weight: bold; cursor: pointer; margin-top: 10px;">Read Full Dispatch &rarr;</div>` : ''}
+                            ${smlcNewsSourceLink(story)}
                         </div>
                     `;
                 }).join('');
@@ -2656,12 +2995,13 @@ function handleSPAHashNavigation() {
             gap: 16px; overflow: hidden !important; padding: 4px 8px 10px; scrollbar-width: none; }
         html .partners-horizontal-strip::-webkit-scrollbar { display: none; }
         html .partners-horizontal-strip .community-partner-card { flex: 1 1 0; min-width: 0; max-width: 260px; margin: 0; box-sizing: border-box; }
-        html .partners-horizontal-strip .partner-logo-container { height: 90px; width: 100%; box-sizing: border-box; }
-        html .partners-horizontal-strip .partner-logo-container img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
+        html .partners-horizontal-strip .partner-logo-container { height: 130px; width: 100%; box-sizing: border-box; background: transparent; border: 0; padding: 0; overflow: visible; }
+        html .partners-horizontal-strip .partner-logo-container :is(img, video) { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; border-radius: 4px; }
         html .partners-horizontal-strip .partner-title { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
         @media (max-width: 767px) {
             html .partners-horizontal-strip .community-partner-card { flex: 0 1 88%; max-width: 340px; }
-            html .partners-horizontal-strip .partner-logo-container { height: 105px; }
+            html .partners-horizontal-strip .partner-logo-container { height: 150px; }
+            html .partners-horizontal-strip.has-pinned { flex-wrap: wrap; justify-content: center; }
         }
 
         /* ---------- Alt text is for screen readers, search engines and the lightbox only:
@@ -2690,22 +3030,9 @@ function handleSPAHashNavigation() {
         /* leave room so snow on top / decorations in the corners of partner cards aren't cut off */
         html.smlc-fx-on .partners-horizontal-strip { padding: 24px 12px 16px; }
 
-        /* ---------- Header: #0C5E75 behind the header image in daytime (light) view ---------- */
-        @media (prefers-color-scheme: light) {
-            .site-brand-header, body.home-bg > header.header { background: #0C5E75 !important; }
-        }
+        /* ---------- Header: navy #001B37 behind the Support My Local Community ribbon (all pages, day and night) ---------- */
+        .site-brand-header, .site-brand-header .header-billboard-link, body.home-bg > header.header { background: #001B37 !important; }
 
-        /* ---------- Quick Answers (SEO / AEO) ---------- */
-        .smlc-answers { width: var(--container-width, 96%); max-width: var(--content-max, 1680px); margin: 28px auto 36px; padding: 0 clamp(4px, 2vw, 24px); box-sizing: border-box; position: relative; z-index: 1; }
-        .smlc-answers-inner { background: var(--card-surface-bg, #fffdf5); color: var(--card-text-primary, #1a1a1a); border: 2px solid var(--card-border-color, #222);
-            box-shadow: 6px 6px 0 var(--card-shadow-color, #000); border-radius: 8px; padding: clamp(18px, 3vw, 34px); }
-        .smlc-answers-title { margin: 0 0 10px; font: 900 clamp(1.5rem, 3vw, 2.2rem)/1.15 'Playfair Display', Georgia, serif; color: var(--on-card-accent, var(--primary, #0258A3)); }
-        .smlc-answers-lead { margin: 0 0 22px; max-width: 75ch; font-size: clamp(1rem, 1.3vw, 1.12rem); line-height: 1.65; color: var(--card-text-secondary, #333); }
-        .smlc-answers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 14px 28px; }
-        .smlc-answer { padding: 14px 0 0; border-top: 2px solid var(--card-border-color, #222); }
-        .smlc-answer-q { margin: 0 0 6px; font: 700 clamp(1.02rem, 1.3vw, 1.15rem)/1.3 'Playfair Display', Georgia, serif; color: var(--card-text-primary, #1a1a1a); }
-        .smlc-answer-a { margin: 0; font-size: 0.9375rem; line-height: 1.6; color: var(--card-text-secondary, #333); }
-        .smlc-answer-a a, .smlc-answers-lead a { color: var(--on-card-accent, #0258A3); text-decoration: underline; word-break: break-word; }
 
         /* ---------- ScoreStream sports widgets ---------- */
         .smlc-sports-block { margin: 0 0 16px; }
@@ -2932,7 +3259,6 @@ function renderBottomNav() {
         <ul class="smlc-bn-list">${groups.towns.map(linkHtml).join('') || '<li class="smlc-bn-empty">Loading towns...</li>'}</ul>`;
 
     const moreSheet = document.getElementById('smlc-bn-sheet-more');
-    const keepTranslate = moreSheet.querySelector('#google_translate_element');
     moreSheet.innerHTML = `
         <div class="smlc-bn-sheet-title">More</div>
         <ul class="smlc-bn-list">
@@ -2940,9 +3266,7 @@ function renderBottomNav() {
             ${groups.more.map(linkHtml).join('')}
             <li><button type="button" class="smlc-bn-row" onclick="openSmlcAccessibilityPanel()"><span aria-hidden="true">&#9855;</span><span>Accessibility</span></button></li>
             <li><button type="button" class="smlc-bn-row smlc-fx-toggle" onclick="toggleSmlcEffects()" aria-pressed="true"><span aria-hidden="true">&#10052;</span><span>Weather Effects</span><span class="smlc-bn-row-detail smlc-fx-toggle-state">On</span></button></li>
-        </ul>
-        <div class="smlc-bn-translate-slot"><div class="smlc-bn-sheet-title">Language</div><div id="smlc-bn-translate-target"></div></div>`;
-    if (keepTranslate) moreSheet.querySelector('#smlc-bn-translate-target').appendChild(keepTranslate);
+        </ul>`;
     document.getElementById('smlc-bn-weather-row').addEventListener('click', () => {
         closeBottomNavSheets();
         if (typeof window.openFiveDayForecastModal === 'function') window.openFiveDayForecastModal();
@@ -2959,7 +3283,6 @@ function updateBottomNavWeather() {
 }
 
 // Move the Google Translate box into the More sheet on phones, and back on desktop.
-let smlcTranslateHome = null;
 function applyBottomNavMode() {
     const mq = window.matchMedia(SMLC_BOTTOM_NAV_QUERY);
     const on = mq.matches;
@@ -2968,12 +3291,6 @@ function applyBottomNavMode() {
     if (topHeader) topHeader.classList.add('smlc-top-nav');
     if (!on) closeBottomNavSheets();
 
-    const tr = document.getElementById('google_translate_element');
-    const slot = document.getElementById('smlc-bn-translate-target');
-    if (!tr) return;
-    if (!smlcTranslateHome && !tr.closest('.smlc-bn-sheet')) smlcTranslateHome = { parent: tr.parentElement, next: tr.nextSibling };
-    if (on && slot && tr.parentElement !== slot) slot.appendChild(tr);
-    if (!on && smlcTranslateHome && tr.parentElement !== smlcTranslateHome.parent) smlcTranslateHome.parent.insertBefore(tr, smlcTranslateHome.next);
 }
 
 (function watchBottomNavMode() {
@@ -3394,7 +3711,7 @@ window.smlcWeatherChanged = function () {
     if (document.getElementById('smlc-fx-styles')) return;
     const style = document.createElement('style');
     style.id = 'smlc-fx-styles';
-    const CARDS = '.smlc-answers-inner, .clay-county-news-box, .news-clipping-wrapper, .newspaper-feed-chassis, .fuel-monitor-billboard-card, .point-of-interest-card, .article-card-chassis, .history-card, .proclamation-card-box, .et_pb_module_heading, .community-partner-card, .slideshow-box';
+    const CARDS = '.clay-county-news-box, .news-clipping-wrapper, .newspaper-feed-chassis, .fuel-monitor-billboard-card, .point-of-interest-card, .article-card-chassis, .history-card, .proclamation-card-box, .et_pb_module_heading, .community-partner-card, .slideshow-box';
     const cardList = (suffix) => CARDS.split(',').map(s => s.trim())
         .filter(sel => !(suffix === '::after' && sel === '.et_pb_module_heading'))
         .map(sel => `html.smlc-fx-on ${sel}${suffix}`).join(',\n');
@@ -3608,7 +3925,7 @@ document.addEventListener('keydown', e => {
     style.id = 'smlc-newspaper-menu-styles';
     style.textContent = `
         /* Full-width header image on every page */
-        .site-brand-header, .site-brand-header .header-billboard-link { display: block; width: 100%; background: #fffdf6 !important; }
+        .site-brand-header, .site-brand-header .header-billboard-link { display: block; width: 100%; background: #001B37 !important; }
         .site-brand-header img.header-billboard-img { width: 100% !important; height: auto !important; max-height: none !important; display: block; object-fit: contain; }
 
         /* Town menu image on the "Discover {Town}" pill */
@@ -3715,7 +4032,8 @@ document.addEventListener('keydown', e => {
         }
         /* Night mode: follows the device setting */
         @media (prefers-color-scheme: dark) {
-            html body .menu-bar, html body .header .nav-bar, .site-brand-header, .site-brand-header .header-billboard-link { background: #1c1c1e !important; border-color: #555 !important; }
+            html body .menu-bar, html body .header .nav-bar { background: #1c1c1e !important; border-color: #555 !important; }
+            .site-brand-header, .site-brand-header .header-billboard-link { background: #001B37 !important; }
             html body .menu-bar .menu-links a, html body .nav-links a, .smlc-more-toggle { color: #f4f4f5 !important; }
             .smlc-more-toggle { border-color: #f4f4f5; }
             .smlc-more-list { background: #1c1c1e; border-color: #555; box-shadow: 6px 6px 0 #000; }
@@ -4008,6 +4326,9 @@ window.openSmlcAccessibilityPanel = function () {
                         <button type="button" data-a11y-text="2" aria-pressed="false">Larger</button>
                     </div>
                 </fieldset>
+                <fieldset class="smlc-a11y-group"><legend>Language</legend>
+                    <select id="smlc-a11y-lang" class="smlc-a11y-select notranslate" translate="no" aria-label="Language"><option value="">Match my device (automatic)</option><option value="en">English</option><option value="es">Español</option><option value="zh-CN">中文（简体）</option><option value="zh-TW">中文（繁體）</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="pt">Português</option><option value="ru">Русский</option><option value="ar">العربية</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="vi">Tiếng Việt</option><option value="hi">हिन्दी</option><option value="tl">Filipino</option></select>
+                </fieldset>
                 <label class="smlc-a11y-switch"><input type="checkbox" data-a11y="contrast"><span>High contrast</span></label>
                 <label class="smlc-a11y-switch"><input type="checkbox" data-a11y="underline"><span>Underline all links</span></label>
                 <label class="smlc-a11y-switch"><input type="checkbox" data-a11y="readable"><span>Easy-to-read font</span></label>
@@ -4023,6 +4344,11 @@ window.openSmlcAccessibilityPanel = function () {
             smlcA11yPrefs.text = +b.dataset.a11yText; smlcSaveA11yPrefs(); smlcApplyA11yPrefs();
             smlcAnnounce(`Text size ${b.textContent}`);
         }));
+        const langSel = panel.querySelector('#smlc-a11y-lang');
+        if (langSel) {
+            langSel.value = window.SMLC_LANGUAGE_OVERRIDE || '';
+            langSel.addEventListener('change', () => { if (typeof window.smlcSetLanguage === 'function') window.smlcSetLanguage(langSel.value); });
+        }
         panel.querySelectorAll('input[data-a11y]').forEach(inp => inp.addEventListener('change', () => {
             const key = inp.dataset.a11y;
             if (key === 'effects') {
@@ -4125,7 +4451,7 @@ function initAccessibility() {
         html.smlc-hc body :is(button, summary, .portal-pill-btn, .weather-pill, .directory-tile-link, .event-clipping-btn, .fb-action-btn, .spotlight-btn, .town-directory-interactive-btn, .smlc-bn-btn, .smlc-bn-row) {
             background: #000 !important; color: #fff !important; border: 2px solid #fff !important; text-shadow: none !important; box-shadow: none !important; }
         html.smlc-hc body .portal-pill-btn.active, html.smlc-hc body .portal-pill-btn[aria-selected="true"] { background: #fff !important; color: #000 !important; }
-        html.smlc-hc body :is(.clay-county-news-box, .news-clipping-wrapper, .newspaper-feed-chassis, .news-matrix-card, .fuel-monitor-billboard-card, .point-of-interest-card, .article-inner-box, .history-card, .proclamation-card-box, .community-partner-card, .smlc-answers-inner, .et_pb_module_heading, .lightbox-modal-window, .smlc-bn-sheet, .smlc-a11y-card) {
+        html.smlc-hc body :is(.clay-county-news-box, .news-clipping-wrapper, .newspaper-feed-chassis, .news-matrix-card, .fuel-monitor-billboard-card, .point-of-interest-card, .article-inner-box, .history-card, .proclamation-card-box, .community-partner-card, .et_pb_module_heading, .lightbox-modal-window, .smlc-bn-sheet, .smlc-a11y-card) {
             border: 2px solid #fff !important; outline: none !important; }
         html.smlc-hc body .smlc-event-status { background: #fff !important; color: #000 !important; box-shadow: none !important; animation: none !important; }
         html.smlc-hc body *::before, html.smlc-hc body *::after { text-shadow: none; }
@@ -4148,6 +4474,7 @@ function initAccessibility() {
         .smlc-a11y-intro { margin: 6px 0 14px; color: #d4d4d8; font-size: .95rem; line-height: 1.5; }
         .smlc-a11y-group { border: 0; margin: 0 0 12px; padding: 0; }
         .smlc-a11y-group legend { font: 700 .85rem 'Oswald', sans-serif; letter-spacing: 1px; text-transform: uppercase; color: #bdbdc4; margin-bottom: 6px; }
+        .smlc-a11y-select { width: 100%; min-height: 44px; background: #1f1f23; color: #fff; border: 1px solid #444; border-radius: 8px; padding: 0 10px; font: 600 .95rem 'Oswald', sans-serif; }
         .smlc-a11y-seg { display: flex; gap: 6px; }
         .smlc-a11y-seg button { flex: 1; min-height: 44px; background: #1f1f23; color: #fff; border: 1px solid #444; border-radius: 8px; font: 700 .95rem 'Oswald', sans-serif; cursor: pointer; }
         .smlc-a11y-seg button[aria-pressed="true"] { background: var(--town-accent, #FFC10E); color: var(--town-on-accent, #000); border-color: var(--town-accent, #FFC10E); }
@@ -4163,6 +4490,8 @@ function initAccessibility() {
 
 // === DOM EVENT LISTENERS ===
 window.addEventListener('hashchange', () => {
+    // #events, #gas, #history... are section bookmarks (smlc-bookmarks.js), not town switches
+    if (typeof window.smlcIsBookmarkHash === 'function' && window.smlcIsBookmarkHash(window.location.hash)) return;
     handleSPAHashNavigation();
     smlcApplyNavColors();
     window.smlcApplyBranding();
@@ -4176,3 +4505,112 @@ window.addEventListener('DOMContentLoaded', () => {
     initAccessibility();
     smlcSetupScrollLogo();
 });
+
+// === KEEP MY PLACE ON REFRESH (pill + scroll position) ===
+// The browser's own scroll restore runs while the page is still short (news, partners and photos load
+// afterwards), so it dropped people at the bottom / in the middle of the Events pill. Instead we remember,
+// per page and per tab session, which pill was open and how far down the page was, then put both back
+// once the content has loaded. A fresh visit (nothing remembered) starts at the top on the first pill.
+(function smlcKeepPlaceOnRefresh() {
+    try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch (e) {}
+    const KEY = 'smlc-view:' + location.pathname;
+    const read = () => { try { return JSON.parse(sessionStorage.getItem(KEY) || 'null') || {}; } catch (e) { return {}; } };
+    const write = (o) => { try { sessionStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} };
+    let state = read();
+    let ready = false;          // don't save the scroll position until the saved one has been restored
+
+    window.addEventListener('DOMContentLoaded', () => {
+        // 1. Remember pill changes (the page's own switchPortalPill does the switching)
+        if (typeof window.switchPortalPill === 'function') {
+            const original = window.switchPortalPill;
+            window.switchPortalPill = function (btn, panelId) {
+                original.apply(this, arguments);
+                state.pill = panelId;
+                state.y = null;      // new pill = new place; the page scrolls to the pill bar itself
+                write(state);
+            };
+        }
+
+        // 2. Re-open the remembered pill (same class changes as switchPortalPill, but no scrolling)
+        if (state.pill && document.getElementById(state.pill)) {
+            const btn = Array.from(document.querySelectorAll('.portal-pill-btn'))
+                .find(b => (b.getAttribute('onclick') || '').indexOf("'" + state.pill + "'") !== -1);
+            if (btn) {
+                document.querySelectorAll('.portal-pill-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.portal-tab-panel').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(state.pill).classList.add('active');
+            }
+        }
+
+        // 3. Put the scroll position back once the page is tall enough (content loads in after the first paint)
+        const targetY = Number(state.y) || 0;
+        const hasHash = !!window.location.hash && window.location.hash.length > 1;
+        if (!targetY || hasHash) { ready = true; return; }
+        let userMoved = false, tries = 0;
+        const stop = () => { userMoved = true; };
+        ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(ev => window.addEventListener(ev, stop, { passive: true, once: true }));
+        const attempt = () => {
+            if (userMoved) { ready = true; return; }
+            const max = document.documentElement.scrollHeight - window.innerHeight;
+            if (max >= targetY - 2 || tries >= 24) {
+                window.scrollTo(0, Math.min(targetY, Math.max(max, 0)));
+                // content above can still grow a little; re-apply once if the person hasn't scrolled
+                setTimeout(() => { if (!userMoved) window.scrollTo(0, targetY); ready = true; }, 1500);
+                return;
+            }
+            tries++;
+            setTimeout(attempt, 250);
+        };
+        attempt();
+    });
+
+    // 4. Save the position while scrolling and when leaving / refreshing
+    let saveTimer = null;
+    const savePosition = () => { if (!ready) return; state.y = Math.round(window.scrollY || window.pageYOffset || 0); write(state); };
+    window.addEventListener('scroll', () => { clearTimeout(saveTimer); saveTimer = setTimeout(savePosition, 150); }, { passive: true });
+    window.addEventListener('pagehide', savePosition);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') savePosition(); });
+})();
+
+
+// === FUEL PRICES: stacked LED-style numbers ===
+// Regular on top, Diesel underneath, big seven-segment digits (DSEG7 Classic, SIL Open Font License,
+// loaded from jsDelivr; falls back to a monospace font if it can't load).
+(function smlcLedFuelPrices() {
+    const style = document.createElement('style');
+    style.id = 'smlc-led-fuel-style';
+    style.textContent = `
+        .gas-pane { display: contents; }
+        .gas-pane[hidden] { display: none !important; }
+        @font-face { font-family: 'DSEG7-Classic'; font-weight: 700; font-style: normal; font-display: swap;
+            src: url('https://cdn.jsdelivr.net/npm/dseg@0.46.0/fonts/DSEG7-Classic/DSEG7Classic-Bold.woff2') format('woff2'); }
+        .fuel-monitor-billboard-card .fuel-pricing-grid { grid-template-columns: 1fr; grid-auto-rows: minmax(110px, 1fr); flex: 1 1 auto; gap: 14px; }
+        .fuel-monitor-billboard-card .price-box { display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 14px 8px; background: #050505; border: 2px solid #1c1c1c; box-shadow: inset 0 0 18px rgba(0,0,0,.95); }
+        .fuel-monitor-billboard-card .price-type-label { margin-bottom: 10px; letter-spacing: 3px; }
+        .fuel-monitor-billboard-card .led-digits { position: relative; display: inline-block; line-height: 1; letter-spacing: .05em;
+            font-family: 'DSEG7-Classic', 'Courier New', monospace; font-weight: 700; font-size: clamp(2.6rem, 6vw, 4rem); }
+        .fuel-monitor-billboard-card .led-digits::before { content: attr(data-ghost); position: absolute; left: 0; top: 0;
+            opacity: .09; text-shadow: none; pointer-events: none; }
+        .fuel-monitor-billboard-card .price-value-regular { color: #39ff14; text-shadow: 0 0 6px rgba(57,255,20,.85), 0 0 18px rgba(57,255,20,.45); }
+        .fuel-monitor-billboard-card .price-value-midgrade { color: #ffc929; text-shadow: 0 0 6px rgba(255,201,41,.85), 0 0 18px rgba(255,201,41,.45); }
+        .fuel-monitor-billboard-card .price-value-e85 { color: #c77dff; text-shadow: 0 0 6px rgba(199,125,255,.85), 0 0 18px rgba(199,125,255,.45); }
+        .fuel-monitor-billboard-card .price-value-premium { color: #39d5ff; text-shadow: 0 0 6px rgba(57,213,255,.85), 0 0 18px rgba(57,213,255,.45); }
+        .fuel-monitor-billboard-card .fuel-pricing-grid.many-grades { grid-auto-rows: minmax(78px, 1fr); gap: 10px; }
+        .fuel-monitor-billboard-card .many-grades .price-box { padding: 8px; }
+        .fuel-monitor-billboard-card .many-grades .price-type-label { margin-bottom: 6px; }
+        .fuel-monitor-billboard-card .many-grades .led-digits { font-size: clamp(2rem, 4.5vw, 2.8rem); }
+        /* 3 or more prices: two across (a lone last one spans the row). Phones keep one per row. */
+        @media (min-width: 768px) {
+            .fuel-monitor-billboard-card .fuel-pricing-grid.many-grades { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(88px, auto); gap: 10px; }
+            .fuel-monitor-billboard-card .many-grades .price-box:last-child:nth-child(odd) { grid-column: 1 / -1; }
+            .fuel-monitor-billboard-card .many-grades .led-digits { font-size: clamp(1.5rem, 2.3vw, 2.2rem); }
+            .fuel-monitor-billboard-card .many-grades .price-type-label { font-size: .8rem; letter-spacing: 2px; }
+        }
+        .fuel-monitor-billboard-card .fuel-station-info { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 12px; margin: 2px 0 12px; font-size: .78rem; line-height: 1.4; text-align: center; opacity: .9; }
+        .fuel-monitor-billboard-card .fuel-station-info a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+        .fuel-monitor-billboard-card .price-value-diesel { color: #ff2a2a; text-shadow: 0 0 6px rgba(255,42,42,.85), 0 0 18px rgba(255,42,42,.45); }
+    `;
+    (document.head || document.documentElement).appendChild(style);
+})();

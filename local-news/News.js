@@ -1,5 +1,5 @@
 /* === SECTION: File Header & Config === */
-// Active Version: v1.9.3 | Timestamp: 2026-10-31_06:51:00 EDT
+// Active Version: v1.9.4 | Timestamp: 2026-11-10_10:25:00 EST
 // Description: Multi-Source Local News Scraper with XML Sanitizer, Cloudflare Bypass & Strict Clay County Filtering
 
 import { initializeApp } from "firebase/app";
@@ -51,6 +51,7 @@ const rssParser = new Parser({
 const STORE_FULL_STORY = false;
 const EXCERPT_LENGTH = 400;
 const MAX_AGE_DAYS = 7;
+const TAG_SCAN_LENGTH = 1500;
 
 /* === SECTION: Area Rules === */
 const AREA_RULES = {
@@ -204,6 +205,8 @@ const AREA_IDS = {
 };
 
 const COLLEGE_REGEX = /\b(college|university|lake land|olney central|SIU|SIUE|EIU)\b/i;
+// Matches county lists such as "Clay and Effingham counties" or "Clay, Effingham, ..., and White counties"
+const COUNTY_LIST_REGEX = /\bclay\b(?:\s*,\s*[A-Za-z]+)*,?\s*(?:and\s+)?[A-Za-z]+\s+counties\b/i;
 const OTHER_STATES_REGEX = /\b(alabama|alaska|arizona|arkansas|california|colorado|connecticut|delaware|florida|georgia|hawaii|idaho|indiana|iowa|kansas|kentucky|louisiana|maine|maryland|massachusetts|michigan|minnesota|mississippi|missouri|montana|nebraska|nevada|new hampshire|new jersey|new mexico|new york|north carolina|north dakota|ohio|oklahoma|oregon|pennsylvania|rhode island|south carolina|south dakota|tennessee|texas|utah|vermont|virginia|wisconsin|wyoming)\b/i;
 
 function escapeRegex(s) {
@@ -220,7 +223,7 @@ function resolveStoryTags(title, summary) {
     const lower = text.toLowerCase();
 
     const hasIllinois = /\billinois\b/i.test(text) || /,\s*IL\b/.test(text);
-    const hasCounty = /\bclay\s*county\b/i.test(text);
+    const hasCounty = /\bclay\s*county\b/i.test(text) || COUNTY_LIST_REGEX.test(text);
     const hasContext = hasIllinois || hasCounty;
     const wrongState = OTHER_STATES_REGEX.test(text) && !hasIllinois;
 
@@ -248,7 +251,7 @@ function resolveStoryTags(title, summary) {
     }
 
     if (COLLEGE_REGEX.test(text)) return null;
-    if (hits.has("Clay County")) return ["Clay County"];
+    if (hits.has("Clay County") || COUNTY_LIST_REGEX.test(text)) return ["Clay County"];
 
     return null;
 }
@@ -322,10 +325,81 @@ function cleanLink(rawLink) {
     if (rawLink.includes("google.com/url?") || rawLink.includes("google.com/alerts/url?")) {
         const urlMatch = rawLink.match(/(?:url|q)=([^&]+)/);
         if (urlMatch && urlMatch[1]) {
-            return decodeURIComponent(urlMatch[1]);
+            return stripLocaleParams(decodeURIComponent(urlMatch[1]));
         }
     }
-    return rawLink;
+    return stripLocaleParams(rawLink);
+}
+
+/** Removes ?locale=fo_FO / hl= / lang= so links open in the reader's own language */
+function stripLocaleParams(url) {
+    try {
+        const u = new URL(url);
+        ["locale", "hl", "lang", "_fb_noscript"].forEach(k => u.searchParams.delete(k));
+        return u.toString();
+    } catch (e) {
+        return url;
+    }
+}
+
+// People-search / personal-records sites: never shown (private people's addresses, phones, ages)
+const ALERT_BLOCKED_SITES = [
+    "411.com", "whitepages.com", "spokeo.com", "beenverified.com", "truepeoplesearch.com",
+    "fastpeoplesearch.com", "peoplefinders.com", "radaris.com", "mylife.com", "intelius.com",
+    "instantcheckmate.com", "truthfinder.com", "zabasearch.com", "peekyou.com", "addresses.com",
+    "anywho.com", "usphonebook.com", "clustrmaps.com", "nuwber.com", "thatsthem.com",
+    "familytreenow.com", "searchpeoplefree.com", "peoplesearchnow.com", "cyberbackgroundchecks.com",
+    "ancientfaces.com", "bizapedia.com"
+];
+
+// Listing types that ARE wanted alongside local news
+const ALERT_CATEGORY_RULES = [
+    { category: "Jobs", sites: ["indeed.com", "ziprecruiter.com", "glassdoor.com", "monster.com", "careerbuilder.com",
+        "simplyhired.com", "snagajob.com", "usajobs.gov", "illinoisjoblink.illinois.gov", "joblink.illinois.gov", "jobs.com", "talent.com", "jooble.org"],
+      paths: /\/(jobs?|careers?|hiring|employment)(\/|$)/, words: /\b(now hiring|hiring|job opening|jobs?|careers?|employment|apply now)\b/i },
+    { category: "For Rent", sites: ["apartments.com", "rent.com", "zumper.com", "hotpads.com", "rentals.com", "apartmentguide.com", "forrent.com"],
+      paths: /\/(rent|rentals?|apartments?)(\/|$)/, words: /\b(for rent|rental|apartments?|lease)\b/i },
+    { category: "Real Estate", sites: ["zillow.com", "realtor.com", "trulia.com", "redfin.com", "homes.com", "landwatch.com", "land.com", "loopnet.com", "movoto.com", "homesnap.com"],
+      paths: null, words: /\b(for sale|homes? for sale|real estate|acres?|mls)\b/i },
+    { category: "For Sale", sites: ["craigslist.org", "ebay.com", "offerup.com"],
+      paths: /^\/marketplace\//, words: /\b(for sale|marketplace|garage sale|yard sale|auction)\b/i }
+];
+
+function hostMatches(host, sites) {
+    return sites.some(site => host === site || host.endsWith("." + site));
+}
+
+/** "News", "Jobs", "For Rent", "Real Estate" or "For Sale" */
+function alertCategory(title, link) {
+    let host = "", path = "";
+    try { const u = new URL(link); host = u.hostname.toLowerCase().replace(/^www\./, ""); path = u.pathname.toLowerCase(); } catch (e) { return "News"; }
+    for (const rule of ALERT_CATEGORY_RULES) if (hostMatches(host, rule.sites)) return rule.category;
+    if (/facebook\.com$/.test(host) && /^\/marketplace\//.test(path)) return "For Sale";
+    for (const rule of ALERT_CATEGORY_RULES) if (rule.paths && rule.paths.test(path)) return rule.category;
+    return "News";
+}
+
+/** Returns why a Google Alert item should be skipped, or "" to keep it */
+function googleAlertJunkReason(title, link, rawLink = "") {
+    // Google indexed the page in another language (e.g. ?locale=fo_FO), so its snippet is foreign
+    const loc = decodeURIComponent(String(rawLink)).match(/[?&](?:locale|hl|lang)=([a-z]{2,3})/i);
+    if (loc && loc[1].toLowerCase() !== "en") return "page in another language (" + loc[1] + ")";
+    let host = "", path = "";
+    try { const u = new URL(link); host = u.hostname.toLowerCase().replace(/^www\./, ""); path = u.pathname.toLowerCase(); } catch (e) { return "bad link"; }
+    if (hostMatches(host, ALERT_BLOCKED_SITES)) return "people-search site";
+    if (/facebook\.com$/.test(host) && /^\/(people|profile\.php)/.test(path)) return "Facebook personal profile";
+    if (/person-search|people-search|\/person\/|\/people\//.test(path)) return "people-search page";
+    if (/\|\s*(address|phone|age)\b|\bage\s*\d{2}\+/i.test(title)) return "personal-info listing";
+    // Mostly non-English titles (letters outside basic Latin, or common foreign words)
+    const letters = (title.match(/\p{L}/gu) || []).length;
+    const nonAscii = (title.match(/[^\x00-\x7F]/g) || []).length;
+    if (letters && nonAscii / letters > 0.08) return "not English";
+    return "";
+}
+
+/** "www.wandtv.com" -> "wandtv.com" (shown as "Read at wandtv.com") */
+function publisherNameFromUrl(url) {
+    try { return new URL(url).hostname.replace(/^www\./i, ""); } catch (e) { return ""; }
 }
 
 function extractImageFromFeed(item) {
@@ -411,6 +485,7 @@ async function fetchAllFeedItems() {
                         full_story: htmlData.story,
                         summary: htmlData.story.slice(0, 500),
                         image: htmlData.image,
+                        is_page: true,
                         source_name: source.name,
                         source_url: source.url
                     });
@@ -440,15 +515,40 @@ async function fetchAllFeedItems() {
             const feed = await rssParser.parseString(cleanXml);
 
             const skipFallback = source.excerptOnly === true || /wnoi\.com/i.test(source.url);
+            const isGoogleAlert = /google\.com\/alerts\/feeds\//i.test(source.url);
 
             for (const item of feed.items) {
                 const itemTitle = cleanTitle(item.title);
                 const itemLink = cleanLink(item.link || source.url);
+
+                // Google Alerts also returns people-search pages, Facebook Marketplace
+                // listings and pages forced into other languages - skip those.
+                if (isGoogleAlert) {
+                    const junkReason = googleAlertJunkReason(itemTitle, itemLink, item.link || "");
+                    if (junkReason) {
+                        console.log(`[ALERT SKIPPED] ${junkReason}: "${itemTitle}"`);
+                        continue;
+                    }
+                }
                 let itemStory = cleanStoryText(item.contentEncoded || item.content || item.contentSnippet || item.summary || item.description || "");
                 const itemSummary = cleanStoryText(item.contentSnippet || item.summary || item.description || item.content || "").slice(0, 500);
                 let itemImage = extractImageFromFeed(item);
+                const itemDate = normalizeDate(item.isoDate || item.pubDate || new Date().toISOString());
+                let itemSourceName = source.name;
 
-                if (!skipFallback && itemStory.length < 100 && itemLink.startsWith("http")) {
+                // Google Alerts feeds only carry a title, a short snippet and a link -
+                // no picture. Visit the real article once to get its preview image
+                // (og:image) and the publisher's name. Only recent items are visited.
+                if (isGoogleAlert && itemLink.startsWith("http") && !/google\.com\//i.test(itemLink)) {
+                    itemSourceName = publisherNameFromUrl(itemLink) || source.name;
+                    const isRecent = new Date(itemDate).getTime() >= Date.now() - MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+                    if (!itemImage && isRecent) {
+                        const scraped = await scrapeWebPageContent(itemLink);
+                        if (scraped.image) itemImage = scraped.image;
+                    }
+                }
+
+                if (!isGoogleAlert && !skipFallback && itemStory.length < 100 && itemLink.startsWith("http")) {
                     console.log(`[HTML FALLBACK] Short snippet for "${itemTitle}". Scraping destination URL...`);
                     const scraped = await scrapeWebPageContent(itemLink);
                     if (scraped.story.length > itemStory.length) {
@@ -462,11 +562,12 @@ async function fetchAllFeedItems() {
                 extractedArticles.push({
                     title: itemTitle,
                     link: itemLink,
-                    date: normalizeDate(item.isoDate || item.pubDate || new Date().toISOString()),
+                    date: itemDate,
                     full_story: itemStory,
                     summary: itemSummary,
                     image: itemImage,
-                    source_name: source.name,
+                    source_name: itemSourceName,
+                    category: isGoogleAlert ? alertCategory(itemTitle, itemLink) : "News",
                     source_url: source.url
                 });
             }
@@ -519,7 +620,12 @@ async function runScraper() {
         }
         processedKeys.add(docId);
 
-        const tags = resolveStoryTags(title, item.summary || "");
+        // RSS items: scan summary + start of story so towns mentioned past the first 500 chars are caught.
+        // Scraped index pages (is_page) stay summary-only so unrelated page text can't tag them.
+        const tagText = item.is_page
+            ? (item.summary || "")
+            : `${item.summary || ""} ${(story || "").slice(0, TAG_SCAN_LENGTH)}`;
+        const tags = resolveStoryTags(title, tagText);
         if (!tags) {
             irrelevantCount++;
             continue;
@@ -544,6 +650,7 @@ async function runScraper() {
             location: displayLocation,
             source_name: item.source_name || "Local News",
             source_url: item.source_url || link,
+            category: item.category || "News",   // News | Jobs | For Rent | Real Estate | For Sale
             tags: tagIds,         // Numeric array ([0] for Clay County, [0, 2] for Flora)
             tagNames: tags,       // Human-readable labels
             towns: towns,

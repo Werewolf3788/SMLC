@@ -1,0 +1,73 @@
+/* ============================================================================
+   SMLC GAS STATIONS - one list used by update-gas.html, index.html and every town page.
+   Edit a station HERE and every page picks it up.
+
+   Fields:
+     town     page key the station belongs to (flora, louisville, clay-city, xenia, sailor-springs)
+     display  town name shown on the monitor
+     name     station name
+     logo     file in gas-prices/image/, or a full web address to a picture
+     whiteBg  true when the logo needs a white box behind it
+     address  street address ("" = not shown)
+     city     "Flora, IL 62839"
+     phone    "(618) 555-1234" ("" = not shown)
+     hours    text shown to visitors ("" = not shown)
+     grades   which prices this station posts: reg, mid, pre, dsl
+   Station facts came from the GasBuddy station pages. Fill in the blanks ("") when you have them.
+   ============================================================================ */
+window.SMLC_STATIONS = {
+    "48100":  { town: "flora", display: "Flora", name: "CASEY'S", logo: "Casey's.png",
+                address: "902 W North Ave", city: "Flora, IL 62839", phone: "(618) 356-1390", hours: "5 AM - 10 PM daily",
+                grades: ["reg", "dsl"] },
+    "48101":  { town: "flora", display: "Flora", name: "HUCK'S", logo: "Hucks.png",
+                address: "232 W North Ave", city: "Flora, IL 62839", phone: "(618) 662-2426", hours: "Open 24 hours",
+                grades: ["reg", "mid", "pre", "dsl"] },
+    "128128": { town: "flora", display: "Flora", name: "MACH 1", logo: "Mach 1.png", whiteBg: true,
+                address: "1433 N State Rd", city: "Flora, IL 62839", phone: "(618) 767-6922", hours: "Open 24 hours",
+                grades: ["reg", "mid", "pre", "dsl"] },
+    "120226": { town: "flora", display: "Flora", name: "FAST STOP", logo: "Fast stop.png",
+                address: "11109 Old US-50", city: "Flora, IL 62839", phone: "(618) 662-2423", hours: "Open 24 hours",
+                grades: ["reg", "e85", "dsl"] },
+    "87817":  { town: "louisville", display: "Louisville", name: "CASEY'S", logo: "Casey's.png",
+                address: "300 Route 45 S", city: "Louisville, IL 62858", phone: "(618) 356-1699", hours: "4 AM - Midnight daily",
+                grades: ["reg", "dsl"] },
+    "48026":  { town: "clay-city", display: "Clay City", name: "CASEY'S", logo: "Casey's.png",
+                address: "940 S Main St", city: "Clay City, IL 62824", phone: "(618) 676-1786", hours: "4 AM - Midnight daily",
+                grades: ["reg", "dsl"] },
+    "171711": { town: "xenia", display: "Xenia", name: "CITGO", logo: "https://raw.githubusercontent.com/Werewolf3788/SMLC/refs/heads/main/images/Knapps_oil.jpg",
+                address: "1500 Church St", city: "Xenia, IL 62899", phone: "(618) 678-2800", hours: "",
+                grades: ["reg", "mid", "dsl"] }
+};
+
+/* Grade labels, in the order they are shown (Regular on top, Diesel on the bottom). */
+window.SMLC_GRADES = [
+    { key: "reg", label: "REGULAR" },
+    { key: "mid", label: "MIDGRADE" },
+    { key: "pre", label: "PREMIUM" },
+    { key: "e85", label: "E85" },
+    { key: "dsl", label: "DIESEL" }
+];
+
+/* Small helpers shared by the pages. */
+window.SMLC_LOGO_BASE = "https://raw.githubusercontent.com/skventuresigns-design/smlc/main/gas-prices/image/";
+
+/* A station "logo" is either a file name in gas-prices/image/ or a full web address. */
+window.smlcLogoUrl = function (logo) {
+    const l = String(logo || "");
+    if (!l) return "";
+    return /^(https?:)?\/\//i.test(l) ? l : window.SMLC_LOGO_BASE + encodeURIComponent(l);
+};
+
+/* Opens the visitor's own maps app:
+     iPhone / iPad / Mac  -> Apple Maps
+     Android              -> the phone's default maps app (geo: link)
+     Windows / Linux / other -> Google Maps in the browser */
+window.smlcMapsUrl = function (st) {
+    const q = encodeURIComponent([st.name, st.address, st.city].filter(Boolean).join(", "));
+    const ua = navigator.userAgent || "";
+    const isApple = /iPhone|iPad|iPod|Macintosh/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    if (isApple) return "https://maps.apple.com/?q=" + q;
+    if (/Android/i.test(ua)) return "geo:0,0?q=" + q;
+    return "https://www.google.com/maps/search/?api=1&query=" + q;
+};
+window.smlcTelUrl = function (phone) { return "tel:+1" + String(phone || "").replace(/\D/g, ""); };

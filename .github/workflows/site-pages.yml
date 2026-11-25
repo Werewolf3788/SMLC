@@ -1,0 +1,37 @@
+# Writes data/site-pages.json: every web page on this branch, with when it last changed
+# and the change note. The Quick Links sheet reads that file, so it needs no GitHub key.
+# Runs by itself on every push to Claude-Test (GitHub's built-in token, nothing to set up).
+name: List site pages for Quick Links
+
+on:
+  push:
+    branches: [Claude-Test]
+    paths: ['**.html', '**.htm']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: site-pages
+  cancel-in-progress: false
+
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: Claude-Test
+          fetch-depth: 0
+      - name: Build data/site-pages.json
+        run: python3 scripts/site-pages.py > data/site-pages.json
+      - name: Commit if changed
+        run: |
+          git config user.name "smlc-pages-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/site-pages.json
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "Quick Links: update page list"
+          git pull --rebase -q origin Claude-Test
+          git push origin HEAD:Claude-Test

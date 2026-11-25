@@ -1,0 +1,116 @@
+// Full Firestore rules for smlc-fuel-monitor (existing SMLC rules + Home Inventory).
+// Firebase -> Firestore Database -> Rules: replace everything with this file, then Publish.
+//
+// Home Inventory keeps everything together under ONE top-level collection:
+//   home_inventory / data / households/{hid}            name, ownerUid, inviteCode, locations, stores
+//                                 households/{hid}/members/{uid}
+//                                 households/{hid}/items/{id}
+//                                 households/{hid}/log/{id}
+//                           invites/{code}              invite code -> household
+//                           users/{uid}                 which households you're in
+//                           barcodes/{code}             shared barcode labels
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /local_news/{document=**} {
+      allow read, write: if true;
+    }
+
+    match /smlc_events/{document=**} {
+      allow read, write: if true;
+    }
+
+    // ----- Home Inventory START -----
+    function invSignedIn() { return request.auth != null; }
+    function invHouse(hid) {
+      return get(/databases/$(database)/documents/home_inventory/data/households/$(hid)).data;
+    }
+    function invAdmin() {
+      return invSignedIn() && request.auth.token.email == 'raykevin71888@gmail.com' &&
+        request.auth.token.email_verified == true;
+    }
+    function invLabelOK() {
+      return invSignedIn() && request.resource.data.name is string &&
+        request.resource.data.name.size() > 0 && request.resource.data.name.size() < 200 &&
+        request.resource.data.get('imageData', '').size() < 400000 &&
+        request.resource.data.get('imageThumb', '').size() < 100000;
+    }
+    function invMember(hid) {
+      return invSignedIn() &&
+        exists(/databases/$(database)/documents/home_inventory/data/households/$(hid)/members/$(request.auth.uid));
+    }
+
+    match /home_inventory/data {
+      match /users/{uid} {
+        allow read, write: if invSignedIn() && request.auth.uid == uid;
+      }
+
+      match /households/{hid} {
+        allow create: if invSignedIn() && request.resource.data.ownerUid == request.auth.uid;
+        allow read, update: if invMember(hid);
+        allow delete: if invSignedIn() && resource.data.ownerUid == request.auth.uid;
+
+        match /members/{uid} {
+          allow read: if invMember(hid);
+          // the person in charge adds people (or themself); anyone else joins with the current invite code
+          allow create: if invSignedIn() &&
+            (invHouse(hid).ownerUid == request.auth.uid ||
+             (request.auth.uid == uid && request.resource.data.code == invHouse(hid).inviteCode));
+          allow update: if invSignedIn() && request.auth.uid == uid;
+          // leave (yourself) or the person in charge removes someone
+          allow delete: if invSignedIn() &&
+            (request.auth.uid == uid || invHouse(hid).ownerUid == request.auth.uid);
+        }
+        match /items/{itemId} {
+          allow read, write: if invMember(hid);
+        }
+        match /log/{logId} {
+          allow read, create: if invMember(hid);
+          allow update: if false;
+          allow delete: if invMember(hid) && invHouse(hid).ownerUid == request.auth.uid;   // only when deleting the household
+        }
+      }
+
+      match /invites/{code} {
+        allow get: if invSignedIn();        // look up one code (no listing all codes)
+        allow list: if false;
+        allow create: if invMember(request.resource.data.householdId);
+        allow update: if invMember(resource.data.householdId) &&
+          request.resource.data.householdId == resource.data.householdId;   // household renamed
+        allow delete: if invMember(resource.data.householdId);
+      }
+
+      // Shared labels anyone can add or fix; TRUSTED products (trusted: true, with the picture inside)
+      // can only be written by the owner account.
+      match /barcodes/{code} {
+        allow read: if invSignedIn();
+        allow create: if invLabelOK() &&
+          (request.resource.data.get('trusted', false) == false || invAdmin());
+        allow update: if invLabelOK() &&
+          (invAdmin() || (resource.data.get('trusted', false) == false &&
+                          request.resource.data.get('trusted', false) == false));
+      }
+    }
+
+    // First-version locations, READ-ONLY, so the app can move an existing list into home_inventory.
+    // Once everyone has opened the new version you can delete these collections in the console
+    // (households, household_invites, inventory_users, inventory_barcodes) and remove this block.
+    match /households/{hid} {
+      allow read: if invSignedIn() &&
+        exists(/databases/$(database)/documents/households/$(hid)/members/$(request.auth.uid));
+      match /{sub=**} {
+        allow read: if invSignedIn() &&
+          exists(/databases/$(database)/documents/households/$(hid)/members/$(request.auth.uid));
+      }
+    }
+    match /inventory_users/{uid} {
+      allow read: if invSignedIn() && request.auth.uid == uid;
+    }
+    match /inventory_barcodes/{code} {
+      allow read: if invSignedIn();
+    }
+    // ----- Home Inventory END -----
+  }
+}

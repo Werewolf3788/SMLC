@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Active Version: 2026-10-31_v5
+   Active Version: 2026-11-11_v6.6  |  Updated: Nov 11, 2026 1:00 PM ET
    File: Code.gs (Google Apps Script)
    Project: SMLC County Portal Semantic RTDB Sync
    Description: SMLC County Portal Master Parser & Firebase Realtime DB Sync.
@@ -20,6 +20,17 @@
                 - v5: Blank sheet rows skipped (no more empty "LINK" menu items).
                       Menu tab: A Town/label | B Website | C Image | D Alt | E Category.
                       Category "More" -> More dropdown; "town" saved for town rows.
+                - v6: SECTION 5 added at the bottom = SMLC Photos (photo uploads + public sharing).
+                      Everything above SECTION 5 is unchanged from v5.
+                - v6.1: Photos shared by the public go straight to the site (no approval).
+                      To remove one: untick Show on the Gallery tab.
+                - v6.2: Gallery Column A = the town the person picked, so each photo is saved
+                      under that town in Firebase (towns/<Town>/sections/gallery).
+                - v6.3: Gallery tab gets an "Alt" column (picture description for screen readers).
+                - v6.4: File names don't repeat the town ("Flora water tower" -> flora-water-tower.jpg).
+                - v6.5: setupSMLCPhotos() - run once to approve permissions and test everything.
+                - v6.6: Admins = Script Property ADMIN_EMAILS (comma-separated). Admin uploads from the
+                        Image Uploader (Google sign-in) go to images/ only - not the Gallery.
    ========================================================================== */
 
 // === SECTION 0: Auto-Sync On Edit Event Listener ===
@@ -29,7 +40,52 @@
  */
 function onEditTrigger(e) {
   Logger.log("Change detected in spreadsheet. Initiating automatic Firebase sync...");
+  try { colorPartnersByTown(); } catch (err) { Logger.log("Partner colors skipped: " + err); }
   pushMasterDataToFirebase();
+}
+
+// === SECTION 0.1: Partners tab helpers (expiration dates + row colors by town) ===
+function partnerTodayIso_() {
+  return Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
+}
+// Returns "yyyy-MM-dd" for a date cell or date text, or "" when the cell is empty/unreadable.
+function partnerExpiryIso_(v) {
+  if (v === "" || v === null || v === undefined) return "";
+  var d = (v instanceof Date) ? v : new Date(String(v).trim());
+  if (isNaN(d.getTime())) return "";
+  return Utilities.formatDate(d, Session.getScriptTimeZone(), "yyyy-MM-dd");
+}
+
+// Background = the town's secondary color, font = its primary color (from each town's CSS).
+// The whole used row (A:F) is colored. A row with several towns (commas) or an unknown town
+// stays standard white/black. Runs on every edit; you can also run colorPartnersByTown() by hand.
+var PARTNER_TOWN_COLORS = {
+  "global":         { bg: "#1E293B", font: "#FFC10E" },  // Gold on Slate (all of Clay County)
+  "flora":          { bg: "#FE4E02", font: "#0258A3" },  // Royal Blue on Wolf Orange
+  "louisville":     { bg: "#FFC10E", font: "#EB1C24" },  // Red on Gold
+  "clay city":      { bg: "#F2F2F2", font: "#0C2890" },  // Navy on Light Gray
+  "xenia":          { bg: "#FFC10E", font: "#1C5640" },  // Green on Gold
+  "sailor springs": { bg: "#FFC10E", font: "#4A154B" }   // Purple on Gold
+};
+var PARTNER_COLOR_COLS = 6;  // A..F
+
+function colorPartnersByTown() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Partners");
+  if (!sheet) return;
+  var last = sheet.getLastRow();
+  if (last < 2) return;
+  var towns = sheet.getRange(2, 1, last - 1, 1).getValues();
+  var bgs = [], fonts = [];
+  for (var i = 0; i < towns.length; i++) {
+    var name = String(towns[i][0]).trim().toLowerCase();
+    var c = name.indexOf(",") >= 0 ? null : PARTNER_TOWN_COLORS[name];
+    var bgRow = [], fontRow = [];
+    for (var k = 0; k < PARTNER_COLOR_COLS; k++) { bgRow.push(c ? c.bg : null); fontRow.push(c ? c.font : null); }
+    bgs.push(bgRow); fonts.push(fontRow);
+  }
+  var range = sheet.getRange(2, 1, towns.length, PARTNER_COLOR_COLS);
+  range.setBackgrounds(bgs);
+  range.setFontColors(fonts);
 }
 
 // === SECTION 1: Master Runner & Firebase Publisher ===
@@ -144,22 +200,29 @@ function processFullCountyDataset() {
       // Skip empty/blank rows on localized town tabs
       if (!rawLocation) return;
 
-      var isExplicitGlobal = (rawLocation.toLowerCase() === "global");
-      var targetContainer;
+      // Partners rows may list several towns in Column A, separated by commas
+      var locations = (tabName === "Partners")
+        ? rawLocation.split(",").map(function(t) { return t.trim(); }).filter(function(t) { return t; })
+        : [rawLocation];
 
-      // Route data to global root or specific town container
-      if (isExplicitGlobal || isGlobalTab) {
-        targetContainer = result.global;
-      } else {
-        var townName = sanitizeFirebaseKey(rawLocation);
-        if (!result.towns[townName]) {
-          result.towns[townName] = { town: rawLocation, sections: {} };
+      locations.forEach(function(loc) {
+        var isExplicitGlobal = (loc.toLowerCase() === "global");
+        var targetContainer;
+
+        // Route data to global root or specific town container
+        if (isExplicitGlobal || isGlobalTab) {
+          targetContainer = result.global;
+        } else {
+          var townName = sanitizeFirebaseKey(loc);
+          if (!result.towns[townName]) {
+            result.towns[townName] = { town: loc, sections: {} };
+          }
+          targetContainer = result.towns[townName];
         }
-        targetContainer = result.towns[townName];
-      }
 
-      /* === SECTION 2.2: Map Row Data to Semantic Node === */
-      mapTabToSemanticNodes(targetContainer, tabName, headers, row);
+        /* === SECTION 2.2: Map Row Data to Semantic Node === */
+        mapTabToSemanticNodes(targetContainer, tabName, headers, row);
+      });
     });
   });
 
@@ -244,14 +307,21 @@ function mapTabToSemanticNodes(containerObj, tabName, headers, row) {
   }
 
   // PARTNERS TAB -> sec.partners
-  // Col A: Town (0) | Col B: Business Name (1) | Col C: Website (2) | Col D: Image (3) | Col E: ALT (4)
+  // Col A: Town(s) (0) | Col B: Name (1) | Col C: Status (2) | Col D: Image URL (3) | Col E: Expiration Date (4) | Col F: Website (5)
+  // Only rows whose Status is "active" and whose Expiration Date has not passed are sent to the site.
+  // Col A may hold several towns separated by commas (handled in processFullCountyDataset).
   else if (tabName === "Partners") {
+    if (String(row[2]).trim().toLowerCase() !== "active") return;
+    var expIso = partnerExpiryIso_(row[4]);
+    if (expIso && expIso < partnerTodayIso_()) return;
     if (!sec["partners"]) sec["partners"] = [];
     sec["partners"].push({
       name: row[1] || "",
-      website: row[2] || "",
+      website: row[5] || "",
       imageUrl: formatGoogleDriveUrl(row[3]),
-      alt: row[4] || row[1] || ""
+      alt: row[1] || "",
+      status: "active",
+      expirationDate: expIso
     });
   }
 
@@ -654,4 +724,378 @@ function installGasPriceTrigger() {
   });
   ScriptApp.newTrigger("updateGasPricesFromGoogle").timeBased().everyHours(GAS_REFRESH_HOURS).create();
   Logger.log("Gas price refresh scheduled every " + GAS_REFRESH_HOURS + " hours.");
+}
+
+// === SECTION 5: SMLC Photos (was the separate SMLCPhotos.gs file) ===
+/* ==========================================================================
+   Active Version: 2026-11-02_v1.2  |  Updated: Nov 2, 2026 8:10 PM ET
+   File: SMLCPhotos.gs (Google Apps Script - goes in the SMLC Sheet, next to Code.gs)
+   Project: SMLC Photos - signed-in uploader, public photo sharing, approvals, gallery
+
+   WHAT IT DOES
+     - Authorized users (signed in with Google through Firebase) save pictures
+       straight into the SMLC GitHub repository (images/...). Nobody needs a
+       GitHub token on their own device: the token lives here, in Script Properties.
+     - The public "Share Your Photos" page sends photos here. They are kept in a
+       private Drive folder + a private "SMLC Photo Submissions" spreadsheet
+       (NOT a tab in this sheet, so Code.gs never publishes anyone's email).
+     - Approving a photo saves it to GitHub and adds it to this sheet's "Gallery" tab,
+       which Code.gs syncs to Firebase for the public Gallery page.
+
+   WHO IS AUTHORIZED
+     Firebase Realtime Database -> smlc_admins. One entry per person, key = email
+     with dots changed to commas, value = true. Example:
+        smlc_admins
+          raykevin71888@gmail,com : true
+     (Add or remove people right in the Firebase console - no code change.)
+
+   SETUP (once)
+     1. Project Settings -> Script Properties -> add:
+          SMLC_GITHUB_TOKEN = fine-grained token, Werewolf3788/SMLC only, Contents: Read and write
+                              (Apps Script Script Properties - NOT GitHub's Secrets page)
+          NOTIFY_EMAILS  = (optional) emails to tell about new public photos, comma separated
+     2. Deploy -> New deployment -> type "Web app"
+          Execute as: Me      Who has access: Anyone
+        Copy the /exec link and put it in smlc-photos-config.js (ENDPOINT).
+     3. After changing this file later: Deploy -> Manage deployments -> edit -> Version: New version.
+   ========================================================================== */
+
+var PH_VERSION = "v1.8 - Nov 11, 2026 1:00 PM ET (admin list in ADMIN_EMAILS)";
+var PH_REPO = "Werewolf3788/SMLC";
+var PH_BRANCH = "Claude-Test";                 // the branch the live site is published from
+var PH_FOLDER = "images";
+var PH_FIREBASE_API_KEY = "AIzaSyBYPbGWDhPUnCSnPWDP9wtiKe2P5WpinXg";   // public web key (same as the website)
+var PH_RTDB = "https://smlc-fuel-monitor-default-rtdb.firebaseio.com";
+var PH_GALLERY_TAB = "Gallery";
+var PH_GALLERY_HEADERS = ["Town", "Image", "Place", "Group", "Caption", "Era", "Year", "Credit", "Show", "Added", "Source", "Alt"];
+var PH_SUB_HEADERS = ["Received", "Status", "Place", "Group", "Caption", "Era", "Year", "Credit", "Submitted By", "Email",
+                      "Drive File ID", "Reviewed By", "Reviewed On", "Image Link"];
+var PH_MAX_PUBLIC_PER_DAY = 60;
+var PH_MAX_BYTES = 9 * 1024 * 1024;
+
+// ---- one-click token setup -------------------------------------------------------------
+/** Run this once from the Apps Script editor (pick it in the function list, click Run).
+ *  A box opens in the Google Sheet: paste the GitHub token and click OK.
+ *  It is stored privately in this script's Script Properties - never in the code. */
+function saveGitHubToken() {
+  var ui = SpreadsheetApp.getUi();
+  var res = ui.prompt("SMLC Photos - GitHub token",
+    "Paste the GitHub token (starts with github_pat_) and click OK.\nIt is stored privately in this Sheet's script, not in the website.",
+    ui.ButtonSet.OK_CANCEL);
+  if (res.getSelectedButton() !== ui.Button.OK) return;
+  var t = String(res.getResponseText() || "").trim();
+  if (!/^(github_pat_|ghp_)/.test(t)) { ui.alert("That doesn't look like a GitHub token (it should start with github_pat_)."); return; }
+  PropertiesService.getScriptProperties().setProperty("SMLC_GITHUB_TOKEN", t);
+  var check = UrlFetchApp.fetch("https://api.github.com/repos/" + PH_REPO, {
+    muteHttpExceptions: true, headers: { "Authorization": "Bearer " + t, "Accept": "application/vnd.github+json" } });
+  ui.alert(check.getResponseCode() === 200
+    ? "Saved. The token works with " + PH_REPO + "."
+    : "Saved, but GitHub answered " + check.getResponseCode() + " - check the token has access to " + PH_REPO + ".");
+}
+
+/** Run this ONCE from the editor (choose it in the function list, click Run).
+ *  Google asks you to approve the permissions the photo page needs (GitHub, Drive, Sheets, email),
+ *  then it checks each part and shows the result in the Execution log. */
+function setupSMLCPhotos() {
+  var out = [];
+  try { phGitHubToken_(); out.push("GitHub key: found"); } catch (e) { out.push("GitHub key: MISSING - run saveGitHubToken"); }
+  try {
+    var r = phGh_("https://api.github.com/repos/" + PH_REPO);
+    out.push("GitHub access: " + (r.getResponseCode() === 200 ? "OK" : "HTTP " + r.getResponseCode()));
+  } catch (e) { out.push("GitHub access: " + e.message); }
+  try { phSubmissionsFolder_(); out.push("Private Drive folder: OK"); } catch (e) { out.push("Drive folder: " + e.message); }
+  try { phSubmissionsSheet_(); out.push("Private submissions sheet: OK"); } catch (e) { out.push("Submissions sheet: " + e.message); }
+  try { out.push("Email quota left today: " + MailApp.getRemainingDailyQuota()); } catch (e) { out.push("Email: " + e.message); }
+  var admins = PropertiesService.getScriptProperties().getProperty("ADMIN_EMAILS");
+  out.push("Admins (ADMIN_EMAILS): " + (admins ? admins : "NONE SET - add Script Property ADMIN_EMAILS"));
+  Logger.log("SMLC Photos " + PH_VERSION + "\n" + out.join("\n") +
+    "\n\nNext: Deploy -> Manage deployments -> pencil -> Version: New version -> Deploy (Who has access: Anyone).");
+}
+
+// ---- entry point ---------------------------------------------------------------
+function doPost(e) {
+  var out;
+  try {
+    var req = JSON.parse((e && e.postData && e.postData.contents) || "{}");
+    switch (req.action) {
+      case "whoami":          out = phWhoAmI_(req); break;
+      case "upload":          out = phUpload_(req); break;
+      case "submit":          out = phSubmit_(req); break;
+      case "listSubmissions": out = phListSubmissions_(req); break;
+      case "review":          out = phReview_(req); break;
+      default: throw new Error("Unknown action.");
+    }
+    out.ok = true;
+  } catch (err) {
+    out = { ok: false, error: String(err && err.message || err) };
+  }
+  out.version = PH_VERSION;
+  return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet() {
+  return ContentService.createTextOutput(JSON.stringify({ ok: true, service: "SMLC Photos", version: PH_VERSION }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ---- sign-in check ------------------------------------------------------------------
+function phEmailKey_(email) { return String(email || "").toLowerCase().replace(/\./g, ","); }
+
+/** Confirms the Firebase sign-in with Google, then checks smlc_admins. Returns { email, admin }. */
+function phCheckUser_(idToken) {
+  if (!idToken) throw new Error("Please sign in.");
+  var r = UrlFetchApp.fetch("https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" + PH_FIREBASE_API_KEY, {
+    method: "post", contentType: "application/json", payload: JSON.stringify({ idToken: idToken }), muteHttpExceptions: true
+  });
+  if (r.getResponseCode() !== 200) throw new Error("Your sign-in has expired. Please sign in again.");
+  var user = (JSON.parse(r.getContentText()).users || [])[0];
+  if (!user || !user.email) throw new Error("Could not read your sign-in.");
+  if (!user.emailVerified) throw new Error("Your Google email is not verified.");
+  // Admins: Script Property ADMIN_EMAILS (private, comma-separated), e.g.
+  //   raykevin71888@gmail.com, skventuresigns@gmail.com, scott.robinson@skventuresigns.com
+  var list = String(PropertiesService.getScriptProperties().getProperty("ADMIN_EMAILS") || "")
+    .toLowerCase().split(/[\s,;]+/).filter(String);
+  var admin = list.indexOf(String(user.email).toLowerCase()) !== -1;
+  if (!admin) {
+    // Older setup: Firebase Realtime Database smlc_admins/<email with , for .> = true
+    try {
+      var a = UrlFetchApp.fetch(PH_RTDB + "/smlc_admins/" + encodeURIComponent(phEmailKey_(user.email)) + ".json?auth=" + encodeURIComponent(idToken),
+                                { muteHttpExceptions: true });
+      admin = a.getResponseCode() === 200 && a.getContentText().trim() === "true";
+    } catch (e) {}
+  }
+  return { email: user.email, admin: admin };
+}
+function phRequireAdmin_(idToken) {
+  var u = phCheckUser_(idToken);
+  if (!u.admin) throw new Error(u.email + " is not on the SMLC admin list (ADMIN_EMAILS in the Sheet's Apps Script).");
+  return u;
+}
+
+function phWhoAmI_(req) {
+  var u = phCheckUser_(req.idToken);
+  return { email: u.email, admin: u.admin };
+}
+
+// ---- GitHub ---------------------------------------------------------------------
+function phGitHubToken_() {
+  var props = PropertiesService.getScriptProperties();
+  var t = props.getProperty("SMLC_GITHUB_TOKEN") || props.getProperty("GITHUB_TOKEN");
+  if (!t) throw new Error("SMLC_GITHUB_TOKEN is missing (Apps Script -> Project Settings -> Script Properties).");
+  return t;
+}
+function phApiPath_(path) { return "https://api.github.com/repos/" + PH_REPO + "/contents/" + path.split("/").map(encodeURIComponent).join("/"); }
+function phGh_(url, opts) {
+  opts = opts || {};
+  opts.muteHttpExceptions = true;
+  opts.headers = { "Authorization": "Bearer " + phGitHubToken_(), "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" };
+  return UrlFetchApp.fetch(url, opts);
+}
+function phExistingSha_(path) {
+  var r = phGh_(phApiPath_(path) + "?ref=" + encodeURIComponent(PH_BRANCH));
+  return r.getResponseCode() === 200 ? JSON.parse(r.getContentText()).sha : null;
+}
+function phRawUrl_(path) {
+  return "https://raw.githubusercontent.com/" + PH_REPO + "/" + encodeURIComponent(PH_BRANCH) + "/" + path.split("/").map(encodeURIComponent).join("/");
+}
+function phSlug_(s) {
+  return String(s || "").toLowerCase().replace(/&/g, " and ").replace(/['’]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+}
+/** "flora" + "Flora water tower" -> "flora-water-tower" (town only added when the name doesn't start with it) */
+function phTownSlug_(place, name) {
+  var t = phSlug_(String(place || "").replace(/\s+township$/i, "")), n = phSlug_(name || "photo");
+  return (t && n.indexOf(t) !== 0) ? (t + "-" + n).slice(0, 80) : n;
+}
+/** First free name: flora-depot.jpg, flora-depot-2.jpg, ... */
+function phFreePath_(base, ext) {
+  for (var n = 1; n < 50; n++) {
+    var path = PH_FOLDER + "/" + base + (n > 1 ? "-" + n : "") + "." + ext;
+    if (!phExistingSha_(path)) return path;
+  }
+  throw new Error("Too many pictures with that name.");
+}
+function phCommit_(path, base64, message, sha) {
+  var body = { message: message, content: base64, branch: PH_BRANCH };
+  if (sha) body.sha = sha;
+  var r = phGh_(phApiPath_(path), { method: "put", contentType: "application/json", payload: JSON.stringify(body) });
+  var code = r.getResponseCode();
+  if (code !== 200 && code !== 201) {
+    var msg = ""; try { msg = JSON.parse(r.getContentText()).message; } catch (e) {}
+    throw new Error("GitHub refused the save (" + code + (msg ? ": " + msg : "") + "). Check SMLC_GITHUB_TOKEN has Contents: Read and write.");
+  }
+  return phRawUrl_(path);
+}
+
+// ---- Gallery tab (in this sheet; Code.gs syncs it) --------------------------------------
+/** Column A of the Gallery tab: the town picked, so Code.gs files the photo under that town.
+ *  County-wide photos go under Global. */
+function phTownCol_(place) {
+  var p = String(place || "").trim();
+  return (!p || p.toLowerCase() === "clay county") ? "Global" : p;
+}
+function phGalleryAdd_(row) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(PH_GALLERY_TAB);
+  if (!sh) {
+    sh = ss.insertSheet(PH_GALLERY_TAB);
+    sh.getRange(1, 1, 1, PH_GALLERY_HEADERS.length).setValues([PH_GALLERY_HEADERS]).setFontWeight("bold");
+    sh.setFrozenRows(1);
+  }
+  // Match columns by their header names, and add any missing headers (e.g. "Alt") at the end
+  var lastCol = Math.max(sh.getLastColumn(), 1);
+  var head = sh.getRange(1, 1, 1, lastCol).getValues()[0].map(function (h) { return String(h).trim(); });
+  PH_GALLERY_HEADERS.forEach(function (h) {
+    if (head.indexOf(h) === -1) { head.push(h); sh.getRange(1, head.length).setValue(h).setFontWeight("bold"); }
+  });
+  var values = head.map(function (h) { return row[h] !== undefined ? row[h] : ""; });
+  sh.appendRow(values);
+  var showCol = head.indexOf("Show") + 1;
+  sh.getRange(1, showCol).setNote("Untick Show to hide a photo from the public Gallery page.");
+  sh.getRange(sh.getLastRow(), showCol).insertCheckboxes().setValue(row.Show !== false);
+  // Send it to Firebase now (Code.gs). Edits made by a script don't fire the On edit trigger.
+  if (typeof pushMasterDataToFirebase === "function") {
+    try { pushMasterDataToFirebase(); } catch (e) { Logger.log("Firebase sync after gallery add failed: " + e); }
+  }
+}
+
+// ---- signed-in upload --------------------------------------------------------------
+function phUpload_(req) {
+  var u = phRequireAdmin_(req.idToken);
+  if (!req.base64) throw new Error("No picture was sent.");
+  if (req.base64.length * 0.75 > PH_MAX_BYTES) throw new Error("That picture is too large. Choose a smaller width.");
+  var ext = /^(png|jpg|jpeg|gif|webp)$/i.test(req.ext || "") ? req.ext.toLowerCase() : "jpg";
+  var slug = phSlug_(req.name);
+  if (!slug) throw new Error("Please give the picture a name.");
+  var path = PH_FOLDER + "/" + slug + "." + ext;
+  var sha = phExistingSha_(path);
+  if (sha && !req.overwrite) return { exists: true, path: path };
+  var link = phCommit_(path, req.base64, (sha ? "Replace " : "Add ") + path + " (SMLC Photos, " + u.email + ")", sha);
+
+  if (req.addToGallery) {
+    phGalleryAdd_({
+      Town: phTownCol_(req.place), Image: link, Place: req.place || "", Group: req.group || "", Caption: req.caption || "",
+      Era: req.era || "", Year: req.year || "", Credit: req.credit || "", Show: true, Added: new Date(), Source: "Uploaded by " + u.email, Alt: String(req.alt || "").slice(0, 300)
+    });
+  }
+  return { path: path, link: link, replaced: !!sha };
+}
+
+// ---- public submissions (kept OUT of the synced sheet) ---------------------------------------
+function phSubmissionsSheet_() {
+  var props = PropertiesService.getScriptProperties();
+  var id = props.getProperty("SUBMISSIONS_SHEET_ID");
+  var ss = null;
+  if (id) { try { ss = SpreadsheetApp.openById(id); } catch (e) { ss = null; } }
+  if (!ss) {
+    ss = SpreadsheetApp.create("SMLC Photo Submissions (private)");
+    props.setProperty("SUBMISSIONS_SHEET_ID", ss.getId());
+    var sh0 = ss.getSheets()[0];
+    sh0.setName("Submissions");
+    sh0.getRange(1, 1, 1, PH_SUB_HEADERS.length).setValues([PH_SUB_HEADERS]).setFontWeight("bold");
+    sh0.setFrozenRows(1);
+  }
+  return ss.getSheetByName("Submissions") || ss.getSheets()[0];
+}
+function phSubmissionsFolder_() {
+  var props = PropertiesService.getScriptProperties();
+  var id = props.getProperty("SUBMISSIONS_FOLDER_ID");
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
+  var f = DriveApp.createFolder("SMLC Photo Submissions (private)");
+  props.setProperty("SUBMISSIONS_FOLDER_ID", f.getId());
+  return f;
+}
+
+function phSubmit_(req) {
+  if (req.hp) return { received: true };                       // spam trap filled in -> pretend it worked
+  if (!req.consent) throw new Error("Please confirm you have the right to share this photo.");
+  if (!req.base64) throw new Error("Please choose a photo.");
+  if (req.base64.length * 0.75 > PH_MAX_BYTES) throw new Error("That photo is too large.");
+  if (!req.place) throw new Error("Please choose where the photo was taken.");
+
+  var props = PropertiesService.getScriptProperties();
+  var dayKey = "SUBS_" + Utilities.formatDate(new Date(), "America/Chicago", "yyyyMMdd");
+  var count = Number(props.getProperty(dayKey) || 0);
+  if (count >= PH_MAX_PUBLIC_PER_DAY) throw new Error("We've received a lot of photos today. Please try again tomorrow.");
+  props.setProperty(dayKey, String(count + 1));
+
+  var clean = function (s, n) { return String(s || "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, n || 300); };
+  var mime = /^image\/(png|jpeg|gif|webp)$/.test(req.mimeType || "") ? req.mimeType : "image/jpeg";
+  var ext = mime === "image/png" ? "png" : "jpg";
+  var place = clean(req.place, 80), caption = clean(req.caption, 300);
+  var credit = clean(req.credit, 120) || clean(req.name, 120);
+
+  // Publish right away: save into images/ (named after the town) and add it to the Gallery tab
+  var path = phFreePath_(phTownSlug_(place, caption), ext);
+  var link = phCommit_(path, req.base64, "Add " + path + " (shared by the public)");
+  phGalleryAdd_({
+    Town: phTownCol_(place), Image: link, Place: place, Group: clean(req.group, 80), Caption: caption, Era: clean(req.era, 20),
+    Year: clean(req.year, 20), Credit: credit, Show: true, Added: new Date(), Source: "Shared by the public", Alt: clean(req.alt, 300)
+  });
+
+  // Private record (who sent what) - kept out of the synced sheet so emails never go public
+  phSubmissionsSheet_().appendRow([new Date(), "Published", place, clean(req.group, 80), caption,
+    clean(req.era, 20), clean(req.year, 20), credit, clean(req.name, 120), clean(req.email, 160), "", "", "", link]);
+
+  var notify = props.getProperty("NOTIFY_EMAILS");
+  if (notify) {
+    try {
+      MailApp.sendEmail(notify, "New photo on SMLC: " + place,
+        "A photo was just added to the Clay County Photo Gallery for " + place + (caption ? " (" + caption + ")" : "") + ".\n\n" + link +
+        "\n\nTo take it down: open the SMLC Sheet -> Gallery tab -> untick Show on that row.");
+    } catch (e) { Logger.log("Notify email failed: " + e); }
+  }
+  return { received: true, published: true, link: link };
+}
+
+function phListSubmissions_(req) {
+  phRequireAdmin_(req.idToken);
+  var sh = phSubmissionsSheet_();
+  if (sh.getLastRow() < 2) return { items: [] };
+  var rows = sh.getRange(2, 1, sh.getLastRow() - 1, PH_SUB_HEADERS.length).getValues();
+  var items = [];
+  rows.forEach(function (r, i) {
+    if (r[1] !== "Pending") return;
+    var preview = "";
+    try {
+      var thumb = DriveApp.getFileById(r[10]).getThumbnail();
+      if (thumb) preview = "data:" + thumb.getContentType() + ";base64," + Utilities.base64Encode(thumb.getBytes());
+    } catch (e) {}
+    items.push({ row: i + 2, received: r[0] instanceof Date ? r[0].toISOString() : String(r[0]), place: r[2], group: r[3],
+      caption: r[4], era: r[5], year: String(r[6] || ""), credit: r[7], name: r[8], email: r[9], preview: preview });
+  });
+  return { items: items.slice(0, 40) };
+}
+
+function phReview_(req) {
+  var u = phRequireAdmin_(req.idToken);
+  var sh = phSubmissionsSheet_();
+  var rowNum = Number(req.row);
+  if (!rowNum || rowNum < 2 || rowNum > sh.getLastRow()) throw new Error("That photo was not found.");
+  var r = sh.getRange(rowNum, 1, 1, PH_SUB_HEADERS.length).getValues()[0];
+  if (r[1] !== "Pending") throw new Error("That photo was already reviewed (" + r[1] + ").");
+  var file = DriveApp.getFileById(r[10]);
+
+  if (req.decision === "reject") {
+    sh.getRange(rowNum, 2).setValue("Rejected");
+    sh.getRange(rowNum, 12, 1, 2).setValues([[u.email, new Date()]]);
+    try { file.setTrashed(true); } catch (e) {}
+    return { rejected: true };
+  }
+
+  // Approve: allow small edits from the reviewer
+  var place = req.place || r[2], caption = req.caption !== undefined ? req.caption : r[4];
+  var credit = req.credit !== undefined ? req.credit : (r[7] || r[8]);
+  var blob = file.getBlob();
+  var ext = /png/i.test(blob.getContentType()) ? "png" : "jpg";
+  var path = phFreePath_(phTownSlug_(place, caption), ext);
+  var link = phCommit_(path, Utilities.base64Encode(blob.getBytes()), "Add " + path + " (shared photo approved by " + u.email + ")");
+
+  phGalleryAdd_({
+    Town: phTownCol_(place), Image: link, Place: place, Group: r[3], Caption: caption, Era: r[5], Year: r[6],
+    Credit: credit, Show: true, Added: new Date(), Source: "Shared by the public", Alt: req.alt || ""
+  });
+  sh.getRange(rowNum, 2).setValue("Approved");
+  sh.getRange(rowNum, 12, 1, 3).setValues([[u.email, new Date(), link]]);
+  return { approved: true, link: link, path: path };
 }

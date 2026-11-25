@@ -1,0 +1,74 @@
+{
+  "_about": "Home Inventory trusted product list. The app checks this BEFORE any outside product list, so whatever is here always wins. Key = the barcode number (12-digit UPC, or 13-digit EAN). Fields: name, brand, size, category (Food, Fresh food, Drinks, Snacks, Frozen, Cleaning, Personal care, Medicine, Paper goods, Pet, Baby, Other), place (where it's usually kept), each (how many are inside, for boxes/packs), unit (what one of them is called), store (walmart, sams, publix, dg, target, aldi, kroger, costco, amazon), link (the product's store page), image (a picture path, pictures go in images/barcode/<barcode>.jpg, written as ../images/barcode/<barcode>.jpg).",
+  "072878262552": {
+    "name": "Avocado Dip",
+    "size": "15 oz",
+    "category": "Fresh food",
+    "place": "Fridge"
+  },
+  "070662013038": {
+    "name": "Top Ramen Chicken Flavor",
+    "brand": "Nissin",
+    "size": "24 pack case",
+    "category": "Food",
+    "place": "Pantry",
+    "each": 24,
+    "unit": "packs",
+    "image": "../images/barcode/070662010037.jpg",
+    "store": "walmart",
+    "link": "https://www.walmart.com/ip/738135969"
+  },
+  "013700016608": {
+    "name": "Hefty Ultra Strong Tall Kitchen Trash Bags, Lavender & Sweet Vanilla",
+    "brand": "Hefty",
+    "category": "Cleaning",
+    "place": "Laundry / cleaning",
+    "unit": "bags",
+    "size": "13 gal, 40 bags",
+    "each": 40,
+    "image": "../images/barcode/013700016608.jpg",
+    "store": "walmart",
+    "link": "https://www.walmart.com/ip/1177157724"
+  },
+  "194346122233": {
+    "name": "Great Value Thick & Chunky Salsa, Mild",
+    "brand": "Great Value",
+    "size": "16 oz",
+    "category": "Food",
+    "place": "Pantry",
+    "image": "../images/barcode/194346122233.jpg",
+    "store": "walmart",
+    "link": "https://www.walmart.com/ip/1959652540"
+  },
+  "078742377469": {
+    "name": "Great Value Classic Ranch Salad Dressing & Recipe Mix",
+    "brand": "Great Value",
+    "size": "8 oz canister",
+    "category": "Food",
+    "place": "Pantry",
+    "store": "walmart",
+    "link": "https://www.walmart.com/ip/868694067"
+  },
+  "049000050271": {
+    "name": "Fanta Strawberry Soda Pop Bottle",
+    "brand": "Fanta",
+    "size": "2 liter (67.6 fl oz)",
+    "category": "Drinks",
+    "place": "Pantry",
+    "image": "../images/barcode/049000050271.jpg",
+    "store": "walmart",
+    "link": "https://www.walmart.com/ip/15610634"
+  },
+  "070662010037": {
+    "name": "Top Ramen Chicken Flavor Ramen Noodle Soup",
+    "brand": "Nissin",
+    "size": "24 pack case, 3 oz bags",
+    "category": "Food",
+    "place": "Pantry",
+    "each": 24,
+    "unit": "packs",
+    "image": "../images/barcode/070662010037.jpg",
+    "store": "walmart",
+    "link": "https://www.walmart.com/ip/738135969"
+  }
+}
